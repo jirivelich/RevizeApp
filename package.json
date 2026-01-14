@@ -10,6 +10,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "start": "cd server && npm start",
+    "start:production": "cd server && npm install && npm start",
     "lint": "eslint .",
     "preview": "vite preview"
   },
