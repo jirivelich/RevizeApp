@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" 
+           Name="RevizeApp" 
+           Language="1029" 
+           Version="1.0.0.0" 
+           Manufacturer="RevizeApp"
+           UpgradeCode="12345678-1234-1234-1234-123456789012">
+    <Package InstallerVersion="200" 
+             Compressed="yes" 
+             Description="RevizeApp - Aplikace pro správu elektrických revizí"
+             InstallScope="perMachine" />
+
+    <Media Id="1" Cabinet="RevizeApp.cab" EmbedCab="yes" />
+
+    <!-- Ikona a vlastnosti -->
+    <Icon Id="ProductIcon" SourceFile="$(var.ProjectDir)\electron\icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="ProductIcon" />
+    <Property Id="ARPHELPLINK" Value="https://revizeapp.cz" />
+    <Property Id="ARPNOREPAIR" Value="1" />
+    <Property Id="ARPNOMODIFY" Value="1" />
+
+    <!-- Požadavek na .NET -->
+    <PropertyRef Id="NETFRAMEWORK45" />
+    <Condition Message="Tato aplikace vyžaduje .NET Framework 4.5 nebo novější.">
+      <![CDATA[NETFRAMEWORK45]]>
+    </Condition>
+
+    <!-- Instalační cesty -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="RevizeApp" />
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="RevizeApp" />
+      </Directory>
+      <Directory Id="DesktopFolder" Name="Desktop" />
+    </Directory>
+
+    <!-- Součásti aplikace -->
+    <Feature Id="ProductFeature" Title="RevizeApp" Level="1">
+      <ComponentRef Id="ApplicationFiles" />
+      <ComponentRef Id="StartMenuShortcut" />
+      <ComponentRef Id="DesktopShortcut" />
+      <ComponentRef Id="LauncherBat" />
+    </Feature>
+
+    <!-- Hlavní složka s aplikací -->
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Id="ApplicationFiles" Guid="12345678-1234-1234-1234-111111111111">
+        <File Source="$(var.ProjectDir)\launcher.bat" />
+        <File Source="$(var.ProjectDir)\package.json" />
+        <File Source="$(var.ProjectDir)\README.md" />
+        <CreateFolder />
+      </Component>
+
+      <!-- Dist složka -->
+      <Directory Id="DistFolder" Name="dist">
+        <Component Id="DistFiles" Guid="12345678-1234-1234-1234-222222222222">
+          <File Source="$(var.ProjectDir)\dist\index.html" />
+          <CreateFolder />
+        </Component>
+      </Directory>
+
+      <!-- Server složka -->
+      <Directory Id="ServerFolder" Name="server">
+        <Component Id="ServerFiles" Guid="12345678-1234-1234-1234-333333333333">
+          <File Source="$(var.ProjectDir)\server\package.json" />
+          <File Source="$(var.ProjectDir)\server\server.ts" />
+          <File Source="$(var.ProjectDir)\server\database.ts" />
+          <File Source="$(var.ProjectDir)\server\tsconfig.json" />
+          <CreateFolder />
+        </Component>
+        <Directory Id="ServerDataFolder" Name="data">
+          <Component Id="ServerData" Guid="12345678-1234-1234-1234-444444444444">
+            <CreateFolder />
+          </Component>
+        </Directory>
+      </Directory>
+    </DirectoryRef>
+
+    <!-- Start Menu Shortcut -->
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="StartMenuShortcut" Guid="12345678-1234-1234-1234-555555555555">
+        <Shortcut Id="StartMenuRevizeApp"
+                  Name="RevizeApp"
+                  Description="Aplikace pro správu elektrických revizí"
+                  Target="[INSTALLFOLDER]launcher.bat"
+                  WorkingDirectory="INSTALLFOLDER" />
+        <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\RevizeApp" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <!-- Desktop Shortcut -->
+    <DirectoryRef Id="DesktopFolder">
+      <Component Id="DesktopShortcut" Guid="12345678-1234-1234-1234-666666666666">
+        <Shortcut Id="DesktopRevizeApp"
+                  Name="RevizeApp"
+                  Description="Aplikace pro správu elektrických revizí"
+                  Target="[INSTALLFOLDER]launcher.bat"
+                  WorkingDirectory="INSTALLFOLDER" />
+        <RegistryValue Root="HKCU" Key="Software\RevizeApp\Desktop" Name="shortcut" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <!-- Launcher Bat -->
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Id="LauncherBat" Guid="12345678-1234-1234-1234-777777777777">
+        <File Source="$(var.ProjectDir)\launcher.bat" />
+        <RegistryValue Root="HKCU" Key="Software\RevizeApp" Name="launcher" Type="string" Value="[INSTALLFOLDER]launcher.bat" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <!-- UI -->
+    <UIRef Id="WixUI_InstallDir" />
+    <UIRef Id="WixUI_ErrorProgressText" />
+
+    <!-- Vlastní banner -->
+    <WixVariable Id="WixUIBannerBmp" Value="$(var.ProjectDir)\electron\banner.bmp" Overridable="yes" />
+    <WixVariable Id="WixUIDialogBmp" Value="$(var.ProjectDir)\electron\dialog.bmp" Overridable="yes" />
+  </Product>
+</Wix>

@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RevizeApp - Průvodce spuštěním</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+        }
+        
+        .section h2 {
+            color: #667eea;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section h2 .icon {
+            font-size: 1.3em;
+        }
+        
+        .steps {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .step {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 10px;
+        }
+        
+        .step:last-child {
+            margin-bottom: 0;
+        }
+        
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .step-content {
+            flex: 1;
+        }
+        
+        .step-content p {
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .tab-button {
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-button.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .tab-button:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .links {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .link-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .link-item:last-child {
+            border-bottom: none;
+        }
+        
+        .link-item a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .link-item a:hover {
+            text-decoration: underline;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        
+        .status.ready {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .feature {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .feature h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .feature p {
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab-button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 RevizeApp</h1>
+            <p>Komplexní systém pro správu elektrických revizí</p>
+        </div>
+        
+        <div class="content">
+            <!-- Features Section -->
+            <div class="section">
+                <h2><span class="icon">✨</span> Vlastnosti aplikace</h2>
+                <div class="features">
+                    <div class="feature">
+                        <h3>📱 Responsive design</h3>
+                        <p>Perfektně funguje na počítači, tabletu i telefonu</p>
+                    </div>
+                    <div class="feature">
+                        <h3>📄 PDF export</h3>
+                        <p>Exportujte revizní zprávy v profesionálním formátu</p>
+                    </div>
+                    <div class="feature">
+                        <h3>📊 SQLite databáze</h3>
+                        <p>Lokální persistentní úložiště dat</p>
+                    </div>
+                    <div class="feature">
+                        <h3>💾 Backup/Restore</h3>
+                        <p>Bezpečně zálohujte a obnovujte svá data</p>
+                    </div>
+                    <div class="feature">
+                        <h3>⚙️ Offline mód</h3>
+                        <p>Pracujte offline s IndexedDB, synchronizace když je síť</p>
+                    </div>
+                    <div class="feature">
+                        <h3>🔍 Regulační soulad</h3>
+                        <p>Všechna pole dle české legislativy pro elektrické revize</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Start Section -->
+            <div class="section">
+                <h2><span class="icon">⚡</span> Rychlý start</h2>
+                
+                <div class="tabs">
+                    <button class="tab-button active" onclick="switchTab('windows')">Windows</button>
+                    <button class="tab-button" onclick="switchTab('linux')">Linux / Mac</button>
+                    <button class="tab-button" onclick="switchTab('manual')">Manuálně</button>
+                </div>
+                
+                <div id="windows" class="tab-content active">
+                    <div class="steps">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <p><strong>Spusťte backend</strong> - Klikněte na <code>run-backend.bat</code></p>
+                                <p style="color: #666; font-size: 0.9em; margin-top: 5px;">Nebo spusťte v PowerShellu:</p>
+                                <div class="code-block">.\run-backend.bat</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <p><strong>Otevřete nový PowerShell</strong> v pracovní složce</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <p><strong>Spusťte frontend</strong></p>
+                                <div class="code-block">npm run dev</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <p><strong>Otevřete aplikaci</strong> na http://localhost:5173</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="linux" class="tab-content">
+                    <div class="steps">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <p><strong>Dejte skriptu práva na spouštění</strong></p>
+                                <div class="code-block">chmod +x run-backend.sh</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <p><strong>Spusťte backend</strong></p>
+                                <div class="code-block">./run-backend.sh</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <p><strong>V novém terminálu spusťte frontend</strong></p>
+                                <div class="code-block">npm run dev</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <p><strong>Otevřete aplikaci</strong> na http://localhost:5173</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="manual" class="tab-content">
+                    <div class="steps">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <p><strong>Terminal 1 - Backend</strong></p>
+                                <div class="code-block">cd server
+npm install
+npm run dev</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <p><strong>Terminal 2 - Frontend</strong></p>
+                                <div class="code-block">npm install
+npm run dev</div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <p><strong>Aplikace bude dostupná</strong> na http://localhost:5173</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Links Section -->
+            <div class="section">
+                <h2><span class="icon">🔗</span> Užitečné odkazy</h2>
+                <div class="links">
+                    <div class="link-item">
+                        <span>Frontend aplikace</span>
+                        <span style="display: flex; gap: 15px; align-items: center;">
+                            <a href="http://localhost:5173" target="_blank">http://localhost:5173</a>
+                            <span class="status pending">Čekání</span>
+                        </span>
+                    </div>
+                    <div class="link-item">
+                        <span>Backend API</span>
+                        <span style="display: flex; gap: 15px; align-items: center;">
+                            <a href="http://localhost:3001/api" target="_blank">http://localhost:3001/api</a>
+                            <span class="status pending">Čekání</span>
+                        </span>
+                    </div>
+                    <div class="link-item">
+                        <span>Health Check</span>
+                        <span style="display: flex; gap: 15px; align-items: center;">
+                            <a href="http://localhost:3001/api/health" target="_blank">http://localhost:3001/api/health</a>
+                            <span class="status pending">Čekání</span>
+                        </span>
+                    </div>
+                    <div class="link-item">
+                        <span>Backend README</span>
+                        <span><a href="server/README.md">server/README.md</a></span>
+                    </div>
+                    <div class="link-item">
+                        <span>Projekt README</span>
+                        <span><a href="README.md">README.md</a></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Info Section -->
+            <div class="section" style="background: #f0f4ff; padding: 20px; border-radius: 10px;">
+                <h2 style="margin: 0 0 15px 0;"><span class="icon">ℹ️</span> Informace</h2>
+                <p style="color: #333; line-height: 1.6;">
+                    <strong>Backend</strong> automaticky inicializuje SQLite databázi v <code>server/data/revizeapp.db</code>.<br><br>
+                    <strong>Frontend</strong> má proxy nakonfigurován v <code>vite.config.ts</code> pro komunikaci s backendem.<br><br>
+                    <strong>Offline mód</strong> používá IndexedDB v prohlížeči pro offline funkcionalitu.<br><br>
+                    <strong>API dokumentace</strong> je k dispozici v souboru <code>server/README.md</code>.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function switchTab(tabName) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(button => button.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+        
+        // Check server status on page load
+        window.addEventListener('load', () => {
+            checkServerStatus();
+        });
+        
+        async function checkServerStatus() {
+            try {
+                const response = await fetch('http://localhost:3001/api/health');
+                if (response.ok) {
+                    updateStatus('Backend API', 'ready');
+                    updateStatus('Health Check', 'ready');
+                }
+            } catch (error) {
+                // Server not running, update status
+            }
+            
+            try {
+                const response = await fetch('http://localhost:5173');
+                if (response.ok) {
+                    updateStatus('Frontend aplikace', 'ready');
+                }
+            } catch (error) {
+                // Frontend not running
+            }
+        }
+        
+        function updateStatus(serviceName, status) {
+            const links = document.querySelectorAll('.link-item');
+            links.forEach(link => {
+                if (link.textContent.includes(serviceName)) {
+                    const statusElement = link.querySelector('.status');
+                    if (statusElement) {
+                        statusElement.className = 'status ' + status;
+                        statusElement.textContent = status === 'ready' ? '✅ Připraveno' : '⏳ Čekání';
+                    }
+                }
+            });
+        }
+        
+        // Recheck every 2 seconds
+        setInterval(checkServerStatus, 2000);
+    </script>
+</body>
+</html>
