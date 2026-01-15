@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
 import { PDFExportModal } from '../components/PDFExportModal';
-import { revizeService, rozvadecService, zavadaService, mistnostService, okruhService, pristrojService, revizePristrojService, zarizeniService, firmaService, zavadaKatalogService } from '../services/database';
-import type { Revize, Rozvadec, Zavada, Mistnost, Okruh, MericiPristroj, Zarizeni, Firma, ZavadaKatalog } from '../types';
+import { revizeService, rozvadecService, zavadaService, mistnostService, okruhService, pristrojService, revizePristrojService, zarizeniService, firmaService, zavadaKatalogService, nastaveniService } from '../services/database';
+import type { Revize, Rozvadec, Zavada, Mistnost, Okruh, MericiPristroj, Zarizeni, Firma, ZavadaKatalog, Nastaveni } from '../types';
 
 export function RevizeDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +33,9 @@ export function RevizeDetailPage() {
   // Firmy
   const [firmy, setFirmy] = useState<Firma[]>([]);
   const [selectedFirmaId, setSelectedFirmaId] = useState<string>('');
+  
+  // Nastavení (pro výchozí firmu)
+  const [nastaveni, setNastaveni] = useState<Nastaveni | null>(null);
 
   // Závady
   const [isZavadaModalOpen, setIsZavadaModalOpen] = useState(false);
@@ -157,6 +160,10 @@ export function RevizeDetailPage() {
         // Načíst katalog závad
         const katalogData = await zavadaKatalogService.getAll();
         setKatalogZavad(katalogData);
+        
+        // Načíst nastavení (pro výchozí firmu)
+        const nastaveniData = await nastaveniService.get();
+        setNastaveni(nastaveniData || null);
       } else {
         setError('Revize nebyla nalezena');
       }
@@ -974,6 +981,25 @@ export function RevizeDetailPage() {
                     💡 Tip: Můžete si předem vytvořit seznam firem v sekci <Link to="/firmy" className="underline font-medium">Firmy</Link>.
                   </p>
                 )}
+                
+                {/* Zobrazit náhled výchozí firmy z nastavení */}
+                {selectedFirmaId === '' && nastaveni && (nastaveni.firmaJmeno || nastaveni.firmaIco) && (
+                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm font-medium text-blue-800 mb-2">📋 Náhled firmy z nastavení:</p>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div><span className="text-blue-600">Název:</span> {nastaveni.firmaJmeno || '—'}</div>
+                      <div><span className="text-blue-600">IČO:</span> {nastaveni.firmaIco || '—'}</div>
+                      <div><span className="text-blue-600">Adresa:</span> {nastaveni.firmaAdresa || '—'}</div>
+                      <div><span className="text-blue-600">DIČ:</span> {nastaveni.firmaDic || '—'}</div>
+                    </div>
+                  </div>
+                )}
+                
+                {selectedFirmaId === '' && (!nastaveni || (!nastaveni.firmaJmeno && !nastaveni.firmaIco)) && (
+                  <p className="text-sm text-amber-600 mt-4">
+                    ⚠️ V nastavení nemáte vyplněnou výchozí firmu. <Link to="/nastaveni" className="underline font-medium">Přejít do nastavení</Link>
+                  </p>
+                )}
               </div>
             ) : (
               <div>
@@ -996,8 +1022,30 @@ export function RevizeDetailPage() {
                       <p className="font-medium">{revize.firmaDic || '—'}</p>
                     </div>
                   </div>
+                ) : nastaveni && (nastaveni.firmaJmeno || nastaveni.firmaIco) ? (
+                  <div>
+                    <p className="text-sm text-slate-500 italic mb-2">Firma z nastavení:</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-slate-500">Název firmy</p>
+                        <p className="font-medium">{nastaveni.firmaJmeno || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500">IČO</p>
+                        <p className="font-medium">{nastaveni.firmaIco || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500">Adresa</p>
+                        <p className="font-medium">{nastaveni.firmaAdresa || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-500">DIČ</p>
+                        <p className="font-medium">{nastaveni.firmaDic || '—'}</p>
+                      </div>
+                    </div>
+                  </div>
                 ) : (
-                  <p className="text-slate-500 italic">Použije se firma z nastavení</p>
+                  <p className="text-slate-500 italic">Firma není nastavena</p>
                 )}
               </div>
             )}
