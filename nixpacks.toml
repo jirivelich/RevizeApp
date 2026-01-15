@@ -10,7 +10,3 @@ cmds = ["npm run build"]
 
 [start]
 cmd = "cd server && npm start"
-
-# Disable Caddy - we use Express for serving
-[staticAssets]
-enable = false
