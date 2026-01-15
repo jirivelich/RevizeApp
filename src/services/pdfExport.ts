@@ -1,4 +1,4 @@
-import jsPDF from 'jspdf';
+﻿import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { Revize, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, Nastaveni, Sablona, MericiPristroj } from '../types';
 import { addCzechFont, t } from './fontUtils';
@@ -156,7 +156,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
         doc.setFont('Roboto', 'bold');
         doc.setFontSize(baseFontSize - 1);
         doc.setTextColor(255, 255, 255);
-        doc.text(t('REVIZNI TECHNIK'), rightX + 2, startY + 4);
+        doc.text(t('REVIZNÍ TECHNIK'), rightX + 2, startY + 4);
         
         let technikY = startY + 10;
         doc.setFontSize(baseFontSize);
@@ -248,7 +248,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     drawTableRow(yPos, [
       { label: 'Cislo zpravy:', value: revize.cisloRevize, width: contentWidth / 4 },
       { label: 'Druh revize:', value: druhRevize, width: contentWidth / 4 },
-      { label: 'Datum provedeni:', value: datumProvedeni, width: contentWidth / 4 },
+      { label: 'Datum provedení:', value: datumProvedeni, width: contentWidth / 4 },
       { label: 'Datum dokonceni:', value: datumDokonceni, width: contentWidth / 4 },
     ], rowHeight, ramecekUdaje);
     yPos += rowHeight;
@@ -276,11 +276,11 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.setFont('Roboto', 'bold');
       doc.setFontSize(baseFontSize - 1);
       doc.setTextColor(0, 0, 0);
-      doc.text(t('UDAJE O OBJEKTU'), margin + 2, yPos + 4);
+      doc.text(t('Údaje o objektu'), margin + 2, yPos + 4);
       yPos += 6;
       
       drawTableRow(yPos, [
-        { label: 'Nazev objektu:', value: revize.nazev, width: contentWidth },
+        { label: 'Název objektu:', value: revize.nazev, width: contentWidth },
       ], rowHeight, ramecekObjekt);
       yPos += rowHeight;
       
@@ -303,16 +303,16 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.setFont('Roboto', 'bold');
       doc.setFontSize(baseFontSize - 1);
       doc.setTextColor(0, 0, 0);
-      doc.text(t('VYHODNOCENI REVIZE'), margin + 2, yPos + 4);
+      doc.text(t('VYHODNOCENÍ REVIZE'), margin + 2, yPos + 4);
       yPos += 10;
 
       const vysledekText = revize.vysledek === 'schopno' 
-        ? t('Elektricka instalace JE SCHOPNA bezpecneho provozu')
+        ? t('Elektrická instalace JE SCHOPNA bezpečného provozu')
         : revize.vysledek === 'neschopno'
-        ? t('Elektricka instalace NENI SCHOPNA bezpecneho provozu')
+        ? t('Elektrická instalace NENÍ SCHOPNA bezpečného provozu')
         : revize.vysledek === 'podmíněně schopno'
-        ? t('Elektricka instalace je PODMINENE SCHOPNA bezpecneho provozu')
-        : t('Vysledek revize nebyl stanoven');
+        ? t('Elektrická instalace je PODMÍNĚNĚ SCHOPNA bezpečného provozu')
+        : t('VÝSLEDEK REVIZE NEBYL STANOVEN');
 
       const vysledekColor: [number, number, number] = revize.vysledek === 'schopno' 
         ? [0, 100, 0]  // dark green
@@ -361,7 +361,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.setFontSize(baseFontSize - 1);
       doc.setFont('Roboto', 'normal');
       doc.setTextColor(80, 80, 80);
-      doc.text(t('Revizni technik:'), leftX, podpisyY);
+      doc.text(t('Revizní technik:'), leftX, podpisyY);
       doc.text(t('Objednatel:'), rightX, podpisyY);
       
       podpisyY += 4;
@@ -433,14 +433,14 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       case 'vyhodnoceni-predchozich':
         renderVyhodnoceniPredchozich(sekceIndex++);
         break;
-      case 'rozvadece':
-        renderRozvadece(sekceIndex++);
+      case 'Rozvaděče':
+        renderRozvaděče(sekceIndex++);
         break;
-      case 'mereni':
-        renderMereni(sekceIndex++);
+      case 'Měření':
+        renderMěření(sekceIndex++);
         break;
-      case 'mistnosti':
-        renderMistnosti(sekceIndex++);
+      case 'Místnosti':
+        renderMístnosti(sekceIndex++);
         break;
       case 'pristroje':
         renderPristroje(sekceIndex++);
@@ -480,13 +480,13 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     doc.setFontSize(baseFontSize);
     doc.setFont('Roboto', 'normal');
     doc.setTextColor(0, 0, 0);
-    doc.text(t('Tento dokument obsahuje nasledujici prilohy:'), margin, yPos);
+    doc.text(t('Tento dokument obsahuje následující přílohy:'), margin, yPos);
     yPos += 8;
 
     let prilohaIndex = 1;
     sekce.forEach((s) => {
       const nazvy: Record<string, string> = {
-        'zavady': 'Zjistene zavady s fotodokumentaci',
+        'zavady': 'Zjištěné závady s Fotodokumentaci',
       };
       doc.setFont('Roboto', 'bold');
       doc.text(t(`Priloha ${prilohaIndex}: ${nazvy[s.id] || s.nazev}`), margin + 5, yPos);
@@ -519,13 +519,13 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
   }
 
   function renderZakladniUdaje(sectionNumber: number) {
-    renderSectionTitle(`${sectionNumber}. Zakladni udaje`);
+    renderSectionTitle(`${sectionNumber}. Základní údaje`);
     
     const tableData = [
-      [t('Cislo revize:'), t(revize.cisloRevize)],
-      [t('Nazev:'), t(revize.nazev)],
+      [t('Číslo revize:'), t(revize.cisloRevize)],
+      [t('Název:'), t(revize.nazev)],
       [t('Typ revize:'), t(revize.typRevize)],
-      [t('Datum provedeni:'), new Date(revize.datum).toLocaleDateString('cs-CZ')],
+      [t('Datum provedení:'), new Date(revize.datum).toLocaleDateString('cs-CZ')],
       [t('Platnost do:'), revize.datumPlatnosti ? new Date(revize.datumPlatnosti).toLocaleDateString('cs-CZ') : '-'],
       [t('Stav:'), t(revize.stav)],
     ];
@@ -551,16 +551,16 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
   }
 
   function renderObjekt(sectionNumber: number) {
-    renderSectionTitle(`${sectionNumber}. Udaje o objektu`);
+    renderSectionTitle(`${sectionNumber}. Údaje o objektu`);
     
     const tableData = [
-      [t('Nazev objektu:'), t(revize.nazev)],
+      [t('Název objektu:'), t(revize.nazev)],
       [t('Adresa objektu:'), t(revize.adresa)],
       [t('Objednatel:'), t(revize.objednatel)],
     ];
 
     if (revize.poznamka) {
-      tableData.push([t('Poznamka:'), t(revize.poznamka)]);
+      tableData.push([t('Poznámka:'), t(revize.poznamka)]);
     }
 
     autoTable(doc, {
@@ -599,7 +599,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.setFontSize(baseFontSize);
       doc.setFont('Roboto', 'bold');
       doc.setTextColor(80, 80, 80);
-      doc.text(t('Vymezeni rozsahu revize:'), margin, yPos);
+      doc.text(t('Vymezení rozsahu revize:'), margin, yPos);
       yPos += 5;
       
       doc.setFont('Roboto', 'normal');
@@ -618,7 +618,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.setFontSize(baseFontSize);
       doc.setFont('Roboto', 'bold');
       doc.setTextColor(80, 80, 80);
-      doc.text(t('Seznam podkladu:'), margin, yPos);
+      doc.text(t('Seznam podkladů:'), margin, yPos);
       yPos += 5;
       
       doc.setFont('Roboto', 'normal');
@@ -643,7 +643,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     // Zkontrolovat prostor PŘED vykreslením nadpisu
     addPageIfNeeded(Math.min(requiredSpace, 50)); // Min 50px aby nadpis + začátek textu byly spolu
     
-    renderSectionTitle(`${sectionNumber}. Provedene ukony`);
+    renderSectionTitle(`${sectionNumber}. Provedené úkony`);
     
     doc.setFontSize(baseFontSize);
     doc.setFont('Roboto', 'normal');
@@ -665,7 +665,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     // Zkontrolovat prostor PŘED vykreslením nadpisu
     addPageIfNeeded(Math.min(requiredSpace, 50));
     
-    renderSectionTitle(`${sectionNumber}. Vyhodnoceni predchozich revizi`);
+    renderSectionTitle(`${sectionNumber}. Vyhodnocení předchozích revizí`);
     
     doc.setFontSize(baseFontSize);
     doc.setFont('Roboto', 'normal');
@@ -683,7 +683,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     // Zkontrolovat prostor pro nadpis + alespoň záhlaví tabulky
     addPageIfNeeded(50);
     
-    renderSectionTitle(`${sectionNumber}. Pouzite merici pristroje`);
+    renderSectionTitle(`${sectionNumber}. Použité měřicí přístroje`);
     
     const tableData = pouzitePristroje.map(p => [
       t(p.nazev),
@@ -696,9 +696,9 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     autoTable(doc, {
       startY: yPos,
       head: [[
-        t('Nazev'),
-        t('Vyrobce/Model'),
-        t('Vyrobni cislo'),
+        t('Název'),
+        t('Výrobce/Model'),
+        t('Výrobní číslo'),
         t('Kalibrace'),
         t('Platnost do'),
       ]],
@@ -720,13 +720,13 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     yPos = doc.lastAutoTable.finalY + 10;
   }
 
-  function renderRozvadece(sectionNumber: number) {
-    renderSectionTitle(`${sectionNumber}. Rozvadece a okruhy`);
+  function renderRozvaděče(sectionNumber: number) {
+    renderSectionTitle(`${sectionNumber}. Rozvaděče a okruhy`);
 
     if (rozvadece.length === 0) {
       doc.setFontSize(baseFontSize);
       doc.setTextColor(100, 100, 100);
-      doc.text(t('Zadne rozvadece nebyly pridany.'), margin, yPos);
+      doc.text(t('Žádné rozvaděče nebyly přidány.'), margin, yPos);
       yPos += 10;
       return;
     }
@@ -745,12 +745,12 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.setFontSize(baseFontSize - 1);
       doc.setFont('Roboto', 'normal');
       doc.setTextColor(100, 100, 100);
-      doc.text(t(`Umisteni: ${rozvadec.umisteni} | Typ: ${rozvadec.typRozvadece || '-'} | Kryti: ${rozvadec.stupenKryti}`), margin, yPos);
+      doc.text(t(`Umístění: ${rozvadec.umisteni} | Typ: ${rozvadec.typRozvadece || '-'} | Kryti: ${rozvadec.stupenKryti}`), margin, yPos);
       yPos += 8;
 
       // Tabulka okruhů
-      const rozvadecOkruhy = okruhy[rozvadec.id!] || [];
-      if (rozvadecOkruhy.length > 0) {
+      const RozvaděčOkruhy = okruhy[rozvadec.id!] || [];
+      if (RozvaděčOkruhy.length > 0) {
         // Filtrovat sloupce podle šablony
         const enabledSloupce = sablona.sloupceOkruhu
           .filter(s => s.enabled)
@@ -758,15 +758,15 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
 
         const headers = enabledSloupce.map(s => t(s.nazev));
         
-        const bodyData = rozvadecOkruhy
+        const bodyData = RozvaděčOkruhy
           .sort((a, b) => a.cislo - b.cislo)
           .map(o => {
             return enabledSloupce.map(s => {
               switch (s.id) {
                 case 'cislo': return o.cislo.toString();
-                case 'jistic': return `${o.pocetFazi || 1}/${o.jisticTyp}${o.jisticProud}`;
+                case 'Jistič': return `${o.pocetFazi || 1}/${o.jisticTyp}${o.jisticProud}`;
                 case 'nazev': return t(o.nazev);
-                case 'vodic': return o.vodic;
+                case 'Vodič': return o.vodic;
                 case 'izolacni-odpor': return o.izolacniOdpor ? `${o.izolacniOdpor} MOhm` : '-';
                 case 'impedance': return o.impedanceSmycky ? `${o.impedanceSmycky} Ohm` : '-';
                 case 'proudovy-chranic': return o.proudovyChranicMa ? `${o.proudovyChranicMa} mA` : '-';
@@ -801,23 +801,23 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       } else {
         doc.setFontSize(baseFontSize - 1);
         doc.setTextColor(150, 150, 150);
-        doc.text(t('Zadne okruhy'), margin + 5, yPos);
+        doc.text(t('Žádné okruhy'), margin + 5, yPos);
         yPos += 10;
       }
     }
   }
 
-  function renderMereni(sectionNumber: number) {
-    renderSectionTitle(`${sectionNumber}. Vysledky mereni`);
+  function renderMěření(sectionNumber: number) {
+    renderSectionTitle(`${sectionNumber}. Výsledky měření`);
     
     // Souhrn měření ze všech okruhů
     let celkemOkruhu = 0;
     let minIzolacniOdpor: number | null = null;
     let maxImpedance: number | null = null;
 
-    for (const rozvadecOkruhy of Object.values(okruhy)) {
-      celkemOkruhu += rozvadecOkruhy.length;
-      for (const o of rozvadecOkruhy) {
+    for (const RozvaděčOkruhy of Object.values(okruhy)) {
+      celkemOkruhu += RozvaděčOkruhy.length;
+      for (const o of RozvaděčOkruhy) {
         if (o.izolacniOdpor !== undefined) {
           if (minIzolacniOdpor === null || o.izolacniOdpor < minIzolacniOdpor) {
             minIzolacniOdpor = o.izolacniOdpor;
@@ -832,9 +832,9 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     }
 
     const tableData = [
-      [t('Celkem okruhu:'), celkemOkruhu.toString()],
-      [t('Nejnizsi izolacni odpor:'), minIzolacniOdpor !== null ? `${minIzolacniOdpor} MOhm` : t('Nemereno')],
-      [t('Nejvyssi impedance smycky:'), maxImpedance !== null ? `${maxImpedance} Ohm` : t('Nemereno')],
+      [t('Celkem okruhů:'), celkemOkruhu.toString()],
+      [t('Nejnižší izolační odpor:'), minIzolacniOdpor !== null ? `${minIzolacniOdpor} MOhm` : t('Neměřeno')],
+      [t('Nejvyšší impedance smyčky:'), maxImpedance !== null ? `${maxImpedance} Ohm` : t('Neměřeno')],
     ];
 
     autoTable(doc, {
@@ -871,18 +871,18 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     doc.setFont('Roboto', 'bold');
     doc.setFontSize(baseFontSize + 1);
     doc.setTextColor(255, 255, 255);
-    doc.text(t('Priloha 1: Zjistene zavady s fotodokumentaci'), landscapeMargin + 3, yPos + 5.5);
+    doc.text(t('Příloha 1: Zjištěné závady s fotodokumentací'), landscapeMargin + 3, yPos + 5.5);
     yPos += 12;
 
     if (zavady.length === 0) {
       doc.setFontSize(baseFontSize);
       doc.setTextColor(100, 100, 100);
-      doc.text(t('Zadne zavady nebyly zjisteny.'), landscapeMargin, yPos);
+      doc.text(t('Žádné závady nebyly zjištěny.'), landscapeMargin, yPos);
       yPos += 10;
       return;
     }
 
-    // Vykreslení každé závady s fotografiemi
+    // Vykreslení každé závady s Fotografiemi
     zavady.forEach((z, index) => {
       // Kontrola místa na stránce
       if (yPos + 60 > landscapePageHeight - 20) {
@@ -898,7 +898,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       yPos += 6;
 
       // Barva podle závažnosti
-      const zavaznostColor: [number, number, number] = z.zavaznost === 'C1' 
+      const ZávažnostColor: [number, number, number] = z.zavaznost === 'C1' 
         ? [239, 68, 68]   // red - kritická
         : z.zavaznost === 'C2'
         ? [234, 179, 8]   // yellow - závažná
@@ -912,11 +912,11 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
         head: [],
         body: [
           [t('Popis:'), t(z.popis)],
-          [t('Zavaznost:'), t(z.zavaznost)],
+          [t('Závažnost:'), t(z.zavaznost)],
           [t('Stav:'), t(z.stav)],
-          [t('Datum zjisteni:'), z.datumZjisteni ? new Date(z.datumZjisteni).toLocaleDateString('cs-CZ') : '-'],
-          ...(z.datumVyreseni ? [[t('Datum vyreseni:'), new Date(z.datumVyreseni).toLocaleDateString('cs-CZ')]] : []),
-          ...(z.poznamka ? [[t('Poznamka:'), t(z.poznamka)]] : []),
+          [t('Datum zjištění:'), z.datumZjisteni ? new Date(z.datumZjisteni).toLocaleDateString('cs-CZ') : '-'],
+          ...(z.datumVyreseni ? [[t('Datum vyřešení:'), new Date(z.datumVyreseni).toLocaleDateString('cs-CZ')]] : []),
+          ...(z.poznamka ? [[t('Poznámka:'), t(z.poznamka)]] : []),
         ],
         theme: 'plain',
         styles: {
@@ -932,7 +932,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
         didParseCell: (data) => {
           // Obarvení závažnosti
           if (data.row.index === 1 && data.column.index === 1) {
-            data.cell.styles.textColor = zavaznostColor;
+            data.cell.styles.textColor = ZávažnostColor;
             data.cell.styles.fontStyle = 'bold';
           }
         },
@@ -948,9 +948,9 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
         let photoX = photoStartX;
         let photoY = yPos;
 
-        z.fotky.forEach((foto, fotoIndex) => {
+        z.fotky.forEach((Foto, FotoIndex) => {
           // Maximálně 3 fotky vedle sebe
-          if (fotoIndex > 0 && fotoIndex % 3 === 0) {
+          if (FotoIndex > 0 && FotoIndex % 3 === 0) {
             photoX = photoStartX;
             photoY += photoHeight + 5;
           }
@@ -958,7 +958,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
           if (photoX + photoWidth <= landscapePageWidth - landscapeMargin) {
             try {
               // Obrázek z Base64
-              const imgData = foto.startsWith('data:') ? foto : `data:image/jpeg;base64,${foto}`;
+              const imgData = Foto.startsWith('data:') ? Foto : `data:image/jpeg;base64,${Foto}`;
               doc.addImage(imgData, 'JPEG', photoX, photoY, photoWidth, photoHeight);
               
               // Rámeček kolem obrázku
@@ -988,13 +988,13 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     // Landscape přílohy zůstávají na konci dokumentu - nepřepínáme zpět
   }
 
-  function renderMistnosti(sectionNumber: number) {
-    renderSectionTitle(`${sectionNumber}. Kontrolovane mistnosti`);
+  function renderMístnosti(sectionNumber: number) {
+    renderSectionTitle(`${sectionNumber}. Kontrolované místnosti`);
 
     if (mistnosti.length === 0) {
       doc.setFontSize(baseFontSize);
       doc.setTextColor(100, 100, 100);
-      doc.text(t('Zadne mistnosti nebyly pridany.'), margin, yPos);
+      doc.text(t('Žádné místnosti nebyly přidány.'), margin, yPos);
       yPos += 10;
       return;
     }
@@ -1037,17 +1037,17 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       yPos = doc.lastAutoTable.finalY + 5;
 
       // Zařízení v místnosti
-      const mistnostZarizeni = m.id ? (zarizeni[m.id] || []) : [];
+      const MístnostZarizeni = m.id ? (zarizeni[m.id] || []) : [];
       
-      if (mistnostZarizeni.length > 0) {
+      if (MístnostZarizeni.length > 0) {
         // Podnádpis pro zařízení
         doc.setFontSize(baseFontSize - 1);
         doc.setFont('Roboto', 'italic');
         doc.setTextColor(80, 80, 80);
-        doc.text(t('Zarizeni v mistnosti:'), margin + 5, yPos);
+        doc.text(t('Zařízení v mistnosti:'), margin + 5, yPos);
         yPos += 5;
 
-        const zarizeniBodyData = mistnostZarizeni.map(z => [
+        const zarizeniBodyData = MístnostZarizeni.map(z => [
           t(z.nazev),
           t(z.oznaceni) || '-',
           z.pocetKs?.toString() || '1',
@@ -1059,7 +1059,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
 
         autoTable(doc, {
           startY: yPos,
-          head: [[t('Nazev'), t('Oznaceni'), t('Ks'), t('Trida'), t('Prikon'), t('Ochrana'), t('Stav')]],
+          head: [[t('Název'), t('Oznaceni'), t('Ks'), t('Trida'), t('Prikon'), t('Ochrana'), t('Stav')]],
           body: zarizeniBodyData,
           theme: 'striped',
           styles: {
@@ -1083,18 +1083,18 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
   }
 
   function renderZaver(sectionNumber: number) {
-    renderSectionTitle(`${sectionNumber}. Zaver revize`);
+    renderSectionTitle(`${sectionNumber}. Závěr revize`);
     
     addPageIfNeeded(40);
     
     // Výsledek revize
     const vysledekText = revize.vysledek === 'schopno' 
-      ? t('ELEKTRICKE ZARIZENI JE SCHOPNO BEZPECNEHO PROVOZU')
+      ? t('ELEKTRICKÉ ZAŘÍZENÍ JE SCHOPNO BEZPEČNÉHO PROVOZU')
       : revize.vysledek === 'neschopno'
-      ? t('ELEKTRICKE ZARIZENI NENI SCHOPNO BEZPECNEHO PROVOZU')
+      ? t('ELEKTRICKÉ ZAŘÍZENÍ NENÍ SCHOPNO BEZPEČNÉHO PROVOZU')
       : revize.vysledek === 'podmíněně schopno'
-      ? t('ELEKTRICKE ZARIZENI JE PODMINENE SCHOPNO BEZPECNEHO PROVOZU')
-      : t('VYSLEDEK REVIZE NEBYL STANOVEN');
+      ? t('ELEKTRICKÉ ZAŘÍZENÍ JE PODMÍNĚNĚ SCHOPNO BEZPEČNÉHO PROVOZU')
+      : t('VÝSLEDEK REVIZE NEBYL STANOVEN');
 
     const vysledekColor: [number, number, number] = revize.vysledek === 'schopno' 
       ? [34, 197, 94]  // green
@@ -1124,7 +1124,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.setFontSize(baseFontSize);
       doc.setFont('Roboto', 'bold');
       doc.setTextColor(239, 68, 68);
-      doc.text(t('Oduvodneni neschopnosti provozu:'), margin, yPos);
+      doc.text(t('Odůvodnění neschopnosti provozu:'), margin, yPos);
       yPos += 5;
       
       doc.setFont('Roboto', 'normal');
@@ -1140,7 +1140,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.setFontSize(baseFontSize);
       doc.setFont('Roboto', 'bold');
       doc.setTextColor(80, 80, 80);
-      doc.text(t('Zaver a doporuceni:'), margin, yPos);
+      doc.text(t('Závěr a doporučení:'), margin, yPos);
       yPos += 5;
       
       doc.setFont('Roboto', 'normal');
@@ -1156,10 +1156,10 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     doc.setTextColor(80, 80, 80);
     
     const stats = [
-      t(`Pocet kontrolovanych rozvadecu: ${rozvadece.length}`),
-      t(`Pocet kontrolovanych okruhu: ${Object.values(okruhy).reduce((sum, arr) => sum + arr.length, 0)}`),
-      t(`Pocet zjistenych zavad: ${zavady.length}`),
-      t(`Pocet kontrolovanych mistnosti: ${mistnosti.length}`),
+      t(`Počet kontrolovaných rozvaděčů: ${rozvadece.length}`),
+      t(`Počet kontrolovaných okruhů: ${Object.values(okruhy).reduce((sum, arr) => sum + arr.length, 0)}`),
+      t(`Počet zjištěných závad: ${zavady.length}`),
+      t(`Počet kontrolovaných místností: ${mistnosti.length}`),
     ];
 
     stats.forEach(stat => {
@@ -1182,7 +1182,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     doc.setFontSize(baseFontSize);
     doc.setFont('Roboto', 'normal');
     doc.setTextColor(80, 80, 80);
-    doc.text(t('Revizni technik:'), margin, yPos);
+    doc.text(t('Revizní technik:'), margin, yPos);
     doc.text(t('Objednatel:'), margin + colWidth, yPos);
     
     yPos += 20;
