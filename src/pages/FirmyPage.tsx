@@ -116,68 +116,55 @@ export function FirmyPage() {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {firmy.map((firma) => (
-            <Card key={firma.id} className="hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-3">
-                <h3 className="font-semibold text-lg text-slate-800">{firma.nazev}</h3>
-                <div className="flex gap-1">
-                  <Button size="sm" variant="secondary" onClick={() => handleOpenModal(firma)}>
-                    ✏️
-                  </Button>
-                  <Button size="sm" variant="danger" onClick={() => handleDelete(firma.id!)}>
-                    🗑️
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2 text-sm">
-                {firma.adresa && (
-                  <div>
-                    <span className="text-slate-500">Adresa:</span>{' '}
-                    <span className="text-slate-700">{firma.adresa}</span>
-                  </div>
-                )}
-                {firma.ico && (
-                  <div>
-                    <span className="text-slate-500">IČO:</span>{' '}
-                    <span className="text-slate-700">{firma.ico}</span>
-                  </div>
-                )}
-                {firma.dic && (
-                  <div>
-                    <span className="text-slate-500">DIČ:</span>{' '}
-                    <span className="text-slate-700">{firma.dic}</span>
-                  </div>
-                )}
-                {firma.kontaktOsoba && (
-                  <div>
-                    <span className="text-slate-500">Kontakt:</span>{' '}
-                    <span className="text-slate-700">{firma.kontaktOsoba}</span>
-                  </div>
-                )}
-                {firma.telefon && (
-                  <div>
-                    <span className="text-slate-500">Telefon:</span>{' '}
-                    <span className="text-slate-700">{firma.telefon}</span>
-                  </div>
-                )}
-                {firma.email && (
-                  <div>
-                    <span className="text-slate-500">E-mail:</span>{' '}
-                    <span className="text-slate-700">{firma.email}</span>
-                  </div>
-                )}
-              </div>
-
-              {firma.poznamka && (
-                <div className="mt-3 pt-3 border-t border-slate-100">
-                  <p className="text-sm text-slate-500 italic">{firma.poznamka}</p>
-                </div>
-              )}
-            </Card>
-          ))}
-        </div>
+        <Card title="Seznam firem">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">Název</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">IČO</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">Adresa</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">Kontakt</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">Telefon / Email</th>
+                  <th className="text-right py-3 px-4 font-medium text-slate-600">Akce</th>
+                </tr>
+              </thead>
+              <tbody>
+                {firmy.map((firma) => (
+                  <tr key={firma.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="py-3 px-4 font-medium">{firma.nazev}</td>
+                    <td className="py-3 px-4 font-mono text-sm">{firma.ico || '-'}</td>
+                    <td className="py-3 px-4 text-sm text-slate-600 max-w-xs truncate">{firma.adresa || '-'}</td>
+                    <td className="py-3 px-4 text-sm">{firma.kontaktOsoba || '-'}</td>
+                    <td className="py-3 px-4 text-sm text-slate-600">
+                      {firma.telefon && <div>{firma.telefon}</div>}
+                      {firma.email && <div className="text-blue-600">{firma.email}</div>}
+                      {!firma.telefon && !firma.email && '-'}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleOpenModal(firma)}
+                        >
+                          Upravit
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleDelete(firma.id!)}
+                        >
+                          Smazat
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       )}
 
       {/* Modal pro přidání/úpravu firmy */}

@@ -152,101 +152,81 @@ const ZakazniciPage: React.FC = () => {
       </Card>
 
       {/* Seznam zákazníků */}
-      <div className="grid gap-4">
-        {filteredZakaznici.length === 0 ? (
-          <Card className="p-8 text-center">
-            <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            <p className="text-gray-500">
-              {searchTerm ? 'Žádní zákazníci nenalezeni' : 'Zatím nemáte žádné zákazníky'}
-            </p>
-            {!searchTerm && (
-              <Button onClick={handleNewZakaznik} className="mt-4">
-                Přidat prvního zákazníka
-              </Button>
-            )}
-          </Card>
-        ) : (
-          filteredZakaznici.map((zakaznik) => (
-            <Card key={zakaznik.id} className="p-4">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">{zakaznik.nazev}</h3>
-                    <span 
-                      className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full cursor-pointer hover:bg-blue-200"
-                      onClick={() => handleShowRevize(zakaznik)}
-                      title="Zobrazit revize zákazníka"
-                    >
-                      {zakaznik.pocetRevizi || 0} revizí
-                    </span>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-gray-600">
-                    {zakaznik.adresa && (
-                      <div className="flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <span>{zakaznik.adresa}</span>
+      {filteredZakaznici.length === 0 ? (
+        <Card className="p-8 text-center">
+          <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          <p className="text-gray-500">
+            {searchTerm ? 'Žádní zákazníci nenalezeni' : 'Zatím nemáte žádné zákazníky'}
+          </p>
+          {!searchTerm && (
+            <Button onClick={handleNewZakaznik} className="mt-4">
+              Přidat prvního zákazníka
+            </Button>
+          )}
+        </Card>
+      ) : (
+        <Card title="Seznam zákazníků">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">Název</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">IČO</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">Adresa</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">Kontakt</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">Telefon / Email</th>
+                  <th className="text-center py-3 px-4 font-medium text-slate-600">Revizí</th>
+                  <th className="text-right py-3 px-4 font-medium text-slate-600">Akce</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredZakaznici.map((zakaznik) => (
+                  <tr key={zakaznik.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="py-3 px-4 font-medium">{zakaznik.nazev}</td>
+                    <td className="py-3 px-4 font-mono text-sm">{zakaznik.ico || '-'}</td>
+                    <td className="py-3 px-4 text-sm text-slate-600 max-w-xs truncate">{zakaznik.adresa || '-'}</td>
+                    <td className="py-3 px-4 text-sm">{zakaznik.kontaktOsoba || '-'}</td>
+                    <td className="py-3 px-4 text-sm text-slate-600">
+                      {zakaznik.telefon && <div>{zakaznik.telefon}</div>}
+                      {zakaznik.email && <div className="text-blue-600">{zakaznik.email}</div>}
+                      {!zakaznik.telefon && !zakaznik.email && '-'}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span 
+                        className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full cursor-pointer hover:bg-blue-200"
+                        onClick={() => handleShowRevize(zakaznik)}
+                        title="Zobrazit revize zákazníka"
+                      >
+                        {zakaznik.pocetRevizi || 0}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleEditZakaznik(zakaznik)}
+                        >
+                          Upravit
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleDelete(zakaznik.id)}
+                        >
+                          Smazat
+                        </Button>
                       </div>
-                    )}
-                    {zakaznik.ico && (
-                      <div className="flex items-center gap-1">
-                        <span className="font-medium">IČO:</span> {zakaznik.ico}
-                      </div>
-                    )}
-                    {zakaznik.dic && (
-                      <div className="flex items-center gap-1">
-                        <span className="font-medium">DIČ:</span> {zakaznik.dic}
-                      </div>
-                    )}
-                    {zakaznik.kontaktOsoba && (
-                      <div className="flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        <span>{zakaznik.kontaktOsoba}</span>
-                      </div>
-                    )}
-                    {zakaznik.telefon && (
-                      <div className="flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
-                        <span>{zakaznik.telefon}</span>
-                      </div>
-                    )}
-                    {zakaznik.email && (
-                      <div className="flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                        <a href={`mailto:${zakaznik.email}`} className="text-blue-600 hover:underline">{zakaznik.email}</a>
-                      </div>
-                    )}
-                  </div>
-
-                  {zakaznik.poznamka && (
-                    <p className="mt-2 text-sm text-gray-500 italic">{zakaznik.poznamka}</p>
-                  )}
-                </div>
-
-                <div className="flex gap-2 ml-4">
-                  <Button variant="secondary" size="sm" onClick={() => handleEditZakaznik(zakaznik)}>
-                    Upravit
-                  </Button>
-                  <Button variant="danger" size="sm" onClick={() => handleDelete(zakaznik.id)}>
-                    Smazat
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          ))
-        )}
-      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
 
       {/* Modal pro editaci zákazníka */}
       <Modal

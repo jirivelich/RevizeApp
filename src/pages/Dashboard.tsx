@@ -179,29 +179,29 @@ export function Dashboard() {
         </Card>
       </div>
 
-      {openZavady.length > 0 && (
-        <Card title="Otevřené závady">
+      {expiringPristroje.length > 0 && (
+        <Card title="Přístroje k rekalibraci">
           <div className="space-y-3">
-            {openZavady.map((zavada) => (
-              <div
-                key={zavada.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-slate-50"
+            {expiringPristroje.map((pristroj) => (
+              <Link
+                key={pristroj.id}
+                to="/pristroje"
+                className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
               >
                 <div>
-                  <p className="font-medium">{zavada.popis}</p>
+                  <p className="font-medium">{pristroj.nazev}</p>
                   <p className="text-sm text-slate-500">
-                    {new Date(zavada.datumZjisteni).toLocaleDateString('cs-CZ')}
+                    {pristroj.vyrobce} {pristroj.model}
                   </p>
                 </div>
                 <span className={`px-2 py-1 rounded text-xs font-medium ${
-                  zavada.zavaznost === 'C1' ? 'bg-red-100 text-red-700' :
-                  zavada.zavaznost === 'C2' ? 'bg-orange-100 text-orange-700' :
-                  zavada.zavaznost === 'C3' ? 'bg-amber-100 text-amber-700' :
-                  'bg-slate-100 text-slate-700'
+                  new Date(pristroj.platnostKalibrace) < new Date() 
+                    ? 'bg-red-100 text-red-700' 
+                    : 'bg-amber-100 text-amber-700'
                 }`}>
-                  {zavada.zavaznost}
+                  {new Date(pristroj.platnostKalibrace).toLocaleDateString('cs-CZ')}
                 </span>
-              </div>
+              </Link>
             ))}
           </div>
         </Card>

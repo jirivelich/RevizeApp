@@ -108,14 +108,6 @@ export function ZavadyPage() {
     drobne: zavady.filter(z => z.zavaznost === 'C3').length,
   };
 
-  // Seskupení podle kategorií
-  const zavadyByKategorie = filteredZavady.reduce((acc, z) => {
-    const kat = z.kategorie || 'Bez kategorie';
-    if (!acc[kat]) acc[kat] = [];
-    acc[kat].push(z);
-    return acc;
-  }, {} as Record<string, ZavadaKatalog[]>);
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -187,88 +179,80 @@ export function ZavadyPage() {
           />
         </div>
 
-        {Object.keys(zavadyByKategorie).length > 0 ? (
-          <div className="space-y-6">
-            {Object.entries(zavadyByKategorie).map(([kat, zavadyList]) => (
-              <div key={kat}>
-                <h3 className="text-lg font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                  {kat}
-                  <span className="text-sm font-normal text-slate-400">({zavadyList.length})</span>
-                </h3>
-                <div className="space-y-2">
-                  {zavadyList.map((z) => (
-                    <div
-                      key={z.id}
-                      className="p-4 rounded-lg bg-slate-50 border border-slate-200 hover:border-slate-300 transition-colors"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              z.zavaznost === 'C1' ? 'bg-red-100 text-red-700' :
-                              z.zavaznost === 'C2' ? 'bg-orange-100 text-orange-700' :
-                              'bg-amber-100 text-amber-700'
-                            }`}>
-                              {z.zavaznost}
-                            </span>
-                            {z.norma && (
-                              <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700">
-                                {z.norma}
-                              </span>
-                            )}
-                            {z.clanek && (
-                              <span className="px-2 py-1 rounded text-xs font-medium bg-slate-200 text-slate-700">
-                                {z.clanek}
-                              </span>
-                            )}
+        {filteredZavady.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">Závažnost</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">Kategorie</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">Popis</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">Norma</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">Článek</th>
+                  <th className="text-right py-3 px-4 font-medium text-slate-600">Akce</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredZavady.map((z) => (
+                  <tr key={z.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        z.zavaznost === 'C1' ? 'bg-red-100 text-red-700' :
+                        z.zavaznost === 'C2' ? 'bg-orange-100 text-orange-700' :
+                        'bg-amber-100 text-amber-700'
+                      }`}>
+                        {z.zavaznost}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-sm">{z.kategorie || '-'}</td>
+                    <td className="py-3 px-4">
+                      <div className="max-w-md">
+                        <p className="font-medium text-sm">{z.popis}</p>
+                        {z.zneniClanku && (
+                          <button
+                            onClick={() => setExpandedId(expandedId === z.id ? null : z.id!)}
+                            className="text-xs text-blue-600 hover:text-blue-800 mt-1"
+                          >
+                            {expandedId === z.id ? '▼ Skrýt znění' : '▶ Zobrazit znění'}
+                          </button>
+                        )}
+                        {expandedId === z.id && z.zneniClanku && (
+                          <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-slate-600 italic">
+                            "{z.zneniClanku}"
                           </div>
-                          <p className="font-medium mb-1">{z.popis}</p>
-                          
-                          {/* Rozbalovací znění článku */}
-                          {z.zneniClanku && (
-                            <div className="mt-2">
-                              <button
-                                onClick={() => setExpandedId(expandedId === z.id ? null : z.id!)}
-                                className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                              >
-                                {expandedId === z.id ? '▼' : '▶'} Zobrazit znění článku
-                              </button>
-                              {expandedId === z.id && (
-                                <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                                  <p className="text-sm text-slate-700 italic">
-                                    "{z.zneniClanku}"
-                                  </p>
-                                  <p className="text-xs text-slate-500 mt-2">
-                                    — {z.norma} {z.clanek}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex gap-2 ml-4">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => handleEdit(z)}
-                          >
-                            ✏️
-                          </Button>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => handleDelete(z.id!)}
-                          >
-                            🗑️
-                          </Button>
-                        </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+                    </td>
+                    <td className="py-3 px-4">
+                      {z.norma && (
+                        <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700">
+                          {z.norma}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-slate-600">{z.clanek || '-'}</td>
+                    <td className="py-3 px-4">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleEdit(z)}
+                        >
+                          Upravit
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleDelete(z.id!)}
+                        >
+                          Smazat
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
           <p className="text-center text-slate-500 py-8">
