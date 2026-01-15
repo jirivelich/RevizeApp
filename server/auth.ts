@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { Request, Response, NextFunction } from 'express';
-import db from './database';
+import { pool } from './database';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
@@ -51,23 +51,30 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
 }
 
 // Registrace uživatele
-export async function registerUser(username: string, email: string, password: string, jmeno: string = ''): Promise<{ id: number; username: string; email: string }> {
+export async function registerUser(data: { username: string; email: string; password: string; jmeno?: string }): Promise<{ id: number; username: string; email: string }> {
+  const { username, email, password, jmeno = '' } = data;
+  
   // Zkontrolovat, zda uživatel již neexistuje
-  const existingUser = db.prepare('SELECT id FROM users WHERE username = ? OR email = ?').get(username, email);
-  if (existingUser) {
+  const existingUser = await pool.query(
+    'SELECT id FROM users WHERE username = $1 OR email = $2',
+    [username, email]
+  );
+  
+  if (existingUser.rows.length > 0) {
     throw new Error('Uživatel se stejným jménem nebo emailem již existuje');
   }
 
   const hashedPassword = await hashPassword(password);
   const now = new Date().toISOString();
 
-  const result = db.prepare(`
-    INSERT INTO users (username, password, email, jmeno, createdAt, updatedAt)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(username, hashedPassword, email, jmeno, now, now);
+  const result = await pool.query(`
+    INSERT INTO users (username, password, email, jmeno, "createdAt", "updatedAt")
+    VALUES ($1, $2, $3, $4, $5, $6)
+    RETURNING id
+  `, [username, hashedPassword, email, jmeno, now, now]);
 
   return {
-    id: result.lastInsertRowid as number,
+    id: result.rows[0].id,
     username,
     email
   };
@@ -75,7 +82,12 @@ export async function registerUser(username: string, email: string, password: st
 
 // Ověřit přihlášení
 export async function loginUser(username: string, password: string): Promise<{ token: string; user: { id: number; username: string; email: string } }> {
-  const user = db.prepare('SELECT id, username, email, password FROM users WHERE username = ?').get(username) as any;
+  const result = await pool.query(
+    'SELECT id, username, email, password FROM users WHERE username = $1',
+    [username]
+  );
+  
+  const user = result.rows[0];
 
   if (!user) {
     throw new Error('Uživatel neexistuje');

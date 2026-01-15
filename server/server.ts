@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import db, { initializeDatabase } from './database';
+import { pool, initializeDatabase } from './database';
 import { authMiddleware, loginUser, registerUser, AuthRequest } from './auth';
 import fs from 'fs';
 import path from 'path';
@@ -22,7 +22,6 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 // Servírovat statické soubory frontendu (dist/)
-// Zkusit různé cesty pro lokální vývoj i Railway
 const possibleDistPaths = [
   path.join(__dirname, '..', 'dist'),
   path.join(process.cwd(), 'dist'),
@@ -43,895 +42,862 @@ if (distPath) {
 }
 
 // Inicializovat databázi
-try {
-  initializeDatabase();
-  console.log('✅ Databáze inicializována');
-} catch (error) {
-  console.error('❌ Chyba při inicializaci databáze:', error);
-  process.exit(1);
-}
-
-// Vytvořit data direktorium
-const dataDir = path.join(__dirname, 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-
-// ==================== HEALTH CHECK ====================
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'RevizeApp Server je spuštěný' });
-});
-
-// ==================== AUTHENTICATION ====================
-app.post('/api/auth/register', async (req, res) => {
+async function startServer() {
   try {
-    const { username, email, password, jmeno } = req.body;
-    
-    if (!username || !email || !password) {
-      res.status(400).json({ error: 'Vyplňte všechna povinná pole' });
-      return;
+    await initializeDatabase();
+    console.log('✅ PostgreSQL databáze inicializována');
+  } catch (error) {
+    console.error('❌ Chyba při inicializaci databáze:', error);
+    process.exit(1);
+  }
+
+  // ==================== HEALTH CHECK ====================
+  app.get('/api/health', async (req, res) => {
+    try {
+      await pool.query('SELECT 1');
+      res.json({ status: 'ok', database: 'connected', timestamp: new Date().toISOString() });
+    } catch (error) {
+      res.status(500).json({ status: 'error', database: 'disconnected' });
     }
-    
-    const user = await registerUser(username, email, password, jmeno);
-    res.status(201).json({ success: true, user });
-  } catch (error) {
-    res.status(400).json({ error: (error as Error).message });
-  }
-});
+  });
 
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    
-    if (!username || !password) {
-      res.status(400).json({ error: 'Vyplňte uživatelské jméno a heslo' });
-      return;
+  // ==================== AUTH ====================
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const result = await loginUser(req.body.username, req.body.password);
+      res.json(result);
+    } catch (error: any) {
+      res.status(401).json({ error: error.message });
     }
-    
-    const result = await loginUser(username, password);
-    res.json(result);
-  } catch (error) {
-    res.status(401).json({ error: (error as Error).message });
-  }
-});
+  });
 
-app.post('/api/auth/verify', authMiddleware, (req: AuthRequest, res) => {
-  try {
-    // Middleware již ověřil token a nastavil req.user
-    res.json({ valid: true, user: req.user });
-  } catch (error) {
-    res.status(401).json({ error: (error as Error).message });
-  }
-});
+  app.post('/api/auth/register', authMiddleware, async (req, res) => {
+    try {
+      const result = await registerUser(req.body);
+      res.json(result);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
 
-// ==================== PROTECTED ROUTES ====================
-// Aplikovat autentizaci na všechny API endpointy kromě auth a health
-app.use('/api/revize', authMiddleware);
-app.use('/api/rozvadece', authMiddleware);
-app.use('/api/okruhy', authMiddleware);
-app.use('/api/zavady', authMiddleware);
-app.use('/api/firmy', authMiddleware);
-app.use('/api/mistnosti', authMiddleware);
-app.use('/api/zarizeni', authMiddleware);
-app.use('/api/zakazky', authMiddleware);
-app.use('/api/pristroje', authMiddleware);
-app.use('/api/sablony', authMiddleware);
-app.use('/api/nastaveni', authMiddleware);
-app.use('/api/zavady-katalog', authMiddleware);
-app.use('/api/backup', authMiddleware);
+  app.get('/api/auth/me', authMiddleware, (req: AuthRequest, res) => {
+    res.json({ user: req.user });
+  });
 
-// ==================== REVIZE ====================
-app.get('/api/revize', (req, res) => {
-  try {
-    const revize = db.prepare('SELECT * FROM revize ORDER BY datum DESC').all();
-    res.json(revize);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
+  // ==================== REVIZE ====================
+  app.get('/api/revize', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM revize ORDER BY datum DESC');
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
 
-app.get('/api/revize/:id', (req, res) => {
-  try {
-    const revize = db.prepare('SELECT * FROM revize WHERE id = ?').get(req.params.id);
-    if (!revize) return res.status(404).json({ error: 'Revize nebyla nalezena' });
-    res.json(revize);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
+  app.get('/api/revize/:id', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM revize WHERE id = $1', [req.params.id]);
+      if (result.rows.length === 0) return res.status(404).json({ error: 'Revize nebyla nalezena' });
+      res.json(result.rows[0]);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
 
-app.post('/api/revize', (req, res) => {
-  try {
-    const { cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav } = req.body;
-    const now = new Date().toISOString();
-    
-    const result = db.prepare(`
-      INSERT INTO revize (cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav, now, now);
-    
-    res.json({ id: result.lastInsertRowid });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
+  app.post('/api/revize', authMiddleware, async (req, res) => {
+    try {
+      const { cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav } = req.body;
+      const now = new Date().toISOString();
+      
+      const result = await pool.query(`
+        INSERT INTO revize ("cisloRevize", nazev, adresa, objednatel, datum, termin, "typRevize", stav, "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id
+      `, [cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav, now, now]);
+      
+      res.json({ id: result.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
 
-app.put('/api/revize/:id', (req, res) => {
-  try {
-    const now = new Date().toISOString();
-    const updates = { ...req.body, updatedAt: now };
-    const keys = Object.keys(updates);
-    const values = Object.values(updates);
-    
-    const query = `UPDATE revize SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
-    db.prepare(query).run(...values, req.params.id);
-    
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.delete('/api/revize/:id', (req, res) => {
-  try {
-    db.prepare('DELETE FROM revize WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-// ==================== ROZVADĚČE ====================
-app.get('/api/rozvadece/:revizeId', (req, res) => {
-  try {
-    const rozvadece = db.prepare('SELECT * FROM rozvadec WHERE revizeId = ?').all(req.params.revizeId);
-    res.json(rozvadece);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.post('/api/rozvadece', (req, res) => {
-  try {
-    const { revizeId, nazev, oznaceni, umisteni, typRozvadece, stupenKryti } = req.body;
-    const now = new Date().toISOString();
-    
-    const result = db.prepare(`
-      INSERT INTO rozvadec (revizeId, nazev, oznaceni, umisteni, typRozvadece, stupenKryti, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(revizeId, nazev, oznaceni, umisteni, typRozvadece, stupenKryti, now, now);
-    
-    res.json({ id: result.lastInsertRowid });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.delete('/api/rozvadece/:id', (req, res) => {
-  try {
-    db.prepare('DELETE FROM rozvadec WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.put('/api/rozvadece/:id', (req, res) => {
-  try {
-    const now = new Date().toISOString();
-    const updates = { ...req.body, updatedAt: now };
-    const keys = Object.keys(updates);
-    const values = Object.values(updates);
-    
-    const query = `UPDATE rozvadec SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
-    db.prepare(query).run(...values, req.params.id);
-    
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-// ==================== OKRUHY ====================
-app.get('/api/okruhy/:rozvadecId', (req, res) => {
-  try {
-    const okruhy = db.prepare('SELECT * FROM okruh WHERE rozvadecId = ? ORDER BY cislo').all(req.params.rozvadecId);
-    res.json(okruhy);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.post('/api/okruhy', (req, res) => {
-  try {
-    const data = req.body;
-    const keys = Object.keys(data);
-    const values = Object.values(data);
-    
-    const result = db.prepare(`
-      INSERT INTO okruh (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})
-    `).run(...values);
-    
-    res.json({ id: result.lastInsertRowid });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.put('/api/okruhy/:id', (req, res) => {
-  try {
-    const keys = Object.keys(req.body);
-    const values = Object.values(req.body);
-    
-    const query = `UPDATE okruh SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
-    db.prepare(query).run(...values, req.params.id);
-    
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.delete('/api/okruhy/:id', (req, res) => {
-  try {
-    db.prepare('DELETE FROM okruh WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-// ==================== MISTNOSTI ====================
-app.get('/api/mistnosti', (req, res) => {
-  try {
-    const mistnosti = db.prepare('SELECT * FROM mistnost').all();
-    res.json(mistnosti);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.get('/api/mistnosti/revize/:revizeId', (req, res) => {
-  try {
-    const mistnosti = db.prepare('SELECT * FROM mistnost WHERE revizeId = ?').all(req.params.revizeId);
-    res.json(mistnosti);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.post('/api/mistnosti', (req, res) => {
-  try {
-    const data = req.body;
-    const keys = Object.keys(data);
-    const values = Object.values(data);
-    
-    const result = db.prepare(`
-      INSERT INTO mistnost (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})
-    `).run(...values);
-    
-    res.json({ id: result.lastInsertRowid });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.put('/api/mistnosti/:id', (req, res) => {
-  try {
-    const keys = Object.keys(req.body);
-    const values = Object.values(req.body);
-    
-    const query = `UPDATE mistnost SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
-    db.prepare(query).run(...values, req.params.id);
-    
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.delete('/api/mistnosti/:id', (req, res) => {
-  try {
-    db.prepare('DELETE FROM mistnost WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-// ==================== ZARIZENI ====================
-app.get('/api/zarizeni/:mistnostId', (req, res) => {
-  try {
-    const zarizeni = db.prepare('SELECT * FROM zarizeni WHERE mistnostId = ?').all(req.params.mistnostId);
-    res.json(zarizeni);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.post('/api/zarizeni', (req, res) => {
-  try {
-    const data = req.body;
-    const keys = Object.keys(data);
-    const values = Object.values(data);
-    
-    const result = db.prepare(`
-      INSERT INTO zarizeni (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})
-    `).run(...values);
-    
-    res.json({ id: result.lastInsertRowid });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.put('/api/zarizeni/:id', (req, res) => {
-  try {
-    const keys = Object.keys(req.body);
-    const values = Object.values(req.body);
-    
-    const query = `UPDATE zarizeni SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
-    db.prepare(query).run(...values, req.params.id);
-    
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.delete('/api/zarizeni/:id', (req, res) => {
-  try {
-    db.prepare('DELETE FROM zarizeni WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-// ==================== ZAVADY ====================
-app.get('/api/zavady', (req, res) => {
-  try {
-    const zavady = db.prepare('SELECT * FROM zavada').all();
-    res.json(zavady);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.get('/api/zavady/revize/:revizeId', (req, res) => {
-  try {
-    const zavady = db.prepare('SELECT * FROM zavada WHERE revizeId = ?').all(req.params.revizeId);
-    res.json(zavady);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.post('/api/zavady', (req, res) => {
-  try {
-    const data = req.body;
-    const keys = Object.keys(data);
-    const values = Object.values(data);
-    
-    const result = db.prepare(`
-      INSERT INTO zavada (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})
-    `).run(...values);
-    
-    res.json({ id: result.lastInsertRowid });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.put('/api/zavady/:id', (req, res) => {
-  try {
-    const keys = Object.keys(req.body);
-    const values = Object.values(req.body);
-    
-    const query = `UPDATE zavada SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
-    db.prepare(query).run(...values, req.params.id);
-    
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.delete('/api/zavady/:id', (req, res) => {
-  try {
-    db.prepare('DELETE FROM zavada WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-// ==================== FIRMY ====================
-app.get('/api/firmy', (req, res) => {
-  try {
-    const firmy = db.prepare('SELECT * FROM firma').all();
-    res.json(firmy);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.get('/api/firmy/:id', (req, res) => {
-  try {
-    const firma = db.prepare('SELECT * FROM firma WHERE id = ?').get(req.params.id);
-    if (!firma) return res.status(404).json({ error: 'Firma nebyla nalezena' });
-    res.json(firma);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.post('/api/firmy', (req, res) => {
-  try {
-    const now = new Date().toISOString();
-    const data = { ...req.body, createdAt: now, updatedAt: now };
-    const keys = Object.keys(data);
-    const values = Object.values(data);
-    
-    const result = db.prepare(`
-      INSERT INTO firma (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})
-    `).run(...values);
-    
-    res.json({ id: result.lastInsertRowid });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.put('/api/firmy/:id', (req, res) => {
-  try {
-    const now = new Date().toISOString();
-    const updates = { ...req.body, updatedAt: now };
-    const keys = Object.keys(updates);
-    const values = Object.values(updates);
-    
-    const query = `UPDATE firma SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
-    db.prepare(query).run(...values, req.params.id);
-    
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.delete('/api/firmy/:id', (req, res) => {
-  try {
-    db.prepare('DELETE FROM firma WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-// ==================== ZAKAZKY ====================
-app.get('/api/zakazky', (req, res) => {
-  try {
-    const zakazky = db.prepare('SELECT * FROM zakazka ORDER BY datumPlanovany').all();
-    res.json(zakazky);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.post('/api/zakazky', (req, res) => {
-  try {
-    const now = new Date().toISOString();
-    const data = { ...req.body, createdAt: now, updatedAt: now };
-    const keys = Object.keys(data);
-    const values = Object.values(data);
-    
-    const result = db.prepare(`
-      INSERT INTO zakazka (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})
-    `).run(...values);
-    
-    res.json({ id: result.lastInsertRowid });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.put('/api/zakazky/:id', (req, res) => {
-  try {
-    const now = new Date().toISOString();
-    const updates = { ...req.body, updatedAt: now };
-    const keys = Object.keys(updates);
-    const values = Object.values(updates);
-    
-    const query = `UPDATE zakazka SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
-    db.prepare(query).run(...values, req.params.id);
-    
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.delete('/api/zakazky/:id', (req, res) => {
-  try {
-    db.prepare('DELETE FROM zakazka WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-// ==================== MERICI PRISTROJE ====================
-app.get('/api/pristroje', (req, res) => {
-  try {
-    const pristroje = db.prepare('SELECT * FROM mericiPristroj').all();
-    res.json(pristroje);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.get('/api/pristroje/:id', (req, res) => {
-  try {
-    const pristroj = db.prepare('SELECT * FROM mericiPristroj WHERE id = ?').get(req.params.id);
-    if (!pristroj) return res.status(404).json({ error: 'Přístroj nebyl nalezen' });
-    res.json(pristroj);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.post('/api/pristroje', (req, res) => {
-  try {
-    const now = new Date().toISOString();
-    const data = { ...req.body, createdAt: now, updatedAt: now };
-    const keys = Object.keys(data);
-    const values = Object.values(data);
-    
-    const result = db.prepare(`
-      INSERT INTO mericiPristroj (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})
-    `).run(...values);
-    
-    res.json({ id: result.lastInsertRowid });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.put('/api/pristroje/:id', (req, res) => {
-  try {
-    const now = new Date().toISOString();
-    const updates = { ...req.body, updatedAt: now };
-    const keys = Object.keys(updates);
-    const values = Object.values(updates);
-    
-    const query = `UPDATE mericiPristroj SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
-    db.prepare(query).run(...values, req.params.id);
-    
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.delete('/api/pristroje/:id', (req, res) => {
-  try {
-    db.prepare('DELETE FROM mericiPristroj WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-// ==================== REVIZE-PRISTROJ (vazby) ====================
-app.get('/api/revize-pristroje/:revizeId', (req, res) => {
-  try {
-    const vazby = db.prepare(`
-      SELECT rp.*, mp.nazev, mp.vyrobce, mp.model, mp.vyrobniCislo 
-      FROM revizePristroj rp 
-      JOIN mericiPristroj mp ON rp.pristrojId = mp.id 
-      WHERE rp.revizeId = ?
-    `).all(req.params.revizeId);
-    res.json(vazby);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.post('/api/revize-pristroje', (req, res) => {
-  try {
-    const { revizeId, pristrojId } = req.body;
-    
-    const result = db.prepare(`
-      INSERT INTO revizePristroj (revizeId, pristrojId) VALUES (?, ?)
-    `).run(revizeId, pristrojId);
-    
-    res.json({ id: result.lastInsertRowid });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.delete('/api/revize-pristroje/:id', (req, res) => {
-  try {
-    db.prepare('DELETE FROM revizePristroj WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-// ==================== SABLONY ====================
-app.get('/api/sablony', (req, res) => {
-  try {
-    const sablony = db.prepare('SELECT * FROM sablona').all();
-    res.json(sablony);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.get('/api/sablony/:id', (req, res) => {
-  try {
-    const sablona = db.prepare('SELECT * FROM sablona WHERE id = ?').get(req.params.id);
-    if (!sablona) return res.status(404).json({ error: 'Šablona nebyla nalezena' });
-    res.json(sablona);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.get('/api/sablony/vychozi/get', (req, res) => {
-  try {
-    const sablona = db.prepare('SELECT * FROM sablona WHERE jeVychozi = 1').get();
-    res.json(sablona || null);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.post('/api/sablony', (req, res) => {
-  try {
-    const now = new Date().toISOString();
-    const data = { ...req.body, createdAt: now, updatedAt: now };
-    const keys = Object.keys(data);
-    const values = Object.values(data);
-    
-    const result = db.prepare(`
-      INSERT INTO sablona (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})
-    `).run(...values);
-    
-    res.json({ id: result.lastInsertRowid });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.put('/api/sablony/:id', (req, res) => {
-  try {
-    const now = new Date().toISOString();
-    const updates = { ...req.body, updatedAt: now };
-    const keys = Object.keys(updates);
-    const values = Object.values(updates);
-    
-    const query = `UPDATE sablona SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
-    db.prepare(query).run(...values, req.params.id);
-    
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.put('/api/sablony/:id/vychozi', (req, res) => {
-  try {
-    // Nejprve zrušit výchozí u všech
-    db.prepare('UPDATE sablona SET jeVychozi = 0').run();
-    // Nastavit jako výchozí vybranou
-    db.prepare('UPDATE sablona SET jeVychozi = 1 WHERE id = ?').run(req.params.id);
-    
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.delete('/api/sablony/:id', (req, res) => {
-  try {
-    db.prepare('DELETE FROM sablona WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-// ==================== ZAVADY KATALOG ====================
-app.get('/api/zavady-katalog', (req, res) => {
-  try {
-    const katalog = db.prepare('SELECT * FROM zavadaKatalog').all();
-    res.json(katalog);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.post('/api/zavady-katalog', (req, res) => {
-  try {
-    const now = new Date().toISOString();
-    const data = { ...req.body, createdAt: now, updatedAt: now };
-    const keys = Object.keys(data);
-    const values = Object.values(data);
-    
-    const result = db.prepare(`
-      INSERT INTO zavadaKatalog (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})
-    `).run(...values);
-    
-    res.json({ id: result.lastInsertRowid });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.put('/api/zavady-katalog/:id', (req, res) => {
-  try {
-    const now = new Date().toISOString();
-    const updates = { ...req.body, updatedAt: now };
-    const keys = Object.keys(updates);
-    const values = Object.values(updates);
-    
-    const query = `UPDATE zavadaKatalog SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
-    db.prepare(query).run(...values, req.params.id);
-    
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.delete('/api/zavady-katalog/:id', (req, res) => {
-  try {
-    db.prepare('DELETE FROM zavadaKatalog WHERE id = ?').run(req.params.id);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-// ==================== NASTAVENÍ ====================
-app.get('/api/nastaveni', (req, res) => {
-  try {
-    const nastaveni = db.prepare('SELECT * FROM nastaveni LIMIT 1').get();
-    res.json(nastaveni || {});
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.put('/api/nastaveni', (req, res) => {
-  try {
-    const existing = db.prepare('SELECT id FROM nastaveni LIMIT 1').get();
-    const now = new Date().toISOString();
-    
-    if (existing) {
+  app.put('/api/revize/:id', authMiddleware, async (req, res) => {
+    try {
+      const now = new Date().toISOString();
       const updates = { ...req.body, updatedAt: now };
       const keys = Object.keys(updates);
       const values = Object.values(updates);
       
-      const query = `UPDATE nastaveni SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
-      db.prepare(query).run(...values, (existing as any).id);
-    } else {
-      const updates = { ...req.body, createdAt: now, updatedAt: now };
+      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      await pool.query(`UPDATE revize SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/revize/:id', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM revize WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== ROZVADĚČE ====================
+  app.get('/api/rozvadece/:revizeId', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM rozvadec WHERE "revizeId" = $1', [req.params.revizeId]);
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/rozvadece', authMiddleware, async (req, res) => {
+    try {
+      const { revizeId, nazev, oznaceni, umisteni, typRozvadece, stupenKryti, poznamka } = req.body;
+      const now = new Date().toISOString();
+      
+      const result = await pool.query(`
+        INSERT INTO rozvadec ("revizeId", nazev, oznaceni, umisteni, "typRozvadece", "stupenKryti", poznamka, "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id
+      `, [revizeId, nazev, oznaceni, umisteni, typRozvadece, stupenKryti, poznamka, now, now]);
+      
+      res.json({ id: result.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/rozvadece/:id', authMiddleware, async (req, res) => {
+    try {
+      const now = new Date().toISOString();
+      const updates = { ...req.body, updatedAt: now };
       const keys = Object.keys(updates);
       const values = Object.values(updates);
       
-      const query = `INSERT INTO nastaveni (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})`;
-      db.prepare(query).run(...values);
+      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      await pool.query(`UPDATE rozvadec SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/rozvadece/:id', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM rozvadec WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== OKRUHY ====================
+  app.get('/api/okruhy/:rozvadecId', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM okruh WHERE "rozvadecId" = $1 ORDER BY cislo', [req.params.rozvadecId]);
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/okruhy', authMiddleware, async (req, res) => {
+    try {
+      const { rozvadecId, cislo, nazev, jisticTyp, jisticProud, pocetFazi, vodic, izolacniOdpor, impedanceSmycky, proudovyChranicMa, casOdpojeni, poznamka } = req.body;
+      
+      const result = await pool.query(`
+        INSERT INTO okruh ("rozvadecId", cislo, nazev, "jisticTyp", "jisticProud", "pocetFazi", vodic, "izolacniOdpor", "impedanceSmycky", "proudovyChranicMa", "casOdpojeni", poznamka)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        RETURNING id
+      `, [rozvadecId, cislo, nazev, jisticTyp, jisticProud, pocetFazi, vodic, izolacniOdpor, impedanceSmycky, proudovyChranicMa, casOdpojeni, poznamka]);
+      
+      res.json({ id: result.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/okruhy/:id', authMiddleware, async (req, res) => {
+    try {
+      const keys = Object.keys(req.body);
+      const values = Object.values(req.body);
+      
+      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      await pool.query(`UPDATE okruh SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/okruhy/:id', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM okruh WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== MÍSTNOSTI ====================
+  app.get('/api/mistnosti', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM mistnost');
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.get('/api/mistnosti/revize/:revizeId', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM mistnost WHERE "revizeId" = $1', [req.params.revizeId]);
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/mistnosti', authMiddleware, async (req, res) => {
+    try {
+      const { revizeId, nazev, patro, plocha, typ, prostredi, poznamka } = req.body;
+      
+      const result = await pool.query(`
+        INSERT INTO mistnost ("revizeId", nazev, patro, plocha, typ, prostredi, poznamka)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id
+      `, [revizeId, nazev, patro, plocha, typ, prostredi, poznamka]);
+      
+      res.json({ id: result.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/mistnosti/:id', authMiddleware, async (req, res) => {
+    try {
+      const keys = Object.keys(req.body);
+      const values = Object.values(req.body);
+      
+      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      await pool.query(`UPDATE mistnost SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/mistnosti/:id', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM mistnost WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== ZAŘÍZENÍ ====================
+  app.get('/api/zarizeni/:mistnostId', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM zarizeni WHERE "mistnostId" = $1', [req.params.mistnostId]);
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/zarizeni', authMiddleware, async (req, res) => {
+    try {
+      const { mistnostId, nazev, oznaceni, pocetKs, trida, prikonW, ochranaPredDotykem, stav, poznamka } = req.body;
+      
+      const result = await pool.query(`
+        INSERT INTO zarizeni ("mistnostId", nazev, oznaceni, "pocetKs", trida, "prikonW", "ochranaPredDotykem", stav, poznamka)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id
+      `, [mistnostId, nazev, oznaceni, pocetKs, trida, prikonW, ochranaPredDotykem, stav, poznamka]);
+      
+      res.json({ id: result.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/zarizeni/:id', authMiddleware, async (req, res) => {
+    try {
+      const keys = Object.keys(req.body);
+      const values = Object.values(req.body);
+      
+      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      await pool.query(`UPDATE zarizeni SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/zarizeni/:id', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM zarizeni WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== ZÁVADY ====================
+  app.get('/api/zavady', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM zavada');
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.get('/api/zavady/revize/:revizeId', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM zavada WHERE "revizeId" = $1', [req.params.revizeId]);
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/zavady', authMiddleware, async (req, res) => {
+    try {
+      const { revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, fotky, poznamka } = req.body;
+      const datumZjisteni = new Date().toISOString().split('T')[0];
+      
+      const result = await pool.query(`
+        INSERT INTO zavada ("revizeId", "rozvadecId", "mistnostId", popis, zavaznost, stav, fotky, "datumZjisteni", poznamka)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id
+      `, [revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, JSON.stringify(fotky || []), datumZjisteni, poznamka]);
+      
+      res.json({ id: result.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/zavady/:id', authMiddleware, async (req, res) => {
+    try {
+      const updates = { ...req.body };
+      if (updates.fotky) updates.fotky = JSON.stringify(updates.fotky);
+      
+      const keys = Object.keys(updates);
+      const values = Object.values(updates);
+      
+      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      await pool.query(`UPDATE zavada SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/zavady/:id', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM zavada WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== FIRMY ====================
+  app.get('/api/firmy', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM firma ORDER BY nazev');
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.get('/api/firmy/:id', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM firma WHERE id = $1', [req.params.id]);
+      if (result.rows.length === 0) return res.status(404).json({ error: 'Firma nenalezena' });
+      res.json(result.rows[0]);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/firmy', authMiddleware, async (req, res) => {
+    try {
+      const { nazev, adresa, ico, dic, kontaktOsoba, telefon, email, poznamka } = req.body;
+      const now = new Date().toISOString();
+      
+      const result = await pool.query(`
+        INSERT INTO firma (nazev, adresa, ico, dic, "kontaktOsoba", telefon, email, poznamka, "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id
+      `, [nazev, adresa, ico, dic, kontaktOsoba, telefon, email, poznamka, now, now]);
+      
+      res.json({ id: result.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/firmy/:id', authMiddleware, async (req, res) => {
+    try {
+      const now = new Date().toISOString();
+      const updates = { ...req.body, updatedAt: now };
+      const keys = Object.keys(updates);
+      const values = Object.values(updates);
+      
+      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      await pool.query(`UPDATE firma SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/firmy/:id', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM firma WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== ZAKÁZKY ====================
+  app.get('/api/zakazky', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM zakazka ORDER BY "datumPlanovany" DESC');
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/zakazky', authMiddleware, async (req, res) => {
+    try {
+      const { nazev, klient, adresa, datumPlanovany, stav, priorita, revizeId, poznamka } = req.body;
+      const now = new Date().toISOString();
+      
+      const result = await pool.query(`
+        INSERT INTO zakazka (nazev, klient, adresa, "datumPlanovany", stav, priorita, "revizeId", poznamka, "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id
+      `, [nazev, klient, adresa, datumPlanovany, stav, priorita, revizeId, poznamka, now, now]);
+      
+      res.json({ id: result.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/zakazky/:id', authMiddleware, async (req, res) => {
+    try {
+      const now = new Date().toISOString();
+      const updates = { ...req.body, updatedAt: now };
+      const keys = Object.keys(updates);
+      const values = Object.values(updates);
+      
+      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      await pool.query(`UPDATE zakazka SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/zakazky/:id', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM zakazka WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== MĚŘÍCÍ PŘÍSTROJE ====================
+  app.get('/api/pristroje', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM "mericiPristroj" ORDER BY nazev');
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.get('/api/pristroje/:id', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM "mericiPristroj" WHERE id = $1', [req.params.id]);
+      if (result.rows.length === 0) return res.status(404).json({ error: 'Přístroj nenalezen' });
+      res.json(result.rows[0]);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/pristroje', authMiddleware, async (req, res) => {
+    try {
+      const { nazev, vyrobce, model, vyrobniCislo, typPristroje, datumKalibrace, platnostKalibrace, kalibracniList, poznamka } = req.body;
+      const now = new Date().toISOString();
+      
+      const result = await pool.query(`
+        INSERT INTO "mericiPristroj" (nazev, vyrobce, model, "vyrobniCislo", "typPristroje", "datumKalibrace", "platnostKalibrace", "kalibracniList", poznamka, "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        RETURNING id
+      `, [nazev, vyrobce, model, vyrobniCislo, typPristroje, datumKalibrace, platnostKalibrace, kalibracniList, poznamka, now, now]);
+      
+      res.json({ id: result.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/pristroje/:id', authMiddleware, async (req, res) => {
+    try {
+      const now = new Date().toISOString();
+      const updates = { ...req.body, updatedAt: now };
+      const keys = Object.keys(updates);
+      const values = Object.values(updates);
+      
+      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      await pool.query(`UPDATE "mericiPristroj" SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/pristroje/:id', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM "mericiPristroj" WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== REVIZE-PŘÍSTROJ (vazby) ====================
+  app.get('/api/revize-pristroje/:revizeId', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query(`
+        SELECT mp.* FROM "mericiPristroj" mp
+        JOIN "revizePristroj" rp ON mp.id = rp."pristrojId"
+        WHERE rp."revizeId" = $1
+      `, [req.params.revizeId]);
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/revize-pristroje', authMiddleware, async (req, res) => {
+    try {
+      const { revizeId, pristrojId } = req.body;
+      
+      const result = await pool.query(`
+        INSERT INTO "revizePristroj" ("revizeId", "pristrojId")
+        VALUES ($1, $2)
+        RETURNING id
+      `, [revizeId, pristrojId]);
+      
+      res.json({ id: result.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/revize-pristroje/:id', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM "revizePristroj" WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== ŠABLONY ====================
+  app.get('/api/sablony', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM sablona ORDER BY nazev');
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.get('/api/sablony/vychozi/get', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM sablona WHERE "jeVychozi" = 1 LIMIT 1');
+      res.json(result.rows[0] || null);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.get('/api/sablony/:id', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM sablona WHERE id = $1', [req.params.id]);
+      if (result.rows.length === 0) return res.status(404).json({ error: 'Šablona nenalezena' });
+      res.json(result.rows[0]);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/sablony', authMiddleware, async (req, res) => {
+    try {
+      const now = new Date().toISOString();
+      const data = { ...req.body };
+      if (data.sekce) data.sekce = JSON.stringify(data.sekce);
+      if (data.sloupceOkruhu) data.sloupceOkruhu = JSON.stringify(data.sloupceOkruhu);
+      
+      const keys = Object.keys(data);
+      const values = Object.values(data);
+      const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
+      
+      const result = await pool.query(`
+        INSERT INTO sablona (${keys.map(k => `"${k}"`).join(', ')}, "createdAt", "updatedAt")
+        VALUES (${placeholders}, $${keys.length + 1}, $${keys.length + 2})
+        RETURNING id
+      `, [...values, now, now]);
+      
+      res.json({ id: result.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/sablony/:id', authMiddleware, async (req, res) => {
+    try {
+      const now = new Date().toISOString();
+      const data = { ...req.body, updatedAt: now };
+      if (data.sekce) data.sekce = JSON.stringify(data.sekce);
+      if (data.sloupceOkruhu) data.sloupceOkruhu = JSON.stringify(data.sloupceOkruhu);
+      
+      const keys = Object.keys(data);
+      const values = Object.values(data);
+      
+      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      await pool.query(`UPDATE sablona SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/sablony/:id', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM sablona WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== NASTAVENÍ ====================
+  app.get('/api/nastaveni', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM nastaveni LIMIT 1');
+      res.json(result.rows[0] || null);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/nastaveni', authMiddleware, async (req, res) => {
+    try {
+      const now = new Date().toISOString();
+      const existing = await pool.query('SELECT id FROM nastaveni LIMIT 1');
+      
+      if (existing.rows.length === 0) {
+        const data = { ...req.body };
+        const keys = Object.keys(data);
+        const values = Object.values(data);
+        const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
+        
+        await pool.query(`
+          INSERT INTO nastaveni (${keys.map(k => `"${k}"`).join(', ')}, "createdAt", "updatedAt")
+          VALUES (${placeholders}, $${keys.length + 1}, $${keys.length + 2})
+        `, [...values, now, now]);
+      } else {
+        const data = { ...req.body, updatedAt: now };
+        const keys = Object.keys(data);
+        const values = Object.values(data);
+        
+        const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+        await pool.query(`UPDATE nastaveni SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, existing.rows[0].id]);
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== KATALOG ZÁVAD ====================
+  app.get('/api/zavady-katalog', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM "zavadaKatalog" ORDER BY kategorie, popis');
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/zavady-katalog', authMiddleware, async (req, res) => {
+    try {
+      const { popis, zavaznost, norma, clanek, zneniClanku, kategorie } = req.body;
+      const now = new Date().toISOString();
+      
+      const result = await pool.query(`
+        INSERT INTO "zavadaKatalog" (popis, zavaznost, norma, clanek, "zneniClanku", kategorie, "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id
+      `, [popis, zavaznost, norma, clanek, zneniClanku, kategorie, now, now]);
+      
+      res.json({ id: result.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/zavady-katalog/:id', authMiddleware, async (req, res) => {
+    try {
+      const now = new Date().toISOString();
+      const updates = { ...req.body, updatedAt: now };
+      const keys = Object.keys(updates);
+      const values = Object.values(updates);
+      
+      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      await pool.query(`UPDATE "zavadaKatalog" SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/zavady-katalog/:id', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM "zavadaKatalog" WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== BACKUP ====================
+  app.get('/api/backup', authMiddleware, async (req, res) => {
+    try {
+      const tables = [
+        'revize', 'rozvadec', 'okruh', 'zavada', 'mistnost', 'zarizeni',
+        'zakazka', 'mericiPristroj', 'revizePristroj', 'firma', 'nastaveni', 'sablona', 'zavadaKatalog'
+      ];
+      
+      const backup: Record<string, any> = {
+        version: '1.0.0',
+        timestamp: new Date().toISOString(),
+      };
+      
+      for (const table of tables) {
+        const result = await pool.query(`SELECT * FROM "${table}"`);
+        backup[table] = result.rows;
+      }
+      
+      res.json(backup);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/backup/import', authMiddleware, async (req, res) => {
+    try {
+      const { data, mode } = req.body;
+      
+      if (mode === 'replace') {
+        const tables = [
+          'revizePristroj', 'zarizeni', 'zavada', 'okruh', 'zakazka',
+          'rozvadec', 'mistnost', 'revize', 'sablona', 'firma', 
+          'mericiPristroj', 'nastaveni', 'zavadaKatalog'
+        ];
+        for (const table of tables) {
+          await pool.query(`DELETE FROM "${table}"`);
+        }
+      }
+      
+      const skipKeys = ['version', 'timestamp'];
+      for (const [table, records] of Object.entries(data)) {
+        if (skipKeys.includes(table)) continue;
+        if (!Array.isArray(records) || records.length === 0) continue;
+        
+        for (const record of records as any[]) {
+          const cols = Object.keys(record);
+          const values = Object.values(record);
+          const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
+          
+          try {
+            await pool.query(`
+              INSERT INTO "${table}" (${cols.map(c => `"${c}"`).join(', ')})
+              VALUES (${placeholders})
+              ON CONFLICT DO NOTHING
+            `, values);
+          } catch (e) {
+            console.error(`Import error for ${table}:`, e);
+          }
+        }
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== SPA FALLBACK ====================
+  app.get('*', (req, res) => {
+    if (req.path.startsWith('/api/')) {
+      return res.status(404).json({ error: 'API endpoint nenalezen' });
     }
     
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-// ==================== BACKUP ====================
-app.get('/api/backup', (req, res) => {
-  try {
-    const tables = [
-      'revize', 'rozvadec', 'okruh', 'zavada', 'mistnost', 'zarizeni',
-      'zakazka', 'mericiPristroj', 'revizePristroj', 'firma', 'nastaveni', 'sablona', 'zavadaKatalog'
+    const possiblePaths = [
+      path.join(__dirname, '..', 'dist', 'index.html'),
+      path.join(process.cwd(), 'dist', 'index.html'),
+      '/app/dist/index.html'
     ];
     
-    const backup: Record<string, any> = {
-      version: '1.0.0',
-      timestamp: new Date().toISOString(),
-    };
-    
-    for (const table of tables) {
-      backup[table] = db.prepare(`SELECT * FROM ${table}`).all();
-    }
-    
-    res.json(backup);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.post('/api/backup/import', (req, res) => {
-  try {
-    const { data, mode } = req.body;
-    
-    if (mode === 'replace') {
-      // Smazat všechna data - pořadí je důležité kvůli foreign keys
-      const tables = [
-        'revizePristroj', 'zarizeni', 'zavada', 'okruh', 'zakazka',
-        'rozvadec', 'mistnost', 'revize', 'sablona', 'firma', 
-        'mericiPristroj', 'nastaveni', 'zavadaKatalog'
-      ];
-      for (const table of tables) {
-        db.prepare(`DELETE FROM ${table}`).run();
+    for (const indexPath of possiblePaths) {
+      if (fs.existsSync(indexPath)) {
+        return res.sendFile(indexPath);
       }
     }
     
-    // Importovat data - přeskočit metadata
-    const skipKeys = ['version', 'timestamp'];
-    for (const [table, records] of Object.entries(data)) {
-      if (skipKeys.includes(table)) continue;
-      if (!Array.isArray(records) || records.length === 0) continue;
-      
-      const cols = Object.keys(records[0]);
-      const placeholders = cols.map(() => '?').join(', ');
-      const query = `INSERT OR REPLACE INTO ${table} (${cols.join(', ')}) VALUES (${placeholders})`;
-      const stmt = db.prepare(query);
-      
-      for (const record of records) {
-        stmt.run(...cols.map(col => record[col]));
-      }
-    }
-    
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
+    res.status(404).send('Frontend není dostupný');
+  });
 
-// ==================== SPA FALLBACK ====================
-// Všechny ostatní routes (kromě /api/*) přesměrovat na index.html pro React Router
-app.get('*', (req, res) => {
-  // Pokud je to API request, vrátit 404
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API endpoint nenalezen' });
-  }
-  
-  // Pro všechny ostatní routes vrátit index.html (SPA)
-  // Zkusit různé cesty pro lokální vývoj i Railway
-  const possiblePaths = [
-    path.join(__dirname, '..', 'dist', 'index.html'),
-    path.join(process.cwd(), 'dist', 'index.html'),
-    '/app/dist/index.html'
-  ];
-  
-  for (const indexPath of possiblePaths) {
-    if (fs.existsSync(indexPath)) {
-      console.log(`SPA fallback: serving ${indexPath} for ${req.path}`);
-      return res.sendFile(indexPath);
-    }
-  }
-  
-  console.error(`SPA fallback: index.html not found. Tried: ${possiblePaths.join(', ')}`);
-  res.status(404).send('Frontend není dostupný');
-});
+  // Start server
+  app.listen(PORT, () => {
+    console.log(`\n🚀 RevizeApp Server běží na http://localhost:${PORT}`);
+    console.log(`📊 Zdravotní kontrola: http://localhost:${PORT}/api/health`);
+    console.log(`🐘 Databáze: PostgreSQL`);
+    console.log(`🌐 CORS povolena pro: ${CORS_ORIGIN}\n`);
+  });
+}
 
-// ==================== ERROR HANDLING ====================
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err);
-  res.status(500).json({ error: 'Interní chyba serveru' });
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`\n🚀 RevizeApp Server běží na http://localhost:${PORT}`);
-  console.log(`📊 Zdravotní kontrola: http://localhost:${PORT}/api/health`);
-  console.log(`💾 Databáze: ${path.join(__dirname, 'data/revizeapp.db')}`);
-  console.log(`🌐 CORS povolena pro: ${CORS_ORIGIN}\n`);
-});
-
+startServer().catch(console.error);
