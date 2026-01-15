@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../components/ui';
-import { revizeService, zakazkaService, zavadaService } from '../services/database';
-import type { Revize, Zakazka, Zavada } from '../types';
+import { revizeService, zakazkaService, pristrojService } from '../services/database';
+import type { Revize, Zakazka, MericiPristroj } from '../types';
 
 interface DashboardStats {
   celkemRevizi: number;
   rozpracovanoRevizi: number;
-  celkemZavad: number;
-  otevrenychZavad: number;
+  pristrojeKRekalibraci: number;
   planovaneZakazky: number;
 }
 
@@ -16,13 +15,12 @@ export function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     celkemRevizi: 0,
     rozpracovanoRevizi: 0,
-    celkemZavad: 0,
-    otevrenychZavad: 0,
+    pristrojeKRekalibraci: 0,
     planovaneZakazky: 0,
   });
   const [recentRevize, setRecentRevize] = useState<Revize[]>([]);
   const [upcomingZakazky, setUpcomingZakazky] = useState<Zakazka[]>([]);
-  const [openZavady, setOpenZavady] = useState<Zavada[]>([]);
+  const [expiringPristroje, setExpiringPristroje] = useState<MericiPristroj[]>([]);
 
   useEffect(() => {
     loadData();
@@ -30,20 +28,30 @@ export function Dashboard() {
 
   const loadData = async () => {
     const revize = await revizeService.getAll();
-    const zavady = await zavadaService.getAll();
+    const pristroje = await pristrojService.getAll();
     const zakazky = await zakazkaService.getAll();
+
+    // Přístroje s kalibrací končící do 30 dní nebo již prošlou
+    const today = new Date();
+    const in30Days = new Date();
+    in30Days.setDate(today.getDate() + 30);
+    
+    const expiringOrExpired = pristroje.filter(p => {
+      if (!p.platnostKalibrace) return false;
+      const expDate = new Date(p.platnostKalibrace);
+      return expDate <= in30Days;
+    });
 
     setStats({
       celkemRevizi: revize.length,
       rozpracovanoRevizi: revize.filter(r => r.stav === 'rozpracováno').length,
-      celkemZavad: zavady.length,
-      otevrenychZavad: zavady.filter(z => z.stav === 'otevřená').length,
+      pristrojeKRekalibraci: expiringOrExpired.length,
       planovaneZakazky: zakazky.filter(z => z.stav === 'plánováno').length,
     });
 
     setRecentRevize(revize.slice(-5).reverse());
     setUpcomingZakazky(zakazky.filter(z => z.stav === 'plánováno').slice(0, 5));
-    setOpenZavady(zavady.filter(z => z.stav === 'otevřená').slice(0, 5));
+    setExpiringPristroje(expiringOrExpired.slice(0, 5));
   };
 
   const StatCard = ({ title, value, icon, color, link }: { 
@@ -92,11 +100,11 @@ export function Dashboard() {
           link="/revize"
         />
         <StatCard
-          title="Otevřené závady"
-          value={stats.otevrenychZavad}
-          icon="⚠️"
-          color="bg-red-100"
-          link="/zavady"
+          title="K rekalibraci"
+          value={stats.pristrojeKRekalibraci}
+          icon="🔧"
+          color="bg-orange-100"
+          link="/pristroje"
         />
         <StatCard
           title="Plánované zakázky"
