@@ -587,6 +587,9 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       return;
     }
 
+    // Zkontrolovat prostor pro nadpis + začátek obsahu
+    addPageIfNeeded(50);
+    
     renderSectionTitle(`${sectionNumber}. Rozsah revize a podklady`);
     
     // Rozsah revize
@@ -600,14 +603,16 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(0, 0, 0);
       const rozsahLines = doc.splitTextToSize(t(revize.rozsahRevize), pageWidth - 2 * margin);
-      addPageIfNeeded(rozsahLines.length * 5 + 10);
       doc.text(rozsahLines, margin, yPos);
       yPos += rozsahLines.length * 5 + 8;
     }
     
     // Podklady
     if (revize.podklady) {
-      addPageIfNeeded(30);
+      // Spočítat prostor pro podnadpis + text
+      const podkladyLines = doc.splitTextToSize(t(revize.podklady), pageWidth - 2 * margin);
+      addPageIfNeeded(Math.min(20 + podkladyLines.length * 5, 50));
+      
       doc.setFontSize(baseFontSize);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(80, 80, 80);
@@ -616,8 +621,6 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(0, 0, 0);
-      const podkladyLines = doc.splitTextToSize(t(revize.podklady), pageWidth - 2 * margin);
-      addPageIfNeeded(podkladyLines.length * 5 + 10);
       doc.text(podkladyLines, margin, yPos);
       yPos += podkladyLines.length * 5 + 8;
     }
@@ -631,13 +634,18 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       return;
     }
 
+    // Spočítat potřebný prostor pro nadpis + text
+    const ukonyLines = doc.splitTextToSize(t(revize.provedeneUkony), pageWidth - 2 * margin);
+    const requiredSpace = 15 + ukonyLines.length * 5 + 10; // 15 pro nadpis
+    
+    // Zkontrolovat prostor PŘED vykreslením nadpisu
+    addPageIfNeeded(Math.min(requiredSpace, 50)); // Min 50px aby nadpis + začátek textu byly spolu
+    
     renderSectionTitle(`${sectionNumber}. Provedene ukony`);
     
     doc.setFontSize(baseFontSize);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
-    const ukonyLines = doc.splitTextToSize(t(revize.provedeneUkony), pageWidth - 2 * margin);
-    addPageIfNeeded(ukonyLines.length * 5 + 10);
     doc.text(ukonyLines, margin, yPos);
     yPos += ukonyLines.length * 5 + 10;
   }
@@ -648,13 +656,18 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       return;
     }
 
+    // Spočítat potřebný prostor pro nadpis + text
+    const vyhodnoceniLines = doc.splitTextToSize(t(revize.vyhodnoceniPredchozich), pageWidth - 2 * margin);
+    const requiredSpace = 15 + vyhodnoceniLines.length * 5 + 10;
+    
+    // Zkontrolovat prostor PŘED vykreslením nadpisu
+    addPageIfNeeded(Math.min(requiredSpace, 50));
+    
     renderSectionTitle(`${sectionNumber}. Vyhodnoceni predchozich revizi`);
     
     doc.setFontSize(baseFontSize);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
-    const vyhodnoceniLines = doc.splitTextToSize(t(revize.vyhodnoceniPredchozich), pageWidth - 2 * margin);
-    addPageIfNeeded(vyhodnoceniLines.length * 5 + 10);
     doc.text(vyhodnoceniLines, margin, yPos);
     yPos += vyhodnoceniLines.length * 5 + 10;
   }
@@ -665,6 +678,9 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       return;
     }
 
+    // Zkontrolovat prostor pro nadpis + alespoň záhlaví tabulky
+    addPageIfNeeded(50);
+    
     renderSectionTitle(`${sectionNumber}. Pouzite merici pristroje`);
     
     const tableData = pouzitePristroje.map(p => [
