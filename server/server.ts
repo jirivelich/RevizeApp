@@ -135,9 +135,10 @@ async function startServer() {
         'cisloRevize', 'nazev', 'adresa', 'objednatel', 'zakaznikId',
         'datum', 'datumDokonceni', 'datumPlatnosti', 'termin', 'datumVypracovani',
         'typRevize', 'duvodMimoradne', 'stav', 'poznamka', 'vysledek',
-        'vysledekOduvodneni', 'rozsahRevize', 'podklady', 'vyhodnoceniPredchozich',
+        'vysledekOduvodneni', 'rozsahRevize', 'predmetNeni', 'napetovaSoustava',
+        'ochranaOpatreni', 'podklady', 'vyhodnoceniPredchozich',
         'pouzitePristroje', 'provedeneUkony', 'firmaJmeno', 'firmaAdresa',
-        'firmaIco', 'firmaDic', 'zaver', 'updatedAt'
+        'firmaIco', 'firmaDic', 'zaver', 'kategorieRevize', 'updatedAt'
       ];
       
       const updates: Record<string, any> = { updatedAt: now };
@@ -665,6 +666,16 @@ async function startServer() {
   app.delete('/api/revize-pristroje/:id', authMiddleware, async (req, res) => {
     try {
       await pool.query('DELETE FROM "revizePristroj" WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Alternativní mazání podle revizeId a pristrojId
+  app.delete('/api/revize-pristroje/:revizeId/:pristrojId', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM "revizePristroj" WHERE "revizeId" = $1 AND "pristrojId" = $2', [req.params.revizeId, req.params.pristrojId]);
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });

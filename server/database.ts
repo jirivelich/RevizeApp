@@ -80,6 +80,7 @@ export async function initializeDatabase() {
         "predmetNeni" TEXT,
         "napetovaSoustava" TEXT,
         "ochranaOpatreni" TEXT,
+        "kategorieRevize" TEXT DEFAULT 'elektro',
         podklady TEXT,
         "vyhodnoceniPredchozich" TEXT,
         "pouzitePristroje" TEXT,

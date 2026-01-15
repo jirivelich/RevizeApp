@@ -424,14 +424,10 @@ export const revizePristrojService = {
   },
 
   async removeFromRevize(revizeId: number, pristrojId: number): Promise<void> {
-    const vazby = await this.getByRevize(revizeId) as unknown as Array<{ id: number; pristrojId: number }>;
-    const vazba = vazby.find(v => v.pristrojId === pristrojId);
-    if (vazba?.id) {
-      await fetch(`${API_BASE_URL}/revize-pristroje/${vazba.id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      }).then(res => handleResponse<unknown>(res));
-    }
+    await fetch(`${API_BASE_URL}/revize-pristroje/${revizeId}/${pristrojId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).then(res => handleResponse<unknown>(res));
   },
 };
 
