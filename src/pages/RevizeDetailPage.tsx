@@ -169,11 +169,16 @@ export function RevizeDetailPage() {
         const nastaveniData = await nastaveniService.get();
         setNastaveni(nastaveniData || null);
         
-        // Načíst zákazníky
-        const zakazniciData = await zakazniciService.getAll();
-        setZakaznici(zakazniciData);
-        if (revizeData.zakaznikId) {
-          setSelectedZakaznikId(revizeData.zakaznikId.toString());
+        // Načíst zákazníky (může selhat pokud tabulka ještě neexistuje)
+        try {
+          const zakazniciData = await zakazniciService.getAll();
+          setZakaznici(zakazniciData);
+          if (revizeData.zakaznikId) {
+            setSelectedZakaznikId(revizeData.zakaznikId.toString());
+          }
+        } catch (zakazniciError) {
+          console.warn('Nepodařilo se načíst zákazníky:', zakazniciError);
+          setZakaznici([]);
         }
       } else {
         setError('Revize nebyla nalezena');

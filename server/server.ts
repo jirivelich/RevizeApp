@@ -648,8 +648,12 @@ async function startServer() {
         ORDER BY z.nazev
       `);
       res.json(result.rows);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error getting zakaznici:', error);
+      // Pokud tabulka nebo sloupec neexistuje, vrátit prázdný seznam
+      if (error.message?.includes('does not exist')) {
+        return res.json([]);
+      }
       res.status(500).json({ error: (error as Error).message });
     }
   });
@@ -665,7 +669,10 @@ async function startServer() {
       `, [req.params.id]);
       if (result.rows.length === 0) return res.status(404).json({ error: 'Zákazník nenalezen' });
       res.json(result.rows[0]);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message?.includes('does not exist')) {
+        return res.status(404).json({ error: 'Zákazník nenalezen' });
+      }
       res.status(500).json({ error: (error as Error).message });
     }
   });
@@ -677,7 +684,10 @@ async function startServer() {
         [req.params.id]
       );
       res.json(result.rows);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message?.includes('does not exist')) {
+        return res.json([]);
+      }
       res.status(500).json({ error: (error as Error).message });
     }
   });
