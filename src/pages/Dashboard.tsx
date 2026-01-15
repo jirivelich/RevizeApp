@@ -54,13 +54,13 @@ export function Dashboard() {
     link: string;
   }) => (
     <Link to={link} className="block">
-      <div className={`bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow`}>
+      <div className={`bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 hover:shadow-md transition-shadow`}>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-slate-500 text-sm">{title}</p>
-            <p className="text-3xl font-bold mt-1">{value}</p>
+            <p className="text-slate-500 text-xs sm:text-sm">{title}</p>
+            <p className="text-2xl sm:text-3xl font-bold mt-1">{value}</p>
           </div>
-          <div className={`w-12 h-12 rounded-lg ${color} flex items-center justify-center text-2xl`}>
+          <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg ${color} flex items-center justify-center text-xl sm:text-2xl`}>
             {icon}
           </div>
         </div>
@@ -75,7 +75,8 @@ export function Dashboard() {
         <p className="text-slate-500">Přehled elektrotechnických revizí</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Statistiky - 2 sloupce na mobilu, 4 na desktopu */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           title="Celkem revizí"
           value={stats.celkemRevizi}
