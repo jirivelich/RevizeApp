@@ -1013,7 +1013,7 @@ async function startServer() {
     try {
       const tables = [
         'revize', 'rozvadec', 'okruh', 'zavada', 'mistnost', 'zarizeni',
-        'zakazka', 'mericiPristroj', 'revizePristroj', 'firma', 'nastaveni', 'sablona', 'zavadaKatalog'
+        'zakazka', 'mericiPristroj', 'revizePristroj', 'firma', 'nastaveni', 'sablona', 'zavadaKatalog', 'zakaznik'
       ];
       
       const backup: Record<string, any> = {
@@ -1040,16 +1040,47 @@ async function startServer() {
         const tables = [
           'revizePristroj', 'zarizeni', 'zavada', 'okruh', 'zakazka',
           'rozvadec', 'mistnost', 'revize', 'sablona', 'firma', 
-          'mericiPristroj', 'nastaveni', 'zavadaKatalog'
+          'mericiPristroj', 'nastaveni', 'zavadaKatalog', 'zakaznik'
         ];
         for (const table of tables) {
           await pool.query(`DELETE FROM "${table}"`);
         }
       }
       
+      // Pořadí importu - nejdřív nezávislé tabulky, pak závislé
+      const importOrder = [
+        'nastaveni', 'firma', 'zakaznik', 'mericiPristroj', 'sablona', 'zavadaKatalog',
+        'revize', 'mistnost', 'rozvadec', 'zakazka',
+        'okruh', 'zavada', 'zarizeni', 'revizePristroj'
+      ];
+      
       const skipKeys = ['version', 'timestamp'];
+      
+      // Import v definovaném pořadí
+      for (const table of importOrder) {
+        const records = data[table];
+        if (!records || !Array.isArray(records) || records.length === 0) continue;
+        
+        for (const record of records as any[]) {
+          const cols = Object.keys(record);
+          const values = Object.values(record);
+          const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
+          
+          try {
+            await pool.query(`
+              INSERT INTO "${table}" (${cols.map(c => `"${c}"`).join(', ')})
+              VALUES (${placeholders})
+              ON CONFLICT DO NOTHING
+            `, values);
+          } catch (e) {
+            console.error(`Import error for ${table}:`, e);
+          }
+        }
+      }
+      
+      // Import zbývajících tabulek (pokud by nějaké chyběly v importOrder)
       for (const [table, records] of Object.entries(data)) {
-        if (skipKeys.includes(table)) continue;
+        if (skipKeys.includes(table) || importOrder.includes(table)) continue;
         if (!Array.isArray(records) || records.length === 0) continue;
         
         for (const record of records as any[]) {

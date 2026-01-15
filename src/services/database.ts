@@ -703,6 +703,9 @@ export const backupService = {
       zarizeni: data.zarizeni?.length || 0,
       zakazky: data.zakazka?.length || 0,
       firmy: data.firma?.length || 0,
+      zakaznici: data.zakaznik?.length || 0,
+      pristroje: data.mericiPristroj?.length || 0,
+      sablony: data.sablona?.length || 0,
     };
   },
 
