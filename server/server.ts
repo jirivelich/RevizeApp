@@ -880,6 +880,23 @@ app.post('/api/backup/import', (req, res) => {
   }
 });
 
+// ==================== SPA FALLBACK ====================
+// Všechny ostatní routes (kromě /api/*) přesměrovat na index.html pro React Router
+app.get('*', (req, res) => {
+  // Pokud je to API request, vrátit 404
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint nenalezen' });
+  }
+  
+  // Pro všechny ostatní routes vrátit index.html (SPA)
+  const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).send('Frontend není dostupný');
+  }
+});
+
 // ==================== ERROR HANDLING ====================
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err);
