@@ -51,6 +51,8 @@ export function RevizeDetailPage() {
   });
 
   const [formData, setFormData] = useState<Partial<Revize>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [rozvadecFormData, setRozvadecFormData] = useState({
     nazev: '',
     oznaceni: '',
@@ -108,50 +110,61 @@ export function RevizeDetailPage() {
   }, [id]);
 
   const loadData = async (revizeId: number) => {
-    const revizeData = await revizeService.getById(revizeId);
-    if (revizeData) {
-      setRevize(revizeData);
-      setFormData(revizeData);
-      const rozvadeceData = await rozvadecService.getByRevize(revizeId);
-      setRozvadece(rozvadeceData);
-      setZavady(await zavadaService.getByRevize(revizeId));
-      setMistnosti(await mistnostService.getByRevize(revizeId));
-      
-      // Načíst počty okruhů pro každý rozvaděč
-      const counts: Record<number, number> = {};
-      for (const roz of rozvadeceData) {
-        if (roz.id) {
-          const okruhyRoz = await okruhService.getByRozvadec(roz.id);
-          counts[roz.id] = okruhyRoz.length;
+    setLoading(true);
+    setError(null);
+    try {
+      const revizeData = await revizeService.getById(revizeId);
+      if (revizeData) {
+        setRevize(revizeData);
+        setFormData(revizeData);
+        const rozvadeceData = await rozvadecService.getByRevize(revizeId);
+        setRozvadece(rozvadeceData);
+        setZavady(await zavadaService.getByRevize(revizeId));
+        setMistnosti(await mistnostService.getByRevize(revizeId));
+        
+        // Načíst počty okruhů pro každý rozvaděč
+        const counts: Record<number, number> = {};
+        for (const roz of rozvadeceData) {
+          if (roz.id) {
+            const okruhyRoz = await okruhService.getByRozvadec(roz.id);
+            counts[roz.id] = okruhyRoz.length;
+          }
         }
-      }
-      setOkruhyCounts(counts);
+        setOkruhyCounts(counts);
 
-      // Načíst měřící přístroje
-      const pristroje = await revizePristrojService.getByRevize(revizeId);
-      setPouzitePristroje(pristroje);
-      const allPristroje = await pristrojService.getAll();
-      setVsechnyPristroje(allPristroje);
+        // Načíst měřící přístroje
+        const pristroje = await revizePristrojService.getByRevize(revizeId);
+        setPouzitePristroje(pristroje);
+        const allPristroje = await pristrojService.getAll();
+        setVsechnyPristroje(allPristroje);
 
-      // Načíst firmy
-      const firmyData = await firmaService.getAll();
-      setFirmy(firmyData);
+        // Načíst firmy
+        const firmyData = await firmaService.getAll();
+        setFirmy(firmyData);
 
-      // Načíst počty zařízení pro každou místnost
-      const mistnostiData = await mistnostService.getByRevize(revizeId);
-      setMistnosti(mistnostiData);
-      const zarizeniCountsData: Record<number, number> = {};
-      for (const mist of mistnostiData) {
-        if (mist.id) {
-          const zarizeniMist = await zarizeniService.getByMistnost(mist.id);
-          zarizeniCountsData[mist.id] = zarizeniMist.length;
+        // Načíst počty zařízení pro každou místnost
+        const mistnostiData = await mistnostService.getByRevize(revizeId);
+        setMistnosti(mistnostiData);
+        const zarizeniCountsData: Record<number, number> = {};
+        for (const mist of mistnostiData) {
+          if (mist.id) {
+            const zarizeniMist = await zarizeniService.getByMistnost(mist.id);
+            zarizeniCountsData[mist.id] = zarizeniMist.length;
+          }
         }
-      }
-      setZarizeniCounts(zarizeniCountsData);
+        setZarizeniCounts(zarizeniCountsData);
 
-      // Načíst katalog závad
-      const katalogData = await zavadaKatalogService.getAll();
-      setKatalogZavad(katalogData);
+        // Načíst katalog závad
+        const katalogData = await zavadaKatalogService.getAll();
+        setKatalogZavad(katalogData);
+      } else {
+        setError('Revize nebyla nalezena');
+      }
+    } catch (err) {
+      console.error('Chyba při načítání revize:', err);
+      setError(err instanceof Error ? err.message : 'Chyba při načítání dat');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -575,10 +588,34 @@ export function RevizeDetailPage() {
     setDraggedOkruh(null);
   };
 
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p className="text-slate-500">Načítání revize...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-red-500 text-5xl mb-4">⚠️</div>
+        <p className="text-red-600 font-medium mb-2">{error}</p>
+        <Button variant="secondary" onClick={() => navigate('/revize')}>
+          ← Zpět na seznam revizí
+        </Button>
+      </div>
+    );
+  }
+
   if (!revize) {
     return (
       <div className="text-center py-12">
-        <p className="text-slate-500">Načítání...</p>
+        <p className="text-slate-500">Revize nebyla nalezena</p>
+        <Button variant="secondary" onClick={() => navigate('/revize')} className="mt-4">
+          ← Zpět na seznam revizí
+        </Button>
       </div>
     );
   }
