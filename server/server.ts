@@ -838,7 +838,7 @@ app.get('/api/backup', (req, res) => {
   try {
     const tables = [
       'revize', 'rozvadec', 'okruh', 'zavada', 'mistnost', 'zarizeni',
-      'zakazka', 'mericiPristroj', 'revizePristroj', 'firma', 'nastaveni', 'sablona'
+      'zakazka', 'mericiPristroj', 'revizePristroj', 'firma', 'nastaveni', 'sablona', 'zavadaKatalog'
     ];
     
     const backup: Record<string, any> = {
@@ -861,24 +861,26 @@ app.post('/api/backup/import', (req, res) => {
     const { data, mode } = req.body;
     
     if (mode === 'replace') {
-      // Smazat všechna data
+      // Smazat všechna data - pořadí je důležité kvůli foreign keys
       const tables = [
         'revizePristroj', 'zarizeni', 'zavada', 'okruh', 'zakazka',
         'rozvadec', 'mistnost', 'revize', 'sablona', 'firma', 
-        'mericiPristroj', 'nastaveni'
+        'mericiPristroj', 'nastaveni', 'zavadaKatalog'
       ];
       for (const table of tables) {
         db.prepare(`DELETE FROM ${table}`).run();
       }
     }
     
-    // Importovat data
+    // Importovat data - přeskočit metadata
+    const skipKeys = ['version', 'timestamp'];
     for (const [table, records] of Object.entries(data)) {
+      if (skipKeys.includes(table)) continue;
       if (!Array.isArray(records) || records.length === 0) continue;
       
       const cols = Object.keys(records[0]);
       const placeholders = cols.map(() => '?').join(', ');
-      const query = `INSERT INTO ${table} (${cols.join(', ')}) VALUES (${placeholders})`;
+      const query = `INSERT OR REPLACE INTO ${table} (${cols.join(', ')}) VALUES (${placeholders})`;
       const stmt = db.prepare(query);
       
       for (const record of records) {
