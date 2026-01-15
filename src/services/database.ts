@@ -33,7 +33,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
     const error = await response.json().catch(() => ({ error: 'Neznámá chyba' }));
     throw new Error(error.error || 'API chyba');
   }
-  return response.json();
+  return response.json() as Promise<T>;
 }
 
 // ==================== REVIZE ====================
@@ -41,13 +41,13 @@ export const revizeService = {
   async getAll(): Promise<Revize[]> {
     return fetch(`${API_BASE_URL}/revize`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<Revize[]>(res));
   },
 
   async getById(id: number): Promise<Revize | undefined> {
     return fetch(`${API_BASE_URL}/revize/${id}`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<Revize | undefined>(res));
   },
 
   async create(data: Omit<Revize, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
@@ -55,7 +55,7 @@ export const revizeService = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse) as { id: number };
+    }).then(res => handleResponse<{ id: number }>(res));
     return response.id;
   },
 
@@ -64,7 +64,7 @@ export const revizeService = {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
     return 1;
   },
 
@@ -72,7 +72,7 @@ export const revizeService = {
     await fetch(`${API_BASE_URL}/revize/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
   },
 };
 
@@ -81,12 +81,10 @@ export const rozvadecService = {
   async getByRevize(revizeId: number): Promise<Rozvadec[]> {
     return fetch(`${API_BASE_URL}/rozvadece/${revizeId}`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<Rozvadec[]>(res));
   },
 
-  async getById(id: number): Promise<Rozvadec | undefined> {
-    // Server nemá přímý endpoint pro jeden rozvaděč, vrátíme undefined
-    // V případě potřeby můžeme přidat endpoint
+  async getById(_id: number): Promise<Rozvadec | undefined> {
     return undefined;
   },
 
@@ -95,7 +93,7 @@ export const rozvadecService = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse) as { id: number };
+    }).then(res => handleResponse<{ id: number }>(res));
     return response.id;
   },
 
@@ -104,7 +102,7 @@ export const rozvadecService = {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
     return 1;
   },
 
@@ -112,7 +110,7 @@ export const rozvadecService = {
     await fetch(`${API_BASE_URL}/rozvadece/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
   },
 };
 
@@ -121,7 +119,7 @@ export const okruhService = {
   async getByRozvadec(rozvadecId: number): Promise<Okruh[]> {
     return fetch(`${API_BASE_URL}/okruhy/${rozvadecId}`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<Okruh[]>(res));
   },
 
   async create(data: Omit<Okruh, 'id'>): Promise<number> {
@@ -129,7 +127,7 @@ export const okruhService = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse) as { id: number };
+    }).then(res => handleResponse<{ id: number }>(res));
     return response.id;
   },
 
@@ -138,7 +136,7 @@ export const okruhService = {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
     return 1;
   },
 
@@ -146,7 +144,7 @@ export const okruhService = {
     await fetch(`${API_BASE_URL}/okruhy/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
   },
 };
 
@@ -155,13 +153,13 @@ export const mistnostService = {
   async getAll(): Promise<Mistnost[]> {
     return fetch(`${API_BASE_URL}/mistnosti`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<Mistnost[]>(res));
   },
 
   async getByRevize(revizeId: number): Promise<Mistnost[]> {
     return fetch(`${API_BASE_URL}/mistnosti/revize/${revizeId}`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<Mistnost[]>(res));
   },
 
   async getById(id: number): Promise<Mistnost | undefined> {
@@ -174,7 +172,7 @@ export const mistnostService = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse) as { id: number };
+    }).then(res => handleResponse<{ id: number }>(res));
     return response.id;
   },
 
@@ -183,7 +181,7 @@ export const mistnostService = {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
     return 1;
   },
 
@@ -191,24 +189,23 @@ export const mistnostService = {
     await fetch(`${API_BASE_URL}/mistnosti/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
   },
 };
 
 // ==================== ZARIZENI ====================
 export const zarizeniService = {
   async getAll(): Promise<Zarizeni[]> {
-    // Server nemá endpoint pro všechna zařízení, vrátíme prázdné pole
     return [];
   },
 
   async getByMistnost(mistnostId: number): Promise<Zarizeni[]> {
     return fetch(`${API_BASE_URL}/zarizeni/${mistnostId}`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<Zarizeni[]>(res));
   },
 
-  async getById(id: number): Promise<Zarizeni | undefined> {
+  async getById(_id: number): Promise<Zarizeni | undefined> {
     return undefined;
   },
 
@@ -217,7 +214,7 @@ export const zarizeniService = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse) as { id: number };
+    }).then(res => handleResponse<{ id: number }>(res));
     return response.id;
   },
 
@@ -226,7 +223,7 @@ export const zarizeniService = {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
     return 1;
   },
 
@@ -234,10 +231,10 @@ export const zarizeniService = {
     await fetch(`${API_BASE_URL}/zarizeni/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
   },
 
-  async deleteByMistnost(mistnostId: number): Promise<void> {
+  async deleteByMistnost(_mistnostId: number): Promise<void> {
     // Server smaže automaticky při smazání místnosti díky ON DELETE CASCADE
   },
 };
@@ -247,13 +244,13 @@ export const zavadaService = {
   async getAll(): Promise<Zavada[]> {
     return fetch(`${API_BASE_URL}/zavady`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<Zavada[]>(res));
   },
 
   async getByRevize(revizeId: number): Promise<Zavada[]> {
     return fetch(`${API_BASE_URL}/zavady/revize/${revizeId}`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<Zavada[]>(res));
   },
 
   async create(data: Omit<Zavada, 'id'>): Promise<number> {
@@ -261,7 +258,7 @@ export const zavadaService = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse) as { id: number };
+    }).then(res => handleResponse<{ id: number }>(res));
     return response.id;
   },
 
@@ -270,7 +267,7 @@ export const zavadaService = {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
     return 1;
   },
 
@@ -278,7 +275,7 @@ export const zavadaService = {
     await fetch(`${API_BASE_URL}/zavady/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
   },
 };
 
@@ -287,13 +284,13 @@ export const firmaService = {
   async getAll(): Promise<Firma[]> {
     return fetch(`${API_BASE_URL}/firmy`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<Firma[]>(res));
   },
 
   async getById(id: number): Promise<Firma | undefined> {
     return fetch(`${API_BASE_URL}/firmy/${id}`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<Firma | undefined>(res));
   },
 
   async create(data: Omit<Firma, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
@@ -301,7 +298,7 @@ export const firmaService = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse) as { id: number };
+    }).then(res => handleResponse<{ id: number }>(res));
     return response.id;
   },
 
@@ -310,7 +307,7 @@ export const firmaService = {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
     return 1;
   },
 
@@ -318,7 +315,7 @@ export const firmaService = {
     await fetch(`${API_BASE_URL}/firmy/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
   },
 };
 
@@ -327,7 +324,7 @@ export const zakazkaService = {
   async getAll(): Promise<Zakazka[]> {
     return fetch(`${API_BASE_URL}/zakazky`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<Zakazka[]>(res));
   },
 
   async getById(id: number): Promise<Zakazka | undefined> {
@@ -340,7 +337,7 @@ export const zakazkaService = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse) as { id: number };
+    }).then(res => handleResponse<{ id: number }>(res));
     return response.id;
   },
 
@@ -349,7 +346,7 @@ export const zakazkaService = {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
     return 1;
   },
 
@@ -357,7 +354,7 @@ export const zakazkaService = {
     await fetch(`${API_BASE_URL}/zakazky/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
   },
 };
 
@@ -366,13 +363,13 @@ export const pristrojService = {
   async getAll(): Promise<MericiPristroj[]> {
     return fetch(`${API_BASE_URL}/pristroje`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<MericiPristroj[]>(res));
   },
 
   async getById(id: number): Promise<MericiPristroj | undefined> {
     return fetch(`${API_BASE_URL}/pristroje/${id}`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<MericiPristroj | undefined>(res));
   },
 
   async getExpiring(days: number = 30): Promise<MericiPristroj[]> {
@@ -387,7 +384,7 @@ export const pristrojService = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse) as { id: number };
+    }).then(res => handleResponse<{ id: number }>(res));
     return response.id;
   },
 
@@ -396,7 +393,7 @@ export const pristrojService = {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
     return 1;
   },
 
@@ -404,7 +401,7 @@ export const pristrojService = {
     await fetch(`${API_BASE_URL}/pristroje/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
   },
 };
 
@@ -413,7 +410,7 @@ export const revizePristrojService = {
   async getByRevize(revizeId: number): Promise<MericiPristroj[]> {
     return fetch(`${API_BASE_URL}/revize-pristroje/${revizeId}`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<MericiPristroj[]>(res));
   },
 
   async addToRevize(revizeId: number, pristrojId: number): Promise<number> {
@@ -421,19 +418,18 @@ export const revizePristrojService = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ revizeId, pristrojId }),
-    }).then(handleResponse) as { id: number };
+    }).then(res => handleResponse<{ id: number }>(res));
     return response.id;
   },
 
   async removeFromRevize(revizeId: number, pristrojId: number): Promise<void> {
-    // Najít vazbu a smazat ji
-    const vazby = await this.getByRevize(revizeId) as any[];
+    const vazby = await this.getByRevize(revizeId) as unknown as Array<{ id: number; pristrojId: number }>;
     const vazba = vazby.find(v => v.pristrojId === pristrojId);
     if (vazba?.id) {
       await fetch(`${API_BASE_URL}/revize-pristroje/${vazba.id}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
-      }).then(handleResponse);
+      }).then(res => handleResponse<unknown>(res));
     }
   },
 };
@@ -443,19 +439,19 @@ export const sablonaService = {
   async getAll(): Promise<Sablona[]> {
     return fetch(`${API_BASE_URL}/sablony`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<Sablona[]>(res));
   },
 
   async getById(id: number): Promise<Sablona | undefined> {
     return fetch(`${API_BASE_URL}/sablony/${id}`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<Sablona | undefined>(res));
   },
 
   async getVychozi(): Promise<Sablona | undefined> {
     return fetch(`${API_BASE_URL}/sablony/vychozi/get`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<Sablona | undefined>(res));
   },
 
   async create(data: Omit<Sablona, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
@@ -463,7 +459,7 @@ export const sablonaService = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse) as { id: number };
+    }).then(res => handleResponse<{ id: number }>(res));
     return response.id;
   },
 
@@ -472,7 +468,7 @@ export const sablonaService = {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
     return 1;
   },
 
@@ -480,7 +476,7 @@ export const sablonaService = {
     await fetch(`${API_BASE_URL}/sablony/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
   },
 
   getDefaultSablona(): Omit<Sablona, 'id' | 'createdAt' | 'updatedAt'> {
@@ -540,7 +536,7 @@ export const nastaveniService = {
   async get(): Promise<Nastaveni | undefined> {
     return fetch(`${API_BASE_URL}/nastaveni`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<Nastaveni | undefined>(res));
   },
 
   async save(data: Partial<Nastaveni>): Promise<void> {
@@ -548,7 +544,7 @@ export const nastaveniService = {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
   },
 };
 
@@ -557,7 +553,7 @@ export const zavadaKatalogService = {
   async getAll(): Promise<ZavadaKatalog[]> {
     return fetch(`${API_BASE_URL}/zavady-katalog`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<ZavadaKatalog[]>(res));
   },
 
   async getById(id: number): Promise<ZavadaKatalog | undefined> {
@@ -580,7 +576,7 @@ export const zavadaKatalogService = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse) as { id: number };
+    }).then(res => handleResponse<{ id: number }>(res));
     return response.id;
   },
 
@@ -589,7 +585,7 @@ export const zavadaKatalogService = {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
     return 1;
   },
 
@@ -597,7 +593,7 @@ export const zavadaKatalogService = {
     await fetch(`${API_BASE_URL}/zavady-katalog/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
   },
 
   async getKategorie(): Promise<string[]> {
@@ -633,7 +629,7 @@ export const backupService = {
   async exportDatabase(): Promise<string> {
     const data = await fetch(`${API_BASE_URL}/backup`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
     return JSON.stringify(data, null, 2);
   },
 
@@ -643,13 +639,13 @@ export const backupService = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ data, mode: mergeMode }),
-    }).then(handleResponse);
+    }).then(res => handleResponse<unknown>(res));
   },
 
   async getDatabaseStats(): Promise<Record<string, number>> {
     const data = await fetch(`${API_BASE_URL}/backup`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse) as any;
+    }).then(res => handleResponse<Record<string, unknown[]>>(res));
     
     return {
       revize: data.revize?.length || 0,
@@ -667,9 +663,15 @@ export const backupService = {
     const stats = await this.getDatabaseStats();
     let totalSize = 0;
     for (const count of Object.values(stats)) {
-      totalSize += count * 1; // ~1KB na záznam
+      totalSize += count * 1;
     }
     return (totalSize / 1024).toFixed(2);
+  },
+
+  async cleanOldData(_daysOld: number = 365): Promise<void> {
+    // Funkce pro čištění starých dat - zatím pouze placeholder
+    // Server by měl mít endpoint pro tuto funkci
+    console.log('Clean old data - not implemented on server yet');
   },
 };
 
