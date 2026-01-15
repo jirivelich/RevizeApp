@@ -319,6 +319,8 @@ export async function initializeDatabase() {
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "zakaznikId" INTEGER REFERENCES zakaznik(id)',
       // Odstranit UNIQUE constraint z vyrobniCislo (může být prázdné nebo duplicitní)
       'ALTER TABLE "mericiPristroj" DROP CONSTRAINT IF EXISTS "mericiPristroj_vyrobniCislo_key"',
+      // Přidat kategorii revize (elektro, hromosvod, stroje)
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "kategorieRevize" TEXT DEFAULT \'elektro\'',
     ];
     
     for (const migration of migrations) {

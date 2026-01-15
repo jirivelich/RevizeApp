@@ -911,7 +911,17 @@ export function RevizeDetailPage() {
           {/* Stav revize */}
           <Card title="Stav revize">
             {isEditing ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Select
+                  label="Kategorie"
+                  value={formData.kategorieRevize || 'elektro'}
+                  onChange={(e) => setFormData({ ...formData, kategorieRevize: e.target.value as any })}
+                  options={[
+                    { value: 'elektro', label: '⚡ Elektrické instalace' },
+                    { value: 'hromosvod', label: '🌩️ Hromosvody' },
+                    { value: 'stroje', label: '⚙️ Strojní zařízení' },
+                  ]}
+                />
                 <Select
                   label="Typ revize"
                   value={formData.typRevize || ''}
@@ -945,7 +955,20 @@ export function RevizeDetailPage() {
                 />
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <p className="text-sm text-slate-500">Kategorie</p>
+                  <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                    revize.kategorieRevize === 'elektro' ? 'bg-blue-100 text-blue-700' :
+                    revize.kategorieRevize === 'hromosvod' ? 'bg-purple-100 text-purple-700' :
+                    revize.kategorieRevize === 'stroje' ? 'bg-slate-100 text-slate-700' :
+                    'bg-blue-100 text-blue-700'
+                  }`}>
+                    {revize.kategorieRevize === 'elektro' ? '⚡ Elektro' :
+                     revize.kategorieRevize === 'hromosvod' ? '🌩️ Hromosvod' :
+                     revize.kategorieRevize === 'stroje' ? '⚙️ Stroje' : '⚡ Elektro'}
+                  </span>
+                </div>
                 <div>
                   <p className="text-sm text-slate-500">Typ revize</p>
                   <p className="font-medium capitalize">{revize.typRevize}</p>

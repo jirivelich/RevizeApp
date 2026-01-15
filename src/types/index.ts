@@ -1,5 +1,8 @@
 // Základní typy pro RevizeApp
 
+// Kategorie revize - typ kontrolovaného zařízení
+export type KategorieRevize = 'elektro' | 'hromosvod' | 'stroje';
+
 export interface Zakaznik {
   id?: number;
   nazev: string;
@@ -22,6 +25,7 @@ export interface Revize {
   adresa: string;
   objednatel: string;
   zakaznikId?: number; // Vazba na zákazníka
+  kategorieRevize: KategorieRevize; // elektro / hromosvod / stroje
   datum: string;
   datumDokonceni?: string;
   datumPlatnosti?: string;

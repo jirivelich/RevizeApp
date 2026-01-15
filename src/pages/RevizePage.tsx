@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
 import { revizeService } from '../services/database';
-import type { Revize } from '../types';
+import type { Revize, KategorieRevize } from '../types';
 
 export function RevizePage() {
   const [revize, setRevize] = useState<Revize[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStav, setFilterStav] = useState('');
+  const [filterKategorie, setFilterKategorie] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ export function RevizePage() {
     nazev: '',
     adresa: '',
     objednatel: '',
+    kategorieRevize: 'elektro' as KategorieRevize,
     datum: new Date().toISOString().split('T')[0],
     datumPlatnosti: '',
     termin: 36, // výchozí 36 měsíců (3 roky)
@@ -70,6 +72,7 @@ export function RevizePage() {
       nazev: '',
       adresa: '',
       objednatel: '',
+      kategorieRevize: 'elektro',
       datum: new Date().toISOString().split('T')[0],
       datumPlatnosti: '',
       termin: 36,
@@ -92,7 +95,8 @@ export function RevizePage() {
       r.cisloRevize.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.adresa.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = !filterStav || r.stav === filterStav;
-    return matchesSearch && matchesFilter;
+    const matchesKategorie = !filterKategorie || r.kategorieRevize === filterKategorie;
+    return matchesSearch && matchesFilter && matchesKategorie;
   });
 
   if (loading) {
@@ -121,7 +125,7 @@ export function RevizePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Revize</h1>
-          <p className="text-slate-500">Správa elektrotechnických revizí</p>
+          <p className="text-slate-500">Správa revizí elektrických instalací, hromosvodů a strojních zařízení</p>
         </div>
         <Button onClick={() => setIsModalOpen(true)}>
           + Nová revize
@@ -129,14 +133,24 @@ export function RevizePage() {
       </div>
 
       <Card>
-        <div className="flex gap-4 mb-4">
-          <div className="flex-1">
+        <div className="flex flex-wrap gap-4 mb-4">
+          <div className="flex-1 min-w-[200px]">
             <Input
               placeholder="Hledat revize..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          <Select
+            value={filterKategorie}
+            onChange={(e) => setFilterKategorie(e.target.value)}
+            options={[
+              { value: '', label: 'Všechny kategorie' },
+              { value: 'elektro', label: '⚡ Elektrické instalace' },
+              { value: 'hromosvod', label: '🌩️ Hromosvody' },
+              { value: 'stroje', label: '⚙️ Strojní zařízení' },
+            ]}
+          />
           <Select
             value={filterStav}
             onChange={(e) => setFilterStav(e.target.value)}
@@ -155,6 +169,7 @@ export function RevizePage() {
               <thead>
                 <tr className="border-b border-slate-200">
                   <th className="text-left py-3 px-4 font-medium text-slate-600">Číslo</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-600">Kategorie</th>
                   <th className="text-left py-3 px-4 font-medium text-slate-600">Název</th>
                   <th className="text-left py-3 px-4 font-medium text-slate-600">Adresa</th>
                   <th className="text-left py-3 px-4 font-medium text-slate-600">Datum</th>
@@ -170,6 +185,18 @@ export function RevizePage() {
                       <Link to={`/revize/${r.id}`} className="text-blue-600 hover:underline">
                         {r.cisloRevize}
                       </Link>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        r.kategorieRevize === 'elektro' ? 'bg-blue-100 text-blue-700' :
+                        r.kategorieRevize === 'hromosvod' ? 'bg-purple-100 text-purple-700' :
+                        r.kategorieRevize === 'stroje' ? 'bg-slate-100 text-slate-700' :
+                        'bg-blue-100 text-blue-700'
+                      }`}>
+                        {r.kategorieRevize === 'elektro' ? '⚡ Elektro' :
+                         r.kategorieRevize === 'hromosvod' ? '🌩️ Hromosvod' :
+                         r.kategorieRevize === 'stroje' ? '⚙️ Stroje' : '⚡ Elektro'}
+                      </span>
                     </td>
                     <td className="py-3 px-4 font-medium">{r.nazev}</td>
                     <td className="py-3 px-4 text-slate-600">{r.adresa}</td>
@@ -238,12 +265,24 @@ export function RevizePage() {
         }
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Číslo revize"
-            value={formData.cisloRevize}
-            onChange={(e) => setFormData({ ...formData, cisloRevize: e.target.value })}
-            disabled
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Číslo revize"
+              value={formData.cisloRevize}
+              onChange={(e) => setFormData({ ...formData, cisloRevize: e.target.value })}
+              disabled
+            />
+            <Select
+              label="Kategorie revize"
+              value={formData.kategorieRevize}
+              onChange={(e) => setFormData({ ...formData, kategorieRevize: e.target.value as KategorieRevize })}
+              options={[
+                { value: 'elektro', label: '⚡ Elektrické instalace' },
+                { value: 'hromosvod', label: '🌩️ Hromosvody' },
+                { value: 'stroje', label: '⚙️ Strojní zařízení' },
+              ]}
+            />
+          </div>
           <Input
             label="Název"
             value={formData.nazev}
