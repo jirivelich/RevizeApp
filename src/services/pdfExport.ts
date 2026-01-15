@@ -424,8 +424,17 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       case 'objekt':
         renderObjekt(sekceIndex++);
         break;
+      case 'vymezeni-rozsahu':
+        renderVymezeniRozsahu(sekceIndex++);
+        break;
+      case 'charakteristika-zarizeni':
+        renderCharakteristikaZarizeni(sekceIndex++);
+        break;
       case 'rozsah-podklady':
         renderRozsahPodklady(sekceIndex++);
+        break;
+      case 'podklady':
+        renderPodklady(sekceIndex++);
         break;
       case 'provedene-ukony':
         renderProvedeneUkony(sekceIndex++);
@@ -628,6 +637,158 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     }
     
     yPos += 5;
+  }
+
+  // ============ VYMEZENÍ ROZSAHU REVIZE ============
+  function renderVymezeniRozsahu(sectionNumber: number) {
+    // Pokud nemáme data, přeskočit sekci
+    if (!revize.rozsahRevize && !revize.predmetNeni) {
+      return;
+    }
+
+    addPageIfNeeded(50);
+    renderSectionTitle(`${sectionNumber}. Vymezení rozsahu revize`);
+    
+    // 1.1 Předmětem revize je
+    if (revize.rozsahRevize) {
+      doc.setFontSize(baseFontSize);
+      doc.setFont('Roboto', 'bold');
+      doc.setTextColor(80, 80, 80);
+      doc.text(t('1.1 Předmětem revize je:'), margin, yPos);
+      yPos += 5;
+      
+      doc.setFont('Roboto', 'normal');
+      doc.setTextColor(0, 0, 0);
+      const rozsahLines = doc.splitTextToSize(t(revize.rozsahRevize), pageWidth - 2 * margin);
+      doc.text(rozsahLines, margin, yPos);
+      yPos += rozsahLines.length * 5 + 8;
+    }
+    
+    // 1.2 Předmětem revize není
+    if (revize.predmetNeni) {
+      const predmetNeniLines = doc.splitTextToSize(t(revize.predmetNeni), pageWidth - 2 * margin);
+      addPageIfNeeded(Math.min(20 + predmetNeniLines.length * 5, 50));
+      
+      doc.setFontSize(baseFontSize);
+      doc.setFont('Roboto', 'bold');
+      doc.setTextColor(80, 80, 80);
+      doc.text(t('1.2 Předmětem revize není:'), margin, yPos);
+      yPos += 5;
+      
+      doc.setFont('Roboto', 'normal');
+      doc.setTextColor(0, 0, 0);
+      doc.text(predmetNeniLines, margin, yPos);
+      yPos += predmetNeniLines.length * 5 + 8;
+    }
+    
+    yPos += 5;
+  }
+
+  // ============ CHARAKTERISTIKA ZAŘÍZENÍ ============
+  function renderCharakteristikaZarizeni(sectionNumber: number) {
+    // Pokud nemáme data, přeskočit sekci
+    if (!revize.napetovaSoustava && !revize.ochranaOpatreni) {
+      return;
+    }
+
+    addPageIfNeeded(50);
+    renderSectionTitle(`${sectionNumber}. Charakteristika zařízení`);
+    
+    // 2.1 Napěťová soustava
+    if (revize.napetovaSoustava) {
+      doc.setFontSize(baseFontSize);
+      doc.setFont('Roboto', 'bold');
+      doc.setTextColor(80, 80, 80);
+      doc.text(t('2.1 Napěťová soustava:'), margin, yPos);
+      yPos += 5;
+      
+      doc.setFont('Roboto', 'normal');
+      doc.setTextColor(0, 0, 0);
+      doc.text(t(revize.napetovaSoustava), margin, yPos);
+      yPos += 10;
+    }
+    
+    // 2.2 Ochrana před úrazem elektrickým proudem
+    if (revize.ochranaOpatreni) {
+      doc.setFontSize(baseFontSize);
+      doc.setFont('Roboto', 'bold');
+      doc.setTextColor(80, 80, 80);
+      doc.text(t('2.2 Ochrana před úrazem elektrickým proudem:'), margin, yPos);
+      yPos += 8;
+      
+      // Seznam všech opatření
+      const vsechnaOpatreni = [
+        { id: 'zakladni-izolace', label: 'Základní izolace živých částí' },
+        { id: 'kryty-pricka', label: 'Přepážky nebo kryty' },
+        { id: 'zamezeni-dotyk', label: 'Zábrany nebo ochrana polohou' },
+        { id: 'selv', label: 'Ochrana malým napětím SELV' },
+        { id: 'pelv', label: 'Ochrana malým napětím PELV' },
+        { id: 'ochrane-pospojovani', label: 'Ochranné pospojování' },
+        { id: 'samocine-odpojeni', label: 'Samočinné odpojení od zdroje' },
+        { id: 'proudovy-chranic', label: 'Doplňková ochrana proudovým chráničem' },
+        { id: 'ochranne-oddeleni', label: 'Ochranné oddělení obvodů' },
+        { id: 'dvojita-izolace', label: 'Dvojitá nebo zesílená izolace' },
+        { id: 'nevodive-prostredi', label: 'Nevodivé prostředí' },
+        { id: 'neuzemene-pospojeni', label: 'Neuzemené místní pospojování' },
+      ];
+      
+      let selectedOpatreni: string[] = [];
+      try {
+        selectedOpatreni = JSON.parse(revize.ochranaOpatreni);
+      } catch {
+        selectedOpatreni = [];
+      }
+      
+      // Tabulka opatření
+      const tableData = vsechnaOpatreni.map(op => [
+        t(op.label),
+        selectedOpatreni.includes(op.id) ? '✓' : '—'
+      ]);
+      
+      autoTable(doc, {
+        startY: yPos,
+        head: [[t('Druh ochrany'), t('Použito')]],
+        body: tableData,
+        theme: 'striped',
+        styles: {
+          font: 'Roboto',
+          fontSize: baseFontSize - 1,
+          cellPadding: 2,
+        },
+        headStyles: {
+          fillColor: primaryColor,
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+        },
+        columnStyles: {
+          0: { cellWidth: 140 },
+          1: { cellWidth: 25, halign: 'center' },
+        },
+        margin: { left: margin, right: margin },
+      });
+
+      yPos = doc.lastAutoTable.finalY + 10;
+    }
+  }
+
+  // ============ PODKLADY PRO REVIZI ============
+  function renderPodklady(sectionNumber: number) {
+    // Pokud nemáme data, přeskočit sekci
+    if (!revize.podklady) {
+      return;
+    }
+
+    const podkladyLines = doc.splitTextToSize(t(revize.podklady), pageWidth - 2 * margin);
+    const requiredSpace = 15 + podkladyLines.length * 5 + 10;
+    addPageIfNeeded(Math.min(requiredSpace, 50));
+    
+    renderSectionTitle(`${sectionNumber}. Podklady pro revizi`);
+    
+    doc.setFontSize(baseFontSize);
+    doc.setFont('Roboto', 'normal');
+    doc.setTextColor(0, 0, 0);
+    doc.text(podkladyLines, margin, yPos);
+    yPos += podkladyLines.length * 5 + 10;
   }
 
   function renderProvedeneUkony(sectionNumber: number) {
