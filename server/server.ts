@@ -129,7 +129,24 @@ async function startServer() {
   app.put('/api/revize/:id', authMiddleware, async (req, res) => {
     try {
       const now = new Date().toISOString();
-      const updates = { ...req.body, updatedAt: now };
+      
+      // Definovat povolené sloupce pro revize
+      const allowedColumns = [
+        'cisloRevize', 'nazev', 'adresa', 'objednatel', 'zakaznikId',
+        'datum', 'datumDokonceni', 'datumPlatnosti', 'termin', 'datumVypracovani',
+        'typRevize', 'duvodMimoradne', 'stav', 'poznamka', 'vysledek',
+        'vysledekOduvodneni', 'rozsahRevize', 'podklady', 'vyhodnoceniPredchozich',
+        'pouzitePristroje', 'provedeneUkony', 'firmaJmeno', 'firmaAdresa',
+        'firmaIco', 'firmaDic', 'zaver', 'updatedAt'
+      ];
+      
+      const updates: Record<string, any> = { updatedAt: now };
+      for (const key of Object.keys(req.body)) {
+        if (allowedColumns.includes(key)) {
+          updates[key] = req.body[key];
+        }
+      }
+      
       const keys = Object.keys(updates);
       const values = Object.values(updates);
       
@@ -137,7 +154,25 @@ async function startServer() {
       await pool.query(`UPDATE revize SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
       
       res.json({ success: true });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error updating revize:', error);
+      // Pokud sloupec neexistuje, zkusit bez zakaznikId
+      if (error.message?.includes('zakaznikId') && error.message?.includes('does not exist')) {
+        try {
+          const now = new Date().toISOString();
+          const { zakaznikId, ...restBody } = req.body;
+          const updates = { ...restBody, updatedAt: now };
+          const keys = Object.keys(updates);
+          const values = Object.values(updates);
+          
+          const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+          await pool.query(`UPDATE revize SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
+          
+          return res.json({ success: true });
+        } catch (retryError) {
+          return res.status(500).json({ error: (retryError as Error).message });
+        }
+      }
       res.status(500).json({ error: (error as Error).message });
     }
   });

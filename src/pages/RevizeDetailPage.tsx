@@ -806,12 +806,12 @@ export function RevizeDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-slate-500">Adresa</p>
-                  <p className="font-medium">{revize.adresa}</p>
+                  <p className="font-medium">{revize?.adresa || '-'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-slate-500">Objednatel</p>
-                  <p className="font-medium">{revize.objednatel}</p>
-                  {revize.zakaznikId && (() => {
+                  <p className="font-medium">{revize?.objednatel || '-'}</p>
+                  {revize?.zakaznikId && zakaznici.length > 0 && (() => {
                     const zakaznik = zakaznici.find(z => z.id === revize.zakaznikId);
                     return zakaznik ? (
                       <p className="text-sm text-blue-600">
