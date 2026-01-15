@@ -1,11 +1,7 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm install && npm run build && cd server && npm install"
-
-[build.nixpacksPlan.phases.setup]
-nixPkgs = ["nodejs_23"]
 
 [deploy]
-startCommand = "cd server && npm start"
+startCommand = "cd server && npm install && npm start"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10

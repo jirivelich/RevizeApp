@@ -1,0 +1,16 @@
+# Nixpacks configuration
+[phases.setup]
+nixPkgs = ["nodejs_23"]
+
+[phases.install]
+cmds = ["npm ci", "cd server && npm install"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "cd server && npm start"
+
+# Disable Caddy - we use Express for serving
+[staticAssets]
+enable = false
