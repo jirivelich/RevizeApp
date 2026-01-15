@@ -335,6 +335,73 @@ export async function initializeDatabase() {
       }
     }
 
+    // Aktualizovat existující šablony - přidat nové sekce pokud chybí
+    try {
+      const sablonyResult = await client.query('SELECT id, sekce FROM sablona');
+      const noveSekce = [
+        { id: 'rozsah-podklady', nazev: 'Rozsah revize a podklady', enabled: true },
+        { id: 'provedene-ukony', nazev: 'Provedené úkony', enabled: true },
+        { id: 'vyhodnoceni-predchozich', nazev: 'Vyhodnocení předchozích revizí', enabled: true },
+        { id: 'pristroje', nazev: 'Použité měřicí přístroje', enabled: true },
+      ];
+
+      for (const row of sablonyResult.rows) {
+        if (!row.sekce) continue;
+        
+        let sekce = JSON.parse(row.sekce);
+        let updated = false;
+        
+        // Zkontrolovat, zda sekce obsahuje nové položky
+        for (const novaSekce of noveSekce) {
+          if (!sekce.find((s: any) => s.id === novaSekce.id)) {
+            // Najít správné pořadí pro vložení
+            let poradi = sekce.length + 1;
+            
+            if (novaSekce.id === 'rozsah-podklady') {
+              // Vložit za 'objekt'
+              const objektIndex = sekce.findIndex((s: any) => s.id === 'objekt');
+              if (objektIndex >= 0) {
+                poradi = sekce[objektIndex].poradi + 1;
+                // Posunout pořadí všech následujících sekcí
+                sekce = sekce.map((s: any) => s.poradi > sekce[objektIndex].poradi ? { ...s, poradi: s.poradi + 1 } : s);
+              }
+            } else if (novaSekce.id === 'provedene-ukony') {
+              const rozsahIndex = sekce.findIndex((s: any) => s.id === 'rozsah-podklady');
+              if (rozsahIndex >= 0) {
+                poradi = sekce[rozsahIndex].poradi + 1;
+                sekce = sekce.map((s: any) => s.poradi > sekce[rozsahIndex].poradi ? { ...s, poradi: s.poradi + 1 } : s);
+              }
+            } else if (novaSekce.id === 'vyhodnoceni-predchozich') {
+              const ukonyIndex = sekce.findIndex((s: any) => s.id === 'provedene-ukony');
+              if (ukonyIndex >= 0) {
+                poradi = sekce[ukonyIndex].poradi + 1;
+                sekce = sekce.map((s: any) => s.poradi > sekce[ukonyIndex].poradi ? { ...s, poradi: s.poradi + 1 } : s);
+              }
+            } else if (novaSekce.id === 'pristroje') {
+              // Vložit před 'zaver'
+              const zaverIndex = sekce.findIndex((s: any) => s.id === 'zaver');
+              if (zaverIndex >= 0) {
+                poradi = sekce[zaverIndex].poradi;
+                sekce = sekce.map((s: any) => s.poradi >= sekce[zaverIndex].poradi ? { ...s, poradi: s.poradi + 1 } : s);
+              }
+            }
+            
+            sekce.push({ ...novaSekce, poradi });
+            updated = true;
+          }
+        }
+        
+        if (updated) {
+          // Seřadit podle pořadí
+          sekce.sort((a: any, b: any) => a.poradi - b.poradi);
+          await client.query('UPDATE sablona SET sekce = $1 WHERE id = $2', [JSON.stringify(sekce), row.id]);
+          console.log('✅ Šablona ID', row.id, 'aktualizována - přidány nové sekce');
+        }
+      }
+    } catch (e: any) {
+      console.log('⚠️ Aktualizace šablon přeskočena:', e.message);
+    }
+
     // Vytvořit demo uživatele pokud neexistuje
     const existingUser = await client.query('SELECT id FROM users WHERE username = $1', ['admin']);
     if (existingUser.rows.length === 0) {
