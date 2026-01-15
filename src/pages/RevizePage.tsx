@@ -9,6 +9,8 @@ export function RevizePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStav, setFilterStav] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Generování čísla revize ve formátu rrrrmmddhhmm
@@ -41,8 +43,17 @@ export function RevizePage() {
   }, []);
 
   const loadRevize = async () => {
-    const data = await revizeService.getAll();
-    setRevize(data);
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await revizeService.getAll();
+      setRevize(data);
+    } catch (err) {
+      console.error('Chyba při načítání revizí:', err);
+      setError(err instanceof Error ? err.message : 'Chyba při načítání dat');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,6 +94,27 @@ export function RevizePage() {
     const matchesFilter = !filterStav || r.stav === filterStav;
     return matchesSearch && matchesFilter;
   });
+
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p className="text-slate-500">Načítání revizí...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-red-500 text-5xl mb-4">⚠️</div>
+        <p className="text-red-600 font-medium mb-2">{error}</p>
+        <Button variant="secondary" onClick={() => loadRevize()}>
+          Zkusit znovu
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
