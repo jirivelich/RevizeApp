@@ -314,6 +314,23 @@ export async function initializeDatabase() {
       }
     }
 
+    // Migrace - přidat chybějící sloupce do existujících tabulek
+    const migrations = [
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "zakaznikId" INTEGER REFERENCES zakaznik(id)',
+    ];
+    
+    for (const migration of migrations) {
+      try {
+        await client.query(migration);
+        console.log('✅ Migrace provedena:', migration.substring(0, 60) + '...');
+      } catch (e: any) {
+        // Sloupec možná už existuje nebo jiná chyba
+        if (!e.message?.includes('already exists')) {
+          console.log('⚠️ Migrace přeskočena:', e.message);
+        }
+      }
+    }
+
     // Vytvořit demo uživatele pokud neexistuje
     const existingUser = await client.query('SELECT id FROM users WHERE username = $1', ['admin']);
     if (existingUser.rows.length === 0) {
