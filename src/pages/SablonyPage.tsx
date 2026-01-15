@@ -169,204 +169,411 @@ export function SablonyPage() {
     const primaryColor = formData.barvaPrimary || '#1e40af';
     const secondaryColor = formData.barvaSecondary || '#64748b';
 
-    return (
+    // Demo data pro náhled
+    const demoRozvadece = [
+      { nazev: 'Hlavní rozvaděč', oznaceni: 'HR-1', umisteni: 'Vstupní hala' },
+      { nazev: 'Rozvaděč kuchyně', oznaceni: 'RK-1', umisteni: 'Kuchyň' },
+    ];
+    
+    const demoOkruhy = [
+      { cislo: '1', jistic: 'B16', nazev: 'Zásuvky obývák', vodic: '3x2.5', izolacniOdpor: '>200', impedanceSmycky: '0.8' },
+      { cislo: '2', jistic: 'B10', nazev: 'Osvětlení', vodic: '3x1.5', izolacniOdpor: '>200', impedanceSmycky: '0.5' },
+      { cislo: '3', jistic: 'C16', nazev: 'Sporák', vodic: '5x2.5', izolacniOdpor: '>200', impedanceSmycky: '0.9' },
+      { cislo: '4', jistic: 'B16', nazev: 'Zásuvky kuchyň', vodic: '3x2.5', izolacniOdpor: '>200', impedanceSmycky: '0.7' },
+    ];
+
+    const demoZavady = [
+      { popis: 'Chybí kryt zásuvky v koupelně', zavaznost: 'C2' },
+      { popis: 'Poškozená izolace vodiče', zavaznost: 'C1' },
+    ];
+
+    // Funkce pro render záhlaví stránky
+    const renderHeader = () => (
       <div 
-        ref={previewRef}
-        className="bg-white shadow-xl border border-slate-300 relative"
-        style={{ 
-          width: '210px', 
-          minHeight: '297px',
-          fontFamily: formData.fontFamily || 'Arial'
-        }}
+        className="px-2 pt-1 pb-1 border-b flex justify-between items-center"
+        style={{ borderColor: primaryColor, fontSize: '5px' }}
       >
-        {/* Minimalistické záhlaví */}
-        <div 
-          className="px-2 pt-1 pb-1 border-b flex justify-between items-center"
-          style={{ borderColor: primaryColor, fontSize: '5px' }}
-        >
-          <span style={{ color: primaryColor, fontWeight: 'bold' }}>{previewRevize.cisloRevize}</span>
-          <span style={{ color: secondaryColor }}>{previewRevize.nazev || 'Název objektu'}</span>
-          <span style={{ color: secondaryColor }}>{new Date().toLocaleDateString('cs-CZ')}</span>
-        </div>
+        <span style={{ color: primaryColor, fontWeight: 'bold' }}>{previewRevize.cisloRevize}</span>
+        <span style={{ color: secondaryColor }}>{previewRevize.nazev || 'Název objektu'}</span>
+        <span style={{ color: secondaryColor }}>{new Date().toLocaleDateString('cs-CZ')}</span>
+      </div>
+    );
 
-        {/* Obsah stránky */}
-        <div className="p-3">
-          {/* Firma a technik NAHOŘE vedle sebe */}
-          {(formData.uvodniStranaZobrazitFirmu !== false || formData.uvodniStranaZobrazitTechnika !== false) && (
-            <div className="grid grid-cols-2 gap-1 mb-2" style={{ fontSize: '4px' }}>
-              {formData.uvodniStranaZobrazitFirmu !== false && (
-                <div className="border border-slate-200">
-                  <div className="px-1 py-0.5 font-bold text-white" style={{ backgroundColor: primaryColor, fontSize: '3.5px' }}>
-                    FIRMA
+    // Funkce pro render zápatí stránky
+    const renderFooter = (pageNum: number, totalPages: number) => (
+      <div 
+        className="absolute bottom-0 left-0 right-0 px-2 py-1 border-t flex justify-between"
+        style={{ borderColor: secondaryColor, fontSize: '4px', color: secondaryColor }}
+      >
+        <span>{new Date().toLocaleDateString('cs-CZ')}</span>
+        <span>Strana {pageNum} z {totalPages}</span>
+        <span>{formData.zapatiCustomText || ''}</span>
+      </div>
+    );
+
+    // Styl stránky
+    const pageStyle = {
+      width: '210px', 
+      minHeight: '297px',
+      fontFamily: formData.fontFamily || 'Arial'
+    };
+
+    return (
+      <div className="flex flex-col gap-4">
+        {/* Strana 1 - Úvodní strana */}
+        <div 
+          ref={previewRef}
+          className="bg-white shadow-xl border border-slate-300 relative"
+          style={pageStyle}
+        >
+          {renderHeader()}
+
+          {/* Obsah stránky */}
+          <div className="p-3">
+            {/* Firma a technik NAHOŘE vedle sebe */}
+            {(formData.uvodniStranaZobrazitFirmu !== false || formData.uvodniStranaZobrazitTechnika !== false) && (
+              <div className="grid grid-cols-2 gap-1 mb-2" style={{ fontSize: '4px' }}>
+                {formData.uvodniStranaZobrazitFirmu !== false && (
+                  <div className="border border-slate-200">
+                    <div className="px-1 py-0.5 font-bold text-white" style={{ backgroundColor: primaryColor, fontSize: '3.5px' }}>
+                      FIRMA
+                    </div>
+                    <div className="p-1 flex gap-1">
+                      {nastaveni?.logo && (
+                        <img 
+                          src={nastaveni.logo} 
+                          alt="Logo" 
+                          className="object-contain"
+                          style={{ width: '15px', height: '12px' }}
+                        />
+                      )}
+                      <div className="flex-1">
+                        <div className="font-bold" style={{ fontSize: '4.5px' }}>
+                          {nastaveni?.firmaJmeno || 'Název firmy'}
+                        </div>
+                        <div className="text-slate-500" style={{ fontSize: '3.5px' }}>
+                          {nastaveni?.firmaAdresa || 'Adresa firmy'}
+                        </div>
+                        <div className="text-slate-500" style={{ fontSize: '3.5px' }}>
+                          IČO: {nastaveni?.firmaIco || 'XXX'}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="p-1 flex gap-1">
-                    {nastaveni?.logo && (
-                      <img 
-                        src={nastaveni.logo} 
-                        alt="Logo" 
-                        className="object-contain"
-                        style={{ width: '15px', height: '12px' }}
-                      />
-                    )}
-                    <div className="flex-1">
+                )}
+                {formData.uvodniStranaZobrazitTechnika !== false && (
+                  <div className="border border-slate-200">
+                    <div className="px-1 py-0.5 font-bold text-white" style={{ backgroundColor: primaryColor, fontSize: '3.5px' }}>
+                      REVIZNÍ TECHNIK
+                    </div>
+                    <div className="p-1">
                       <div className="font-bold" style={{ fontSize: '4.5px' }}>
-                        {nastaveni?.firmaJmeno || 'Název firmy'}
+                        {nastaveni?.reviznniTechnikJmeno || 'Jméno technika'}
                       </div>
                       <div className="text-slate-500" style={{ fontSize: '3.5px' }}>
-                        {nastaveni?.firmaAdresa || 'Adresa firmy'}
+                        Ev. č.: {nastaveni?.reviznniTechnikCisloOpravneni || 'XXX'}
                       </div>
                       <div className="text-slate-500" style={{ fontSize: '3.5px' }}>
-                        IČO: {nastaveni?.firmaIco || 'XXX'}
+                        Tel.: {nastaveni?.kontaktTelefon || ''}
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-              {formData.uvodniStranaZobrazitTechnika !== false && (
-                <div className="border border-slate-200">
-                  <div className="px-1 py-0.5 font-bold text-white" style={{ backgroundColor: primaryColor, fontSize: '3.5px' }}>
-                    REVIZNÍ TECHNIK
-                  </div>
-                  <div className="p-1">
-                    <div className="font-bold" style={{ fontSize: '4.5px' }}>
-                      {nastaveni?.reviznniTechnikJmeno || 'Jméno technika'}
-                    </div>
-                    <div className="text-slate-500" style={{ fontSize: '3.5px' }}>
-                      Ev. č.: {nastaveni?.reviznniTechnikCisloOpravneni || 'XXX'}
-                    </div>
-                    <div className="text-slate-500" style={{ fontSize: '3.5px' }}>
-                      Tel.: {nastaveni?.kontaktTelefon || ''}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
 
-          {/* Hlavní nadpis */}
-          <div 
-            className={`text-center mb-2 py-1 ${formData.uvodniStranaNadpisRamecek !== false ? 'border-2' : ''}`}
-            style={{ 
-              borderColor: formData.uvodniStranaNadpisRamecek !== false ? primaryColor : 'transparent', 
-              fontSize: `${Math.max(4, (formData.uvodniStranaNadpisFontSize || 18) / 3)}px` 
-            }}
-          >
-            <span className="font-bold" style={{ color: primaryColor }}>
-              {formData.uvodniStranaNadpis || 'ZPRÁVA O REVIZI ELEKTRICKÉ INSTALACE'}
-            </span>
+            {/* Hlavní nadpis */}
+            <div 
+              className={`text-center mb-2 py-1 ${formData.uvodniStranaNadpisRamecek !== false ? 'border-2' : ''}`}
+              style={{ 
+                borderColor: formData.uvodniStranaNadpisRamecek !== false ? primaryColor : 'transparent', 
+                fontSize: `${Math.max(4, (formData.uvodniStranaNadpisFontSize || 18) / 3)}px` 
+              }}
+            >
+              <span className="font-bold" style={{ color: primaryColor }}>
+                {formData.uvodniStranaNadpis || 'ZPRÁVA O REVIZI ELEKTRICKÉ INSTALACE'}
+              </span>
+            </div>
+
+            {/* Základní údaje - 4 sloupce na řádek */}
+            <div className="mb-2" style={{ fontSize: '4.5px' }}>
+              <div className="grid grid-cols-4 gap-px bg-slate-300">
+                <div className="bg-slate-50 p-1">
+                  <span className="text-slate-400 block" style={{ fontSize: '3px' }}>Číslo zprávy:</span>
+                  <span className="font-medium" style={{ fontSize: '4px' }}>{previewRevize.cisloRevize}</span>
+                </div>
+                <div className="bg-slate-50 p-1">
+                  <span className="text-slate-400 block" style={{ fontSize: '3px' }}>Druh revize:</span>
+                  <span className="font-medium" style={{ fontSize: '4px' }}>{previewRevize.typRevize}</span>
+                </div>
+                <div className="bg-slate-50 p-1">
+                  <span className="text-slate-400 block" style={{ fontSize: '3px' }}>Datum provedení:</span>
+                  <span className="font-medium" style={{ fontSize: '4px' }}>{new Date(previewRevize.datum).toLocaleDateString('cs-CZ')}</span>
+                </div>
+                <div className="bg-slate-50 p-1">
+                  <span className="text-slate-400 block" style={{ fontSize: '3px' }}>Platnost do:</span>
+                  <span className="font-medium" style={{ fontSize: '4px' }}>{previewRevize.datumPlatnosti ? new Date(previewRevize.datumPlatnosti).toLocaleDateString('cs-CZ') : '-'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Údaje o objektu */}
+            {formData.uvodniStranaZobrazitObjekt !== false && (
+              <div className="mb-2">
+                <div 
+                  className="px-1 py-0.5 font-bold text-white"
+                  style={{ backgroundColor: secondaryColor, fontSize: '4px' }}
+                >
+                  ÚDAJE O OBJEKTU
+                </div>
+                <div className="border border-slate-300 p-1" style={{ fontSize: '4.5px' }}>
+                  <div className="text-slate-400" style={{ fontSize: '3.5px' }}>Adresa:</div>
+                  <div>{previewRevize.adresa}</div>
+                </div>
+              </div>
+            )}
+
+            {/* Vyhodnocení */}
+            {formData.uvodniStranaZobrazitVyhodnoceni !== false && (
+              <div className="mb-2">
+                <div 
+                  className="px-1 py-0.5 font-bold text-white"
+                  style={{ backgroundColor: secondaryColor, fontSize: '4px' }}
+                >
+                  VYHODNOCENÍ REVIZE
+                </div>
+                <div 
+                  className="border-2 p-1 text-center font-bold mt-0.5"
+                  style={{ 
+                    borderColor: '#16a34a',
+                    color: '#16a34a',
+                    fontSize: '4.5px'
+                  }}
+                >
+                  Elektrická instalace JE SCHOPNA bezpečného provozu
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Základní údaje - 4 sloupce na řádek */}
-          <div className="mb-2" style={{ fontSize: '4.5px' }}>
-            <div className="grid grid-cols-4 gap-px bg-slate-300">
-              <div className="bg-slate-50 p-1">
-                <span className="text-slate-400 block" style={{ fontSize: '3px' }}>Číslo zprávy:</span>
-                <span className="font-medium" style={{ fontSize: '4px' }}>{previewRevize.cisloRevize}</span>
-              </div>
-              <div className="bg-slate-50 p-1">
-                <span className="text-slate-400 block" style={{ fontSize: '3px' }}>Druh revize:</span>
-                <span className="font-medium" style={{ fontSize: '4px' }}>{previewRevize.typRevize}</span>
-              </div>
-              <div className="bg-slate-50 p-1">
-                <span className="text-slate-400 block" style={{ fontSize: '3px' }}>Datum provedení:</span>
-                <span className="font-medium" style={{ fontSize: '4px' }}>{new Date(previewRevize.datum).toLocaleDateString('cs-CZ')}</span>
-              </div>
-              <div className="bg-slate-50 p-1">
-                <span className="text-slate-400 block" style={{ fontSize: '3px' }}>Datum dokončení:</span>
-                <span className="font-medium" style={{ fontSize: '4px' }}>{previewRevize.datumDokonceni ? new Date(previewRevize.datumDokonceni).toLocaleDateString('cs-CZ') : '-'}</span>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 gap-px bg-slate-300 mt-px">
-              <div className="bg-slate-50 p-1">
-                <span className="text-slate-400 block" style={{ fontSize: '3px' }}>Datum vypracování:</span>
-                <span className="font-medium" style={{ fontSize: '4px' }}>{previewRevize.datumVypracovani ? new Date(previewRevize.datumVypracovani).toLocaleDateString('cs-CZ') : '-'}</span>
-              </div>
-              <div className="bg-slate-50 p-1">
-                <span className="text-slate-400 block" style={{ fontSize: '3px' }}>Platnost do:</span>
-                <span className="font-medium" style={{ fontSize: '4px' }}>{previewRevize.datumPlatnosti ? new Date(previewRevize.datumPlatnosti).toLocaleDateString('cs-CZ') : '-'}</span>
-              </div>
-              <div className="bg-slate-50 p-1">
-                <span className="text-slate-400 block" style={{ fontSize: '3px' }}>Termín příští revize:</span>
-                <span className="font-medium" style={{ fontSize: '4px' }}>{previewRevize.termin} měsíců</span>
-              </div>
-              <div className="bg-slate-50 p-1">
-              </div>
-            </div>
-          </div>
-
-          {/* Údaje o objektu */}
-          {formData.uvodniStranaZobrazitObjekt !== false && (
-            <div className="mb-2">
-              <div 
-                className="px-1 py-0.5 font-bold text-white"
-                style={{ backgroundColor: secondaryColor, fontSize: '4px' }}
-              >
-                ÚDAJE O OBJEKTU
-              </div>
-              <div className="border border-slate-300 p-1" style={{ fontSize: '4.5px' }}>
-                <div className="text-slate-400" style={{ fontSize: '3.5px' }}>Adresa:</div>
-                <div>{previewRevize.adresa}</div>
+          {/* Podpisy na spodku stránky */}
+          {formData.uvodniStranaZobrazitPodpisy !== false && (
+            <div className="absolute left-3 right-3" style={{ bottom: '22px' }}>
+              <div className="grid grid-cols-2 gap-2 mt-1" style={{ fontSize: '3.5px' }}>
+                <div>
+                  <div className="text-slate-500">Revizní technik:</div>
+                  <div className="border-b border-slate-400 mt-2 mb-0.5"></div>
+                  <div className="text-center text-slate-400" style={{ fontSize: '3px' }}>podpis</div>
+                </div>
+                <div>
+                  <div className="text-slate-500">Objednatel:</div>
+                  <div className="border-b border-slate-400 mt-2 mb-0.5"></div>
+                  <div className="text-center text-slate-400" style={{ fontSize: '3px' }}>podpis</div>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Vyhodnocení */}
-          {formData.uvodniStranaZobrazitVyhodnoceni !== false && (
-            <div className="mb-2">
-              <div 
-                className="px-1 py-0.5 font-bold text-white"
-                style={{ backgroundColor: secondaryColor, fontSize: '4px' }}
-              >
-                VYHODNOCENÍ REVIZE
-              </div>
-              <div 
-                className="border-2 p-1 text-center font-bold mt-0.5"
-                style={{ 
-                  borderColor: '#16a34a',
-                  color: '#16a34a',
-                  fontSize: '4.5px'
-                }}
-              >
-                Elektrická instalace JE SCHOPNA bezpečného provozu
-              </div>
-            </div>
-          )}
+          {renderFooter(1, 4)}
         </div>
 
-        {/* Podpisy na spodku stránky */}
-        {formData.uvodniStranaZobrazitPodpisy !== false && (
-          <div className="absolute left-3 right-3" style={{ bottom: '22px' }}>
-            <div 
-              className="px-1 py-0.5 font-bold text-white"
-              style={{ backgroundColor: '#d1d5db', fontSize: '3.5px', color: '#374151' }}
-            >
-              PODPISY
-            </div>
-            <div className="grid grid-cols-2 gap-2 mt-1" style={{ fontSize: '3.5px' }}>
-              <div>
-                <div className="text-slate-500">Revizní technik:</div>
-                <div className="font-medium" style={{ fontSize: '4px' }}>{nastaveni?.reviznniTechnikJmeno || 'Jméno technika'}</div>
-                <div className="border-b border-slate-400 mt-2 mb-0.5"></div>
-                <div className="text-center text-slate-400" style={{ fontSize: '3px' }}>podpis</div>
+        {/* Strana 2 - Rozvaděče a okruhy */}
+        <div 
+          className="bg-white shadow-xl border border-slate-300 relative"
+          style={pageStyle}
+        >
+          {renderHeader()}
+          <div className="p-3">
+            {/* Nadpis sekce */}
+            <div className="mb-2">
+              <div className="font-bold" style={{ color: primaryColor, fontSize: '5px' }}>
+                2. Rozvaděče a okruhy
               </div>
-              <div>
-                <div className="text-slate-500">Objednatel:</div>
-                <div className="font-medium" style={{ fontSize: '4px' }}>{previewRevize.objednatel}</div>
-                <div className="border-b border-slate-400 mt-2 mb-0.5"></div>
-                <div className="text-center text-slate-400" style={{ fontSize: '3px' }}>podpis</div>
+              <div className="border-b" style={{ borderColor: secondaryColor }}></div>
+            </div>
+
+            {/* Demo rozvaděče */}
+            {demoRozvadece.map((roz, idx) => (
+              <div key={idx} className="mb-3">
+                <div className="font-bold mb-1" style={{ fontSize: '4.5px', color: '#374151' }}>
+                  {roz.nazev} ({roz.oznaceni})
+                </div>
+                <div className="text-slate-500 mb-1" style={{ fontSize: '3.5px' }}>
+                  Umístění: {roz.umisteni}
+                </div>
+                
+                {/* Tabulka okruhů */}
+                <table className="w-full border-collapse" style={{ fontSize: '3.5px' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: primaryColor, color: 'white' }}>
+                      <th className="border border-slate-300 p-0.5 text-left">Č.</th>
+                      <th className="border border-slate-300 p-0.5 text-left">Jistič</th>
+                      <th className="border border-slate-300 p-0.5 text-left">Název</th>
+                      <th className="border border-slate-300 p-0.5 text-left">Vodič</th>
+                      <th className="border border-slate-300 p-0.5 text-left">Iz. odpor</th>
+                      <th className="border border-slate-300 p-0.5 text-left">Imp.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {demoOkruhy.slice(idx * 2, idx * 2 + 2).map((okr, i) => (
+                      <tr key={i} className={i % 2 === 0 ? 'bg-slate-50' : 'bg-white'}>
+                        <td className="border border-slate-300 p-0.5">{okr.cislo}</td>
+                        <td className="border border-slate-300 p-0.5">{okr.jistic}</td>
+                        <td className="border border-slate-300 p-0.5">{okr.nazev}</td>
+                        <td className="border border-slate-300 p-0.5">{okr.vodic}</td>
+                        <td className="border border-slate-300 p-0.5">{okr.izolacniOdpor}</td>
+                        <td className="border border-slate-300 p-0.5">{okr.impedanceSmycky}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+
+            {/* Sekce provedené úkony */}
+            <div className="mt-3 mb-2">
+              <div className="font-bold" style={{ color: primaryColor, fontSize: '5px' }}>
+                3. Provedené úkony
+              </div>
+              <div className="border-b mb-1" style={{ borderColor: secondaryColor }}></div>
+              <div style={{ fontSize: '3.5px', color: '#374151' }}>
+                Prohlídka elektrického zařízení, kontrola dokumentace, měření izolačního odporu, 
+                měření impedance smyčky, kontrola proudových chráničů, kontrola spojitosti ochranných vodičů...
               </div>
             </div>
           </div>
-        )}
+          {renderFooter(2, 4)}
+        </div>
 
-        {/* Minimalistické zápatí */}
+        {/* Strana 3 - Závěr */}
         <div 
-          className="absolute bottom-0 left-0 right-0 px-2 py-1 border-t flex justify-between"
-          style={{ borderColor: secondaryColor, fontSize: '4px', color: secondaryColor }}
+          className="bg-white shadow-xl border border-slate-300 relative"
+          style={pageStyle}
         >
-          <span>{new Date().toLocaleDateString('cs-CZ')}</span>
-          <span>Strana 1 z 5</span>
-          <span>{formData.zapatiCustomText || ''}</span>
+          {renderHeader()}
+          <div className="p-3">
+            {/* Nadpis sekce */}
+            <div className="mb-2">
+              <div className="font-bold" style={{ color: primaryColor, fontSize: '5px' }}>
+                4. Závěr revize
+              </div>
+              <div className="border-b" style={{ borderColor: secondaryColor }}></div>
+            </div>
+
+            {/* Výsledek */}
+            <div 
+              className="border-2 p-2 text-center font-bold mb-3"
+              style={{ borderColor: '#16a34a', color: '#16a34a', fontSize: '5px' }}
+            >
+              ELEKTRICKÉ ZAŘÍZENÍ JE SCHOPNO BEZPEČNÉHO PROVOZU
+            </div>
+
+            {/* Statistiky */}
+            <div className="mb-3" style={{ fontSize: '4px', color: '#374151' }}>
+              <div>Počet kontrolovaných rozvaděčů: {demoRozvadece.length}</div>
+              <div>Počet kontrolovaných okruhů: {demoOkruhy.length}</div>
+              <div>Počet zjištěných závad: {demoZavady.length}</div>
+            </div>
+
+            {/* Podpisy */}
+            <div className="mt-4">
+              <div className="font-bold mb-2" style={{ color: primaryColor, fontSize: '5px' }}>
+                5. Podpisy
+              </div>
+              <div className="border-b mb-2" style={{ borderColor: secondaryColor }}></div>
+              <div className="grid grid-cols-2 gap-4" style={{ fontSize: '3.5px' }}>
+                <div>
+                  <div className="text-slate-500">Revizní technik:</div>
+                  <div className="font-medium mt-1">{nastaveni?.reviznniTechnikJmeno || 'Jméno technika'}</div>
+                  <div className="border-b border-slate-400 mt-4 mb-0.5"></div>
+                  <div className="text-center text-slate-400" style={{ fontSize: '3px' }}>podpis</div>
+                </div>
+                <div>
+                  <div className="text-slate-500">Objednatel:</div>
+                  <div className="font-medium mt-1">{previewRevize.objednatel}</div>
+                  <div className="border-b border-slate-400 mt-4 mb-0.5"></div>
+                  <div className="text-center text-slate-400" style={{ fontSize: '3px' }}>podpis</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {renderFooter(3, 4)}
+        </div>
+
+        {/* Strana 4 - Příloha závady */}
+        <div 
+          className="bg-white shadow-xl border border-slate-300 relative"
+          style={{ ...pageStyle, width: '297px', minHeight: '210px' }}
+        >
+          <div 
+            className="px-2 pt-1 pb-1 border-b flex justify-between items-center"
+            style={{ borderColor: primaryColor, fontSize: '5px' }}
+          >
+            <span style={{ color: primaryColor, fontWeight: 'bold' }}>PŘÍLOHA - Zjištěné závady</span>
+            <span style={{ color: secondaryColor }}>{previewRevize.cisloRevize}</span>
+          </div>
+          <div className="p-3">
+            {/* Tabulka závad */}
+            <table className="w-full border-collapse" style={{ fontSize: '4px' }}>
+              <thead>
+                <tr style={{ backgroundColor: primaryColor, color: 'white' }}>
+                  <th className="border border-slate-300 p-1 text-left" style={{ width: '5%' }}>Č.</th>
+                  <th className="border border-slate-300 p-1 text-left" style={{ width: '50%' }}>Popis závady</th>
+                  <th className="border border-slate-300 p-1 text-left" style={{ width: '10%' }}>Závažnost</th>
+                  <th className="border border-slate-300 p-1 text-left" style={{ width: '35%' }}>Fotodokumentace</th>
+                </tr>
+              </thead>
+              <tbody>
+                {demoZavady.map((z, i) => (
+                  <tr key={i} className={i % 2 === 0 ? 'bg-slate-50' : 'bg-white'}>
+                    <td className="border border-slate-300 p-1">{i + 1}</td>
+                    <td className="border border-slate-300 p-1">{z.popis}</td>
+                    <td className="border border-slate-300 p-1">
+                      <span 
+                        className="px-1 py-0.5 rounded text-white"
+                        style={{ 
+                          backgroundColor: z.zavaznost === 'C1' ? '#ef4444' : z.zavaznost === 'C2' ? '#f59e0b' : '#22c55e',
+                          fontSize: '3.5px'
+                        }}
+                      >
+                        {z.zavaznost}
+                      </span>
+                    </td>
+                    <td className="border border-slate-300 p-1">
+                      <div className="flex gap-1">
+                        <div className="bg-slate-200 rounded" style={{ width: '25px', height: '20px' }}></div>
+                        <div className="bg-slate-200 rounded" style={{ width: '25px', height: '20px' }}></div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Legenda */}
+            <div className="mt-3 flex gap-4" style={{ fontSize: '3.5px' }}>
+              <div className="flex items-center gap-1">
+                <span className="px-1 py-0.5 rounded text-white" style={{ backgroundColor: '#ef4444' }}>C1</span>
+                <span>Závada ohrožující bezpečnost</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="px-1 py-0.5 rounded text-white" style={{ backgroundColor: '#f59e0b' }}>C2</span>
+                <span>Závada ohrožující provoz</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="px-1 py-0.5 rounded text-white" style={{ backgroundColor: '#22c55e' }}>C3</span>
+                <span>Doporučení</span>
+              </div>
+            </div>
+          </div>
+          <div 
+            className="absolute bottom-0 left-0 right-0 px-2 py-1 border-t flex justify-between"
+            style={{ borderColor: secondaryColor, fontSize: '4px', color: secondaryColor }}
+          >
+            <span>{new Date().toLocaleDateString('cs-CZ')}</span>
+            <span>Příloha 1 - Strana 4 z 4</span>
+            <span>{formData.zapatiCustomText || ''}</span>
+          </div>
         </div>
       </div>
     );
@@ -859,14 +1066,17 @@ export function SablonyPage() {
         {/* Preview panel */}
         <div className="col-span-12 lg:col-span-5">
           <div className="sticky top-6">
-            <Card title="📄 Náhled dokumentu">
-              <div className="bg-gradient-to-br from-slate-200 to-slate-300 rounded-lg p-6 flex justify-center items-start" style={{ minHeight: '400px' }}>
-                <div className="relative">
+            <Card title="📄 Náhled dokumentu (4 strany)">
+              <div 
+                className="bg-gradient-to-br from-slate-200 to-slate-300 rounded-lg p-4 overflow-y-auto" 
+                style={{ maxHeight: '700px' }}
+              >
+                <div className="flex flex-col items-center">
                   {renderPreview()}
                 </div>
               </div>
               <p className="text-center text-xs text-slate-500 mt-2">
-                Zjednodušený náhled první strany • Skutečný PDF export může vypadat mírně odlišně
+                Scrollujte pro zobrazení všech stran • Obsahuje demo data
               </p>
             </Card>
           </div>
