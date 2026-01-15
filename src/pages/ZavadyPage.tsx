@@ -12,6 +12,7 @@ export function ZavadyPage() {
   const [filterKategorie, setFilterKategorie] = useState('');
   const [filterZavaznost, setFilterZavaznost] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showStats, setShowStats] = useState(false);
 
   const [formData, setFormData] = useState({
     popis: '',
@@ -128,22 +129,31 @@ export function ZavadyPage() {
       </div>
 
       {/* Statistiky */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg p-4 border border-slate-200">
-          <p className="text-sm text-slate-500">Celkem v katalogu</p>
-          <p className="text-2xl font-bold">{stats.celkem}</p>
+      <div className="lg:hidden">
+        <button
+          onClick={() => setShowStats(!showStats)}
+          className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-800"
+        >
+          <span>{showStats ? '▼' : '▶'}</span>
+          <span>{showStats ? 'Skrýt statistiky' : 'Zobrazit statistiky'}</span>
+        </button>
+      </div>
+      <div className={`grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 ${showStats ? '' : 'hidden lg:grid'}`}>
+        <div className="bg-white rounded-lg p-3 sm:p-4 border border-slate-200">
+          <p className="text-xs sm:text-sm text-slate-500">Celkem v katalogu</p>
+          <p className="text-xl sm:text-2xl font-bold">{stats.celkem}</p>
         </div>
-        <div className="bg-white rounded-lg p-4 border border-red-200">
-          <p className="text-sm text-red-600">C1 - Kritické</p>
-          <p className="text-2xl font-bold text-red-600">{stats.kriticke}</p>
+        <div className="bg-white rounded-lg p-3 sm:p-4 border border-red-200">
+          <p className="text-xs sm:text-sm text-red-600">C1 - Kritické</p>
+          <p className="text-xl sm:text-2xl font-bold text-red-600">{stats.kriticke}</p>
         </div>
-        <div className="bg-white rounded-lg p-4 border border-orange-200">
-          <p className="text-sm text-orange-600">C2 - Vážné</p>
-          <p className="text-2xl font-bold text-orange-600">{stats.vazne}</p>
+        <div className="bg-white rounded-lg p-3 sm:p-4 border border-orange-200">
+          <p className="text-xs sm:text-sm text-orange-600">C2 - Vážné</p>
+          <p className="text-xl sm:text-2xl font-bold text-orange-600">{stats.vazne}</p>
         </div>
-        <div className="bg-white rounded-lg p-4 border border-amber-200">
-          <p className="text-sm text-amber-600">C3 - Drobné</p>
-          <p className="text-2xl font-bold text-amber-600">{stats.drobne}</p>
+        <div className="bg-white rounded-lg p-3 sm:p-4 border border-amber-200">
+          <p className="text-xs sm:text-sm text-amber-600">C3 - Drobné</p>
+          <p className="text-xl sm:text-2xl font-bold text-amber-600">{stats.drobne}</p>
         </div>
       </div>
 

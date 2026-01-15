@@ -18,6 +18,7 @@ export function PristrojePage() {
   const [editingPristroj, setEditingPristroj] = useState<MericiPristroj | null>(null);
   const [filterTyp, setFilterTyp] = useState('');
   const [showExpiring, setShowExpiring] = useState(false);
+  const [showStats, setShowStats] = useState(false);
 
   const [formData, setFormData] = useState({
     nazev: '',
@@ -121,35 +122,44 @@ export function PristrojePage() {
       </div>
 
       {/* Statistiky */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="lg:hidden">
+        <button
+          onClick={() => setShowStats(!showStats)}
+          className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-800"
+        >
+          <span>{showStats ? '▼' : '▶'}</span>
+          <span>{showStats ? 'Skrýt statistiky' : 'Zobrazit statistiky'}</span>
+        </button>
+      </div>
+      <div className={`grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 ${showStats ? '' : 'hidden lg:grid'}`}>
         <Card>
-          <div className="text-center">
-            <p className="text-3xl font-bold text-slate-800">{pristroje.length}</p>
-            <p className="text-sm text-slate-500">Celkem přístrojů</p>
+          <div className="text-center p-1">
+            <p className="text-2xl sm:text-3xl font-bold text-slate-800">{pristroje.length}</p>
+            <p className="text-xs sm:text-sm text-slate-500">Celkem přístrojů</p>
           </div>
         </Card>
         <Card>
-          <div className="text-center">
-            <p className="text-3xl font-bold text-green-600">
+          <div className="text-center p-1">
+            <p className="text-2xl sm:text-3xl font-bold text-green-600">
               {pristroje.filter(p => !isExpiring(p.platnostKalibrace)).length}
             </p>
-            <p className="text-sm text-slate-500">Platná kalibrace</p>
+            <p className="text-xs sm:text-sm text-slate-500">Platná kalibrace</p>
           </div>
         </Card>
         <Card>
-          <div className="text-center">
-            <p className="text-3xl font-bold text-amber-600">
+          <div className="text-center p-1">
+            <p className="text-2xl sm:text-3xl font-bold text-amber-600">
               {pristroje.filter(p => isExpiring(p.platnostKalibrace) && !isExpired(p.platnostKalibrace)).length}
             </p>
-            <p className="text-sm text-slate-500">Brzy expiruje</p>
+            <p className="text-xs sm:text-sm text-slate-500">Brzy expiruje</p>
           </div>
         </Card>
         <Card>
-          <div className="text-center">
-            <p className="text-3xl font-bold text-red-600">
+          <div className="text-center p-1">
+            <p className="text-2xl sm:text-3xl font-bold text-red-600">
               {pristroje.filter(p => isExpired(p.platnostKalibrace)).length}
             </p>
-            <p className="text-sm text-slate-500">Prošlá kalibrace</p>
+            <p className="text-xs sm:text-sm text-slate-500">Prošlá kalibrace</p>
           </div>
         </Card>
       </div>
