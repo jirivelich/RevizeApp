@@ -1,11 +1,27 @@
 // Základní typy pro RevizeApp
 
+export interface Zakaznik {
+  id?: number;
+  nazev: string;
+  adresa?: string;
+  ico?: string;
+  dic?: string;
+  kontaktOsoba?: string;
+  telefon?: string;
+  email?: string;
+  poznamka?: string;
+  pocetRevizi?: number; // Počítané pole - kolik má revizí
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 export interface Revize {
   id?: number;
   cisloRevize: string;
   nazev: string;
   adresa: string;
   objednatel: string;
+  zakaznikId?: number; // Vazba na zákazníka
   datum: string;
   datumDokonceni?: string;
   datumPlatnosti?: string;

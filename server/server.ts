@@ -636,6 +636,99 @@ async function startServer() {
     }
   });
 
+  // ==================== ZÁKAZNÍCI ====================
+  app.get('/api/zakaznici', authMiddleware, async (req, res) => {
+    try {
+      // Získat zákazníky s počtem revizí
+      const result = await pool.query(`
+        SELECT z.*, COUNT(r.id) as "pocetRevizi"
+        FROM zakaznik z
+        LEFT JOIN revize r ON r."zakaznikId" = z.id
+        GROUP BY z.id
+        ORDER BY z.nazev
+      `);
+      res.json(result.rows);
+    } catch (error) {
+      console.error('Error getting zakaznici:', error);
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.get('/api/zakaznici/:id', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query(`
+        SELECT z.*, COUNT(r.id) as "pocetRevizi"
+        FROM zakaznik z
+        LEFT JOIN revize r ON r."zakaznikId" = z.id
+        WHERE z.id = $1
+        GROUP BY z.id
+      `, [req.params.id]);
+      if (result.rows.length === 0) return res.status(404).json({ error: 'Zákazník nenalezen' });
+      res.json(result.rows[0]);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.get('/api/zakaznici/:id/revize', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query(
+        'SELECT * FROM revize WHERE "zakaznikId" = $1 ORDER BY datum DESC',
+        [req.params.id]
+      );
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/zakaznici', authMiddleware, async (req, res) => {
+    try {
+      const { nazev, adresa, ico, dic, kontaktOsoba, telefon, email, poznamka } = req.body;
+      const now = new Date().toISOString();
+      
+      const result = await pool.query(`
+        INSERT INTO zakaznik (nazev, adresa, ico, dic, "kontaktOsoba", telefon, email, poznamka, "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id
+      `, [nazev, adresa, ico, dic, kontaktOsoba, telefon, email, poznamka, now, now]);
+      
+      res.json({ id: result.rows[0].id });
+    } catch (error) {
+      console.error('Error creating zakaznik:', error);
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/zakaznici/:id', authMiddleware, async (req, res) => {
+    try {
+      const now = new Date().toISOString();
+      const updates = { ...req.body, updatedAt: now };
+      const keys = Object.keys(updates);
+      const values = Object.values(updates);
+      
+      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      await pool.query(`UPDATE zakaznik SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error updating zakaznik:', error);
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/zakaznici/:id', authMiddleware, async (req, res) => {
+    try {
+      // Odebrat vazbu na zákazníka z revizí
+      await pool.query('UPDATE revize SET "zakaznikId" = NULL WHERE "zakaznikId" = $1', [req.params.id]);
+      // Smazat zákazníka
+      await pool.query('DELETE FROM zakaznik WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
   // ==================== ŠABLONY ====================
   app.get('/api/sablony', authMiddleware, async (req, res) => {
     try {

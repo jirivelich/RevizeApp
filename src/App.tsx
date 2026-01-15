@@ -16,6 +16,7 @@ import {
   PristrojePage,
   FirmyPage,
   BackupRestorePage,
+  ZakazniciPage,
 } from './pages';
 
 // Error Boundary pro zachycení JavaScript chyb
@@ -87,6 +88,7 @@ function App() {
             <Route path="zavady" element={<ZavadyPage />} />
             <Route path="pristroje" element={<PristrojePage />} />
             <Route path="firmy" element={<FirmyPage />} />
+            <Route path="zakaznici" element={<ZakazniciPage />} />
             <Route path="planovani" element={<PlanovaniPage />} />
             <Route path="sablony" element={<SablonyPage />} />
             <Route path="backup" element={<BackupRestorePage />} />

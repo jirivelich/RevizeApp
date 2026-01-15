@@ -6,6 +6,7 @@ const navItems = [
   { path: '/zavady', label: 'Závady', icon: '⚠️' },
   { path: '/pristroje', label: 'Přístroje', icon: '📟' },
   { path: '/firmy', label: 'Firmy', icon: '🏢' },
+  { path: '/zakaznici', label: 'Zákazníci', icon: '👥' },
   { path: '/planovani', label: 'Plánování', icon: '📅' },
   { path: '/sablony', label: 'Šablony PDF', icon: '🎨' },
   { path: '/backup', label: 'Backup', icon: '💾' },

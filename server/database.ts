@@ -40,6 +40,23 @@ export async function initializeDatabase() {
       )
     `);
 
+    // Tabulka zákazníků
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS zakaznik (
+        id SERIAL PRIMARY KEY,
+        nazev TEXT NOT NULL,
+        adresa TEXT,
+        ico TEXT,
+        dic TEXT,
+        "kontaktOsoba" TEXT,
+        telefon TEXT,
+        email TEXT,
+        poznamka TEXT,
+        "createdAt" TEXT NOT NULL,
+        "updatedAt" TEXT NOT NULL
+      )
+    `);
+
     await client.query(`
       CREATE TABLE IF NOT EXISTS revize (
         id SERIAL PRIMARY KEY,
@@ -47,6 +64,7 @@ export async function initializeDatabase() {
         nazev TEXT NOT NULL,
         adresa TEXT NOT NULL,
         objednatel TEXT NOT NULL,
+        "zakaznikId" INTEGER REFERENCES zakaznik(id),
         datum TEXT NOT NULL,
         "datumDokonceni" TEXT,
         "datumPlatnosti" TEXT,

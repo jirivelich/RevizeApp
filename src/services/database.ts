@@ -1,7 +1,7 @@
 // Database service - komunikuje s backend API
 // Všechna data jsou uložena na serveru a synchronizována mezi zařízeními
 
-import type { Revize, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, Sablona, MericiPristroj, Firma, ZavadaKatalog } from '../types';
+import type { Revize, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, Sablona, MericiPristroj, Firma, ZavadaKatalog, Zakaznik } from '../types';
 
 // V produkci používáme relativní URL (frontend i backend na stejném serveru)
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -623,6 +623,52 @@ export const zavadaKatalogService = {
       },
     ];
   }
+};
+
+// ==================== ZÁKAZNÍCI ====================
+export const zakazniciService = {
+  async getAll(): Promise<Zakaznik[]> {
+    return fetch(`${API_BASE_URL}/zakaznici`, {
+      headers: getAuthHeaders(),
+    }).then(res => handleResponse<Zakaznik[]>(res));
+  },
+
+  async getById(id: number): Promise<Zakaznik | undefined> {
+    return fetch(`${API_BASE_URL}/zakaznici/${id}`, {
+      headers: getAuthHeaders(),
+    }).then(res => handleResponse<Zakaznik | undefined>(res));
+  },
+
+  async getRevize(zakaznikId: number): Promise<Revize[]> {
+    return fetch(`${API_BASE_URL}/zakaznici/${zakaznikId}/revize`, {
+      headers: getAuthHeaders(),
+    }).then(res => handleResponse<Revize[]>(res));
+  },
+
+  async create(data: Omit<Zakaznik, 'id' | 'pocetRevizi' | 'createdAt' | 'updatedAt'>): Promise<number> {
+    const response = await fetch(`${API_BASE_URL}/zakaznici`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(res => handleResponse<{ id: number }>(res));
+    return response.id;
+  },
+
+  async update(id: number, data: Partial<Zakaznik>): Promise<number> {
+    await fetch(`${API_BASE_URL}/zakaznici/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(res => handleResponse<unknown>(res));
+    return 1;
+  },
+
+  async delete(id: number): Promise<void> {
+    await fetch(`${API_BASE_URL}/zakaznici/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).then(res => handleResponse<unknown>(res));
+  },
 };
 
 // ==================== BACKUP ====================

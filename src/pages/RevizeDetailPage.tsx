@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
 import { PDFExportModal } from '../components/PDFExportModal';
-import { revizeService, rozvadecService, zavadaService, mistnostService, okruhService, pristrojService, revizePristrojService, zarizeniService, firmaService, zavadaKatalogService, nastaveniService } from '../services/database';
-import type { Revize, Rozvadec, Zavada, Mistnost, Okruh, MericiPristroj, Zarizeni, Firma, ZavadaKatalog, Nastaveni } from '../types';
+import { revizeService, rozvadecService, zavadaService, mistnostService, okruhService, pristrojService, revizePristrojService, zarizeniService, firmaService, zavadaKatalogService, nastaveniService, zakazniciService } from '../services/database';
+import type { Revize, Rozvadec, Zavada, Mistnost, Okruh, MericiPristroj, Zarizeni, Firma, ZavadaKatalog, Nastaveni, Zakaznik } from '../types';
 
 export function RevizeDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -36,6 +36,10 @@ export function RevizeDetailPage() {
   
   // Nastavení (pro výchozí firmu)
   const [nastaveni, setNastaveni] = useState<Nastaveni | null>(null);
+
+  // Zákazníci
+  const [zakaznici, setZakaznici] = useState<Zakaznik[]>([]);
+  const [selectedZakaznikId, setSelectedZakaznikId] = useState<string>('');
 
   // Závady
   const [isZavadaModalOpen, setIsZavadaModalOpen] = useState(false);
@@ -164,6 +168,13 @@ export function RevizeDetailPage() {
         // Načíst nastavení (pro výchozí firmu)
         const nastaveniData = await nastaveniService.get();
         setNastaveni(nastaveniData || null);
+        
+        // Načíst zákazníky
+        const zakazniciData = await zakazniciService.getAll();
+        setZakaznici(zakazniciData);
+        if (revizeData.zakaznikId) {
+          setSelectedZakaznikId(revizeData.zakaznikId.toString());
+        }
       } else {
         setError('Revize nebyla nalezena');
       }
@@ -726,17 +737,65 @@ export function RevizeDetailPage() {
           {/* Místo a objednatel */}
           <Card title="Místo a objednatel">
             {isEditing ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  label="Adresa"
-                  value={formData.adresa || ''}
-                  onChange={(e) => setFormData({ ...formData, adresa: e.target.value })}
-                />
-                <Input
-                  label="Objednatel"
-                  value={formData.objednatel || ''}
-                  onChange={(e) => setFormData({ ...formData, objednatel: e.target.value })}
-                />
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    label="Adresa"
+                    value={formData.adresa || ''}
+                    onChange={(e) => setFormData({ ...formData, adresa: e.target.value })}
+                  />
+                  <Input
+                    label="Objednatel"
+                    value={formData.objednatel || ''}
+                    onChange={(e) => setFormData({ ...formData, objednatel: e.target.value })}
+                    placeholder="Nebo vyberte zákazníka níže"
+                  />
+                </div>
+                
+                {/* Výběr zákazníka */}
+                <div className="border-t pt-4">
+                  <Select
+                    label="Vybrat z uložených zákazníků"
+                    value={selectedZakaznikId}
+                    onChange={(e) => {
+                      const zakaznikId = e.target.value;
+                      setSelectedZakaznikId(zakaznikId);
+                      if (zakaznikId) {
+                        const zakaznik = zakaznici.find(z => z.id === parseInt(zakaznikId));
+                        if (zakaznik) {
+                          // Naplnit objednatele daty ze zákazníka
+                          setFormData({
+                            ...formData,
+                            objednatel: zakaznik.nazev,
+                            zakaznikId: zakaznik.id
+                          });
+                        }
+                      } else {
+                        setFormData({ ...formData, zakaznikId: undefined });
+                      }
+                    }}
+                    options={[
+                      { value: '', label: '-- Vyberte zákazníka --' },
+                      ...zakaznici.filter(z => z.id !== undefined).map(z => ({
+                        value: z.id!.toString(),
+                        label: `${z.nazev}${z.adresa ? ` (${z.adresa})` : ''}`
+                      }))
+                    ]}
+                  />
+                  {selectedZakaznikId && (() => {
+                    const zakaznik = zakaznici.find(z => z.id === parseInt(selectedZakaznikId));
+                    return zakaznik ? (
+                      <div className="mt-2 p-3 bg-blue-50 rounded-lg text-sm">
+                        <div className="grid grid-cols-2 gap-2">
+                          {zakaznik.adresa && <div><span className="text-gray-500">Adresa:</span> {zakaznik.adresa}</div>}
+                          {zakaznik.ico && <div><span className="text-gray-500">IČO:</span> {zakaznik.ico}</div>}
+                          {zakaznik.kontaktOsoba && <div><span className="text-gray-500">Kontakt:</span> {zakaznik.kontaktOsoba}</div>}
+                          {zakaznik.telefon && <div><span className="text-gray-500">Tel:</span> {zakaznik.telefon}</div>}
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -747,6 +806,16 @@ export function RevizeDetailPage() {
                 <div>
                   <p className="text-sm text-slate-500">Objednatel</p>
                   <p className="font-medium">{revize.objednatel}</p>
+                  {revize.zakaznikId && (() => {
+                    const zakaznik = zakaznici.find(z => z.id === revize.zakaznikId);
+                    return zakaznik ? (
+                      <p className="text-sm text-blue-600">
+                        <Link to="/zakaznici" className="hover:underline">
+                          👥 {zakaznik.nazev}
+                        </Link>
+                      </p>
+                    ) : null;
+                  })()}
                 </div>
               </div>
             )}
