@@ -6,7 +6,7 @@ export function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       {/* Mobilní overlay */}
       {isSidebarOpen && (
         <div
@@ -15,16 +15,16 @@ export function Layout() {
         />
       )}
       
-      {/* Sidebar - skryté na mobilu, viditelné na lg+ */}
-      <div className={`fixed lg:relative z-50 transition-transform ${
+      {/* Sidebar - fixní, neskroluje se */}
+      <div className={`fixed lg:sticky top-0 h-screen z-50 transition-transform ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
         <Sidebar onClose={() => setIsSidebarOpen(false)} />
       </div>
       
-      <main className="flex-1 w-full bg-slate-100">
+      <main className="flex-1 w-full bg-slate-100 overflow-y-auto">
         {/* Mobilní header s menu tlačítkem */}
-        <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+        <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
           <h1 className="text-lg font-bold text-slate-800">RevizeApp</h1>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
