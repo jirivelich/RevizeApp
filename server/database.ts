@@ -27,6 +27,7 @@ export default pool;
 export async function initializeDatabase() {
   const client = await pool.connect();
   try {
+    // PostgreSQL vyžaduje jednotlivé CREATE TABLE příkazy
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -36,8 +37,10 @@ export async function initializeDatabase() {
         jmeno TEXT,
         "createdAt" TEXT NOT NULL,
         "updatedAt" TEXT NOT NULL
-      );
+      )
+    `);
 
+    await client.query(`
       CREATE TABLE IF NOT EXISTS revize (
         id SERIAL PRIMARY KEY,
         "cisloRevize" TEXT UNIQUE NOT NULL,
@@ -67,8 +70,10 @@ export async function initializeDatabase() {
         "firmaDic" TEXT,
         "createdAt" TEXT NOT NULL,
         "updatedAt" TEXT NOT NULL
-      );
+      )
+    `);
 
+    await client.query(`
       CREATE TABLE IF NOT EXISTS rozvadec (
         id SERIAL PRIMARY KEY,
         "revizeId" INTEGER NOT NULL REFERENCES revize(id) ON DELETE CASCADE,
@@ -81,8 +86,10 @@ export async function initializeDatabase() {
         poznamka TEXT,
         "createdAt" TEXT NOT NULL,
         "updatedAt" TEXT NOT NULL
-      );
+      )
+    `);
 
+    await client.query(`
       CREATE TABLE IF NOT EXISTS okruh (
         id SERIAL PRIMARY KEY,
         "rozvadecId" INTEGER NOT NULL REFERENCES rozvadec(id) ON DELETE CASCADE,
@@ -97,8 +104,10 @@ export async function initializeDatabase() {
         "proudovyChranicMa" REAL,
         "casOdpojeni" REAL,
         poznamka TEXT
-      );
+      )
+    `);
 
+    await client.query(`
       CREATE TABLE IF NOT EXISTS mistnost (
         id SERIAL PRIMARY KEY,
         "revizeId" INTEGER NOT NULL REFERENCES revize(id) ON DELETE CASCADE,
@@ -108,8 +117,10 @@ export async function initializeDatabase() {
         typ TEXT,
         prostredi TEXT,
         poznamka TEXT
-      );
+      )
+    `);
 
+    await client.query(`
       CREATE TABLE IF NOT EXISTS zarizeni (
         id SERIAL PRIMARY KEY,
         "mistnostId" INTEGER NOT NULL REFERENCES mistnost(id) ON DELETE CASCADE,
@@ -121,8 +132,10 @@ export async function initializeDatabase() {
         "ochranaPredDotykem" TEXT,
         stav TEXT,
         poznamka TEXT
-      );
+      )
+    `);
 
+    await client.query(`
       CREATE TABLE IF NOT EXISTS zavada (
         id SERIAL PRIMARY KEY,
         "revizeId" INTEGER NOT NULL REFERENCES revize(id) ON DELETE CASCADE,
@@ -135,8 +148,10 @@ export async function initializeDatabase() {
         "datumZjisteni" TEXT,
         "datumVyreseni" TEXT,
         poznamka TEXT
-      );
+      )
+    `);
 
+    await client.query(`
       CREATE TABLE IF NOT EXISTS zakazka (
         id SERIAL PRIMARY KEY,
         nazev TEXT NOT NULL,
@@ -150,8 +165,10 @@ export async function initializeDatabase() {
         poznamka TEXT,
         "createdAt" TEXT NOT NULL,
         "updatedAt" TEXT NOT NULL
-      );
+      )
+    `);
 
+    await client.query(`
       CREATE TABLE IF NOT EXISTS "mericiPristroj" (
         id SERIAL PRIMARY KEY,
         nazev TEXT NOT NULL,
@@ -165,14 +182,18 @@ export async function initializeDatabase() {
         poznamka TEXT,
         "createdAt" TEXT NOT NULL,
         "updatedAt" TEXT NOT NULL
-      );
+      )
+    `);
 
+    await client.query(`
       CREATE TABLE IF NOT EXISTS "revizePristroj" (
         id SERIAL PRIMARY KEY,
         "revizeId" INTEGER NOT NULL REFERENCES revize(id) ON DELETE CASCADE,
         "pristrojId" INTEGER NOT NULL REFERENCES "mericiPristroj"(id)
-      );
+      )
+    `);
 
+    await client.query(`
       CREATE TABLE IF NOT EXISTS firma (
         id SERIAL PRIMARY KEY,
         nazev TEXT NOT NULL,
@@ -185,8 +206,10 @@ export async function initializeDatabase() {
         poznamka TEXT,
         "createdAt" TEXT NOT NULL,
         "updatedAt" TEXT NOT NULL
-      );
+      )
+    `);
 
+    await client.query(`
       CREATE TABLE IF NOT EXISTS nastaveni (
         id SERIAL PRIMARY KEY,
         "firmaJmeno" TEXT,
@@ -200,8 +223,10 @@ export async function initializeDatabase() {
         logo TEXT,
         "createdAt" TEXT NOT NULL,
         "updatedAt" TEXT NOT NULL
-      );
+      )
+    `);
 
+    await client.query(`
       CREATE TABLE IF NOT EXISTS sablona (
         id SERIAL PRIMARY KEY,
         nazev TEXT NOT NULL,
@@ -234,8 +259,10 @@ export async function initializeDatabase() {
         "zapatiCustomText" TEXT,
         "createdAt" TEXT NOT NULL,
         "updatedAt" TEXT NOT NULL
-      );
+      )
+    `);
 
+    await client.query(`
       CREATE TABLE IF NOT EXISTS "zavadaKatalog" (
         id SERIAL PRIMARY KEY,
         popis TEXT NOT NULL,
@@ -246,7 +273,7 @@ export async function initializeDatabase() {
         kategorie TEXT,
         "createdAt" TEXT NOT NULL,
         "updatedAt" TEXT NOT NULL
-      );
+      )
     `);
 
     // Vytvořit indexy (ignorovat chyby pokud existují)
