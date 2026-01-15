@@ -192,7 +192,7 @@ export async function initializeDatabase() {
         nazev TEXT NOT NULL,
         vyrobce TEXT,
         model TEXT,
-        "vyrobniCislo" TEXT UNIQUE,
+        "vyrobniCislo" TEXT,
         "typPristroje" TEXT,
         "datumKalibrace" TEXT,
         "platnostKalibrace" TEXT,
@@ -317,6 +317,8 @@ export async function initializeDatabase() {
     // Migrace - přidat chybějící sloupce do existujících tabulek
     const migrations = [
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "zakaznikId" INTEGER REFERENCES zakaznik(id)',
+      // Odstranit UNIQUE constraint z vyrobniCislo (může být prázdné nebo duplicitní)
+      'ALTER TABLE "mericiPristroj" DROP CONSTRAINT IF EXISTS "mericiPristroj_vyrobniCislo_key"',
     ];
     
     for (const migration of migrations) {
