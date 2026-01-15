@@ -672,12 +672,12 @@ export function RevizeDetailPage() {
         </div>
       </div>
 
-      <div className="flex gap-2 border-b border-slate-200">
+      <div className="flex gap-2 border-b border-slate-200 overflow-x-auto scrollbar-thin">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`px-4 py-3 font-medium transition-colors border-b-2 ${
+            className={`px-4 py-3 font-medium transition-colors border-b-2 whitespace-nowrap flex-shrink-0 ${
               activeTab === tab.id
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-slate-600 hover:text-slate-800'
