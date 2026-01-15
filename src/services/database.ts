@@ -491,6 +491,7 @@ export const sablonaService = {
       uvodniStranaZobrazitFirmu: true,
       uvodniStranaZobrazitVyhodnoceni: true,
       uvodniStranaZobrazitPodpisy: true,
+      podpisyUmisteni: 'uvodni',  // Výchozí: podpisy na úvodní straně
       uvodniStranaNadpis: 'ZPRAVA O REVIZI ELEKTRICKE INSTALACE',
       uvodniStranaNadpisFontSize: 18,
       uvodniStranaNadpisRamecek: true,

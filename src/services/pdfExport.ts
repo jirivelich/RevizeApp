@@ -337,8 +337,8 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       yPos += 18;
     }
 
-    // ---- PODPISY (umístěné na spodku stránky) ----
-    if (sablona.uvodniStranaZobrazitPodpisy !== false) {
+    // ---- PODPISY (umístěné na spodku stránky) - pouze pokud je nastaveno 'uvodni' ----
+    if (sablona.uvodniStranaZobrazitPodpisy !== false && sablona.podpisyUmisteni !== 'posledni') {
       const podpisySectionHeight = 52; // Celková výška sekce podpisů
       const bottomMargin = 15; // Spodní okraj
       const podpisyStartY = pageHeight - bottomMargin - podpisySectionHeight;
@@ -1332,6 +1332,11 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
   }
 
   function renderPodpisy(sectionNumber: number) {
+    // Renderovat podpisy na poslední straně pouze pokud je nastaveno
+    if (sablona.uvodniStranaZobrazitPodpisy === false || sablona.podpisyUmisteni !== 'posledni') {
+      return;
+    }
+    
     addPageIfNeeded(60);
     renderSectionTitle(`${sectionNumber}. Podpisy`);
     

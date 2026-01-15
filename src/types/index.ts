@@ -238,6 +238,7 @@ export interface Sablona {
   uvodniStranaZobrazitFirmu: boolean;
   uvodniStranaZobrazitVyhodnoceni: boolean;
   uvodniStranaZobrazitPodpisy: boolean;
+  podpisyUmisteni: 'uvodni' | 'posledni';  // Kde zobrazit podpisy - na úvodní straně nebo na poslední
   uvodniStranaNadpis?: string;
   uvodniStranaNadpisFontSize?: number;  // Velikost písma nadpisu (výchozí 18)
   uvodniStranaNadpisRamecek?: boolean;  // Zobrazit rámeček kolem nadpisu

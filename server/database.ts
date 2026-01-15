@@ -270,6 +270,7 @@ export async function initializeDatabase() {
         "uvodniStranaZobrazitObjekt" INTEGER DEFAULT 1,
         "uvodniStranaZobrazitVyhodnoceni" INTEGER DEFAULT 1,
         "uvodniStranaZobrazitPodpisy" INTEGER DEFAULT 1,
+        "podpisyUmisteni" TEXT DEFAULT 'uvodni',
         "uvodniStranaNadpis" TEXT,
         "uvodniStranaNadpisFontSize" INTEGER,
         "uvodniStranaNadpisRamecek" INTEGER DEFAULT 1,
@@ -329,6 +330,8 @@ export async function initializeDatabase() {
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "predmetNeni" TEXT',
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "napetovaSoustava" TEXT',
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "ochranaOpatreni" TEXT',
+      // Umístění podpisů v šabloně
+      'ALTER TABLE sablona ADD COLUMN IF NOT EXISTS "podpisyUmisteni" TEXT DEFAULT \'uvodni\'',
     ];
     
     for (const migration of migrations) {

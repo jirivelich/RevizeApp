@@ -777,7 +777,6 @@ export function SablonyPage() {
                             { key: 'uvodniStranaZobrazitTechnika', label: 'Revizní technik', icon: '👷' },
                             { key: 'uvodniStranaZobrazitFirmu', label: 'Údaje firmy', icon: '🏭' },
                             { key: 'uvodniStranaZobrazitVyhodnoceni', label: 'Vyhodnocení', icon: '✅' },
-                            { key: 'uvodniStranaZobrazitPodpisy', label: 'Podpisy', icon: '✍️' },
                           ].map(item => (
                             <label 
                               key={item.key}
@@ -797,6 +796,31 @@ export function SablonyPage() {
                               <span>{item.label}</span>
                             </label>
                           ))}
+                        </div>
+
+                        {/* Umístění podpisů */}
+                        <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <div className="flex items-center gap-3">
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={formData.uvodniStranaZobrazitPodpisy !== false}
+                                onChange={(e) => setFormData({ ...formData, uvodniStranaZobrazitPodpisy: e.target.checked })}
+                                className="w-4 h-4 rounded"
+                              />
+                              <span>✍️ Podpisy</span>
+                            </label>
+                            {formData.uvodniStranaZobrazitPodpisy !== false && (
+                              <select
+                                value={formData.podpisyUmisteni || 'uvodni'}
+                                onChange={(e) => setFormData({ ...formData, podpisyUmisteni: e.target.value as 'uvodni' | 'posledni' })}
+                                className="px-3 py-1 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              >
+                                <option value="uvodni">📄 Na úvodní straně</option>
+                                <option value="posledni">📃 Na poslední straně</option>
+                              </select>
+                            )}
+                          </div>
                         </div>
                       </>
                     )}
