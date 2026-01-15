@@ -196,6 +196,14 @@ export interface SablonaSloupecOkruhu {
   poradi: number;
 }
 
+// Blok úvodní strany - pro drag-and-drop editor
+export interface UvodniStranaBlok {
+  id: string;
+  nazev: string;
+  enabled: boolean;
+  poradi: number;
+}
+
 // Měřící přístroje
 export interface MericiPristroj {
   id?: number;
@@ -245,6 +253,7 @@ export interface Sablona {
   uvodniStranaRamecekUdaje?: boolean;   // Rámeček kolem základních údajů
   uvodniStranaRamecekObjekt?: boolean;  // Rámeček kolem údajů o objektu
   uvodniStranaRamecekVyhodnoceni?: boolean; // Rámeček kolem vyhodnocení
+  uvodniStranaBloky?: UvodniStranaBlok[]; // Konfigurovatelné bloky úvodní strany
   
   // Sekce dokumentu
   sekce: SablonaSekce[];

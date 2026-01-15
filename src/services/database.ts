@@ -498,6 +498,14 @@ export const sablonaService = {
       uvodniStranaRamecekUdaje: true,
       uvodniStranaRamecekObjekt: true,
       uvodniStranaRamecekVyhodnoceni: true,
+      uvodniStranaBloky: [
+        { id: 'hlavicka', nazev: 'Hlavička (Firma + Technik)', enabled: true, poradi: 1 },
+        { id: 'nadpis', nazev: 'Nadpis dokumentu', enabled: true, poradi: 2 },
+        { id: 'zakladni-udaje', nazev: 'Základní údaje (číslo, datum, typ)', enabled: true, poradi: 3 },
+        { id: 'objekt', nazev: 'Údaje o objektu', enabled: true, poradi: 4 },
+        { id: 'vyhodnoceni', nazev: 'Vyhodnocení revize', enabled: true, poradi: 5 },
+        { id: 'podpisy', nazev: 'Podpisy', enabled: true, poradi: 6 },
+      ],
       sekce: [
         { id: 'zakladni-udaje', nazev: 'Základní údaje', enabled: true, poradi: 1 },
         { id: 'objekt', nazev: 'Údaje o objektu', enabled: true, poradi: 2 },

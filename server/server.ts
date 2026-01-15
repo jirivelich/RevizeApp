@@ -794,6 +794,7 @@ async function startServer() {
         ...row,
         sekce: row.sekce ? JSON.parse(row.sekce) : [],
         sloupceOkruhu: row.sloupceOkruhu ? JSON.parse(row.sloupceOkruhu) : [],
+        uvodniStranaBloky: row.uvodniStranaBloky ? JSON.parse(row.uvodniStranaBloky) : undefined,
       }));
       res.json(sablony);
     } catch (error) {
@@ -813,6 +814,7 @@ async function startServer() {
         ...row,
         sekce: row.sekce ? JSON.parse(row.sekce) : [],
         sloupceOkruhu: row.sloupceOkruhu ? JSON.parse(row.sloupceOkruhu) : [],
+        uvodniStranaBloky: row.uvodniStranaBloky ? JSON.parse(row.uvodniStranaBloky) : undefined,
       });
     } catch (error) {
       console.error('Error getting vychozi sablona:', error);
@@ -829,6 +831,7 @@ async function startServer() {
         ...row,
         sekce: row.sekce ? JSON.parse(row.sekce) : [],
         sloupceOkruhu: row.sloupceOkruhu ? JSON.parse(row.sloupceOkruhu) : [],
+        uvodniStranaBloky: row.uvodniStranaBloky ? JSON.parse(row.uvodniStranaBloky) : undefined,
       });
     } catch (error) {
       console.error('Error getting sablona:', error);
@@ -856,6 +859,7 @@ async function startServer() {
       
       if (data.sekce) data.sekce = JSON.stringify(data.sekce);
       if (data.sloupceOkruhu) data.sloupceOkruhu = JSON.stringify(data.sloupceOkruhu);
+      if (data.uvodniStranaBloky) data.uvodniStranaBloky = JSON.stringify(data.uvodniStranaBloky);
       
       // Pokud je tato šablona výchozí, odebrat příznak z ostatních
       if (data.jeVychozi === 1) {
@@ -899,6 +903,7 @@ async function startServer() {
       
       if (data.sekce) data.sekce = JSON.stringify(data.sekce);
       if (data.sloupceOkruhu) data.sloupceOkruhu = JSON.stringify(data.sloupceOkruhu);
+      if (data.uvodniStranaBloky) data.uvodniStranaBloky = JSON.stringify(data.uvodniStranaBloky);
       
       // Pokud je tato šablona výchozí, odebrat příznak z ostatních
       if (data.jeVychozi === 1) {

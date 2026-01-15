@@ -54,6 +54,16 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
   const primaryColor = hexToRgb(sablona.barvaPrimary);
   const secondaryColor = hexToRgb(sablona.barvaSecondary);
   const baseFontSize = sablona.fontSize;
+  
+  // Výchozí bloky úvodní strany pokud nejsou definované
+  const defaultBloky = [
+    { id: 'hlavicka', nazev: 'Hlavička', enabled: true, poradi: 1 },
+    { id: 'nadpis', nazev: 'Nadpis', enabled: true, poradi: 2 },
+    { id: 'zakladni-udaje', nazev: 'Základní údaje', enabled: true, poradi: 3 },
+    { id: 'objekt', nazev: 'Objekt', enabled: true, poradi: 4 },
+    { id: 'vyhodnoceni', nazev: 'Vyhodnocení', enabled: true, poradi: 5 },
+    { id: 'podpisy', nazev: 'Podpisy', enabled: true, poradi: 6 },
+  ];
 
   // ============ ÚVODNÍ STRANA - TECHNICKÝ DOKUMENT ============
   const renderUvodniStrana = () => {
@@ -63,154 +73,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     }
     
     const contentWidth = pageWidth - 2 * margin;
-    const halfWidth = (contentWidth - 5) / 2; // Polovina šířky s mezerou uprostřed
-    
-    // ===== HLAVIČKA: FIRMA a REVIZNÍ TECHNIK vedle sebe =====
-    const firmaJmeno = revize.firmaJmeno || nastaveni?.firmaJmeno;
-    const firmaAdresa = revize.firmaAdresa || nastaveni?.firmaAdresa;
-    const firmaIco = revize.firmaIco || nastaveni?.firmaIco;
-    
-    const showFirma = sablona.uvodniStranaZobrazitFirmu !== false && firmaJmeno;
-    const showTechnik = sablona.uvodniStranaZobrazitTechnika !== false;
-    
-    if (showFirma || showTechnik) {
-      const startY = yPos;
-      const headerBoxHeight = 35; // Zvětšená výška pro více textu
-      
-      // Rámečky pro oba sloupce (celá výška)
-      doc.setDrawColor(180, 180, 180);
-      doc.setLineWidth(0.3);
-      if (showFirma) {
-        doc.rect(margin, yPos, halfWidth, headerBoxHeight);
-      }
-      if (showTechnik) {
-        doc.rect(margin + halfWidth + 5, yPos, halfWidth, headerBoxHeight);
-      }
-      
-      // FIRMA (levá strana)
-      if (showFirma) {
-        doc.setFillColor(...primaryColor);
-        doc.rect(margin, yPos, halfWidth, 6, 'F');
-        doc.setFont('Roboto', 'bold');
-        doc.setFontSize(baseFontSize - 1);
-        doc.setTextColor(255, 255, 255);
-        doc.text(t('FIRMA'), margin + 2, yPos + 4);
-        
-        let firmaY = yPos + 10;
-        let firmaX = margin + 2;
-        
-        // Logo firmy (pokud existuje)
-        if (nastaveni?.logo) {
-          try {
-            // Detekce formátu obrázku z Base64 stringu
-            let imageFormat: 'PNG' | 'JPEG' = 'PNG';
-            const logoData = nastaveni.logo.toLowerCase();
-            if (logoData.includes('data:image/jpeg') || logoData.includes('data:image/jpg')) {
-              imageFormat = 'JPEG';
-            } else if (logoData.includes('data:image/png')) {
-              imageFormat = 'PNG';
-            }
-            
-            const logoWidth = 25;
-            const logoHeight = 20;
-            
-            // Zkusit přidat obrázek, pokud selže PNG, zkusit JPEG
-            try {
-              doc.addImage(nastaveni.logo, imageFormat, margin + 2, firmaY, logoWidth, logoHeight);
-            } catch (formatErr) {
-              // Zkusit opačný formát
-              const altFormat = imageFormat === 'PNG' ? 'JPEG' : 'PNG';
-              doc.addImage(nastaveni.logo, altFormat, margin + 2, firmaY, logoWidth, logoHeight);
-            }
-            
-            firmaX = margin + logoWidth + 5; // Posunout text doprava za logo
-          } catch (err) {
-            console.error('Chyba při přidání loga:', err);
-            // V případě chyby pokračovat bez loga
-          }
-        }
-        
-        doc.setFontSize(baseFontSize);
-        doc.setFont('Roboto', 'bold');
-        doc.setTextColor(0, 0, 0);
-        doc.text(t(firmaJmeno), firmaX, firmaY);
-        firmaY += 5;
-        
-        doc.setFont('Roboto', 'normal');
-        doc.setFontSize(baseFontSize - 1);
-        doc.setTextColor(80, 80, 80);
-        if (firmaAdresa) {
-          doc.text(t(firmaAdresa), firmaX, firmaY);
-          firmaY += 4;
-        }
-        if (firmaIco) {
-          doc.text(t(`ICO: ${firmaIco}`), firmaX, firmaY);
-        }
-      }
-      
-      // REVIZNÍ TECHNIK (pravá strana)
-      if (showTechnik) {
-        const rightX = margin + halfWidth + 5;
-        doc.setFillColor(...primaryColor);
-        doc.rect(rightX, startY, halfWidth, 6, 'F');
-        doc.setFont('Roboto', 'bold');
-        doc.setFontSize(baseFontSize - 1);
-        doc.setTextColor(255, 255, 255);
-        doc.text(t('REVIZNÍ TECHNIK'), rightX + 2, startY + 4);
-        
-        let technikY = startY + 10;
-        doc.setFontSize(baseFontSize);
-        doc.setFont('Roboto', 'bold');
-        doc.setTextColor(0, 0, 0);
-        doc.text(t(nastaveni?.reviznniTechnikJmeno || '-'), rightX + 2, technikY);
-        technikY += 5;
-        
-        doc.setFont('Roboto', 'normal');
-        doc.setFontSize(baseFontSize - 1);
-        doc.setTextColor(80, 80, 80);
-        doc.text(t(`Ev. c.: ${nastaveni?.reviznniTechnikCisloOpravneni || '-'}`), rightX + 2, technikY);
-        technikY += 4;
-        if (nastaveni?.kontaktTelefon) {
-          doc.text(t(`Tel.: ${nastaveni.kontaktTelefon}`), rightX + 2, technikY);
-          technikY += 4;
-        }
-        if (nastaveni?.kontaktEmail) {
-          doc.text(t(nastaveni.kontaktEmail), rightX + 2, technikY);
-        }
-      }
-      
-      yPos += headerBoxHeight + 2; // Výška hlavičky s firmou a technikem
-    }
-    
-    // ===== HLAVNÍ NÁZEV DOKUMENTU =====
-    const nadpis = sablona.uvodniStranaNadpis || 'ZPRAVA O REVIZI ELEKTRICKE INSTALACE';
-    const nadpisFontSize = sablona.uvodniStranaNadpisFontSize || 18;
-    const zobrazitRamecek = sablona.uvodniStranaNadpisRamecek !== false;
-    
-    yPos += 5; // Mezera před nadpisem
-    
-    if (zobrazitRamecek) {
-      doc.setDrawColor(...primaryColor);
-      doc.setLineWidth(1);
-      doc.rect(margin, yPos, contentWidth, 18);
-    }
-    
-    doc.setFontSize(nadpisFontSize);
-    doc.setFont('Roboto', 'bold');
-    doc.setTextColor(...primaryColor);
-    doc.text(t(nadpis), pageWidth / 2, yPos + (zobrazitRamecek ? 12 : 8), { align: 'center' });
-    yPos += zobrazitRamecek ? 22 : 14;
-
-    // Řádek s číslem a druhem revize
-    const druhRevize = revize.typRevize === 'pravidelná' ? 'pravidelna' 
-      : revize.typRevize === 'výchozí' ? 'vychozi' 
-      : 'mimoradna';
-    
-    doc.setFontSize(baseFontSize);
-    doc.setFont('Roboto', 'normal');
-    doc.setTextColor(0, 0, 0);
-    
-    // Tabulka s hlavními údaji
+    const halfWidth = (contentWidth - 5) / 2;
     const rowHeight = 8;
     const ramecekUdaje = sablona.uvodniStranaRamecekUdaje !== false;
     const ramecekObjekt = sablona.uvodniStranaRamecekObjekt !== false;
@@ -238,39 +101,142 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
         x += cell.width;
       });
     };
-
-    // Řádek 1: Číslo zprávy, Druh revize, Datum provedení, Datum dokončení
-    const datumProvedeni = new Date(revize.datum).toLocaleDateString('cs-CZ');
-    const datumDokonceni = revize.datumDokonceni 
-      ? new Date(revize.datumDokonceni).toLocaleDateString('cs-CZ') 
-      : '-';
     
-    drawTableRow(yPos, [
-      { label: 'Cislo zpravy:', value: revize.cisloRevize, width: contentWidth / 4 },
-      { label: 'Druh revize:', value: druhRevize, width: contentWidth / 4 },
-      { label: 'Datum provedení:', value: datumProvedeni, width: contentWidth / 4 },
-      { label: 'Datum dokonceni:', value: datumDokonceni, width: contentWidth / 4 },
-    ], rowHeight, ramecekUdaje);
-    yPos += rowHeight;
+    // Render jednotlivých bloků
+    const renderHlavicka = () => {
+      const firmaJmeno = revize.firmaJmeno || nastaveni?.firmaJmeno;
+      const firmaAdresa = revize.firmaAdresa || nastaveni?.firmaAdresa;
+      const firmaIco = revize.firmaIco || nastaveni?.firmaIco;
+      
+      const showFirma = sablona.uvodniStranaZobrazitFirmu !== false && firmaJmeno;
+      const showTechnik = sablona.uvodniStranaZobrazitTechnika !== false;
+      
+      if (!showFirma && !showTechnik) return;
+      
+      const startY = yPos;
+      const headerBoxHeight = 35;
+      
+      doc.setDrawColor(180, 180, 180);
+      doc.setLineWidth(0.3);
+      if (showFirma) doc.rect(margin, yPos, halfWidth, headerBoxHeight);
+      if (showTechnik) doc.rect(margin + halfWidth + 5, yPos, halfWidth, headerBoxHeight);
+      
+      if (showFirma) {
+        doc.setFillColor(...primaryColor);
+        doc.rect(margin, yPos, halfWidth, 6, 'F');
+        doc.setFont('Roboto', 'bold');
+        doc.setFontSize(baseFontSize - 1);
+        doc.setTextColor(255, 255, 255);
+        doc.text(t('FIRMA'), margin + 2, yPos + 4);
+        
+        let firmaY = yPos + 10;
+        let firmaX = margin + 2;
+        
+        if (nastaveni?.logo) {
+          try {
+            let imageFormat: 'PNG' | 'JPEG' = 'PNG';
+            const logoData = nastaveni.logo.toLowerCase();
+            if (logoData.includes('data:image/jpeg') || logoData.includes('data:image/jpg')) imageFormat = 'JPEG';
+            const logoWidth = 25, logoHeight = 20;
+            try {
+              doc.addImage(nastaveni.logo, imageFormat, margin + 2, firmaY, logoWidth, logoHeight);
+            } catch {
+              doc.addImage(nastaveni.logo, imageFormat === 'PNG' ? 'JPEG' : 'PNG', margin + 2, firmaY, logoWidth, logoHeight);
+            }
+            firmaX = margin + logoWidth + 5;
+          } catch { /* pokračovat bez loga */ }
+        }
+        
+        doc.setFontSize(baseFontSize);
+        doc.setFont('Roboto', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text(t(firmaJmeno), firmaX, firmaY);
+        firmaY += 5;
+        
+        doc.setFont('Roboto', 'normal');
+        doc.setFontSize(baseFontSize - 1);
+        doc.setTextColor(80, 80, 80);
+        if (firmaAdresa) { doc.text(t(firmaAdresa), firmaX, firmaY); firmaY += 4; }
+        if (firmaIco) doc.text(t(`ICO: ${firmaIco}`), firmaX, firmaY);
+      }
+      
+      if (showTechnik) {
+        const rightX = margin + halfWidth + 5;
+        doc.setFillColor(...primaryColor);
+        doc.rect(rightX, startY, halfWidth, 6, 'F');
+        doc.setFont('Roboto', 'bold');
+        doc.setFontSize(baseFontSize - 1);
+        doc.setTextColor(255, 255, 255);
+        doc.text(t('REVIZNÍ TECHNIK'), rightX + 2, startY + 4);
+        
+        let technikY = startY + 10;
+        doc.setFontSize(baseFontSize);
+        doc.setFont('Roboto', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text(t(nastaveni?.reviznniTechnikJmeno || '-'), rightX + 2, technikY);
+        technikY += 5;
+        
+        doc.setFont('Roboto', 'normal');
+        doc.setFontSize(baseFontSize - 1);
+        doc.setTextColor(80, 80, 80);
+        doc.text(t(`Ev. c.: ${nastaveni?.reviznniTechnikCisloOpravneni || '-'}`), rightX + 2, technikY);
+        technikY += 4;
+        if (nastaveni?.kontaktTelefon) { doc.text(t(`Tel.: ${nastaveni.kontaktTelefon}`), rightX + 2, technikY); technikY += 4; }
+        if (nastaveni?.kontaktEmail) doc.text(t(nastaveni.kontaktEmail), rightX + 2, technikY);
+      }
+      
+      yPos += headerBoxHeight + 2;
+    };
     
-    // Řádek 2: Datum vypracování, Platnost do, Termín
-    const datumVypracovani = revize.datumVypracovani 
-      ? new Date(revize.datumVypracovani).toLocaleDateString('cs-CZ') 
-      : '-';
-    const platnostDo = revize.datumPlatnosti 
-      ? new Date(revize.datumPlatnosti).toLocaleDateString('cs-CZ') 
-      : '-';
+    const renderNadpis = () => {
+      const nadpis = sablona.uvodniStranaNadpis || 'ZPRAVA O REVIZI ELEKTRICKE INSTALACE';
+      const nadpisFontSize = sablona.uvodniStranaNadpisFontSize || 18;
+      const zobrazitRamecek = sablona.uvodniStranaNadpisRamecek !== false;
+      
+      yPos += 5;
+      
+      if (zobrazitRamecek) {
+        doc.setDrawColor(...primaryColor);
+        doc.setLineWidth(1);
+        doc.rect(margin, yPos, contentWidth, 18);
+      }
+      
+      doc.setFontSize(nadpisFontSize);
+      doc.setFont('Roboto', 'bold');
+      doc.setTextColor(...primaryColor);
+      doc.text(t(nadpis), pageWidth / 2, yPos + (zobrazitRamecek ? 12 : 8), { align: 'center' });
+      yPos += zobrazitRamecek ? 22 : 14;
+    };
     
-    drawTableRow(yPos, [
-      { label: 'Datum vypracovani:', value: datumVypracovani, width: contentWidth / 4 },
-      { label: 'Platnost do:', value: platnostDo, width: contentWidth / 4 },
-      { label: 'Termin pristi revize:', value: `${revize.termin} mesicu`, width: contentWidth / 4 },
-      { label: '', value: '', width: contentWidth / 4 },
-    ], rowHeight, ramecekUdaje);
-    yPos += rowHeight + 4;
-
-    // Sekce: ÚDAJE O OBJEKTU
-    if (sablona.uvodniStranaZobrazitObjekt !== false) {
+    const renderZakladniUdaje = () => {
+      const druhRevize = revize.typRevize === 'pravidelná' ? 'pravidelna' 
+        : revize.typRevize === 'výchozí' ? 'vychozi' : 'mimoradna';
+      
+      const datumProvedeni = new Date(revize.datum).toLocaleDateString('cs-CZ');
+      const datumDokonceni = revize.datumDokonceni ? new Date(revize.datumDokonceni).toLocaleDateString('cs-CZ') : '-';
+      const datumVypracovani = revize.datumVypracovani ? new Date(revize.datumVypracovani).toLocaleDateString('cs-CZ') : '-';
+      const platnostDo = revize.datumPlatnosti ? new Date(revize.datumPlatnosti).toLocaleDateString('cs-CZ') : '-';
+      
+      drawTableRow(yPos, [
+        { label: 'Cislo zpravy:', value: revize.cisloRevize, width: contentWidth / 4 },
+        { label: 'Druh revize:', value: druhRevize, width: contentWidth / 4 },
+        { label: 'Datum provedení:', value: datumProvedeni, width: contentWidth / 4 },
+        { label: 'Datum dokonceni:', value: datumDokonceni, width: contentWidth / 4 },
+      ], rowHeight, ramecekUdaje);
+      yPos += rowHeight;
+      
+      drawTableRow(yPos, [
+        { label: 'Datum vypracovani:', value: datumVypracovani, width: contentWidth / 4 },
+        { label: 'Platnost do:', value: platnostDo, width: contentWidth / 4 },
+        { label: 'Termin pristi revize:', value: `${revize.termin} mesicu`, width: contentWidth / 4 },
+        { label: '', value: '', width: contentWidth / 4 },
+      ], rowHeight, ramecekUdaje);
+      yPos += rowHeight + 4;
+    };
+    
+    const renderObjekt = () => {
+      if (sablona.uvodniStranaZobrazitObjekt === false) return;
+      
       doc.setFillColor(240, 240, 240);
       doc.rect(margin, yPos, contentWidth, 6, 'F');
       doc.setFont('Roboto', 'bold');
@@ -279,24 +245,17 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.text(t('Údaje o objektu'), margin + 2, yPos + 4);
       yPos += 6;
       
-      drawTableRow(yPos, [
-        { label: 'Název objektu:', value: revize.nazev, width: contentWidth },
-      ], rowHeight, ramecekObjekt);
+      drawTableRow(yPos, [{ label: 'Název objektu:', value: revize.nazev, width: contentWidth }], rowHeight, ramecekObjekt);
       yPos += rowHeight;
-      
-      drawTableRow(yPos, [
-        { label: 'Adresa objektu:', value: revize.adresa, width: contentWidth },
-      ], rowHeight, ramecekObjekt);
+      drawTableRow(yPos, [{ label: 'Adresa objektu:', value: revize.adresa, width: contentWidth }], rowHeight, ramecekObjekt);
       yPos += rowHeight;
-      
-      drawTableRow(yPos, [
-        { label: 'Objednatel:', value: revize.objednatel, width: contentWidth },
-      ], rowHeight, ramecekObjekt);
+      drawTableRow(yPos, [{ label: 'Objednatel:', value: revize.objednatel, width: contentWidth }], rowHeight, ramecekObjekt);
       yPos += rowHeight + 4;
-    }
-
-    // ---- VYHODNOCENÍ REVIZE ----
-    if (sablona.uvodniStranaZobrazitVyhodnoceni !== false) {
+    };
+    
+    const renderVyhodnoceni = () => {
+      if (sablona.uvodniStranaZobrazitVyhodnoceni === false) return;
+      
       yPos += 2;
       doc.setFillColor(240, 240, 240);
       doc.rect(margin, yPos, contentWidth, 6, 'F');
@@ -315,14 +274,9 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
         : t('VÝSLEDEK REVIZE NEBYL STANOVEN');
 
       const vysledekColor: [number, number, number] = revize.vysledek === 'schopno' 
-        ? [0, 100, 0]  // dark green
-        : revize.vysledek === 'neschopno'
-        ? [180, 0, 0]   // dark red
-        : revize.vysledek === 'podmíněně schopno'
-        ? [180, 130, 0]   // dark yellow/orange
-        : [80, 80, 80]; // gray
+        ? [0, 100, 0] : revize.vysledek === 'neschopno' ? [180, 0, 0] 
+        : revize.vysledek === 'podmíněně schopno' ? [180, 130, 0] : [80, 80, 80];
 
-      // Box pro výsledek
       if (ramecekVyhodnoceni) {
         doc.setDrawColor(...vysledekColor);
         doc.setLineWidth(1.5);
@@ -333,16 +287,15 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.setFont('Roboto', 'bold');
       doc.setTextColor(...vysledekColor);
       doc.text(vysledekText, pageWidth / 2, yPos + 6, { align: 'center' });
-      
       yPos += 18;
-    }
-
-    // ---- PODPISY (umístěné na spodku stránky) - pouze pokud je nastaveno 'uvodni' ----
-    if (sablona.uvodniStranaZobrazitPodpisy !== false && sablona.podpisyUmisteni !== 'posledni') {
-      const podpisySectionHeight = 52; // Celková výška sekce podpisů
-      const bottomMargin = 15; // Spodní okraj
-      const podpisyStartY = pageHeight - bottomMargin - podpisySectionHeight;
+    };
+    
+    const renderPodpisyBlok = () => {
+      if (sablona.uvodniStranaZobrazitPodpisy === false || sablona.podpisyUmisteni === 'posledni') return;
       
+      const podpisySectionHeight = 52;
+      const bottomMargin = 15;
+      const podpisyStartY = pageHeight - bottomMargin - podpisySectionHeight;
       let podpisyY = podpisyStartY;
       
       doc.setFillColor(240, 240, 240);
@@ -357,7 +310,6 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       const leftX = margin;
       const rightX = margin + colWidth + 10;
       
-      // Popisky
       doc.setFontSize(baseFontSize - 1);
       doc.setFont('Roboto', 'normal');
       doc.setTextColor(80, 80, 80);
@@ -371,8 +323,6 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.text(t(revize.objednatel), rightX, podpisyY);
       
       podpisyY += 18;
-      
-      // Podpisové čáry
       doc.setDrawColor(0, 0, 0);
       doc.setLineWidth(0.5);
       doc.line(leftX, podpisyY, leftX + colWidth, podpisyY);
@@ -385,19 +335,40 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.text(t('podpis'), rightX + colWidth / 2, podpisyY, { align: 'center' });
       
       podpisyY += 10;
-      
-      // Datum a místo
       const datumPodpisu = revize.datumVypracovani 
         ? new Date(revize.datumVypracovani).toLocaleDateString('cs-CZ')
         : new Date().toLocaleDateString('cs-CZ');
       doc.setFontSize(baseFontSize - 1);
       doc.setTextColor(0, 0, 0);
       doc.text(t(`V ........................... dne ${datumPodpisu}`), pageWidth / 2, podpisyY, { align: 'center' });
+    };
+    
+    // Získat bloky a seřadit podle pořadí
+    const bloky = (sablona.uvodniStranaBloky || defaultBloky)
+      .filter(b => b.enabled)
+      .sort((a, b) => a.poradi - b.poradi);
+    
+    // Renderovat bloky v pořadí (kromě podpisů které jsou vždy dole)
+    for (const blok of bloky) {
+      if (blok.id === 'podpisy') continue; // Podpisy jsou zvlášť
+      switch (blok.id) {
+        case 'hlavicka': renderHlavicka(); break;
+        case 'nadpis': renderNadpis(); break;
+        case 'zakladni-udaje': renderZakladniUdaje(); break;
+        case 'objekt': renderObjekt(); break;
+        case 'vyhodnoceni': renderVyhodnoceni(); break;
+      }
+    }
+    
+    // Podpisy jsou vždy na konci (dole na stránce)
+    const podpisyBlok = bloky.find(b => b.id === 'podpisy');
+    if (podpisyBlok) {
+      renderPodpisyBlok();
     }
     
     // Nová stránka pro zbytek dokumentu
     doc.addPage();
-    yPos = headerHeight + 5; // Začít pod záhlavím
+    yPos = headerHeight + 5;
   };
 
   renderUvodniStrana();

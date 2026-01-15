@@ -332,6 +332,8 @@ export async function initializeDatabase() {
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "ochranaOpatreni" TEXT',
       // Umístění podpisů v šabloně
       'ALTER TABLE sablona ADD COLUMN IF NOT EXISTS "podpisyUmisteni" TEXT DEFAULT \'uvodni\'',
+      // Bloky úvodní strany pro drag-and-drop editor
+      'ALTER TABLE sablona ADD COLUMN IF NOT EXISTS "uvodniStranaBloky" TEXT',
     ];
     
     for (const migration of migrations) {

@@ -1,11 +1,77 @@
 import { useEffect, useState, useRef } from 'react';
 import { Button, Card, Input, Modal } from '../components/ui';
 import { sablonaService, nastaveniService, revizeService } from '../services/database';
-import type { Sablona, Nastaveni, Revize } from '../types';
+import type { Sablona, Nastaveni, Revize, UvodniStranaBlok } from '../types';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
-interface DragItem {
-  id: string;
-  index: number;
+// Komponenta pro přetahovatelný blok
+function SortableBlok({ blok, onToggle }: { blok: UvodniStranaBlok; onToggle: (id: string) => void }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: blok.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+        blok.enabled
+          ? 'bg-white border-blue-300 shadow-sm'
+          : 'bg-slate-50 border-slate-200 opacity-60'
+      }`}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+        </svg>
+      </button>
+      <label className="flex items-center gap-2 flex-1 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={blok.enabled}
+          onChange={() => onToggle(blok.id)}
+          className="w-4 h-4 rounded text-blue-600"
+        />
+        <span className={`text-sm ${blok.enabled ? 'font-medium' : 'text-slate-500'}`}>
+          {blok.nazev}
+        </span>
+      </label>
+      <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">
+        {blok.poradi}
+      </span>
+    </div>
+  );
 }
 
 export function SablonyPage() {
@@ -15,7 +81,7 @@ export function SablonyPage() {
   const [previewRevize, setPreviewRevize] = useState<Revize | null>(null);
   const [formData, setFormData] = useState<Partial<Sablona>>({});
   const [activeTab, setActiveTab] = useState<'uvodni' | 'sekce' | 'sloupce' | 'styly'>('uvodni');
-  const [draggedItem, setDraggedItem] = useState<DragItem | null>(null);
+  const [draggedItem, setDraggedItem] = useState<{id: string; index: number} | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newSablonaName, setNewSablonaName] = useState('');
   
@@ -771,31 +837,52 @@ export function SablonyPage() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2">
-                          {[
-                            { key: 'uvodniStranaZobrazitObjekt', label: 'Údaje o objektu', icon: '🏢' },
-                            { key: 'uvodniStranaZobrazitTechnika', label: 'Revizní technik', icon: '👷' },
-                            { key: 'uvodniStranaZobrazitFirmu', label: 'Údaje firmy', icon: '🏭' },
-                            { key: 'uvodniStranaZobrazitVyhodnoceni', label: 'Vyhodnocení', icon: '✅' },
-                          ].map(item => (
-                            <label 
-                              key={item.key}
-                              className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all text-sm ${
-                                (formData as any)[item.key] !== false
-                                  ? 'border-blue-300 bg-blue-50'
-                                  : 'border-slate-200 hover:border-slate-300'
-                              }`}
+                        {/* Drag-and-Drop editor bloků úvodní strany */}
+                        <div className="bg-gradient-to-br from-blue-50 to-slate-50 rounded-lg p-4 border border-blue-200">
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-sm font-semibold text-slate-700">📋 Pořadí bloků úvodní strany</p>
+                            <span className="text-xs text-slate-500">Přetáhněte pro změnu pořadí</span>
+                          </div>
+                          <DndContext
+                            sensors={useSensors(
+                              useSensor(PointerSensor),
+                              useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+                            )}
+                            collisionDetection={closestCenter}
+                            onDragEnd={(event: DragEndEvent) => {
+                              const { active, over } = event;
+                              if (over && active.id !== over.id) {
+                                const bloky = formData.uvodniStranaBloky || sablonaService.getDefaultSablona().uvodniStranaBloky || [];
+                                const oldIndex = bloky.findIndex(b => b.id === active.id);
+                                const newIndex = bloky.findIndex(b => b.id === over.id);
+                                const newBloky = arrayMove(bloky, oldIndex, newIndex).map((b, i) => ({ ...b, poradi: i + 1 }));
+                                setFormData({ ...formData, uvodniStranaBloky: newBloky });
+                              }
+                            }}
+                          >
+                            <SortableContext
+                              items={(formData.uvodniStranaBloky || sablonaService.getDefaultSablona().uvodniStranaBloky || []).map(b => b.id)}
+                              strategy={verticalListSortingStrategy}
                             >
-                              <input
-                                type="checkbox"
-                                checked={(formData as any)[item.key] !== false}
-                                onChange={(e) => setFormData({ ...formData, [item.key]: e.target.checked })}
-                                className="w-4 h-4 rounded"
-                              />
-                              <span>{item.icon}</span>
-                              <span>{item.label}</span>
-                            </label>
-                          ))}
+                              <div className="space-y-2">
+                                {(formData.uvodniStranaBloky || sablonaService.getDefaultSablona().uvodniStranaBloky || [])
+                                  .sort((a, b) => a.poradi - b.poradi)
+                                  .map((blok) => (
+                                    <SortableBlok
+                                      key={blok.id}
+                                      blok={blok}
+                                      onToggle={(id) => {
+                                        const bloky = formData.uvodniStranaBloky || sablonaService.getDefaultSablona().uvodniStranaBloky || [];
+                                        const newBloky = bloky.map(b => 
+                                          b.id === id ? { ...b, enabled: !b.enabled } : b
+                                        );
+                                        setFormData({ ...formData, uvodniStranaBloky: newBloky });
+                                      }}
+                                    />
+                                  ))}
+                              </div>
+                            </SortableContext>
+                          </DndContext>
                         </div>
 
                         {/* Umístění podpisů */}
