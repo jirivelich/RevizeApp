@@ -1171,26 +1171,35 @@ export function RevizeDetailPage() {
             )}
           </div>
 
-          {/* Detailní informace podle NV */}
-          <Card title="Detailní informace revize">
+          {/* Důvod mimořádné revize - zobrazí se pouze pokud je typ mimořádná */}
+          {(formData.typRevize === 'mimořádná' || revize?.typRevize === 'mimořádná') && (
+            <Card title="📋 Důvod mimořádné revize">
+              {isEditing ? (
+                <Input
+                  label="Důvod mimořádné revize"
+                  value={formData.duvodMimoradne || ''}
+                  onChange={(e) => setFormData({ ...formData, duvodMimoradne: e.target.value })}
+                  placeholder="Např. havárie, rekonstrukce..."
+                />
+              ) : (
+                <p className="font-medium whitespace-pre-wrap">
+                  {revize?.duvodMimoradne || <span className="text-slate-400 italic">Nevyplněno</span>}
+                </p>
+              )}
+            </Card>
+          )}
+
+          {/* Rozsah revize a podklady */}
+          <Card title="📑 Rozsah revize a podklady">
             {isEditing ? (
               <div className="space-y-4">
-                {formData.typRevize === 'mimořádná' && (
-                  <Input
-                    label="Důvod mimořádné revize"
-                    value={formData.duvodMimoradne || ''}
-                    onChange={(e) => setFormData({ ...formData, duvodMimoradne: e.target.value })}
-                    placeholder="Např. havárie, rekonstrukce..."
-                  />
-                )}
-                
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     Vymezení rozsahu revize
                   </label>
                   <textarea
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={2}
+                    rows={3}
                     value={formData.rozsahRevize || ''}
                     onChange={(e) => setFormData({ ...formData, rozsahRevize: e.target.value })}
                     placeholder="Co je předmětem revize..."
@@ -1209,117 +1218,114 @@ export function RevizeDetailPage() {
                     placeholder="Projekty, předchozí revize, dokumentace..."
                   />
                 </div>
-
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Soupis provedených úkonů
-                  </label>
-                  <textarea
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={3}
-                    value={formData.provedeneUkony || ''}
-                    onChange={(e) => setFormData({ ...formData, provedeneUkony: e.target.value })}
-                    placeholder="Prohlídka, zkoušky, měření..."
-                  />
+                  <p className="text-sm text-slate-500 mb-1">Vymezení rozsahu revize</p>
+                  <p className="font-medium whitespace-pre-wrap bg-slate-50 p-3 rounded-lg min-h-[60px]">
+                    {revize?.rozsahRevize || <span className="text-slate-400 italic">Nevyplněno</span>}
+                  </p>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Vyhodnocení předchozích revizí
-                  </label>
-                  <textarea
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={3}
-                    value={formData.vyhodnoceniPredchozich || ''}
-                    onChange={(e) => setFormData({ ...formData, vyhodnoceniPredchozich: e.target.value })}
-                    placeholder="Zhodnocení odstranění závad z předchozí revize..."
-                  />
+                  <p className="text-sm text-slate-500 mb-1">Seznam podkladů</p>
+                  <p className="font-medium whitespace-pre-wrap bg-slate-50 p-3 rounded-lg min-h-[60px]">
+                    {revize?.podklady || <span className="text-slate-400 italic">Nevyplněno</span>}
+                  </p>
                 </div>
+              </div>
+            )}
+          </Card>
 
-                {formData.vysledek === 'neschopno' && (
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Odůvodnění neschopnosti provozu
-                    </label>
-                    <textarea
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      rows={3}
-                      value={formData.vysledekOduvodneni || ''}
-                      onChange={(e) => setFormData({ ...formData, vysledekOduvodneni: e.target.value })}
-                      placeholder="Podrobné zdůvodnění proč není zařízení schopno provozu..."
-                    />
-                  </div>
-                )}
+          {/* Provedené úkony */}
+          <Card title="🔧 Provedené úkony">
+            {isEditing ? (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Soupis provedených úkonů
+                </label>
+                <textarea
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={4}
+                  value={formData.provedeneUkony || ''}
+                  onChange={(e) => setFormData({ ...formData, provedeneUkony: e.target.value })}
+                  placeholder="Prohlídka, zkoušky, měření..."
+                />
+              </div>
+            ) : (
+              <p className="font-medium whitespace-pre-wrap bg-slate-50 p-3 rounded-lg min-h-[60px]">
+                {revize?.provedeneUkony || <span className="text-slate-400 italic">Nevyplněno</span>}
+              </p>
+            )}
+          </Card>
 
+          {/* Vyhodnocení předchozích revizí */}
+          <Card title="📊 Vyhodnocení předchozích revizí">
+            {isEditing ? (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Vyhodnocení předchozích revizí
+                </label>
+                <textarea
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={4}
+                  value={formData.vyhodnoceniPredchozich || ''}
+                  onChange={(e) => setFormData({ ...formData, vyhodnoceniPredchozich: e.target.value })}
+                  placeholder="Zhodnocení odstranění závad z předchozí revize..."
+                />
+              </div>
+            ) : (
+              <p className="font-medium whitespace-pre-wrap bg-slate-50 p-3 rounded-lg min-h-[60px]">
+                {revize?.vyhodnoceniPredchozich || <span className="text-slate-400 italic">Nevyplněno</span>}
+              </p>
+            )}
+          </Card>
+
+          {/* Odůvodnění neschopnosti - zobrazí se pouze pokud je výsledek neschopno */}
+          {(formData.vysledek === 'neschopno' || revize?.vysledek === 'neschopno') && (
+            <Card title="⚠️ Odůvodnění neschopnosti provozu">
+              {isEditing ? (
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Závěr revize
+                    Odůvodnění neschopnosti provozu
                   </label>
                   <textarea
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={4}
-                    value={formData.zaver || ''}
-                    onChange={(e) => setFormData({ ...formData, zaver: e.target.value })}
-                    placeholder="Shrnutí nejdůležitějších zjištění a doporučení..."
+                    value={formData.vysledekOduvodneni || ''}
+                    onChange={(e) => setFormData({ ...formData, vysledekOduvodneni: e.target.value })}
+                    placeholder="Podrobné zdůvodnění proč není zařízení schopno provozu..."
                   />
                 </div>
+              ) : (
+                <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
+                  <p className="font-medium whitespace-pre-wrap text-red-800">
+                    {revize?.vysledekOduvodneni || <span className="text-red-400 italic">Nevyplněno</span>}
+                  </p>
+                </div>
+              )}
+            </Card>
+          )}
+
+          {/* Závěr revize */}
+          <Card title="✅ Závěr revize">
+            {isEditing ? (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Závěr revize
+                </label>
+                <textarea
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={5}
+                  value={formData.zaver || ''}
+                  onChange={(e) => setFormData({ ...formData, zaver: e.target.value })}
+                  placeholder="Shrnutí nejdůležitějších zjištění a doporučení..."
+                />
               </div>
             ) : (
-              <div className="space-y-4">
-                {revize.typRevize === 'mimořádná' && revize.duvodMimoradne && (
-                  <div>
-                    <p className="text-sm text-slate-500">Důvod mimořádné revize</p>
-                    <p className="font-medium">{revize.duvodMimoradne}</p>
-                  </div>
-                )}
-
-                {revize.rozsahRevize && (
-                  <div>
-                    <p className="text-sm text-slate-500">Vymezení rozsahu revize</p>
-                    <p className="font-medium whitespace-pre-wrap">{revize.rozsahRevize}</p>
-                  </div>
-                )}
-
-                {revize.podklady && (
-                  <div>
-                    <p className="text-sm text-slate-500">Seznam podkladů</p>
-                    <p className="font-medium whitespace-pre-wrap">{revize.podklady}</p>
-                  </div>
-                )}
-
-                {revize.provedeneUkony && (
-                  <div>
-                    <p className="text-sm text-slate-500">Soupis provedených úkonů</p>
-                    <p className="font-medium whitespace-pre-wrap">{revize.provedeneUkony}</p>
-                  </div>
-                )}
-
-                {revize.vyhodnoceniPredchozich && (
-                  <div>
-                    <p className="text-sm text-slate-500">Vyhodnocení předchozích revizí</p>
-                    <p className="font-medium whitespace-pre-wrap">{revize.vyhodnoceniPredchozich}</p>
-                  </div>
-                )}
-
-                {revize.vysledek === 'neschopno' && revize.vysledekOduvodneni && (
-                  <div>
-                    <p className="text-sm text-slate-500">Odůvodnění neschopnosti provozu</p>
-                    <p className="font-medium whitespace-pre-wrap">{revize.vysledekOduvodneni}</p>
-                  </div>
-                )}
-
-                {revize.zaver && (
-                  <div>
-                    <p className="text-sm text-slate-500">Závěr revize</p>
-                    <p className="font-medium whitespace-pre-wrap">{revize.zaver}</p>
-                  </div>
-                )}
-
-                {!revize.rozsahRevize && !revize.podklady && 
-                 !revize.provedeneUkony && !revize.vyhodnoceniPredchozich && !revize.vysledekOduvodneni && !revize.zaver && (
-                  <p className="text-slate-500 italic">Zatím nebyly vyplněny detailní informace</p>
-                )}
-              </div>
+              <p className="font-medium whitespace-pre-wrap bg-slate-50 p-3 rounded-lg min-h-[80px]">
+                {revize?.zaver || <span className="text-slate-400 italic">Nevyplněno</span>}
+              </p>
             )}
           </Card>
 
