@@ -44,6 +44,7 @@ export function SablonyPage() {
         nazev: 'Ukázková revize',
         adresa: 'Příkladná 123, Praha 1',
         objednatel: 'Jan Novák',
+        kategorieRevize: 'elektro',
         datum: new Date().toISOString(),
         datumPlatnosti: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
         termin: 12,
