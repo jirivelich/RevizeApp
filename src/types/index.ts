@@ -39,8 +39,13 @@ export interface Revize {
   vysledekOduvodneni?: string; // l) Odůvodnění pokud není schopno provozu
   zaver?: string; // Závěr/shrnutí revize
   
-  // c) Vymezení rozsahu revize
-  rozsahRevize?: string;
+  // 1. Vymezení rozsahu revize
+  rozsahRevize?: string;        // 1.1 Předmět revize je
+  predmetNeni?: string;         // 1.2 Předmětem revize není
+  
+  // 2. Charakteristika zařízení
+  napetovaSoustava?: string;    // 2.1 Napěťová soustava (např. "3+N+PE AC 50Hz 400/230V TN-C-S")
+  ochranaOpatreni?: string;     // 2.2 Ochrana před úrazem - JSON pole opatření
   
   // h) Seznam podkladů
   podklady?: string; // Projekty, předchozí revize, atd.

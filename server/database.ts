@@ -77,6 +77,9 @@ export async function initializeDatabase() {
         vysledek TEXT,
         "vysledekOduvodneni" TEXT,
         "rozsahRevize" TEXT,
+        "predmetNeni" TEXT,
+        "napetovaSoustava" TEXT,
+        "ochranaOpatreni" TEXT,
         podklady TEXT,
         "vyhodnoceniPredchozich" TEXT,
         "pouzitePristroje" TEXT,
@@ -321,6 +324,10 @@ export async function initializeDatabase() {
       'ALTER TABLE "mericiPristroj" DROP CONSTRAINT IF EXISTS "mericiPristroj_vyrobniCislo_key"',
       // Přidat kategorii revize (elektro, hromosvod, stroje)
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "kategorieRevize" TEXT DEFAULT \'elektro\'',
+      // Nová pole pro revidované zařízení
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "predmetNeni" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "napetovaSoustava" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "ochranaOpatreni" TEXT',
     ];
     
     for (const migration of migrations) {

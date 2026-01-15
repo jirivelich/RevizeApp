@@ -645,7 +645,7 @@ export function RevizeDetailPage() {
 
   const tabs = [
     { id: 'info', label: 'Základní údaje', icon: '📋' },
-    { id: 'dokumentace', label: 'Dokumentace', icon: '📑' },
+    { id: 'dokumentace', label: 'Revidované zařízení', icon: '🔌' },
     { id: 'rozvadece', label: `Rozvaděče (${rozvadece.length})`, icon: '⚡' },
     { id: 'zavady', label: `Závady (${zavady.length})`, icon: '⚠️' },
     { id: 'mistnosti', label: `Místnosti (${mistnosti.length})`, icon: '🏠' },
@@ -1150,7 +1150,7 @@ export function RevizeDetailPage() {
         </div>
       )}
 
-      {/* Záložka DOKUMENTACE */}
+      {/* Záložka REVIDOVANÉ ZAŘÍZENÍ */}
       {activeTab === 'dokumentace' && (
         <div className="space-y-4">
           {/* Tlačítka pro úpravy */}
@@ -1189,149 +1189,192 @@ export function RevizeDetailPage() {
             </Card>
           )}
 
-          {/* Rozsah revize a podklady */}
-          <Card title="📑 Rozsah revize a podklady">
+          {/* 1. Vymezení rozsahu revize */}
+          <Card title="1. Vymezení rozsahu revize">
             {isEditing ? (
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Vymezení rozsahu revize
+                    1.1 Předmětem revize je:
                   </label>
                   <textarea
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={3}
                     value={formData.rozsahRevize || ''}
                     onChange={(e) => setFormData({ ...formData, rozsahRevize: e.target.value })}
-                    placeholder="Co je předmětem revize..."
+                    placeholder="Elektrická instalace objektu, rozváděče, obvody..."
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Seznam podkladů
+                    1.2 Předmětem revize není:
                   </label>
                   <textarea
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={3}
-                    value={formData.podklady || ''}
-                    onChange={(e) => setFormData({ ...formData, podklady: e.target.value })}
-                    placeholder="Projekty, předchozí revize, dokumentace..."
+                    value={formData.predmetNeni || ''}
+                    onChange={(e) => setFormData({ ...formData, predmetNeni: e.target.value })}
+                    placeholder="Spotřebiče, zařízení dodaná nájemci, hromosvod..."
                   />
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
                 <div>
-                  <p className="text-sm text-slate-500 mb-1">Vymezení rozsahu revize</p>
+                  <p className="text-sm font-medium text-slate-600 mb-1">1.1 Předmětem revize je:</p>
                   <p className="font-medium whitespace-pre-wrap bg-slate-50 p-3 rounded-lg min-h-[60px]">
                     {revize?.rozsahRevize || <span className="text-slate-400 italic">Nevyplněno</span>}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500 mb-1">Seznam podkladů</p>
+                  <p className="text-sm font-medium text-slate-600 mb-1">1.2 Předmětem revize není:</p>
                   <p className="font-medium whitespace-pre-wrap bg-slate-50 p-3 rounded-lg min-h-[60px]">
-                    {revize?.podklady || <span className="text-slate-400 italic">Nevyplněno</span>}
+                    {revize?.predmetNeni || <span className="text-slate-400 italic">Nevyplněno</span>}
                   </p>
                 </div>
               </div>
             )}
           </Card>
 
-          {/* Provedené úkony */}
-          <Card title="🔧 Provedené úkony">
+          {/* 2. Charakteristika zařízení */}
+          <Card title="2. Charakteristika zařízení">
             {isEditing ? (
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Soupis provedených úkonů
-                </label>
-                <textarea
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={4}
-                  value={formData.provedeneUkony || ''}
-                  onChange={(e) => setFormData({ ...formData, provedeneUkony: e.target.value })}
-                  placeholder="Prohlídka, zkoušky, měření..."
-                />
-              </div>
-            ) : (
-              <p className="font-medium whitespace-pre-wrap bg-slate-50 p-3 rounded-lg min-h-[60px]">
-                {revize?.provedeneUkony || <span className="text-slate-400 italic">Nevyplněno</span>}
-              </p>
-            )}
-          </Card>
-
-          {/* Vyhodnocení předchozích revizí */}
-          <Card title="📊 Vyhodnocení předchozích revizí">
-            {isEditing ? (
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Vyhodnocení předchozích revizí
-                </label>
-                <textarea
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={4}
-                  value={formData.vyhodnoceniPredchozich || ''}
-                  onChange={(e) => setFormData({ ...formData, vyhodnoceniPredchozich: e.target.value })}
-                  placeholder="Zhodnocení odstranění závad z předchozí revize..."
-                />
-              </div>
-            ) : (
-              <p className="font-medium whitespace-pre-wrap bg-slate-50 p-3 rounded-lg min-h-[60px]">
-                {revize?.vyhodnoceniPredchozich || <span className="text-slate-400 italic">Nevyplněno</span>}
-              </p>
-            )}
-          </Card>
-
-          {/* Odůvodnění neschopnosti - zobrazí se pouze pokud je výsledek neschopno */}
-          {(formData.vysledek === 'neschopno' || revize?.vysledek === 'neschopno') && (
-            <Card title="⚠️ Odůvodnění neschopnosti provozu">
-              {isEditing ? (
+              <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Odůvodnění neschopnosti provozu
+                    2.1 Napěťová soustava
                   </label>
-                  <textarea
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={4}
-                    value={formData.vysledekOduvodneni || ''}
-                    onChange={(e) => setFormData({ ...formData, vysledekOduvodneni: e.target.value })}
-                    placeholder="Podrobné zdůvodnění proč není zařízení schopno provozu..."
+                  <Select
+                    value={formData.napetovaSoustava || ''}
+                    onChange={(e) => setFormData({ ...formData, napetovaSoustava: e.target.value })}
+                    options={[
+                      { value: '', label: '-- Vyberte napěťovou soustavu --' },
+                      { value: '3+N+PE AC 50Hz 400/230V TN-C-S', label: '3+N+PE AC 50Hz 400/230V TN-C-S' },
+                      { value: '3+N+PE AC 50Hz 400/230V TN-S', label: '3+N+PE AC 50Hz 400/230V TN-S' },
+                      { value: '3+PEN AC 50Hz 400/230V TN-C', label: '3+PEN AC 50Hz 400/230V TN-C' },
+                      { value: '1+N+PE AC 50Hz 230V TN-S', label: '1+N+PE AC 50Hz 230V TN-S' },
+                      { value: '1+N+PE AC 50Hz 230V TN-C-S', label: '1+N+PE AC 50Hz 230V TN-C-S' },
+                      { value: '3+PE AC 50Hz 400V TT', label: '3+PE AC 50Hz 400V TT' },
+                      { value: '1+PE AC 50Hz 230V TT', label: '1+PE AC 50Hz 230V TT' },
+                      { value: 'DC 24V SELV', label: 'DC 24V SELV' },
+                      { value: 'DC 48V PELV', label: 'DC 48V PELV' },
+                    ]}
                   />
                 </div>
-              ) : (
-                <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
-                  <p className="font-medium whitespace-pre-wrap text-red-800">
-                    {revize?.vysledekOduvodneni || <span className="text-red-400 italic">Nevyplněno</span>}
-                  </p>
-                </div>
-              )}
-            </Card>
-          )}
 
-          {/* Závěr revize */}
-          <Card title="✅ Závěr revize">
-            {isEditing ? (
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Závěr revize
-                </label>
-                <textarea
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={5}
-                  value={formData.zaver || ''}
-                  onChange={(e) => setFormData({ ...formData, zaver: e.target.value })}
-                  placeholder="Shrnutí nejdůležitějších zjištění a doporučení..."
-                />
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    2.2 Ochrana před úrazem elektrickým proudem
+                  </label>
+                  <p className="text-xs text-slate-500 mb-2">Zaškrtněte opatření použitá v objektu:</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {[
+                      { id: 'zakladni-izolace', label: 'Základní izolace živých částí' },
+                      { id: 'kryty-pricka', label: 'Přepážky nebo kryty' },
+                      { id: 'zamezeni-dotyk', label: 'Zábrany nebo ochrana polohou' },
+                      { id: 'selv', label: 'Ochrana malým napětím SELV' },
+                      { id: 'pelv', label: 'Ochrana malým napětím PELV' },
+                      { id: 'ochrane-pospojovani', label: 'Ochranné pospojování' },
+                      { id: 'samocine-odpojeni', label: 'Samočinné odpojení od zdroje' },
+                      { id: 'proudovy-chranic', label: 'Doplňková ochrana proudovým chráničem' },
+                      { id: 'ochranne-oddeleni', label: 'Ochranné oddělení obvodů' },
+                      { id: 'dvojita-izolace', label: 'Dvojitá nebo zesílená izolace' },
+                      { id: 'nevodive-prostredi', label: 'Nevodivé prostředí' },
+                      { id: 'neuzemene-pospojeni', label: 'Neuzemeného místního pospojování' },
+                    ].map((opatreni) => {
+                      const currentOpatreni = formData.ochranaOpatreni 
+                        ? JSON.parse(formData.ochranaOpatreni) 
+                        : [];
+                      const isChecked = currentOpatreni.includes(opatreni.id);
+                      
+                      return (
+                        <label key={opatreni.id} className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              let updated = [...currentOpatreni];
+                              if (e.target.checked) {
+                                updated.push(opatreni.id);
+                              } else {
+                                updated = updated.filter(id => id !== opatreni.id);
+                              }
+                              setFormData({ ...formData, ochranaOpatreni: JSON.stringify(updated) });
+                            }}
+                            className="w-4 h-4 text-blue-600 rounded"
+                          />
+                          <span className="text-sm">{opatreni.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             ) : (
-              <p className="font-medium whitespace-pre-wrap bg-slate-50 p-3 rounded-lg min-h-[80px]">
-                {revize?.zaver || <span className="text-slate-400 italic">Nevyplněno</span>}
-              </p>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-600 mb-1">2.1 Napěťová soustava:</p>
+                  <p className="font-medium bg-blue-50 p-3 rounded-lg text-blue-800">
+                    {revize?.napetovaSoustava || <span className="text-slate-400 italic">Nevyplněno</span>}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-600 mb-2">2.2 Ochrana před úrazem elektrickým proudem:</p>
+                  {revize?.ochranaOpatreni ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="bg-slate-100">
+                            <th className="border border-slate-300 px-3 py-2 text-left text-sm font-medium">Druh ochrany</th>
+                            <th className="border border-slate-300 px-3 py-2 text-center text-sm font-medium w-20">Použito</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[
+                            { id: 'zakladni-izolace', label: 'Základní izolace živých částí' },
+                            { id: 'kryty-pricka', label: 'Přepážky nebo kryty' },
+                            { id: 'zamezeni-dotyk', label: 'Zábrany nebo ochrana polohou' },
+                            { id: 'selv', label: 'Ochrana malým napětím SELV' },
+                            { id: 'pelv', label: 'Ochrana malým napětím PELV' },
+                            { id: 'ochrane-pospojovani', label: 'Ochranné pospojování' },
+                            { id: 'samocine-odpojeni', label: 'Samočinné odpojení od zdroje' },
+                            { id: 'proudovy-chranic', label: 'Doplňková ochrana proudovým chráničem' },
+                            { id: 'ochranne-oddeleni', label: 'Ochranné oddělení obvodů' },
+                            { id: 'dvojita-izolace', label: 'Dvojitá nebo zesílená izolace' },
+                            { id: 'nevodive-prostredi', label: 'Nevodivé prostředí' },
+                            { id: 'neuzemene-pospojeni', label: 'Neuzemené místní pospojování' },
+                          ].map((opatreni) => {
+                            const currentOpatreni = JSON.parse(revize.ochranaOpatreni || '[]');
+                            const isUsed = currentOpatreni.includes(opatreni.id);
+                            
+                            return (
+                              <tr key={opatreni.id} className={isUsed ? 'bg-green-50' : ''}>
+                                <td className="border border-slate-300 px-3 py-2 text-sm">{opatreni.label}</td>
+                                <td className="border border-slate-300 px-3 py-2 text-center">
+                                  {isUsed ? (
+                                    <span className="text-green-600 font-bold">✓</span>
+                                  ) : (
+                                    <span className="text-slate-300">—</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-slate-400 italic bg-slate-50 p-3 rounded-lg">Nevyplněno</p>
+                  )}
+                </div>
+              </div>
             )}
           </Card>
 
-          {/* Použitá měřící zařízení */}
+          {/* 2.3 Použité měřicí přístroje */}
           <Card 
-            title="Použitá měřící zařízení"
+            title="2.3 Použité měřicí přístroje"
             actions={
               <Button size="sm" onClick={() => setIsPristrojModalOpen(true)}>
                 + Přidat přístroj
@@ -1339,37 +1382,70 @@ export function RevizeDetailPage() {
             }
           >
             {pouzitePristroje.length > 0 ? (
-              <div className="space-y-2">
-                {pouzitePristroje.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <div className="flex-1">
-                      <p className="font-medium">{p.nazev}</p>
-                      <p className="text-sm text-slate-500">
-                        {p.vyrobce} {p.model} • V.č.: {p.vyrobniCislo}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        Kalibrace: {new Date(p.datumKalibrace).toLocaleDateString('cs-CZ')} — 
-                        Platnost: {new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}
-                      </p>
-                    </div>
-                    <Button 
-                      variant="danger" 
-                      size="sm"
-                      onClick={async () => {
-                        if (revize?.id && p.id) {
-                          await revizePristrojService.removeFromRevize(revize.id, p.id);
-                          loadData(revize.id);
-                        }
-                      }}
-                    >
-                      Odebrat
-                    </Button>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-slate-100">
+                      <th className="border border-slate-300 px-3 py-2 text-left text-sm font-medium">Název</th>
+                      <th className="border border-slate-300 px-3 py-2 text-left text-sm font-medium">Výrobce/Model</th>
+                      <th className="border border-slate-300 px-3 py-2 text-left text-sm font-medium">Výrobní číslo</th>
+                      <th className="border border-slate-300 px-3 py-2 text-center text-sm font-medium">Platnost kalibrace</th>
+                      <th className="border border-slate-300 px-3 py-2 text-center text-sm font-medium w-20">Akce</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pouzitePristroje.map((p) => (
+                      <tr key={p.id} className="hover:bg-slate-50">
+                        <td className="border border-slate-300 px-3 py-2 text-sm font-medium">{p.nazev}</td>
+                        <td className="border border-slate-300 px-3 py-2 text-sm">{p.vyrobce} {p.model}</td>
+                        <td className="border border-slate-300 px-3 py-2 text-sm font-mono">{p.vyrobniCislo}</td>
+                        <td className="border border-slate-300 px-3 py-2 text-sm text-center">
+                          {new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}
+                        </td>
+                        <td className="border border-slate-300 px-3 py-2 text-center">
+                          <Button 
+                            variant="danger" 
+                            size="sm"
+                            onClick={async () => {
+                              if (revize?.id && p.id) {
+                                await revizePristrojService.removeFromRevize(revize.id, p.id);
+                                loadData(revize.id);
+                              }
+                            }}
+                          >
+                            ✕
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ) : (
               <p className="text-center text-slate-500 py-4">
                 Zatím nejsou přiřazeny žádné měřící přístroje.
+              </p>
+            )}
+          </Card>
+
+          {/* 2.4 Podklady pro provedení revize */}
+          <Card title="2.4 Podklady pro provedení revize">
+            {isEditing ? (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Seznam podkladů
+                </label>
+                <textarea
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={4}
+                  value={formData.podklady || ''}
+                  onChange={(e) => setFormData({ ...formData, podklady: e.target.value })}
+                  placeholder="Projekty, předchozí revize, protokoly o měření..."
+                />
+              </div>
+            ) : (
+              <p className="font-medium whitespace-pre-wrap bg-slate-50 p-3 rounded-lg min-h-[60px]">
+                {revize?.podklady || <span className="text-slate-400 italic">Nevyplněno</span>}
               </p>
             )}
           </Card>
