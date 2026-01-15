@@ -640,8 +640,15 @@ async function startServer() {
   app.get('/api/sablony', authMiddleware, async (req, res) => {
     try {
       const result = await pool.query('SELECT * FROM sablona ORDER BY nazev');
-      res.json(result.rows);
+      // Parsovat JSON pole
+      const sablony = result.rows.map(row => ({
+        ...row,
+        sekce: row.sekce ? JSON.parse(row.sekce) : [],
+        sloupceOkruhu: row.sloupceOkruhu ? JSON.parse(row.sloupceOkruhu) : [],
+      }));
+      res.json(sablony);
     } catch (error) {
+      console.error('Error getting sablony:', error);
       res.status(500).json({ error: (error as Error).message });
     }
   });
@@ -649,8 +656,17 @@ async function startServer() {
   app.get('/api/sablony/vychozi/get', authMiddleware, async (req, res) => {
     try {
       const result = await pool.query('SELECT * FROM sablona WHERE "jeVychozi" = 1 LIMIT 1');
-      res.json(result.rows[0] || null);
+      if (result.rows.length === 0) {
+        return res.json(null);
+      }
+      const row = result.rows[0];
+      res.json({
+        ...row,
+        sekce: row.sekce ? JSON.parse(row.sekce) : [],
+        sloupceOkruhu: row.sloupceOkruhu ? JSON.parse(row.sloupceOkruhu) : [],
+      });
     } catch (error) {
+      console.error('Error getting vychozi sablona:', error);
       res.status(500).json({ error: (error as Error).message });
     }
   });
@@ -659,8 +675,14 @@ async function startServer() {
     try {
       const result = await pool.query('SELECT * FROM sablona WHERE id = $1', [req.params.id]);
       if (result.rows.length === 0) return res.status(404).json({ error: 'Šablona nenalezena' });
-      res.json(result.rows[0]);
+      const row = result.rows[0];
+      res.json({
+        ...row,
+        sekce: row.sekce ? JSON.parse(row.sekce) : [],
+        sloupceOkruhu: row.sloupceOkruhu ? JSON.parse(row.sloupceOkruhu) : [],
+      });
     } catch (error) {
+      console.error('Error getting sablona:', error);
       res.status(500).json({ error: (error as Error).message });
     }
   });
@@ -669,8 +691,27 @@ async function startServer() {
     try {
       const now = new Date().toISOString();
       const data = { ...req.body };
+      
+      // Konvertovat boolean na integer pro PostgreSQL
+      const booleanFields = ['jeVychozi', 'zahlaviZobrazitLogo', 'zahlaviZobrazitFirmu', 'zahlaviZobrazitTechnika',
+        'uvodniStranaZobrazit', 'uvodniStranaZobrazitFirmu', 'uvodniStranaZobrazitTechnika', 
+        'uvodniStranaZobrazitObjekt', 'uvodniStranaZobrazitVyhodnoceni', 'uvodniStranaZobrazitPodpisy',
+        'uvodniStranaNadpisRamecek', 'uvodniStranaRamecekUdaje', 'uvodniStranaRamecekObjekt', 
+        'uvodniStranaRamecekVyhodnoceni', 'zapatiZobrazitCisloStranky', 'zapatiZobrazitDatum'];
+      
+      for (const field of booleanFields) {
+        if (field in data) {
+          data[field] = data[field] ? 1 : 0;
+        }
+      }
+      
       if (data.sekce) data.sekce = JSON.stringify(data.sekce);
       if (data.sloupceOkruhu) data.sloupceOkruhu = JSON.stringify(data.sloupceOkruhu);
+      
+      // Pokud je tato šablona výchozí, odebrat příznak z ostatních
+      if (data.jeVychozi === 1) {
+        await pool.query('UPDATE sablona SET "jeVychozi" = 0 WHERE "jeVychozi" = 1');
+      }
       
       const keys = Object.keys(data);
       const values = Object.values(data);
@@ -684,6 +725,7 @@ async function startServer() {
       
       res.json({ id: result.rows[0].id });
     } catch (error) {
+      console.error('Error creating sablona:', error);
       res.status(500).json({ error: (error as Error).message });
     }
   });
@@ -692,8 +734,27 @@ async function startServer() {
     try {
       const now = new Date().toISOString();
       const data = { ...req.body, updatedAt: now };
+      
+      // Konvertovat boolean na integer pro PostgreSQL
+      const booleanFields = ['jeVychozi', 'zahlaviZobrazitLogo', 'zahlaviZobrazitFirmu', 'zahlaviZobrazitTechnika',
+        'uvodniStranaZobrazit', 'uvodniStranaZobrazitFirmu', 'uvodniStranaZobrazitTechnika', 
+        'uvodniStranaZobrazitObjekt', 'uvodniStranaZobrazitVyhodnoceni', 'uvodniStranaZobrazitPodpisy',
+        'uvodniStranaNadpisRamecek', 'uvodniStranaRamecekUdaje', 'uvodniStranaRamecekObjekt', 
+        'uvodniStranaRamecekVyhodnoceni', 'zapatiZobrazitCisloStranky', 'zapatiZobrazitDatum'];
+      
+      for (const field of booleanFields) {
+        if (field in data) {
+          data[field] = data[field] ? 1 : 0;
+        }
+      }
+      
       if (data.sekce) data.sekce = JSON.stringify(data.sekce);
       if (data.sloupceOkruhu) data.sloupceOkruhu = JSON.stringify(data.sloupceOkruhu);
+      
+      // Pokud je tato šablona výchozí, odebrat příznak z ostatních
+      if (data.jeVychozi === 1) {
+        await pool.query('UPDATE sablona SET "jeVychozi" = 0 WHERE "jeVychozi" = 1 AND id != $1', [req.params.id]);
+      }
       
       const keys = Object.keys(data);
       const values = Object.values(data);
@@ -703,6 +764,7 @@ async function startServer() {
       
       res.json({ success: true });
     } catch (error) {
+      console.error('Error updating sablona:', error);
       res.status(500).json({ error: (error as Error).message });
     }
   });
