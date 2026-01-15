@@ -91,7 +91,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       if (showFirma) {
         doc.setFillColor(...primaryColor);
         doc.rect(margin, yPos, halfWidth, 6, 'F');
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('Roboto', 'bold');
         doc.setFontSize(baseFontSize - 1);
         doc.setTextColor(255, 255, 255);
         doc.text(t('FIRMA'), margin + 2, yPos + 4);
@@ -131,12 +131,12 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
         }
         
         doc.setFontSize(baseFontSize);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('Roboto', 'bold');
         doc.setTextColor(0, 0, 0);
         doc.text(t(firmaJmeno), firmaX, firmaY);
         firmaY += 5;
         
-        doc.setFont('helvetica', 'normal');
+        doc.setFont('Roboto', 'normal');
         doc.setFontSize(baseFontSize - 1);
         doc.setTextColor(80, 80, 80);
         if (firmaAdresa) {
@@ -153,19 +153,19 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
         const rightX = margin + halfWidth + 5;
         doc.setFillColor(...primaryColor);
         doc.rect(rightX, startY, halfWidth, 6, 'F');
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('Roboto', 'bold');
         doc.setFontSize(baseFontSize - 1);
         doc.setTextColor(255, 255, 255);
         doc.text(t('REVIZNI TECHNIK'), rightX + 2, startY + 4);
         
         let technikY = startY + 10;
         doc.setFontSize(baseFontSize);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('Roboto', 'bold');
         doc.setTextColor(0, 0, 0);
         doc.text(t(nastaveni?.reviznniTechnikJmeno || '-'), rightX + 2, technikY);
         technikY += 5;
         
-        doc.setFont('helvetica', 'normal');
+        doc.setFont('Roboto', 'normal');
         doc.setFontSize(baseFontSize - 1);
         doc.setTextColor(80, 80, 80);
         doc.text(t(`Ev. c.: ${nastaveni?.reviznniTechnikCisloOpravneni || '-'}`), rightX + 2, technikY);
@@ -196,7 +196,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     }
     
     doc.setFontSize(nadpisFontSize);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setTextColor(...primaryColor);
     doc.text(t(nadpis), pageWidth / 2, yPos + (zobrazitRamecek ? 12 : 8), { align: 'center' });
     yPos += zobrazitRamecek ? 22 : 14;
@@ -207,7 +207,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       : 'mimoradna';
     
     doc.setFontSize(baseFontSize);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setTextColor(0, 0, 0);
     
     // Tabulka s hlavními údaji
@@ -226,12 +226,12 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
         if (showBorder) {
           doc.rect(x, y, cell.width, height);
         }
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('Roboto', 'bold');
         doc.setFontSize(baseFontSize - 2);
         doc.setTextColor(80, 80, 80);
         doc.text(t(cell.label), x + 2, y + 3);
         
-        doc.setFont('helvetica', 'normal');
+        doc.setFont('Roboto', 'normal');
         doc.setFontSize(baseFontSize - 1);
         doc.setTextColor(0, 0, 0);
         doc.text(t(cell.value), x + 2, y + height - 2);
@@ -273,7 +273,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     if (sablona.uvodniStranaZobrazitObjekt !== false) {
       doc.setFillColor(240, 240, 240);
       doc.rect(margin, yPos, contentWidth, 6, 'F');
-      doc.setFont('helvetica', 'bold');
+      doc.setFont('Roboto', 'bold');
       doc.setFontSize(baseFontSize - 1);
       doc.setTextColor(0, 0, 0);
       doc.text(t('UDAJE O OBJEKTU'), margin + 2, yPos + 4);
@@ -300,7 +300,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       yPos += 2;
       doc.setFillColor(240, 240, 240);
       doc.rect(margin, yPos, contentWidth, 6, 'F');
-      doc.setFont('helvetica', 'bold');
+      doc.setFont('Roboto', 'bold');
       doc.setFontSize(baseFontSize - 1);
       doc.setTextColor(0, 0, 0);
       doc.text(t('VYHODNOCENI REVIZE'), margin + 2, yPos + 4);
@@ -330,7 +330,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       }
       
       doc.setFontSize(baseFontSize + 1);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont('Roboto', 'bold');
       doc.setTextColor(...vysledekColor);
       doc.text(vysledekText, pageWidth / 2, yPos + 6, { align: 'center' });
       
@@ -347,7 +347,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       
       doc.setFillColor(240, 240, 240);
       doc.rect(margin, podpisyY, contentWidth, 6, 'F');
-      doc.setFont('helvetica', 'bold');
+      doc.setFont('Roboto', 'bold');
       doc.setFontSize(baseFontSize - 1);
       doc.setTextColor(0, 0, 0);
       doc.text(t('PODPISY'), margin + 2, podpisyY + 4);
@@ -359,7 +359,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       
       // Popisky
       doc.setFontSize(baseFontSize - 1);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('Roboto', 'normal');
       doc.setTextColor(80, 80, 80);
       doc.text(t('Revizni technik:'), leftX, podpisyY);
       doc.text(t('Objednatel:'), rightX, podpisyY);
@@ -467,7 +467,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
 
     // Nadpis PŘÍLOHY - stejný styl jako ostatní sekce
     doc.setFontSize(baseFontSize + 2);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setTextColor(...primaryColor);
     doc.text(t(`${sectionNumber}. PRILOHY`), margin, yPos);
     yPos += 2;
@@ -478,7 +478,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
 
     // Seznam příloh
     doc.setFontSize(baseFontSize);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setTextColor(0, 0, 0);
     doc.text(t('Tento dokument obsahuje nasledujici prilohy:'), margin, yPos);
     yPos += 8;
@@ -488,7 +488,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       const nazvy: Record<string, string> = {
         'zavady': 'Zjistene zavady s fotodokumentaci',
       };
-      doc.setFont('helvetica', 'bold');
+      doc.setFont('Roboto', 'bold');
       doc.text(t(`Priloha ${prilohaIndex}: ${nazvy[s.id] || s.nazev}`), margin + 5, yPos);
       yPos += 6;
       prilohaIndex++;
@@ -508,7 +508,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
   function renderSectionTitle(title: string) {
     addPageIfNeeded(15);
     doc.setFontSize(baseFontSize + 2);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setTextColor(...primaryColor);
     doc.text(t(title), margin, yPos);
     yPos += 2;
@@ -536,6 +536,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       body: tableData,
       theme: 'plain',
       styles: {
+        font: 'Roboto',
         fontSize: baseFontSize,
         cellPadding: 2,
       },
@@ -568,6 +569,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       body: tableData,
       theme: 'plain',
       styles: {
+        font: 'Roboto',
         fontSize: baseFontSize,
         cellPadding: 2,
       },
@@ -595,12 +597,12 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     // Rozsah revize
     if (revize.rozsahRevize) {
       doc.setFontSize(baseFontSize);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont('Roboto', 'bold');
       doc.setTextColor(80, 80, 80);
       doc.text(t('Vymezeni rozsahu revize:'), margin, yPos);
       yPos += 5;
       
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('Roboto', 'normal');
       doc.setTextColor(0, 0, 0);
       const rozsahLines = doc.splitTextToSize(t(revize.rozsahRevize), pageWidth - 2 * margin);
       doc.text(rozsahLines, margin, yPos);
@@ -614,12 +616,12 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       addPageIfNeeded(Math.min(20 + podkladyLines.length * 5, 50));
       
       doc.setFontSize(baseFontSize);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont('Roboto', 'bold');
       doc.setTextColor(80, 80, 80);
       doc.text(t('Seznam podkladu:'), margin, yPos);
       yPos += 5;
       
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('Roboto', 'normal');
       doc.setTextColor(0, 0, 0);
       doc.text(podkladyLines, margin, yPos);
       yPos += podkladyLines.length * 5 + 8;
@@ -644,7 +646,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     renderSectionTitle(`${sectionNumber}. Provedene ukony`);
     
     doc.setFontSize(baseFontSize);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setTextColor(0, 0, 0);
     doc.text(ukonyLines, margin, yPos);
     yPos += ukonyLines.length * 5 + 10;
@@ -666,7 +668,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     renderSectionTitle(`${sectionNumber}. Vyhodnoceni predchozich revizi`);
     
     doc.setFontSize(baseFontSize);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setTextColor(0, 0, 0);
     doc.text(vyhodnoceniLines, margin, yPos);
     yPos += vyhodnoceniLines.length * 5 + 10;
@@ -703,6 +705,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       body: tableData,
       theme: 'striped',
       styles: {
+        font: 'Roboto',
         fontSize: baseFontSize - 1,
         cellPadding: 2,
       },
@@ -733,14 +736,14 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       
       // Název rozvaděče
       doc.setFontSize(baseFontSize + 1);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont('Roboto', 'bold');
       doc.setTextColor(80, 80, 80);
       doc.text(t(`${rozvadec.nazev} (${rozvadec.oznaceni})`), margin, yPos);
       yPos += 6;
 
       // Info o rozvaděči
       doc.setFontSize(baseFontSize - 1);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('Roboto', 'normal');
       doc.setTextColor(100, 100, 100);
       doc.text(t(`Umisteni: ${rozvadec.umisteni} | Typ: ${rozvadec.typRozvadece || '-'} | Kryti: ${rozvadec.stupenKryti}`), margin, yPos);
       yPos += 8;
@@ -779,7 +782,8 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
           body: bodyData,
           theme: 'striped',
           styles: {
-            fontSize: baseFontSize - 1,
+        font: 'Roboto',
+        fontSize: baseFontSize - 1,
             cellPadding: 2,
           },
           headStyles: {
@@ -839,6 +843,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       body: tableData,
       theme: 'plain',
       styles: {
+        font: 'Roboto',
         fontSize: baseFontSize,
         cellPadding: 2,
       },
@@ -863,7 +868,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     // Nadpis sekce
     doc.setFillColor(...primaryColor);
     doc.rect(landscapeMargin, yPos, landscapePageWidth - 2 * landscapeMargin, 8, 'F');
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setFontSize(baseFontSize + 1);
     doc.setTextColor(255, 255, 255);
     doc.text(t('Priloha 1: Zjistene zavady s fotodokumentaci'), landscapeMargin + 3, yPos + 5.5);
@@ -887,7 +892,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
 
       // Nadpis závady
       doc.setFontSize(baseFontSize);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont('Roboto', 'bold');
       doc.setTextColor(0, 0, 0);
       doc.text(t(`Zavada #${index + 1}`), landscapeMargin, yPos);
       yPos += 6;
@@ -915,7 +920,8 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
         ],
         theme: 'plain',
         styles: {
-          fontSize: baseFontSize - 1,
+        font: 'Roboto',
+        fontSize: baseFontSize - 1,
           cellPadding: 2,
         },
         columnStyles: {
@@ -999,7 +1005,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       
       // Nadpis místnosti
       doc.setFontSize(baseFontSize);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont('Roboto', 'bold');
       doc.setTextColor(0, 0, 0);
       doc.text(t(`${index + 1}. ${m.nazev}`), margin, yPos);
       yPos += 6;
@@ -1016,7 +1022,8 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
         ]],
         theme: 'striped',
         styles: {
-          fontSize: baseFontSize - 1,
+        font: 'Roboto',
+        fontSize: baseFontSize - 1,
           cellPadding: 3,
         },
         headStyles: {
@@ -1035,7 +1042,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       if (mistnostZarizeni.length > 0) {
         // Podnádpis pro zařízení
         doc.setFontSize(baseFontSize - 1);
-        doc.setFont('helvetica', 'italic');
+        doc.setFont('Roboto', 'italic');
         doc.setTextColor(80, 80, 80);
         doc.text(t('Zarizeni v mistnosti:'), margin + 5, yPos);
         yPos += 5;
@@ -1056,7 +1063,8 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
           body: zarizeniBodyData,
           theme: 'striped',
           styles: {
-            fontSize: baseFontSize - 2,
+        font: 'Roboto',
+        fontSize: baseFontSize - 2,
             cellPadding: 2,
           },
           headStyles: {
@@ -1097,7 +1105,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       : [100, 100, 100]; // gray
 
     doc.setFontSize(baseFontSize + 2);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'bold');
     doc.setTextColor(...vysledekColor);
     
     // Orámovaný box pro výsledek
@@ -1114,12 +1122,12 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     if (revize.vysledek === 'neschopno' && revize.vysledekOduvodneni) {
       addPageIfNeeded(30);
       doc.setFontSize(baseFontSize);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont('Roboto', 'bold');
       doc.setTextColor(239, 68, 68);
       doc.text(t('Oduvodneni neschopnosti provozu:'), margin, yPos);
       yPos += 5;
       
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('Roboto', 'normal');
       doc.setTextColor(80, 80, 80);
       const oduvodneniLines = doc.splitTextToSize(t(revize.vysledekOduvodneni), pageWidth - 2 * margin);
       doc.text(oduvodneniLines, margin, yPos);
@@ -1130,12 +1138,12 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     if (revize.zaver) {
       addPageIfNeeded(30);
       doc.setFontSize(baseFontSize);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont('Roboto', 'bold');
       doc.setTextColor(80, 80, 80);
       doc.text(t('Zaver a doporuceni:'), margin, yPos);
       yPos += 5;
       
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('Roboto', 'normal');
       doc.setTextColor(0, 0, 0);
       const zaverLines = doc.splitTextToSize(t(revize.zaver), pageWidth - 2 * margin);
       doc.text(zaverLines, margin, yPos);
@@ -1144,7 +1152,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
 
     // Statistiky
     doc.setFontSize(baseFontSize);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setTextColor(80, 80, 80);
     
     const stats = [
@@ -1172,7 +1180,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     
     // Revizní technik
     doc.setFontSize(baseFontSize);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setTextColor(80, 80, 80);
     doc.text(t('Revizni technik:'), margin, yPos);
     doc.text(t('Objednatel:'), margin + colWidth, yPos);
@@ -1216,7 +1224,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     doc.line(currentMargin, headerHeight, currentPageWidth - currentMargin, headerHeight);
     
     doc.setFontSize(baseFontSize - 2);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setTextColor(...primaryColor);
     doc.text(t(`${revize.cisloRevize}`), currentMargin, headerHeight - 3);
     
@@ -1231,7 +1239,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     doc.line(currentMargin, footerY - 5, currentPageWidth - currentMargin, footerY - 5);
     
     doc.setFontSize(baseFontSize - 2);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('Roboto', 'normal');
     doc.setTextColor(120, 120, 120);
     
     if (sablona.zapatiZobrazitCisloStranky) {
