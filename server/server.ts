@@ -22,12 +22,24 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 // Servírovat statické soubory frontendu (dist/)
-const distPath = path.join(__dirname, '..', 'dist');
-if (fs.existsSync(distPath)) {
+// Zkusit různé cesty pro lokální vývoj i Railway
+const possibleDistPaths = [
+  path.join(__dirname, '..', 'dist'),
+  path.join(process.cwd(), 'dist'),
+  '/app/dist'
+];
+
+let distPath = '';
+for (const p of possibleDistPaths) {
+  if (fs.existsSync(p)) {
+    distPath = p;
+    console.log(`📁 Statické soubory: ${distPath}`);
+    break;
+  }
+}
+
+if (distPath) {
   app.use(express.static(distPath));
-  app.get('/', (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
 }
 
 // Inicializovat databázi
@@ -889,12 +901,22 @@ app.get('*', (req, res) => {
   }
   
   // Pro všechny ostatní routes vrátit index.html (SPA)
-  const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
-  if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    res.status(404).send('Frontend není dostupný');
+  // Zkusit různé cesty pro lokální vývoj i Railway
+  const possiblePaths = [
+    path.join(__dirname, '..', 'dist', 'index.html'),
+    path.join(process.cwd(), 'dist', 'index.html'),
+    '/app/dist/index.html'
+  ];
+  
+  for (const indexPath of possiblePaths) {
+    if (fs.existsSync(indexPath)) {
+      console.log(`SPA fallback: serving ${indexPath} for ${req.path}`);
+      return res.sendFile(indexPath);
+    }
   }
+  
+  console.error(`SPA fallback: index.html not found. Tried: ${possiblePaths.join(', ')}`);
+  res.status(404).send('Frontend není dostupný');
 });
 
 // ==================== ERROR HANDLING ====================
