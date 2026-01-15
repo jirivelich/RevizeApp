@@ -84,6 +84,11 @@ async function startServer() {
     res.json({ user: req.user });
   });
 
+  // Verify token endpoint
+  app.post('/api/auth/verify', authMiddleware, (req: AuthRequest, res) => {
+    res.json({ valid: true, user: req.user });
+  });
+
   // ==================== REVIZE ====================
   app.get('/api/revize', authMiddleware, async (req, res) => {
     try {

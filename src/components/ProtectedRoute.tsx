@@ -21,7 +21,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       }
 
       try {
-        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+        // V produkci používáme relativní URL
+        const API_BASE = import.meta.env.VITE_API_URL || '/api';
         const verifyUrl = `${API_BASE}/auth/verify`;
         console.log('ProtectedRoute: Verifying token at', verifyUrl);
         
