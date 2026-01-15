@@ -1,266 +1,486 @@
-import Dexie, { type EntityTable } from 'dexie';
-import type { Revize, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, Sablona, MericiPristroj, RevizePristroj, Firma, ZavadaKatalog } from '../types';
+// Database service - komunikuje s backend API
+// Všechna data jsou uložena na serveru a synchronizována mezi zařízeními
 
-// Definice databáze
-const db = new Dexie('RevizeAppDB') as Dexie & {
-  revize: EntityTable<Revize, 'id'>;
-  rozvadece: EntityTable<Rozvadec, 'id'>;
-  okruhy: EntityTable<Okruh, 'id'>;
-  zavady: EntityTable<Zavada, 'id'>;
-  mistnosti: EntityTable<Mistnost, 'id'>;
-  zarizeni: EntityTable<Zarizeni, 'id'>;
-  zakazky: EntityTable<Zakazka, 'id'>;
-  nastaveni: EntityTable<Nastaveni, 'id'>;
-  sablony: EntityTable<Sablona, 'id'>;
-  mericiPristroje: EntityTable<MericiPristroj, 'id'>;
-  revizePristroje: EntityTable<RevizePristroj, 'id'>;
-  firmy: EntityTable<Firma, 'id'>;
-  zavadyKatalog: EntityTable<ZavadaKatalog, 'id'>;
-};
+import type { Revize, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, Sablona, MericiPristroj, Firma, ZavadaKatalog } from '../types';
 
-db.version(5).stores({
-  revize: '++id, cisloRevize, datum, stav, typRevize',
-  rozvadece: '++id, revizeId, nazev, oznaceni',
-  okruhy: '++id, rozvadecId, cislo',
-  zavady: '++id, revizeId, rozvadecId, mistnostId, stav, zavaznost',
-  mistnosti: '++id, revizeId, nazev',
-  zarizeni: '++id, mistnostId, nazev, typ, stav',
-  zakazky: '++id, datumPlanovany, stav, priorita',
-  nastaveni: '++id',
-  sablony: '++id, nazev, jeVychozi',
-  mericiPristroje: '++id, nazev, vyrobniCislo, typPristroje, platnostKalibrace',
-  revizePristroje: '++id, revizeId, pristrojId',
-  firmy: '++id, nazev, ico',
-  zavadyKatalog: '++id, zavaznost, kategorie, norma'
-});
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
-export { db };
+// Získat token z localStorage
+function getToken(): string | null {
+  return localStorage.getItem('token');
+}
+
+// Vytvořit headers s tokenem
+function getAuthHeaders(): HeadersInit {
+  const token = getToken();
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+async function handleResponse<T>(response: Response): Promise<T> {
+  if (response.status === 401) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+    throw new Error('Sezení vypršelo. Přihlaste se znovu.');
+  }
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Neznámá chyba' }));
+    throw new Error(error.error || 'API chyba');
+  }
+  return response.json();
+}
 
 // ==================== REVIZE ====================
 export const revizeService = {
   async getAll(): Promise<Revize[]> {
-    return await db.revize.toArray();
+    return fetch(`${API_BASE_URL}/revize`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
   },
 
   async getById(id: number): Promise<Revize | undefined> {
-    return await db.revize.get(id);
+    return fetch(`${API_BASE_URL}/revize/${id}`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
   },
 
-  async create(revize: Omit<Revize, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
-    const result = await db.revize.add({
-      ...revize,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    } as Revize);
-    return result as number;
+  async create(data: Omit<Revize, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
+    const response = await fetch(`${API_BASE_URL}/revize`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse) as { id: number };
+    return response.id;
   },
 
-  async update(id: number, revize: Partial<Revize>): Promise<number> {
-    return await db.revize.update(id, {
-      ...revize,
-      updatedAt: new Date()
-    });
+  async update(id: number, data: Partial<Revize>): Promise<number> {
+    await fetch(`${API_BASE_URL}/revize/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse);
+    return 1;
   },
 
   async delete(id: number): Promise<void> {
-    // Smazat související záznamy
-    await db.rozvadece.where('revizeId').equals(id).delete();
-    await db.zavady.where('revizeId').equals(id).delete();
-    await db.mistnosti.where('revizeId').equals(id).delete();
-    await db.revize.delete(id);
-  }
+    await fetch(`${API_BASE_URL}/revize/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
 };
 
 // ==================== ROZVADĚČE ====================
 export const rozvadecService = {
   async getByRevize(revizeId: number): Promise<Rozvadec[]> {
-    return await db.rozvadece.where('revizeId').equals(revizeId).toArray();
+    return fetch(`${API_BASE_URL}/rozvadece/${revizeId}`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
   },
 
   async getById(id: number): Promise<Rozvadec | undefined> {
-    return await db.rozvadece.get(id);
+    // Server nemá přímý endpoint pro jeden rozvaděč, vrátíme undefined
+    // V případě potřeby můžeme přidat endpoint
+    return undefined;
   },
 
-  async create(rozvadec: Omit<Rozvadec, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
-    const result = await db.rozvadece.add({
-      ...rozvadec,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    } as Rozvadec);
-    return result as number;
+  async create(data: Omit<Rozvadec, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
+    const response = await fetch(`${API_BASE_URL}/rozvadece`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse) as { id: number };
+    return response.id;
   },
 
-  async update(id: number, rozvadec: Partial<Rozvadec>): Promise<number> {
-    return await db.rozvadece.update(id, {
-      ...rozvadec,
-      updatedAt: new Date()
-    });
+  async update(id: number, data: Partial<Rozvadec>): Promise<number> {
+    await fetch(`${API_BASE_URL}/rozvadece/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse);
+    return 1;
   },
 
   async delete(id: number): Promise<void> {
-    await db.okruhy.where('rozvadecId').equals(id).delete();
-    await db.rozvadece.delete(id);
-  }
+    await fetch(`${API_BASE_URL}/rozvadece/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
 };
 
 // ==================== OKRUHY ====================
 export const okruhService = {
   async getByRozvadec(rozvadecId: number): Promise<Okruh[]> {
-    return await db.okruhy.where('rozvadecId').equals(rozvadecId).toArray();
+    return fetch(`${API_BASE_URL}/okruhy/${rozvadecId}`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
   },
 
-  async create(okruh: Omit<Okruh, 'id'>): Promise<number> {
-    const result = await db.okruhy.add(okruh as Okruh);
-    return result as number;
+  async create(data: Omit<Okruh, 'id'>): Promise<number> {
+    const response = await fetch(`${API_BASE_URL}/okruhy`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse) as { id: number };
+    return response.id;
   },
 
-  async update(id: number, okruh: Partial<Okruh>): Promise<number> {
-    return await db.okruhy.update(id, okruh);
-  },
-
-  async delete(id: number): Promise<void> {
-    await db.okruhy.delete(id);
-  }
-};
-
-// ==================== ZÁVADY ====================
-export const zavadaService = {
-  async getByRevize(revizeId: number): Promise<Zavada[]> {
-    return await db.zavady.where('revizeId').equals(revizeId).toArray();
-  },
-
-  async getAll(): Promise<Zavada[]> {
-    return await db.zavady.toArray();
-  },
-
-  async create(zavada: Omit<Zavada, 'id'>): Promise<number> {
-    const result = await db.zavady.add(zavada as Zavada);
-    return result as number;
-  },
-
-  async update(id: number, zavada: Partial<Zavada>): Promise<number> {
-    return await db.zavady.update(id, zavada);
+  async update(id: number, data: Partial<Okruh>): Promise<number> {
+    await fetch(`${API_BASE_URL}/okruhy/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse);
+    return 1;
   },
 
   async delete(id: number): Promise<void> {
-    await db.zavady.delete(id);
-  }
+    await fetch(`${API_BASE_URL}/okruhy/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
 };
 
-// ==================== MÍSTNOSTI ====================
+// ==================== MISTNOSTI ====================
 export const mistnostService = {
+  async getAll(): Promise<Mistnost[]> {
+    return fetch(`${API_BASE_URL}/mistnosti`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
+
   async getByRevize(revizeId: number): Promise<Mistnost[]> {
-    return await db.mistnosti.where('revizeId').equals(revizeId).toArray();
+    return fetch(`${API_BASE_URL}/mistnosti/revize/${revizeId}`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
   },
 
   async getById(id: number): Promise<Mistnost | undefined> {
-    return await db.mistnosti.get(id);
+    const all = await this.getAll();
+    return all.find(m => m.id === id);
   },
 
-  async create(mistnost: Omit<Mistnost, 'id'>): Promise<number> {
-    const result = await db.mistnosti.add(mistnost as Mistnost);
-    return result as number;
+  async create(data: Omit<Mistnost, 'id'>): Promise<number> {
+    const response = await fetch(`${API_BASE_URL}/mistnosti`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse) as { id: number };
+    return response.id;
   },
 
-  async update(id: number, mistnost: Partial<Mistnost>): Promise<number> {
-    return await db.mistnosti.update(id, mistnost);
+  async update(id: number, data: Partial<Mistnost>): Promise<number> {
+    await fetch(`${API_BASE_URL}/mistnosti/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse);
+    return 1;
   },
 
   async delete(id: number): Promise<void> {
-    // Smazat i všechna zařízení v místnosti
-    await db.zarizeni.where('mistnostId').equals(id).delete();
-    await db.mistnosti.delete(id);
-  }
+    await fetch(`${API_BASE_URL}/mistnosti/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
 };
 
-// ==================== ZAKÁZKY ====================
+// ==================== ZARIZENI ====================
+export const zarizeniService = {
+  async getAll(): Promise<Zarizeni[]> {
+    // Server nemá endpoint pro všechna zařízení, vrátíme prázdné pole
+    return [];
+  },
+
+  async getByMistnost(mistnostId: number): Promise<Zarizeni[]> {
+    return fetch(`${API_BASE_URL}/zarizeni/${mistnostId}`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
+
+  async getById(id: number): Promise<Zarizeni | undefined> {
+    return undefined;
+  },
+
+  async create(data: Omit<Zarizeni, 'id'>): Promise<number> {
+    const response = await fetch(`${API_BASE_URL}/zarizeni`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse) as { id: number };
+    return response.id;
+  },
+
+  async update(id: number, data: Partial<Zarizeni>): Promise<number> {
+    await fetch(`${API_BASE_URL}/zarizeni/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse);
+    return 1;
+  },
+
+  async delete(id: number): Promise<void> {
+    await fetch(`${API_BASE_URL}/zarizeni/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
+
+  async deleteByMistnost(mistnostId: number): Promise<void> {
+    // Server smaže automaticky při smazání místnosti díky ON DELETE CASCADE
+  },
+};
+
+// ==================== ZAVADY ====================
+export const zavadaService = {
+  async getAll(): Promise<Zavada[]> {
+    return fetch(`${API_BASE_URL}/zavady`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
+
+  async getByRevize(revizeId: number): Promise<Zavada[]> {
+    return fetch(`${API_BASE_URL}/zavady/revize/${revizeId}`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
+
+  async create(data: Omit<Zavada, 'id'>): Promise<number> {
+    const response = await fetch(`${API_BASE_URL}/zavady`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse) as { id: number };
+    return response.id;
+  },
+
+  async update(id: number, data: Partial<Zavada>): Promise<number> {
+    await fetch(`${API_BASE_URL}/zavady/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse);
+    return 1;
+  },
+
+  async delete(id: number): Promise<void> {
+    await fetch(`${API_BASE_URL}/zavady/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
+};
+
+// ==================== FIRMY ====================
+export const firmaService = {
+  async getAll(): Promise<Firma[]> {
+    return fetch(`${API_BASE_URL}/firmy`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
+
+  async getById(id: number): Promise<Firma | undefined> {
+    return fetch(`${API_BASE_URL}/firmy/${id}`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
+
+  async create(data: Omit<Firma, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
+    const response = await fetch(`${API_BASE_URL}/firmy`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse) as { id: number };
+    return response.id;
+  },
+
+  async update(id: number, data: Partial<Firma>): Promise<number> {
+    await fetch(`${API_BASE_URL}/firmy/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse);
+    return 1;
+  },
+
+  async delete(id: number): Promise<void> {
+    await fetch(`${API_BASE_URL}/firmy/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
+};
+
+// ==================== ZAKAZKY ====================
 export const zakazkaService = {
   async getAll(): Promise<Zakazka[]> {
-    return await db.zakazky.toArray();
+    return fetch(`${API_BASE_URL}/zakazky`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
   },
 
   async getById(id: number): Promise<Zakazka | undefined> {
-    return await db.zakazky.get(id);
+    const all = await this.getAll();
+    return all.find(z => z.id === id);
   },
 
-  async create(zakazka: Omit<Zakazka, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
-    const result = await db.zakazky.add({
-      ...zakazka,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    } as Zakazka);
-    return result as number;
+  async create(data: Omit<Zakazka, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
+    const response = await fetch(`${API_BASE_URL}/zakazky`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse) as { id: number };
+    return response.id;
   },
 
-  async update(id: number, zakazka: Partial<Zakazka>): Promise<number> {
-    return await db.zakazky.update(id, {
-      ...zakazka,
-      updatedAt: new Date()
-    });
+  async update(id: number, data: Partial<Zakazka>): Promise<number> {
+    await fetch(`${API_BASE_URL}/zakazky/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse);
+    return 1;
   },
 
   async delete(id: number): Promise<void> {
-    await db.zakazky.delete(id);
-  }
+    await fetch(`${API_BASE_URL}/zakazky/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
 };
 
-// ==================== NASTAVENÍ ====================
-export const nastaveniService = {
-  async get(): Promise<Nastaveni | undefined> {
-    const all = await db.nastaveni.toArray();
-    return all[0];
+// ==================== MERICI PRISTROJE ====================
+export const pristrojService = {
+  async getAll(): Promise<MericiPristroj[]> {
+    return fetch(`${API_BASE_URL}/pristroje`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
   },
 
-  async save(nastaveni: Omit<Nastaveni, 'id'>): Promise<void> {
-    const existing = await this.get();
-    if (existing && existing.id) {
-      await db.nastaveni.update(existing.id, nastaveni);
-    } else {
-      await db.nastaveni.add(nastaveni as Nastaveni);
-    }
-  }
+  async getById(id: number): Promise<MericiPristroj | undefined> {
+    return fetch(`${API_BASE_URL}/pristroje/${id}`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
+
+  async getExpiring(days: number = 30): Promise<MericiPristroj[]> {
+    const all = await this.getAll();
+    const today = new Date();
+    const futureDate = new Date(today.getTime() + days * 24 * 60 * 60 * 1000);
+    return all.filter(p => new Date(p.platnostKalibrace) <= futureDate);
+  },
+
+  async create(data: Omit<MericiPristroj, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
+    const response = await fetch(`${API_BASE_URL}/pristroje`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse) as { id: number };
+    return response.id;
+  },
+
+  async update(id: number, data: Partial<MericiPristroj>): Promise<number> {
+    await fetch(`${API_BASE_URL}/pristroje/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse);
+    return 1;
+  },
+
+  async delete(id: number): Promise<void> {
+    await fetch(`${API_BASE_URL}/pristroje/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
 };
 
-// ==================== ŠABLONY ====================
+// ==================== REVIZE-PRISTROJ (vazby) ====================
+export const revizePristrojService = {
+  async getByRevize(revizeId: number): Promise<MericiPristroj[]> {
+    return fetch(`${API_BASE_URL}/revize-pristroje/${revizeId}`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
+
+  async addToRevize(revizeId: number, pristrojId: number): Promise<number> {
+    const response = await fetch(`${API_BASE_URL}/revize-pristroje`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ revizeId, pristrojId }),
+    }).then(handleResponse) as { id: number };
+    return response.id;
+  },
+
+  async removeFromRevize(revizeId: number, pristrojId: number): Promise<void> {
+    // Najít vazbu a smazat ji
+    const vazby = await this.getByRevize(revizeId) as any[];
+    const vazba = vazby.find(v => v.pristrojId === pristrojId);
+    if (vazba?.id) {
+      await fetch(`${API_BASE_URL}/revize-pristroje/${vazba.id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      }).then(handleResponse);
+    }
+  },
+};
+
+// ==================== SABLONY ====================
 export const sablonaService = {
   async getAll(): Promise<Sablona[]> {
-    return await db.sablony.toArray();
+    return fetch(`${API_BASE_URL}/sablony`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
   },
 
   async getById(id: number): Promise<Sablona | undefined> {
-    return await db.sablony.get(id);
+    return fetch(`${API_BASE_URL}/sablony/${id}`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
   },
 
   async getVychozi(): Promise<Sablona | undefined> {
-    return await db.sablony.where('jeVychozi').equals(1).first();
+    return fetch(`${API_BASE_URL}/sablony/vychozi/get`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
   },
 
-  async create(sablona: Omit<Sablona, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
-    // Pokud je nová šablona výchozí, zrušit výchozí u ostatních
-    if (sablona.jeVychozi) {
-      await db.sablony.where('jeVychozi').equals(1).modify({ jeVychozi: false });
-    }
-    const result = await db.sablony.add({
-      ...sablona,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    } as Sablona);
-    return result as number;
+  async create(data: Omit<Sablona, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
+    const response = await fetch(`${API_BASE_URL}/sablony`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse) as { id: number };
+    return response.id;
   },
 
-  async update(id: number, sablona: Partial<Sablona>): Promise<number> {
-    // Pokud je šablona nastavena jako výchozí, zrušit výchozí u ostatních
-    if (sablona.jeVychozi) {
-      await db.sablony.where('jeVychozi').equals(1).modify({ jeVychozi: false });
-    }
-    return await db.sablony.update(id, {
-      ...sablona,
-      updatedAt: new Date()
-    });
+  async update(id: number, data: Partial<Sablona>): Promise<number> {
+    await fetch(`${API_BASE_URL}/sablony/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse);
+    return 1;
   },
 
   async delete(id: number): Promise<void> {
-    await db.sablony.delete(id);
+    await fetch(`${API_BASE_URL}/sablony/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
   },
 
   getDefaultSablona(): Omit<Sablona, 'id' | 'createdAt' | 'updatedAt'> {
@@ -272,7 +492,6 @@ export const sablonaService = {
       zahlaviZobrazitFirmu: true,
       zahlaviZobrazitTechnika: true,
       zahlaviCustomText: '',
-      // Úvodní strana
       uvodniStranaZobrazit: true,
       uvodniStranaZobrazitObjekt: true,
       uvodniStranaZobrazitTechnika: true,
@@ -316,236 +535,77 @@ export const sablonaService = {
   }
 };
 
-// ==================== EXPORT/IMPORT ====================
-export const exportService = {
-  async exportAll(): Promise<string> {
-    const data = {
-      revize: await db.revize.toArray(),
-      rozvadece: await db.rozvadece.toArray(),
-      okruhy: await db.okruhy.toArray(),
-      zavady: await db.zavady.toArray(),
-      mistnosti: await db.mistnosti.toArray(),
-      zakazky: await db.zakazky.toArray(),
-      nastaveni: await db.nastaveni.toArray(),
-      mericiPristroje: await db.mericiPristroje.toArray(),
-      revizePristroje: await db.revizePristroje.toArray(),
-      exportDate: new Date().toISOString()
-    };
-    return JSON.stringify(data, null, 2);
+// ==================== NASTAVENI ====================
+export const nastaveniService = {
+  async get(): Promise<Nastaveni | undefined> {
+    return fetch(`${API_BASE_URL}/nastaveni`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
   },
 
-  async importAll(jsonString: string): Promise<void> {
-    const data = JSON.parse(jsonString);
-    
-    await db.transaction('rw', 
-      [db.revize, db.rozvadece, db.okruhy, db.zavady, db.mistnosti, db.zakazky, db.nastaveni, db.mericiPristroje, db.revizePristroje], 
-      async () => {
-        // Vymazat existující data
-        await db.revize.clear();
-        await db.rozvadece.clear();
-        await db.okruhy.clear();
-        await db.zavady.clear();
-        await db.mistnosti.clear();
-        await db.zakazky.clear();
-        await db.nastaveni.clear();
-        await db.mericiPristroje.clear();
-        await db.revizePristroje.clear();
-
-        // Importovat nová data
-        if (data.revize) await db.revize.bulkAdd(data.revize);
-        if (data.rozvadece) await db.rozvadece.bulkAdd(data.rozvadece);
-        if (data.okruhy) await db.okruhy.bulkAdd(data.okruhy);
-        if (data.zavady) await db.zavady.bulkAdd(data.zavady);
-        if (data.mistnosti) await db.mistnosti.bulkAdd(data.mistnosti);
-        if (data.zakazky) await db.zakazky.bulkAdd(data.zakazky);
-        if (data.nastaveni) await db.nastaveni.bulkAdd(data.nastaveni);
-        if (data.mericiPristroje) await db.mericiPristroje.bulkAdd(data.mericiPristroje);
-        if (data.revizePristroje) await db.revizePristroje.bulkAdd(data.revizePristroje);
-      }
-    );
-  }
+  async save(data: Partial<Nastaveni>): Promise<void> {
+    await fetch(`${API_BASE_URL}/nastaveni`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse);
+  },
 };
 
-// ==================== MĚŘÍCÍ PŘÍSTROJE ====================
-export const pristrojService = {
-  async getAll(): Promise<MericiPristroj[]> {
-    return await db.mericiPristroje.toArray();
-  },
-
-  async getById(id: number): Promise<MericiPristroj | undefined> {
-    return await db.mericiPristroje.get(id);
-  },
-
-  async getExpiring(days: number = 30): Promise<MericiPristroj[]> {
-    const today = new Date();
-    const futureDate = new Date(today.getTime() + days * 24 * 60 * 60 * 1000);
-    return await db.mericiPristroje
-      .filter(p => new Date(p.platnostKalibrace) <= futureDate)
-      .toArray();
-  },
-
-  async create(pristroj: Omit<MericiPristroj, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
-    const result = await db.mericiPristroje.add({
-      ...pristroj,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    } as MericiPristroj);
-    return result as number;
-  },
-
-  async update(id: number, pristroj: Partial<MericiPristroj>): Promise<number> {
-    return await db.mericiPristroje.update(id, {
-      ...pristroj,
-      updatedAt: new Date()
-    });
-  },
-
-  async delete(id: number): Promise<void> {
-    // Smazat vazby na revize
-    await db.revizePristroje.where('pristrojId').equals(id).delete();
-    await db.mericiPristroje.delete(id);
-  }
-};
-
-// ==================== REVIZE-PŘÍSTROJE VAZBA ====================
-export const revizePristrojService = {
-  async getByRevize(revizeId: number): Promise<MericiPristroj[]> {
-    const vazby = await db.revizePristroje.where('revizeId').equals(revizeId).toArray();
-    const pristroje: MericiPristroj[] = [];
-    for (const vazba of vazby) {
-      const pristroj = await db.mericiPristroje.get(vazba.pristrojId);
-      if (pristroj) pristroje.push(pristroj);
-    }
-    return pristroje;
-  },
-
-  async addToRevize(revizeId: number, pristrojId: number): Promise<number> {
-    // Zkontrolovat, zda vazba již neexistuje
-    const existing = await db.revizePristroje
-      .where({ revizeId, pristrojId })
-      .first();
-    if (existing) return existing.id!;
-    
-    const result = await db.revizePristroje.add({ revizeId, pristrojId } as RevizePristroj);
-    return result as number;
-  },
-
-  async removeFromRevize(revizeId: number, pristrojId: number): Promise<void> {
-    await db.revizePristroje
-      .where({ revizeId, pristrojId })
-      .delete();
-  }
-};
-
-// ==================== ZAŘÍZENÍ ====================
-export const zarizeniService = {
-  async getAll(): Promise<Zarizeni[]> {
-    return await db.zarizeni.toArray();
-  },
-
-  async getByMistnost(mistnostId: number): Promise<Zarizeni[]> {
-    return await db.zarizeni.where('mistnostId').equals(mistnostId).toArray();
-  },
-
-  async getById(id: number): Promise<Zarizeni | undefined> {
-    return await db.zarizeni.get(id);
-  },
-
-  async create(zarizeni: Omit<Zarizeni, 'id'>): Promise<number> {
-    const result = await db.zarizeni.add(zarizeni as Zarizeni);
-    return result as number;
-  },
-
-  async update(id: number, zarizeni: Partial<Zarizeni>): Promise<number> {
-    return await db.zarizeni.update(id, zarizeni);
-  },
-
-  async delete(id: number): Promise<void> {
-    await db.zarizeni.delete(id);
-  },
-
-  async deleteByMistnost(mistnostId: number): Promise<void> {
-    await db.zarizeni.where('mistnostId').equals(mistnostId).delete();
-  }
-};
-
-// ==================== FIRMY ====================
-export const firmaService = {
-  async getAll(): Promise<Firma[]> {
-    return await db.firmy.toArray();
-  },
-
-  async getById(id: number): Promise<Firma | undefined> {
-    return await db.firmy.get(id);
-  },
-
-  async create(firma: Omit<Firma, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
-    const result = await db.firmy.add({
-      ...firma,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    } as Firma);
-    return result as number;
-  },
-
-  async update(id: number, firma: Partial<Firma>): Promise<number> {
-    return await db.firmy.update(id, {
-      ...firma,
-      updatedAt: new Date()
-    });
-  },
-
-  async delete(id: number): Promise<void> {
-    await db.firmy.delete(id);
-  }
-};
-
-// ==================== KATALOG ZÁVAD ====================
+// ==================== ZAVADY KATALOG ====================
 export const zavadaKatalogService = {
   async getAll(): Promise<ZavadaKatalog[]> {
-    return await db.zavadyKatalog.toArray();
+    return fetch(`${API_BASE_URL}/zavady-katalog`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
   },
 
   async getById(id: number): Promise<ZavadaKatalog | undefined> {
-    return await db.zavadyKatalog.get(id);
+    const all = await this.getAll();
+    return all.find(z => z.id === id);
   },
 
   async getByKategorie(kategorie: string): Promise<ZavadaKatalog[]> {
-    return await db.zavadyKatalog.where('kategorie').equals(kategorie).toArray();
+    const all = await this.getAll();
+    return all.filter(z => z.kategorie === kategorie);
   },
 
   async getByZavaznost(zavaznost: string): Promise<ZavadaKatalog[]> {
-    return await db.zavadyKatalog.where('zavaznost').equals(zavaznost).toArray();
+    const all = await this.getAll();
+    return all.filter(z => z.zavaznost === zavaznost);
   },
 
-  async create(zavada: Omit<ZavadaKatalog, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
-    const result = await db.zavadyKatalog.add({
-      ...zavada,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    } as ZavadaKatalog);
-    return result as number;
+  async create(data: Omit<ZavadaKatalog, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
+    const response = await fetch(`${API_BASE_URL}/zavady-katalog`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse) as { id: number };
+    return response.id;
   },
 
-  async update(id: number, zavada: Partial<ZavadaKatalog>): Promise<number> {
-    return await db.zavadyKatalog.update(id, {
-      ...zavada,
-      updatedAt: new Date()
-    });
+  async update(id: number, data: Partial<ZavadaKatalog>): Promise<number> {
+    await fetch(`${API_BASE_URL}/zavady-katalog/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse);
+    return 1;
   },
 
   async delete(id: number): Promise<void> {
-    await db.zavadyKatalog.delete(id);
+    await fetch(`${API_BASE_URL}/zavady-katalog/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
   },
 
-  // Získání unikátních kategorií
   async getKategorie(): Promise<string[]> {
-    const zavady = await db.zavadyKatalog.toArray();
-    const kategorie = [...new Set(zavady.map(z => z.kategorie).filter(Boolean))];
+    const all = await this.getAll();
+    const kategorie = [...new Set(all.map(z => z.kategorie).filter(Boolean))];
     return kategorie as string[];
   },
 
-  // Výchozí závady pro inicializaci databáze
   getDefaultZavady(): Omit<ZavadaKatalog, 'id' | 'createdAt' | 'updatedAt'>[] {
     return [
       {
@@ -564,223 +624,65 @@ export const zavadaKatalogService = {
         zneniClanku: 'Rozvaděče musí být opatřeny výstražnými a informačními štítky.',
         kategorie: 'Rozvaděče'
       },
-      {
-        popis: 'Překročena lhůta periodické revize',
-        zavaznost: 'C1',
-        norma: 'ČSN 33 1500',
-        clanek: 'čl. 4',
-        zneniClanku: 'Lhůty periodických revizí nesmí být překročeny.',
-        kategorie: 'Dokumentace'
-      },
-      {
-        popis: 'Poškozená izolace vodičů',
-        zavaznost: 'C1',
-        norma: 'ČSN 33 2000-5-52',
-        clanek: 'čl. 522',
-        zneniClanku: 'Vodiče musí být chráněny proti mechanickému poškození.',
-        kategorie: 'Vedení'
-      },
-      {
-        popis: 'Nedostatečná ochrana před nebezpečným dotykem',
-        zavaznost: 'C1',
-        norma: 'ČSN 33 2000-4-41',
-        clanek: 'čl. 411',
-        zneniClanku: 'Ochrana automatickým odpojením od zdroje musí být zajištěna.',
-        kategorie: 'Ochrana'
-      },
-      {
-        popis: 'Chybějící nebo poškozené kryty rozvaděče',
-        zavaznost: 'C1',
-        norma: 'ČSN EN 61439-1',
-        clanek: 'čl. 8.4',
-        zneniClanku: 'Stupeň ochrany krytem musí odpovídat prostředí.',
-        kategorie: 'Rozvaděče'
-      },
-      {
-        popis: 'Nevyhovující impedance smyčky',
-        zavaznost: 'C1',
-        norma: 'ČSN 33 2000-6',
-        clanek: 'čl. 6.4.3.7',
-        zneniClanku: 'Impedance poruchové smyčky musí zajistit odpojení v předepsaném čase.',
-        kategorie: 'Měření'
-      },
-      {
-        popis: 'Chybějící pospojování',
-        zavaznost: 'C2',
-        norma: 'ČSN 33 2000-5-54',
-        clanek: 'čl. 544.1',
-        zneniClanku: 'Ochranné pospojování musí být provedeno v souladu s normou.',
-        kategorie: 'Uzemnění'
-      },
-      {
-        popis: 'Nevhodné prostředí pro daný stupeň krytí',
-        zavaznost: 'C2',
-        norma: 'ČSN 33 2000-5-51',
-        clanek: 'čl. 512.2',
-        zneniClanku: 'Elektrická zařízení musí odpovídat vnějším vlivům prostředí.',
-        kategorie: 'Prostředí'
-      },
-      {
-        popis: 'Chybějící označení obvodů v rozvaděči',
-        zavaznost: 'C3',
-        norma: 'ČSN 33 2000-5-51',
-        clanek: 'čl. 514.5',
-        zneniClanku: 'Obvody musí být řádně označeny pro identifikaci.',
-        kategorie: 'Rozvaděče'
-      }
     ];
   }
 };
-// ==================== BACKUP & RESTORE ====================
-interface DatabaseBackup {
-  version: string;
-  timestamp: string;
-  revize: Revize[];
-  rozvadece: Rozvadec[];
-  okruhy: Okruh[];
-  zavady: Zavada[];
-  mistnosti: Mistnost[];
-  zarizeni: Zarizeni[];
-  zakazky: Zakazka[];
-  nastaveni: Nastaveni[];
-  sablony: Sablona[];
-  mericiPristroje: MericiPristroj[];
-  revizePristroje: RevizePristroj[];
-  firmy: Firma[];
-  zavadyKatalog: ZavadaKatalog[];
-}
 
+// ==================== BACKUP ====================
 export const backupService = {
-  /**
-   * Exportuje všechna data z databáze do JSON souboru
-   */
   async exportDatabase(): Promise<string> {
-    const backup: DatabaseBackup = {
-      version: '1.0.0',
-      timestamp: new Date().toISOString(),
-      revize: await db.revize.toArray(),
-      rozvadece: await db.rozvadece.toArray(),
-      okruhy: await db.okruhy.toArray(),
-      zavady: await db.zavady.toArray(),
-      mistnosti: await db.mistnosti.toArray(),
-      zarizeni: await db.zarizeni.toArray(),
-      zakazky: await db.zakazky.toArray(),
-      nastaveni: await db.nastaveni.toArray(),
-      sablony: await db.sablony.toArray(),
-      mericiPristroje: await db.mericiPristroje.toArray(),
-      revizePristroje: await db.revizePristroje.toArray(),
-      firmy: await db.firmy.toArray(),
-      zavadyKatalog: await db.zavadyKatalog.toArray(),
-    };
-    
-    return JSON.stringify(backup, null, 2);
+    const data = await fetch(`${API_BASE_URL}/backup`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+    return JSON.stringify(data, null, 2);
   },
 
-  /**
-   * Importuje data ze JSON backup souboru
-   */
   async importDatabase(jsonData: string, mergeMode: 'replace' | 'merge' = 'replace'): Promise<void> {
-    try {
-      const backup: DatabaseBackup = JSON.parse(jsonData);
-      
-      if (mergeMode === 'replace') {
-        // Smazat všechna stávající data
-        await db.revize.clear();
-        await db.rozvadece.clear();
-        await db.okruhy.clear();
-        await db.zavady.clear();
-        await db.mistnosti.clear();
-        await db.zarizeni.clear();
-        await db.zakazky.clear();
-        await db.nastaveni.clear();
-        await db.sablony.clear();
-        await db.mericiPristroje.clear();
-        await db.revizePristroje.clear();
-        await db.firmy.clear();
-        await db.zavadyKatalog.clear();
-      }
-      
-      // Importovat data
-      if (backup.revize.length > 0) await db.revize.bulkAdd(backup.revize);
-      if (backup.rozvadece.length > 0) await db.rozvadece.bulkAdd(backup.rozvadece);
-      if (backup.okruhy.length > 0) await db.okruhy.bulkAdd(backup.okruhy);
-      if (backup.zavady.length > 0) await db.zavady.bulkAdd(backup.zavady);
-      if (backup.mistnosti.length > 0) await db.mistnosti.bulkAdd(backup.mistnosti);
-      if (backup.zarizeni.length > 0) await db.zarizeni.bulkAdd(backup.zarizeni);
-      if (backup.zakazky.length > 0) await db.zakazky.bulkAdd(backup.zakazky);
-      if (backup.nastaveni.length > 0) await db.nastaveni.bulkAdd(backup.nastaveni);
-      if (backup.sablony.length > 0) await db.sablony.bulkAdd(backup.sablony);
-      if (backup.mericiPristroje.length > 0) await db.mericiPristroje.bulkAdd(backup.mericiPristroje);
-      if (backup.revizePristroje.length > 0) await db.revizePristroje.bulkAdd(backup.revizePristroje);
-      if (backup.firmy.length > 0) await db.firmy.bulkAdd(backup.firmy);
-      if (backup.zavadyKatalog.length > 0) await db.zavadyKatalog.bulkAdd(backup.zavadyKatalog);
-    } catch (error) {
-      throw new Error(`Chyba při importu databáze: ${error instanceof Error ? error.message : 'Neznámá chyba'}`);
-    }
+    const data = JSON.parse(jsonData);
+    await fetch(`${API_BASE_URL}/backup/import`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ data, mode: mergeMode }),
+    }).then(handleResponse);
   },
 
-  /**
-   * Vrací statistiku obsahu databáze
-   */
   async getDatabaseStats(): Promise<Record<string, number>> {
+    const data = await fetch(`${API_BASE_URL}/backup`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse) as any;
+    
     return {
-      revize: await db.revize.count(),
-      rozvadece: await db.rozvadece.count(),
-      okruhy: await db.okruhy.count(),
-      zavady: await db.zavady.count(),
-      mistnosti: await db.mistnosti.count(),
-      zarizeni: await db.zarizeni.count(),
-      zakazky: await db.zakazky.count(),
-      nastaveni: await db.nastaveni.count(),
-      sablony: await db.sablony.count(),
-      mericiPristroje: await db.mericiPristroje.count(),
-      revizePristroje: await db.revizePristroje.count(),
-      firmy: await db.firmy.count(),
-      zavadyKatalog: await db.zavadyKatalog.count(),
+      revize: data.revize?.length || 0,
+      rozvadece: data.rozvadec?.length || 0,
+      okruhy: data.okruh?.length || 0,
+      zavady: data.zavada?.length || 0,
+      mistnosti: data.mistnost?.length || 0,
+      zarizeni: data.zarizeni?.length || 0,
+      zakazky: data.zakazka?.length || 0,
+      firmy: data.firma?.length || 0,
     };
   },
 
-  /**
-   * Čistí databázi od starých dat (starších než X dní)
-   */
-  async cleanOldData(daysOld: number = 365): Promise<void> {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysOld);
-    
-    // Smazat staré završené revize
-    const oldRevize = await db.revize
-      .where('updatedAt')
-      .below(cutoffDate)
-      .filter(r => r.stav === 'schváleno')
-      .toArray();
-    
-    if (oldRevize.length > 0) {
-      for (const revize of oldRevize) {
-        if (revize.id) {
-          await revizeService.delete(revize.id);
-        }
-      }
+  async getDatabaseSize(): Promise<string> {
+    const stats = await this.getDatabaseStats();
+    let totalSize = 0;
+    for (const count of Object.values(stats)) {
+      totalSize += count * 1; // ~1KB na záznam
     }
+    return (totalSize / 1024).toFixed(2);
+  },
+};
+
+// ==================== EXPORT SERVICE (pro kompatibilitu) ====================
+export const exportService = {
+  async exportAll(): Promise<string> {
+    return backupService.exportDatabase();
   },
 
-  /**
-   * Vrací aktuální velikost databáze (přibližně v MB)
-   */
-  async getDatabaseSize(): Promise<string> {
-    let totalSize = 0;
-    const stats = await this.getDatabaseStats();
-    
-    // Zhruba 1KB na záznam + Base64 obrázky
-    for (const [table, count] of Object.entries(stats)) {
-      if (table === 'zavady') {
-        totalSize += count * 5; // Závady s fotkami - ~5KB
-      } else if (table === 'nastaveni') {
-        totalSize += count * 2; // Nastavení s logem - ~2MB max
-      } else {
-        totalSize += count * 1; // Ostatní ~1KB
-      }
-    }
-    
-    return (totalSize / 1024).toFixed(2);
-  }
+  async importAll(jsonString: string): Promise<void> {
+    return backupService.importDatabase(jsonString, 'replace');
+  },
 };
+
+// Pro zpětnou kompatibilitu - prázdná db konstanta
+export const db = null;

@@ -93,15 +93,20 @@ app.post('/api/auth/verify', authMiddleware, (req: AuthRequest, res) => {
 });
 
 // ==================== PROTECTED ROUTES ====================
-// Aplikovat autentizaci na všechny API endpointy kromě auth
+// Aplikovat autentizaci na všechny API endpointy kromě auth a health
 app.use('/api/revize', authMiddleware);
-app.use('/api/rozvadec', authMiddleware);
-app.use('/api/okruh', authMiddleware);
-app.use('/api/zavada', authMiddleware);
-app.use('/api/firma', authMiddleware);
-app.use('/api/mistnost', authMiddleware);
-app.use('/api/metodologie', authMiddleware);
-app.use('/api/sablona', authMiddleware);
+app.use('/api/rozvadece', authMiddleware);
+app.use('/api/okruhy', authMiddleware);
+app.use('/api/zavady', authMiddleware);
+app.use('/api/firmy', authMiddleware);
+app.use('/api/mistnosti', authMiddleware);
+app.use('/api/zarizeni', authMiddleware);
+app.use('/api/zakazky', authMiddleware);
+app.use('/api/pristroje', authMiddleware);
+app.use('/api/sablony', authMiddleware);
+app.use('/api/nastaveni', authMiddleware);
+app.use('/api/zavady-katalog', authMiddleware);
+app.use('/api/backup', authMiddleware);
 
 // ==================== REVIZE ====================
 app.get('/api/revize', (req, res) => {
@@ -193,6 +198,586 @@ app.post('/api/rozvadece', (req, res) => {
 app.delete('/api/rozvadece/:id', (req, res) => {
   try {
     db.prepare('DELETE FROM rozvadec WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.put('/api/rozvadece/:id', (req, res) => {
+  try {
+    const now = new Date().toISOString();
+    const updates = { ...req.body, updatedAt: now };
+    const keys = Object.keys(updates);
+    const values = Object.values(updates);
+    
+    const query = `UPDATE rozvadec SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
+    db.prepare(query).run(...values, req.params.id);
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// ==================== OKRUHY ====================
+app.get('/api/okruhy/:rozvadecId', (req, res) => {
+  try {
+    const okruhy = db.prepare('SELECT * FROM okruh WHERE rozvadecId = ? ORDER BY cislo').all(req.params.rozvadecId);
+    res.json(okruhy);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.post('/api/okruhy', (req, res) => {
+  try {
+    const data = req.body;
+    const keys = Object.keys(data);
+    const values = Object.values(data);
+    
+    const result = db.prepare(`
+      INSERT INTO okruh (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})
+    `).run(...values);
+    
+    res.json({ id: result.lastInsertRowid });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.put('/api/okruhy/:id', (req, res) => {
+  try {
+    const keys = Object.keys(req.body);
+    const values = Object.values(req.body);
+    
+    const query = `UPDATE okruh SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
+    db.prepare(query).run(...values, req.params.id);
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.delete('/api/okruhy/:id', (req, res) => {
+  try {
+    db.prepare('DELETE FROM okruh WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// ==================== MISTNOSTI ====================
+app.get('/api/mistnosti', (req, res) => {
+  try {
+    const mistnosti = db.prepare('SELECT * FROM mistnost').all();
+    res.json(mistnosti);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.get('/api/mistnosti/revize/:revizeId', (req, res) => {
+  try {
+    const mistnosti = db.prepare('SELECT * FROM mistnost WHERE revizeId = ?').all(req.params.revizeId);
+    res.json(mistnosti);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.post('/api/mistnosti', (req, res) => {
+  try {
+    const data = req.body;
+    const keys = Object.keys(data);
+    const values = Object.values(data);
+    
+    const result = db.prepare(`
+      INSERT INTO mistnost (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})
+    `).run(...values);
+    
+    res.json({ id: result.lastInsertRowid });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.put('/api/mistnosti/:id', (req, res) => {
+  try {
+    const keys = Object.keys(req.body);
+    const values = Object.values(req.body);
+    
+    const query = `UPDATE mistnost SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
+    db.prepare(query).run(...values, req.params.id);
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.delete('/api/mistnosti/:id', (req, res) => {
+  try {
+    db.prepare('DELETE FROM mistnost WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// ==================== ZARIZENI ====================
+app.get('/api/zarizeni/:mistnostId', (req, res) => {
+  try {
+    const zarizeni = db.prepare('SELECT * FROM zarizeni WHERE mistnostId = ?').all(req.params.mistnostId);
+    res.json(zarizeni);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.post('/api/zarizeni', (req, res) => {
+  try {
+    const data = req.body;
+    const keys = Object.keys(data);
+    const values = Object.values(data);
+    
+    const result = db.prepare(`
+      INSERT INTO zarizeni (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})
+    `).run(...values);
+    
+    res.json({ id: result.lastInsertRowid });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.put('/api/zarizeni/:id', (req, res) => {
+  try {
+    const keys = Object.keys(req.body);
+    const values = Object.values(req.body);
+    
+    const query = `UPDATE zarizeni SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
+    db.prepare(query).run(...values, req.params.id);
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.delete('/api/zarizeni/:id', (req, res) => {
+  try {
+    db.prepare('DELETE FROM zarizeni WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// ==================== ZAVADY ====================
+app.get('/api/zavady', (req, res) => {
+  try {
+    const zavady = db.prepare('SELECT * FROM zavada').all();
+    res.json(zavady);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.get('/api/zavady/revize/:revizeId', (req, res) => {
+  try {
+    const zavady = db.prepare('SELECT * FROM zavada WHERE revizeId = ?').all(req.params.revizeId);
+    res.json(zavady);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.post('/api/zavady', (req, res) => {
+  try {
+    const data = req.body;
+    const keys = Object.keys(data);
+    const values = Object.values(data);
+    
+    const result = db.prepare(`
+      INSERT INTO zavada (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})
+    `).run(...values);
+    
+    res.json({ id: result.lastInsertRowid });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.put('/api/zavady/:id', (req, res) => {
+  try {
+    const keys = Object.keys(req.body);
+    const values = Object.values(req.body);
+    
+    const query = `UPDATE zavada SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
+    db.prepare(query).run(...values, req.params.id);
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.delete('/api/zavady/:id', (req, res) => {
+  try {
+    db.prepare('DELETE FROM zavada WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// ==================== FIRMY ====================
+app.get('/api/firmy', (req, res) => {
+  try {
+    const firmy = db.prepare('SELECT * FROM firma').all();
+    res.json(firmy);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.get('/api/firmy/:id', (req, res) => {
+  try {
+    const firma = db.prepare('SELECT * FROM firma WHERE id = ?').get(req.params.id);
+    if (!firma) return res.status(404).json({ error: 'Firma nebyla nalezena' });
+    res.json(firma);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.post('/api/firmy', (req, res) => {
+  try {
+    const now = new Date().toISOString();
+    const data = { ...req.body, createdAt: now, updatedAt: now };
+    const keys = Object.keys(data);
+    const values = Object.values(data);
+    
+    const result = db.prepare(`
+      INSERT INTO firma (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})
+    `).run(...values);
+    
+    res.json({ id: result.lastInsertRowid });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.put('/api/firmy/:id', (req, res) => {
+  try {
+    const now = new Date().toISOString();
+    const updates = { ...req.body, updatedAt: now };
+    const keys = Object.keys(updates);
+    const values = Object.values(updates);
+    
+    const query = `UPDATE firma SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
+    db.prepare(query).run(...values, req.params.id);
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.delete('/api/firmy/:id', (req, res) => {
+  try {
+    db.prepare('DELETE FROM firma WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// ==================== ZAKAZKY ====================
+app.get('/api/zakazky', (req, res) => {
+  try {
+    const zakazky = db.prepare('SELECT * FROM zakazka ORDER BY datumPlanovany').all();
+    res.json(zakazky);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.post('/api/zakazky', (req, res) => {
+  try {
+    const now = new Date().toISOString();
+    const data = { ...req.body, createdAt: now, updatedAt: now };
+    const keys = Object.keys(data);
+    const values = Object.values(data);
+    
+    const result = db.prepare(`
+      INSERT INTO zakazka (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})
+    `).run(...values);
+    
+    res.json({ id: result.lastInsertRowid });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.put('/api/zakazky/:id', (req, res) => {
+  try {
+    const now = new Date().toISOString();
+    const updates = { ...req.body, updatedAt: now };
+    const keys = Object.keys(updates);
+    const values = Object.values(updates);
+    
+    const query = `UPDATE zakazka SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
+    db.prepare(query).run(...values, req.params.id);
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.delete('/api/zakazky/:id', (req, res) => {
+  try {
+    db.prepare('DELETE FROM zakazka WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// ==================== MERICI PRISTROJE ====================
+app.get('/api/pristroje', (req, res) => {
+  try {
+    const pristroje = db.prepare('SELECT * FROM mericiPristroj').all();
+    res.json(pristroje);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.get('/api/pristroje/:id', (req, res) => {
+  try {
+    const pristroj = db.prepare('SELECT * FROM mericiPristroj WHERE id = ?').get(req.params.id);
+    if (!pristroj) return res.status(404).json({ error: 'Přístroj nebyl nalezen' });
+    res.json(pristroj);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.post('/api/pristroje', (req, res) => {
+  try {
+    const now = new Date().toISOString();
+    const data = { ...req.body, createdAt: now, updatedAt: now };
+    const keys = Object.keys(data);
+    const values = Object.values(data);
+    
+    const result = db.prepare(`
+      INSERT INTO mericiPristroj (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})
+    `).run(...values);
+    
+    res.json({ id: result.lastInsertRowid });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.put('/api/pristroje/:id', (req, res) => {
+  try {
+    const now = new Date().toISOString();
+    const updates = { ...req.body, updatedAt: now };
+    const keys = Object.keys(updates);
+    const values = Object.values(updates);
+    
+    const query = `UPDATE mericiPristroj SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
+    db.prepare(query).run(...values, req.params.id);
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.delete('/api/pristroje/:id', (req, res) => {
+  try {
+    db.prepare('DELETE FROM mericiPristroj WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// ==================== REVIZE-PRISTROJ (vazby) ====================
+app.get('/api/revize-pristroje/:revizeId', (req, res) => {
+  try {
+    const vazby = db.prepare(`
+      SELECT rp.*, mp.nazev, mp.vyrobce, mp.model, mp.vyrobniCislo 
+      FROM revizePristroj rp 
+      JOIN mericiPristroj mp ON rp.pristrojId = mp.id 
+      WHERE rp.revizeId = ?
+    `).all(req.params.revizeId);
+    res.json(vazby);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.post('/api/revize-pristroje', (req, res) => {
+  try {
+    const { revizeId, pristrojId } = req.body;
+    
+    const result = db.prepare(`
+      INSERT INTO revizePristroj (revizeId, pristrojId) VALUES (?, ?)
+    `).run(revizeId, pristrojId);
+    
+    res.json({ id: result.lastInsertRowid });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.delete('/api/revize-pristroje/:id', (req, res) => {
+  try {
+    db.prepare('DELETE FROM revizePristroj WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// ==================== SABLONY ====================
+app.get('/api/sablony', (req, res) => {
+  try {
+    const sablony = db.prepare('SELECT * FROM sablona').all();
+    res.json(sablony);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.get('/api/sablony/:id', (req, res) => {
+  try {
+    const sablona = db.prepare('SELECT * FROM sablona WHERE id = ?').get(req.params.id);
+    if (!sablona) return res.status(404).json({ error: 'Šablona nebyla nalezena' });
+    res.json(sablona);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.get('/api/sablony/vychozi/get', (req, res) => {
+  try {
+    const sablona = db.prepare('SELECT * FROM sablona WHERE jeVychozi = 1').get();
+    res.json(sablona || null);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.post('/api/sablony', (req, res) => {
+  try {
+    const now = new Date().toISOString();
+    const data = { ...req.body, createdAt: now, updatedAt: now };
+    const keys = Object.keys(data);
+    const values = Object.values(data);
+    
+    const result = db.prepare(`
+      INSERT INTO sablona (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})
+    `).run(...values);
+    
+    res.json({ id: result.lastInsertRowid });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.put('/api/sablony/:id', (req, res) => {
+  try {
+    const now = new Date().toISOString();
+    const updates = { ...req.body, updatedAt: now };
+    const keys = Object.keys(updates);
+    const values = Object.values(updates);
+    
+    const query = `UPDATE sablona SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
+    db.prepare(query).run(...values, req.params.id);
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.put('/api/sablony/:id/vychozi', (req, res) => {
+  try {
+    // Nejprve zrušit výchozí u všech
+    db.prepare('UPDATE sablona SET jeVychozi = 0').run();
+    // Nastavit jako výchozí vybranou
+    db.prepare('UPDATE sablona SET jeVychozi = 1 WHERE id = ?').run(req.params.id);
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.delete('/api/sablony/:id', (req, res) => {
+  try {
+    db.prepare('DELETE FROM sablona WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+// ==================== ZAVADY KATALOG ====================
+app.get('/api/zavady-katalog', (req, res) => {
+  try {
+    const katalog = db.prepare('SELECT * FROM zavadaKatalog').all();
+    res.json(katalog);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.post('/api/zavady-katalog', (req, res) => {
+  try {
+    const now = new Date().toISOString();
+    const data = { ...req.body, createdAt: now, updatedAt: now };
+    const keys = Object.keys(data);
+    const values = Object.values(data);
+    
+    const result = db.prepare(`
+      INSERT INTO zavadaKatalog (${keys.join(', ')}) VALUES (${keys.map(() => '?').join(', ')})
+    `).run(...values);
+    
+    res.json({ id: result.lastInsertRowid });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.put('/api/zavady-katalog/:id', (req, res) => {
+  try {
+    const now = new Date().toISOString();
+    const updates = { ...req.body, updatedAt: now };
+    const keys = Object.keys(updates);
+    const values = Object.values(updates);
+    
+    const query = `UPDATE zavadaKatalog SET ${keys.map(k => `${k} = ?`).join(', ')} WHERE id = ?`;
+    db.prepare(query).run(...values, req.params.id);
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+app.delete('/api/zavady-katalog/:id', (req, res) => {
+  try {
+    db.prepare('DELETE FROM zavadaKatalog WHERE id = ?').run(req.params.id);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
