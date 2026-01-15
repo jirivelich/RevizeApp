@@ -1,5 +1,6 @@
 // API service pro komunikaci s backendem
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// V produkci používáme relativní URL (frontend i backend na stejném serveru)
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Získat token z localStorage
 function getToken(): string | null {

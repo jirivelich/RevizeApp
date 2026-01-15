@@ -24,7 +24,8 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      // V produkci používáme relativní URL (frontend i backend na stejném serveru)
+      const API_BASE = import.meta.env.VITE_API_URL || '/api';
       const endpoint = isLogin ? '/auth/login' : '/auth/register';
       const payload = isLogin 
         ? { username: formData.username, password: formData.password }
