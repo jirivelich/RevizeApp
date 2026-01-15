@@ -442,14 +442,14 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       case 'vyhodnoceni-predchozich':
         renderVyhodnoceniPredchozich(sekceIndex++);
         break;
-      case 'Rozvaděče':
-        renderRozvaděče(sekceIndex++);
+      case 'rozvadece':
+        renderRozvadece(sekceIndex++);
         break;
-      case 'Měření':
-        renderMěření(sekceIndex++);
+      case 'mereni':
+        renderMereni(sekceIndex++);
         break;
-      case 'Místnosti':
-        renderMístnosti(sekceIndex++);
+      case 'mistnosti':
+        renderMistnosti(sekceIndex++);
         break;
       case 'pristroje':
         renderPristroje(sekceIndex++);
@@ -881,7 +881,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     yPos = doc.lastAutoTable.finalY + 10;
   }
 
-  function renderRozvaděče(sectionNumber: number) {
+  function renderRozvadece(sectionNumber: number) {
     renderSectionTitle(`${sectionNumber}. Rozvaděče a okruhy`);
 
     if (rozvadece.length === 0) {
@@ -968,7 +968,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     }
   }
 
-  function renderMěření(sectionNumber: number) {
+  function renderMereni(sectionNumber: number) {
     renderSectionTitle(`${sectionNumber}. Výsledky měření`);
     
     // Souhrn měření ze všech okruhů
@@ -1149,7 +1149,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     // Landscape přílohy zůstávají na konci dokumentu - nepřepínáme zpět
   }
 
-  function renderMístnosti(sectionNumber: number) {
+  function renderMistnosti(sectionNumber: number) {
     renderSectionTitle(`${sectionNumber}. Kontrolované místnosti`);
 
     if (mistnosti.length === 0) {
