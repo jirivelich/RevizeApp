@@ -86,6 +86,12 @@ export function SablonyPage() {
   const [newSablonaName, setNewSablonaName] = useState('');
   
   const previewRef = useRef<HTMLDivElement>(null);
+  
+  // DnD sensors - MUST be at top level, not inside JSX
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   useEffect(() => {
     loadData();
@@ -844,10 +850,7 @@ export function SablonyPage() {
                             <span className="text-xs text-slate-500">Přetáhněte pro změnu pořadí</span>
                           </div>
                           <DndContext
-                            sensors={useSensors(
-                              useSensor(PointerSensor),
-                              useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-                            )}
+                            sensors={sensors}
                             collisionDetection={closestCenter}
                             onDragEnd={(event: DragEndEvent) => {
                               const { active, over } = event;
