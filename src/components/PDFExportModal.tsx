@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Button, Modal, Select } from './ui';
 import { generatePDF, previewPDF, downloadPDF } from '../services/pdfExport';
-import { sablonaService, nastaveniService, rozvadecService, okruhService, zavadaService, mistnostService, zarizeniService } from '../services/database';
-import type { Revize, Sablona, Nastaveni, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni } from '../types';
+import { sablonaService, nastaveniService, rozvadecService, okruhService, zavadaService, mistnostService, zarizeniService, revizePristrojService } from '../services/database';
+import type { Revize, Sablona, Nastaveni, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, MericiPristroj } from '../types';
 import type { jsPDF } from 'jspdf';
 
 interface PDFExportModalProps {
@@ -20,6 +20,7 @@ export function PDFExportModal({ isOpen, onClose, revize }: PDFExportModalProps)
   const [zavady, setZavady] = useState<Zavada[]>([]);
   const [mistnosti, setMistnosti] = useState<Mistnost[]>([]);
   const [zarizeni, setZarizeni] = useState<Record<number, Zarizeni[]>>({});
+  const [pouzitePristroje, setPouzitePristroje] = useState<MericiPristroj[]>([]);
   const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -87,6 +88,10 @@ export function PDFExportModal({ isOpen, onClose, revize }: PDFExportModalProps)
           }
         }
         setZarizeni(zarizeniData);
+
+        // Načíst použité měřicí přístroje
+        const pristrojeData = await revizePristrojService.getByRevize(revize.id);
+        setPouzitePristroje(pristrojeData);
       }
     } catch (err) {
       setError('Chyba při načítání dat');
@@ -132,6 +137,7 @@ export function PDFExportModal({ isOpen, onClose, revize }: PDFExportModalProps)
         zarizeni,
         nastaveni,
         sablona,
+        pouzitePristroje,
       });
 
       console.log('PDF generated successfully');

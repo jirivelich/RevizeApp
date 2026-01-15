@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import type { Revize, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, Nastaveni, Sablona } from '../types';
+import type { Revize, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, Nastaveni, Sablona, MericiPristroj } from '../types';
 import { addCzechFont, t } from './fontUtils';
 
 // Rozšíření jsPDF o autoTable
@@ -19,10 +19,11 @@ interface PDFExportData {
   zarizeni: Record<number, Zarizeni[]>; // mistnostId -> zarizeni
   nastaveni: Nastaveni | null;
   sablona: Sablona;
+  pouzitePristroje?: MericiPristroj[]; // Použité měřicí přístroje
 }
 
 export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
-  const { revize, rozvadece, okruhy, zavady, mistnosti, zarizeni, nastaveni, sablona } = data;
+  const { revize, rozvadece, okruhy, zavady, mistnosti, zarizeni, nastaveni, sablona, pouzitePristroje = [] } = data;
   
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -423,6 +424,15 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       case 'objekt':
         renderObjekt(sekceIndex++);
         break;
+      case 'rozsah-podklady':
+        renderRozsahPodklady(sekceIndex++);
+        break;
+      case 'provedene-ukony':
+        renderProvedeneUkony(sekceIndex++);
+        break;
+      case 'vyhodnoceni-predchozich':
+        renderVyhodnoceniPredchozich(sekceIndex++);
+        break;
       case 'rozvadece':
         renderRozvadece(sekceIndex++);
         break;
@@ -431,6 +441,9 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
         break;
       case 'mistnosti':
         renderMistnosti(sekceIndex++);
+        break;
+      case 'pristroje':
+        renderPristroje(sekceIndex++);
         break;
       case 'zaver':
         renderZaver(sekceIndex++);
@@ -561,6 +574,126 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       columnStyles: {
         0: { fontStyle: 'bold', cellWidth: 50, textColor: [80, 80, 80] },
         1: { cellWidth: 'auto' },
+      },
+      margin: { left: margin, right: margin },
+    });
+
+    yPos = doc.lastAutoTable.finalY + 10;
+  }
+
+  function renderRozsahPodklady(sectionNumber: number) {
+    // Pokud nemáme data, přeskočit sekci
+    if (!revize.rozsahRevize && !revize.podklady) {
+      return;
+    }
+
+    renderSectionTitle(`${sectionNumber}. Rozsah revize a podklady`);
+    
+    // Rozsah revize
+    if (revize.rozsahRevize) {
+      doc.setFontSize(baseFontSize);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(80, 80, 80);
+      doc.text(t('Vymezeni rozsahu revize:'), margin, yPos);
+      yPos += 5;
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(0, 0, 0);
+      const rozsahLines = doc.splitTextToSize(t(revize.rozsahRevize), pageWidth - 2 * margin);
+      addPageIfNeeded(rozsahLines.length * 5 + 10);
+      doc.text(rozsahLines, margin, yPos);
+      yPos += rozsahLines.length * 5 + 8;
+    }
+    
+    // Podklady
+    if (revize.podklady) {
+      addPageIfNeeded(30);
+      doc.setFontSize(baseFontSize);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(80, 80, 80);
+      doc.text(t('Seznam podkladu:'), margin, yPos);
+      yPos += 5;
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(0, 0, 0);
+      const podkladyLines = doc.splitTextToSize(t(revize.podklady), pageWidth - 2 * margin);
+      addPageIfNeeded(podkladyLines.length * 5 + 10);
+      doc.text(podkladyLines, margin, yPos);
+      yPos += podkladyLines.length * 5 + 8;
+    }
+    
+    yPos += 5;
+  }
+
+  function renderProvedeneUkony(sectionNumber: number) {
+    // Pokud nemáme data, přeskočit sekci
+    if (!revize.provedeneUkony) {
+      return;
+    }
+
+    renderSectionTitle(`${sectionNumber}. Provedene ukony`);
+    
+    doc.setFontSize(baseFontSize);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    const ukonyLines = doc.splitTextToSize(t(revize.provedeneUkony), pageWidth - 2 * margin);
+    addPageIfNeeded(ukonyLines.length * 5 + 10);
+    doc.text(ukonyLines, margin, yPos);
+    yPos += ukonyLines.length * 5 + 10;
+  }
+
+  function renderVyhodnoceniPredchozich(sectionNumber: number) {
+    // Pokud nemáme data, přeskočit sekci
+    if (!revize.vyhodnoceniPredchozich) {
+      return;
+    }
+
+    renderSectionTitle(`${sectionNumber}. Vyhodnoceni predchozich revizi`);
+    
+    doc.setFontSize(baseFontSize);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    const vyhodnoceniLines = doc.splitTextToSize(t(revize.vyhodnoceniPredchozich), pageWidth - 2 * margin);
+    addPageIfNeeded(vyhodnoceniLines.length * 5 + 10);
+    doc.text(vyhodnoceniLines, margin, yPos);
+    yPos += vyhodnoceniLines.length * 5 + 10;
+  }
+
+  function renderPristroje(sectionNumber: number) {
+    // Pokud nemáme přístroje, přeskočit sekci
+    if (!pouzitePristroje || pouzitePristroje.length === 0) {
+      return;
+    }
+
+    renderSectionTitle(`${sectionNumber}. Pouzite merici pristroje`);
+    
+    const tableData = pouzitePristroje.map(p => [
+      t(p.nazev),
+      t(`${p.vyrobce} ${p.model}`),
+      t(p.vyrobniCislo),
+      new Date(p.datumKalibrace).toLocaleDateString('cs-CZ'),
+      new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ'),
+    ]);
+
+    autoTable(doc, {
+      startY: yPos,
+      head: [[
+        t('Nazev'),
+        t('Vyrobce/Model'),
+        t('Vyrobni cislo'),
+        t('Kalibrace'),
+        t('Platnost do'),
+      ]],
+      body: tableData,
+      theme: 'striped',
+      styles: {
+        fontSize: baseFontSize - 1,
+        cellPadding: 2,
+      },
+      headStyles: {
+        fillColor: primaryColor,
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
       },
       margin: { left: margin, right: margin },
     });
@@ -960,6 +1093,38 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     doc.text(vysledekText, pageWidth / 2, yPos + 3, { align: 'center' });
     
     yPos += 25;
+
+    // Odůvodnění neschopnosti provozu (pokud je výsledek neschopno)
+    if (revize.vysledek === 'neschopno' && revize.vysledekOduvodneni) {
+      addPageIfNeeded(30);
+      doc.setFontSize(baseFontSize);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(239, 68, 68);
+      doc.text(t('Oduvodneni neschopnosti provozu:'), margin, yPos);
+      yPos += 5;
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80, 80, 80);
+      const oduvodneniLines = doc.splitTextToSize(t(revize.vysledekOduvodneni), pageWidth - 2 * margin);
+      doc.text(oduvodneniLines, margin, yPos);
+      yPos += oduvodneniLines.length * 5 + 8;
+    }
+
+    // Závěr revize (textový popis)
+    if (revize.zaver) {
+      addPageIfNeeded(30);
+      doc.setFontSize(baseFontSize);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(80, 80, 80);
+      doc.text(t('Zaver a doporuceni:'), margin, yPos);
+      yPos += 5;
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(0, 0, 0);
+      const zaverLines = doc.splitTextToSize(t(revize.zaver), pageWidth - 2 * margin);
+      doc.text(zaverLines, margin, yPos);
+      yPos += zaverLines.length * 5 + 8;
+    }
 
     // Statistiky
     doc.setFontSize(baseFontSize);
