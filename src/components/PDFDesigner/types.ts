@@ -61,6 +61,10 @@ export interface Widget {
   zIndex: number;
   tableConfig?: TableConfig;
   groupId?: string;
+  // Automatické stránkování
+  autoGrow?: boolean; // Widget může přetékat na další stránky
+  overflowBehavior?: 'clip' | 'continue' | 'shrink'; // Co dělat když obsah přetéká
+  minHeight?: number; // Minimální výška (px) - pod tímto se přesune na novou stránku
 }
 
 export interface TableConfig {
@@ -71,6 +75,9 @@ export interface TableConfig {
   rowStyle?: Partial<WidgetStyle>;
   alternateRowColor?: string;
   borderStyle: 'all' | 'horizontal' | 'vertical' | 'outer' | 'none';
+  // Automatické stránkování tabulky
+  rowsPerPage?: number; // Max řádků na stránku (0 = automaticky)
+  repeatHeaderOnNewPage?: boolean; // Opakovat hlavičku na každé stránce
 }
 
 export interface TableColumn {

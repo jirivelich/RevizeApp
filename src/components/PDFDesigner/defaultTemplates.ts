@@ -605,12 +605,15 @@ export const createRevizniZpravaTemplate = (): DesignerTemplate => {
       zone: 'content',
       pageId: page2Id,
       zIndex: 8,
+      autoGrow: true, // Automatické stránkování
+      overflowBehavior: 'continue',
       tableConfig: {
         type: 'rozvadece',
         columns: [...TABLE_COLUMNS.rozvadece],
         showHeader: true,
         borderStyle: 'all',
         alternateRowColor: '#f9fafb',
+        repeatHeaderOnNewPage: true, // Opakovat hlavičku na nových stránkách
       },
     }),
 
@@ -640,12 +643,15 @@ export const createRevizniZpravaTemplate = (): DesignerTemplate => {
       zone: 'content',
       pageId: page2Id,
       zIndex: 10,
+      autoGrow: true, // Automatické stránkování
+      overflowBehavior: 'continue',
       tableConfig: {
         type: 'zavady',
         columns: [...TABLE_COLUMNS.zavady],
         showHeader: true,
         borderStyle: 'all',
         alternateRowColor: '#fef2f2',
+        repeatHeaderOnNewPage: true,
       },
     }),
 

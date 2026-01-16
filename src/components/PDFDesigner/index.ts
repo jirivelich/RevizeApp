@@ -38,3 +38,11 @@ export {
   createEmptyTemplate,
   DEFAULT_TEMPLATES,
 } from './defaultTemplates';
+
+// Pagination utilities
+export {
+  processPagination,
+  calculateTableRowsPerPage,
+  splitTableWidget,
+  needsPagination,
+} from './paginationUtils';
