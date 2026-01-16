@@ -487,10 +487,12 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       case 'zaver':
         renderZaver(sekceIndex++);
         break;
-      case 'podpisy':
-        renderPodpisy(sekceIndex++);
-        break;
     }
+  }
+
+  // Podpisy na poslední straně (pokud je nastaveno)
+  if (sablona.uvodniStranaZobrazitPodpisy !== false && sablona.podpisyUmisteni === 'posledni') {
+    renderPodpisyPosledniStrana();
   }
 
   // Přílohy na konci (landscape sekce)
@@ -581,24 +583,6 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       const rozsahLines = doc.splitTextToSize(t(revize.rozsahRevize), pageWidth - 2 * margin);
       doc.text(rozsahLines, margin, yPos);
       yPos += rozsahLines.length * 5 + 8;
-    }
-    
-    // Podklady
-    if (revize.podklady) {
-      // Spočítat prostor pro podnadpis + text
-      const podkladyLines = doc.splitTextToSize(t(revize.podklady), pageWidth - 2 * margin);
-      addPageIfNeeded(Math.min(20 + podkladyLines.length * 5, 50));
-      
-      doc.setFontSize(baseFontSize);
-      doc.setFont('Roboto', 'bold');
-      doc.setTextColor(80, 80, 80);
-      doc.text(t('Seznam podkladů:'), margin, yPos);
-      yPos += 5;
-      
-      doc.setFont('Roboto', 'normal');
-      doc.setTextColor(0, 0, 0);
-      doc.text(podkladyLines, margin, yPos);
-      yPos += podkladyLines.length * 5 + 8;
     }
     
     yPos += 5;
@@ -1213,7 +1197,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     
     addPageIfNeeded(40);
     
-    // Výsledek revize
+    // Výsledek revize - jednoduchý text bez barvy a rámečku
     const vysledekText = revize.vysledek === 'schopno' 
       ? t('ELEKTRICKÉ ZAŘÍZENÍ JE SCHOPNO BEZPEČNÉHO PROVOZU')
       : revize.vysledek === 'neschopno'
@@ -1222,27 +1206,12 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       ? t('ELEKTRICKÉ ZAŘÍZENÍ JE PODMÍNĚNĚ SCHOPNO BEZPEČNÉHO PROVOZU')
       : t('VÝSLEDEK REVIZE NEBYL STANOVEN');
 
-    const vysledekColor: [number, number, number] = revize.vysledek === 'schopno' 
-      ? [34, 197, 94]  // green
-      : revize.vysledek === 'neschopno'
-      ? [239, 68, 68]   // red
-      : revize.vysledek === 'podmíněně schopno'
-      ? [234, 179, 8]   // yellow
-      : [100, 100, 100]; // gray
-
-    doc.setFontSize(baseFontSize + 2);
+    doc.setFontSize(baseFontSize + 1);
     doc.setFont('Roboto', 'bold');
-    doc.setTextColor(...vysledekColor);
+    doc.setTextColor(0, 0, 0);
+    doc.text(vysledekText, pageWidth / 2, yPos, { align: 'center' });
     
-    // Orámovaný box pro výsledek
-    const textWidth = doc.getTextWidth(vysledekText);
-    const boxX = (pageWidth - textWidth - 20) / 2;
-    doc.setDrawColor(...vysledekColor);
-    doc.setLineWidth(1);
-    doc.roundedRect(boxX, yPos - 6, textWidth + 20, 15, 3, 3, 'S');
-    doc.text(vysledekText, pageWidth / 2, yPos + 3, { align: 'center' });
-    
-    yPos += 25;
+    yPos += 12;
 
     // Odůvodnění neschopnosti provozu (pokud je výsledek neschopno)
     if (revize.vysledek === 'neschopno' && revize.vysledekOduvodneni) {
@@ -1279,18 +1248,22 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     yPos += 5;
   }
 
-  function renderPodpisy(sectionNumber: number) {
-    // Renderovat podpisy na poslední straně pouze pokud je nastaveno
-    if (sablona.uvodniStranaZobrazitPodpisy === false || sablona.podpisyUmisteni !== 'posledni') {
-      return;
-    }
-    
+  function renderPodpisyPosledniStrana() {
+    // Podpisy na poslední straně - bez nadpisu sekce
     addPageIfNeeded(60);
-    renderSectionTitle(`${sectionNumber}. Podpisy`);
     
     yPos += 10;
     
     const colWidth = (pageWidth - 2 * margin) / 2;
+    
+    // Nadpis PODPISY
+    doc.setFillColor(240, 240, 240);
+    doc.rect(margin, yPos, pageWidth - 2 * margin, 6, 'F');
+    doc.setFont('Roboto', 'bold');
+    doc.setFontSize(baseFontSize - 1);
+    doc.setTextColor(0, 0, 0);
+    doc.text(t('PODPISY'), margin + 2, yPos + 4);
+    yPos += 12;
     
     // Revizní technik
     doc.setFontSize(baseFontSize);

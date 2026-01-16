@@ -522,8 +522,7 @@ export const sablonaService = {
         { id: 'mereni', nazev: 'Naměřené hodnoty', enabled: true, poradi: 8 },
         { id: 'mistnosti', nazev: 'Místnosti a zařízení', enabled: true, poradi: 9 },
         { id: 'zaver', nazev: 'Závěrečné zhodnocení', enabled: true, poradi: 10 },
-        { id: 'podpisy', nazev: 'Podpisy', enabled: true, poradi: 11 },
-        { id: 'zavady', nazev: 'Přehled zjištěných závad', enabled: true, poradi: 12 },
+        { id: 'zavady', nazev: 'Přehled zjištěných závad', enabled: true, poradi: 11 },
       ],
       sloupceOkruhu: [
         { id: 'cislo', nazev: 'Č.', enabled: true, poradi: 1 },
