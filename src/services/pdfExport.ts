@@ -454,12 +454,6 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
 
   for (const sekce of portraitSekce) {
     switch (sekce.id) {
-      case 'zakladni-udaje':
-        renderZakladniUdaje(sekceIndex++);
-        break;
-      case 'objekt':
-        renderObjekt(sekceIndex++);
-        break;
       case 'vymezeni-rozsahu':
         renderVymezeniRozsahu(sekceIndex++);
         break;
@@ -561,71 +555,6 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     doc.setLineWidth(0.3);
     doc.line(margin, yPos, pageWidth - margin, yPos);
     yPos += 8;
-  }
-
-  function renderZakladniUdaje(sectionNumber: number) {
-    renderSectionTitle(`${sectionNumber}. Základní údaje`);
-    
-    const tableData = [
-      [t('Číslo revize:'), t(revize.cisloRevize)],
-      [t('Název:'), t(revize.nazev)],
-      [t('Typ revize:'), t(revize.typRevize)],
-      [t('Datum provedení:'), new Date(revize.datum).toLocaleDateString('cs-CZ')],
-      [t('Platnost do:'), revize.datumPlatnosti ? new Date(revize.datumPlatnosti).toLocaleDateString('cs-CZ') : '-'],
-      [t('Stav:'), t(revize.stav)],
-    ];
-
-    autoTable(doc, {
-      startY: yPos,
-      head: [],
-      body: tableData,
-      theme: 'plain',
-      styles: {
-        font: 'Roboto',
-        fontSize: baseFontSize,
-        cellPadding: 2,
-      },
-      columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 50, textColor: [80, 80, 80] },
-        1: { cellWidth: 'auto' },
-      },
-      margin: { left: margin, right: margin },
-    });
-
-    yPos = doc.lastAutoTable.finalY + 10;
-  }
-
-  function renderObjekt(sectionNumber: number) {
-    renderSectionTitle(`${sectionNumber}. Údaje o objektu`);
-    
-    const tableData = [
-      [t('Název objektu:'), t(revize.nazev)],
-      [t('Adresa objektu:'), t(revize.adresa)],
-      [t('Objednatel:'), t(revize.objednatel)],
-    ];
-
-    if (revize.poznamka) {
-      tableData.push([t('Poznámka:'), t(revize.poznamka)]);
-    }
-
-    autoTable(doc, {
-      startY: yPos,
-      head: [],
-      body: tableData,
-      theme: 'plain',
-      styles: {
-        font: 'Roboto',
-        fontSize: baseFontSize,
-        cellPadding: 2,
-      },
-      columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 50, textColor: [80, 80, 80] },
-        1: { cellWidth: 'auto' },
-      },
-      margin: { left: margin, right: margin },
-    });
-
-    yPos = doc.lastAutoTable.finalY + 10;
   }
 
   function renderRozsahPodklady(sectionNumber: number) {
@@ -1346,23 +1275,6 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.text(zaverLines, margin, yPos);
       yPos += zaverLines.length * 5 + 8;
     }
-
-    // Statistiky
-    doc.setFontSize(baseFontSize);
-    doc.setFont('Roboto', 'normal');
-    doc.setTextColor(80, 80, 80);
-    
-    const stats = [
-      t(`Počet kontrolovaných rozvaděčů: ${rozvadece.length}`),
-      t(`Počet kontrolovaných okruhů: ${Object.values(okruhy).reduce((sum, arr) => sum + arr.length, 0)}`),
-      t(`Počet zjištěných závad: ${zavady.length}`),
-      t(`Počet kontrolovaných místností: ${mistnosti.length}`),
-    ];
-
-    stats.forEach(stat => {
-      doc.text(stat, margin, yPos);
-      yPos += 6;
-    });
 
     yPos += 5;
   }
