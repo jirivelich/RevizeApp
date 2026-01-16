@@ -80,6 +80,18 @@ export const SignatureIcon: React.FC<IconProps> = ({ size = 16 }) => (
   </svg>
 );
 
+// Repeater - opakující se skupina
+export const RepeatIcon: React.FC<IconProps> = ({ size = 16 }) => (
+  <svg width={size} height={size} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+    <rect x="3" y="3" width="7" height="5" rx="1"/>
+    <rect x="3" y="10" width="7" height="5" rx="1"/>
+    <rect x="3" y="17" width="7" height="5" rx="1"/>
+    <path d="M14 5h7M14 12h7M14 19h7"/>
+    <path d="M12 8v8"/>
+    <path d="M10 10l2-2 2 2M10 14l2 2 2-2"/>
+  </svg>
+);
+
 export const DeleteIcon: React.FC<IconProps> = ({ size = 16 }) => (
   <svg width={size} height={size} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
     <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>

@@ -99,6 +99,22 @@ export const VARIABLES: Variable[] = [
   { key: 'datum.dnes', label: 'Dnešní datum', category: 'Datum' },
   { key: 'datum.cas', label: 'Aktuální čas', category: 'Datum' },
   { key: 'datum.rok', label: 'Aktuální rok', category: 'Datum' },
+  
+  // Rozvaděč (pro repeater - aktuální položka)
+  { key: 'item.nazev', label: 'Název rozvaděče', category: 'Rozvaděč (repeater)' },
+  { key: 'item.oznaceni', label: 'Označení rozvaděče', category: 'Rozvaděč (repeater)' },
+  { key: 'item.umisteni', label: 'Umístění rozvaděče', category: 'Rozvaděč (repeater)' },
+  { key: 'item.typRozvadece', label: 'Typ rozvaděče', category: 'Rozvaděč (repeater)' },
+  { key: 'item.stupenKryti', label: 'Stupeň krytí', category: 'Rozvaděč (repeater)' },
+  { key: 'item.proudovyChranicTyp', label: 'Proudový chránič typ', category: 'Rozvaděč (repeater)' },
+  { key: 'item.poznamka', label: 'Poznámka', category: 'Rozvaděč (repeater)' },
+  { key: 'item.index', label: 'Pořadové číslo', category: 'Rozvaděč (repeater)' },
+  
+  // Místnost (pro repeater)
+  { key: 'item.patro', label: 'Patro', category: 'Místnost (repeater)' },
+  { key: 'item.plocha', label: 'Plocha [m²]', category: 'Místnost (repeater)' },
+  { key: 'item.typ', label: 'Typ místnosti', category: 'Místnost (repeater)' },
+  { key: 'item.prostredi', label: 'Prostředí', category: 'Místnost (repeater)' },
 ];
 
 // Definice sloupců pro dynamické tabulky - podle skutečných typů
@@ -166,6 +182,8 @@ export const VARIABLE_CATEGORIES = [
   'Firma',
   'Stránkování',
   'Datum',
+  'Rozvaděč (repeater)',
+  'Místnost (repeater)',
 ];
 
 // Typy widgetů s popisky
@@ -173,6 +191,7 @@ export const WIDGET_TYPES = [
   { type: 'text', label: 'Text', icon: 'text' },
   { type: 'variable', label: 'Proměnná', icon: 'variable' },
   { type: 'table', label: 'Tabulka', icon: 'table' },
+  { type: 'repeater', label: 'Opakující se skupina', icon: 'repeat' },
   { type: 'image', label: 'Obrázek', icon: 'image' },
   { type: 'line', label: 'Čára', icon: 'line' },
   { type: 'box', label: 'Box/Rámeček', icon: 'box' },
@@ -191,3 +210,139 @@ export const TABLE_TYPES = [
   { type: 'pristroje', label: 'Měřící přístroje' },
   { type: 'zarizeni', label: 'Zařízení' },
 ] as const;
+
+// Typy opakujících se skupin (repeater)
+export const REPEATER_TYPES = [
+  { 
+    type: 'rozvadece', 
+    label: 'Rozvaděče s okruhy',
+    description: 'Pro každý rozvaděč: info o rozvaděči + tabulka okruhů',
+  },
+  { 
+    type: 'mistnosti', 
+    label: 'Místnosti se zařízeními',
+    description: 'Pro každou místnost: info o místnosti + tabulka zařízení',
+  },
+] as const;
+
+// Výchozí šablona pro repeater rozvaděčů
+export const ROZVADEC_REPEATER_TEMPLATE = [
+  {
+    id: 'rozvadec_header',
+    type: 'text' as const,
+    name: 'Nadpis rozvaděče',
+    relativeX: 0,
+    relativeY: 0,
+    width: 180,
+    height: 8,
+    content: 'Rozvaděč č. {{item.index}}: {{item.oznaceni}} - {{item.nazev}}',
+    style: { fontSize: 12, fontWeight: 'bold' as const, color: '#1e40af' },
+  },
+  {
+    id: 'rozvadec_info_box',
+    type: 'box' as const,
+    name: 'Info box',
+    relativeX: 0,
+    relativeY: 10,
+    width: 180,
+    height: 20,
+    style: { borderWidth: 1, borderColor: '#e5e7eb', borderStyle: 'solid' as const, backgroundColor: '#f9fafb' },
+  },
+  {
+    id: 'rozvadec_umisteni_label',
+    type: 'text' as const,
+    name: 'Umístění label',
+    relativeX: 2,
+    relativeY: 12,
+    width: 25,
+    height: 6,
+    content: 'Umístění:',
+    style: { fontSize: 9, color: '#6b7280' },
+  },
+  {
+    id: 'rozvadec_umisteni',
+    type: 'variable' as const,
+    name: 'Umístění',
+    relativeX: 28,
+    relativeY: 12,
+    width: 60,
+    height: 6,
+    content: 'item.umisteni',
+    style: { fontSize: 9 },
+  },
+  {
+    id: 'rozvadec_typ_label',
+    type: 'text' as const,
+    name: 'Typ label',
+    relativeX: 90,
+    relativeY: 12,
+    width: 15,
+    height: 6,
+    content: 'Typ:',
+    style: { fontSize: 9, color: '#6b7280' },
+  },
+  {
+    id: 'rozvadec_typ',
+    type: 'variable' as const,
+    name: 'Typ',
+    relativeX: 106,
+    relativeY: 12,
+    width: 35,
+    height: 6,
+    content: 'item.typRozvadece',
+    style: { fontSize: 9 },
+  },
+  {
+    id: 'rozvadec_kryti_label',
+    type: 'text' as const,
+    name: 'Krytí label',
+    relativeX: 143,
+    relativeY: 12,
+    width: 15,
+    height: 6,
+    content: 'Krytí:',
+    style: { fontSize: 9, color: '#6b7280' },
+  },
+  {
+    id: 'rozvadec_kryti',
+    type: 'variable' as const,
+    name: 'Krytí',
+    relativeX: 159,
+    relativeY: 12,
+    width: 20,
+    height: 6,
+    content: 'item.stupenKryti',
+    style: { fontSize: 9 },
+  },
+  {
+    id: 'rozvadec_okruhy_label',
+    type: 'text' as const,
+    name: 'Okruhy nadpis',
+    relativeX: 0,
+    relativeY: 32,
+    width: 180,
+    height: 6,
+    content: 'Okruhy:',
+    style: { fontSize: 10, fontWeight: 'bold' as const },
+  },
+  {
+    id: 'rozvadec_okruhy_table',
+    type: 'table' as const,
+    name: 'Tabulka okruhů',
+    relativeX: 0,
+    relativeY: 39,
+    width: 180,
+    height: 40,
+    autoGrow: true,
+    tableConfig: {
+      type: 'okruhy' as const,
+      filterByParentId: true,
+      parentIdField: 'rozvadecId',
+      showHeader: true,
+      borderStyle: 'all' as const,
+      alternateRowColor: '#f9fafb',
+      repeatHeaderOnNewPage: true,
+      columns: [], // Bude doplněno z TABLE_COLUMNS
+    },
+  },
+];

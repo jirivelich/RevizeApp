@@ -21,6 +21,9 @@ export type {
   TableType,
   PageSize,
   Variable,
+  RepeaterType,
+  RepeaterConfig,
+  RepeaterItemTemplate,
 } from './types';
 
 // Constants
@@ -31,6 +34,8 @@ export {
   WIDGET_TYPES,
   PAGE_SIZES,
   DEFAULT_WIDGET_STYLE,
+  REPEATER_TYPES,
+  ROZVADEC_REPEATER_TEMPLATE,
 } from './constants';
 // Default templates
 export {
