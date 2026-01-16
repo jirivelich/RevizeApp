@@ -49,9 +49,28 @@ export function PDFDesignerMain({
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Data pro PDF renderování
-  const pdfData: PDFRenderData | null = revize ? {
-    revize,
+  // Demo data pro náhled pokud není revize
+  const demoRevize: Revize = {
+    id: 0,
+    cisloRevize: 'DEMO-2024-001',
+    nazev: 'Elektrická instalace - demo',
+    adresa: 'Ukázková ulice 123, 110 00 Praha',
+    objednatel: 'Demo zákazník s.r.o.',
+    kategorieRevize: 'elektro',
+    datum: new Date().toISOString(),
+    datumDokonceni: new Date().toISOString(),
+    datumPlatnosti: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+    termin: 60,
+    typRevize: 'pravidelná',
+    stav: 'dokončeno',
+    vysledek: 'schopno',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  // Data pro PDF renderování - použít reálná nebo demo data
+  const pdfData: PDFRenderData = {
+    revize: revize || demoRevize,
     nastaveni,
     rozvadece,
     okruhy,
@@ -60,7 +79,7 @@ export function PDFDesignerMain({
     zarizeni,
     pouzitePristroje,
     zakaznik,
-  } : null;
+  };
 
   // Načíst uložené šablony z localStorage
   useEffect(() => {
@@ -76,11 +95,6 @@ export function PDFDesignerMain({
 
   // Náhled PDF
   const handlePreview = useCallback(async () => {
-    if (!pdfData) {
-      alert('Pro náhled je potřeba načíst revizi.');
-      return;
-    }
-    
     setIsGeneratingPDF(true);
     try {
       await openPDFPreview(state.template, pdfData);
