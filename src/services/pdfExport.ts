@@ -218,7 +218,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.setFont('Roboto', 'bold');
       doc.setFontSize(baseFontSize - 1);
       doc.setTextColor(0, 0, 0);
-      doc.text(t('e) f) DRUH REVIZE A DATA'), margin + 2, yPos + 4);
+      doc.text(t('DRUH REVIZE A DATA'), margin + 2, yPos + 4);
       yPos += 6;
       
       // Typ revize podle požadavku e)
@@ -259,7 +259,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.setFontSize(baseFontSize - 1);
       doc.setTextColor(0, 0, 0);
       // Nadpis podle požadavku b) - identifikace zařízení
-      doc.text(t('b) IDENTIFIKACE REVIDOVANÉHO ZAŘÍZENÍ'), margin + 2, yPos + 4);
+      doc.text(t('IDENTIFIKACE REVIDOVANÉHO ZAŘÍZENÍ'), margin + 2, yPos + 4);
       yPos += 6;
       
       drawTableRow(yPos, [{ label: 'Druh zařízení:', value: revize.nazev || 'Elektrická instalace', width: contentWidth }], rowHeight, ramecekObjekt);
@@ -278,7 +278,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.setFontSize(baseFontSize - 1);
       doc.setTextColor(0, 0, 0);
       // Nadpis podle požadavku a) - provozovatel
-      doc.text(t('a) PROVOZOVATEL / OBJEDNATEL'), margin + 2, yPos + 4);
+      doc.text(t('PROVOZOVATEL / OBJEDNATEL'), margin + 2, yPos + 4);
       yPos += 6;
       
       drawTableRow(yPos, [{ label: 'Název/Jméno:', value: zakaznik.nazev || '-', width: contentWidth }], rowHeight, ramecekZakaznik);
@@ -314,7 +314,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.setFontSize(baseFontSize - 1);
       doc.setTextColor(0, 0, 0);
       // Nadpis podle požadavku l)
-      doc.text(t('l) ZÁVĚREČNÉ ZHODNOCENÍ'), margin + 2, yPos + 4);
+      doc.text(t('ZÁVĚREČNÉ ZHODNOCENÍ'), margin + 2, yPos + 4);
       yPos += 10;
 
       // Text vyhodnocení podle požadavku l)
