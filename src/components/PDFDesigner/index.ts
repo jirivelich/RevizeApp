@@ -32,3 +32,9 @@ export {
   PAGE_SIZES,
   DEFAULT_WIDGET_STYLE,
 } from './constants';
+// Default templates
+export {
+  createRevizniZpravaTemplate,
+  createEmptyTemplate,
+  DEFAULT_TEMPLATES,
+} from './defaultTemplates';

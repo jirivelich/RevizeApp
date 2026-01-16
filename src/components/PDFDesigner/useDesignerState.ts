@@ -13,25 +13,13 @@ import {
   WIDGET_TYPES, 
   TABLE_COLUMNS,
 } from './constants';
+import { createRevizniZpravaTemplate, createEmptyTemplate } from './defaultTemplates';
 
 // Generování unikátního ID
 const generateId = () => `widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 const generatePageId = () => `page_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-// Výchozí šablona
-const createDefaultTemplate = (): DesignerTemplate => ({
-  id: `template_${Date.now()}`,
-  name: 'Nová šablona',
-  pages: [createDefaultPage()],
-  headerHeight: 80,
-  footerHeight: 60,
-  snapToGrid: true,
-  gridSize: 10,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-});
-
-// Výchozí stránka
+// Výchozí stránka (pro přidávání nových stránek)
 const createDefaultPage = (index: number = 0): PageTemplate => ({
   id: generatePageId(),
   name: index === 0 ? 'Titulní strana' : `Strana ${index + 1}`,
@@ -48,10 +36,10 @@ interface HistoryState {
 }
 
 export function useDesignerState(initialTemplate?: DesignerTemplate) {
-  // Historie pro undo/redo
+  // Historie pro undo/redo - výchozí je Revizní zpráva šablona
   const [history, setHistory] = useState<HistoryState>({
     past: [],
-    present: initialTemplate || createDefaultTemplate(),
+    present: initialTemplate || createRevizniZpravaTemplate(),
     future: [],
   });
 
@@ -396,9 +384,14 @@ export function useDesignerState(initialTemplate?: DesignerTemplate) {
     setSelectedWidgetIds([]);
   }, []);
 
-  // Reset to default
+  // Reset - načte prázdnou šablonu
   const resetTemplate = useCallback(() => {
-    loadTemplate(createDefaultTemplate());
+    loadTemplate(createEmptyTemplate());
+  }, [loadTemplate]);
+
+  // Načte výchozí šablonu Revizní zpráva
+  const loadDefaultRevizniZprava = useCallback(() => {
+    loadTemplate(createRevizniZpravaTemplate());
   }, [loadTemplate]);
 
   return {
@@ -426,6 +419,7 @@ export function useDesignerState(initialTemplate?: DesignerTemplate) {
     updateTemplate: updateTemplatePartial,
     loadTemplate,
     resetTemplate,
+    loadDefaultRevizniZprava,
 
     // Page operations
     updatePage,
