@@ -385,19 +385,20 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     // Sloučit uložené bloky s výchozími (přidat chybějící bloky)
     let bloky = sablona.uvodniStranaBloky || [];
     
-    // Přidat chybějící bloky z defaultBloky
+    // Přidat chybějící bloky z defaultBloky (pro staré šablony)
     for (const defaultBlok of defaultBloky) {
       if (!bloky.find(b => b.id === defaultBlok.id)) {
-        bloky.push({ ...defaultBlok, poradi: bloky.length + 1 });
+        // Přidat chybějící blok jako enabled
+        bloky.push({ ...defaultBlok, enabled: true, poradi: bloky.length + 1 });
       }
     }
     
-    bloky = bloky
-      .filter(b => b.enabled)
+    const enabledBloky = bloky
+      .filter(b => b.enabled !== false) // Výchozí je enabled
       .sort((a, b) => a.poradi - b.poradi);
     
     // Renderovat bloky v pořadí (kromě podpisů které jsou vždy dole)
-    for (const blok of bloky) {
+    for (const blok of enabledBloky) {
       if (blok.id === 'podpisy') continue; // Podpisy jsou zvlášť
       switch (blok.id) {
         case 'hlavicka': renderHlavicka(); break;
@@ -410,7 +411,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     }
     
     // Podpisy jsou vždy na konci (dole na stránce)
-    const podpisyBlok = bloky.find(b => b.id === 'podpisy');
+    const podpisyBlok = enabledBloky.find(b => b.id === 'podpisy');
     if (podpisyBlok) {
       renderPodpisyBlok();
     }
