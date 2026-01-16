@@ -614,12 +614,12 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     addPageIfNeeded(50);
     renderSectionTitle(`${sectionNumber}. Vymezení rozsahu revize`);
     
-    // 1.1 Předmětem revize je
+    // Předmětem revize je
     if (revize.rozsahRevize) {
       doc.setFontSize(baseFontSize);
       doc.setFont('Roboto', 'bold');
       doc.setTextColor(80, 80, 80);
-      doc.text(t('1.1 Předmětem revize je:'), margin, yPos);
+      doc.text(t(`${sectionNumber}.1 Předmětem revize je:`), margin, yPos);
       yPos += 5;
       
       doc.setFont('Roboto', 'normal');
@@ -629,7 +629,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       yPos += rozsahLines.length * 5 + 8;
     }
     
-    // 1.2 Předmětem revize není
+    // Předmětem revize není
     if (revize.predmetNeni) {
       const predmetNeniLines = doc.splitTextToSize(t(revize.predmetNeni), pageWidth - 2 * margin);
       addPageIfNeeded(Math.min(20 + predmetNeniLines.length * 5, 50));
@@ -637,7 +637,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.setFontSize(baseFontSize);
       doc.setFont('Roboto', 'bold');
       doc.setTextColor(80, 80, 80);
-      doc.text(t('1.2 Předmětem revize není:'), margin, yPos);
+      doc.text(t(`${sectionNumber}.2 Předmětem revize není:`), margin, yPos);
       yPos += 5;
       
       doc.setFont('Roboto', 'normal');
@@ -659,12 +659,12 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     addPageIfNeeded(50);
     renderSectionTitle(`${sectionNumber}. Charakteristika zařízení`);
     
-    // 2.1 Napěťová soustava
+    // Napěťová soustava
     if (revize.napetovaSoustava) {
       doc.setFontSize(baseFontSize);
       doc.setFont('Roboto', 'bold');
       doc.setTextColor(80, 80, 80);
-      doc.text(t('2.1 Napěťová soustava:'), margin, yPos);
+      doc.text(t(`${sectionNumber}.1 Napěťová soustava:`), margin, yPos);
       yPos += 5;
       
       doc.setFont('Roboto', 'normal');
@@ -673,12 +673,12 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       yPos += 10;
     }
     
-    // 2.2 Ochrana před úrazem elektrickým proudem
+    // Ochrana před úrazem elektrickým proudem
     if (revize.ochranaOpatreni) {
       doc.setFontSize(baseFontSize);
       doc.setFont('Roboto', 'bold');
       doc.setTextColor(80, 80, 80);
-      doc.text(t('2.2 Ochrana před úrazem elektrickým proudem:'), margin, yPos);
+      doc.text(t(`${sectionNumber}.2 Ochrana před úrazem elektrickým proudem:`), margin, yPos);
       yPos += 8;
       
       // Seznam všech opatření
