@@ -382,7 +382,17 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     };
     
     // Získat bloky a seřadit podle pořadí
-    const bloky = (sablona.uvodniStranaBloky || defaultBloky)
+    // Sloučit uložené bloky s výchozími (přidat chybějící bloky)
+    let bloky = sablona.uvodniStranaBloky || [];
+    
+    // Přidat chybějící bloky z defaultBloky
+    for (const defaultBlok of defaultBloky) {
+      if (!bloky.find(b => b.id === defaultBlok.id)) {
+        bloky.push({ ...defaultBlok, poradi: bloky.length + 1 });
+      }
+    }
+    
+    bloky = bloky
       .filter(b => b.enabled)
       .sort((a, b) => a.poradi - b.poradi);
     
