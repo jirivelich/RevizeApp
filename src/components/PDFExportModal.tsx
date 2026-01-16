@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Button, Modal, Select } from './ui';
 import { generatePDF, previewPDF, downloadPDF } from '../services/pdfExport';
-import { sablonaService, nastaveniService, rozvadecService, okruhService, zavadaService, mistnostService, zarizeniService, revizePristrojService } from '../services/database';
-import type { Revize, Sablona, Nastaveni, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, MericiPristroj } from '../types';
+import { sablonaService, nastaveniService, rozvadecService, okruhService, zavadaService, mistnostService, zarizeniService, revizePristrojService, zakazniciService } from '../services/database';
+import type { Revize, Sablona, Nastaveni, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, MericiPristroj, Zakaznik } from '../types';
 import type { jsPDF } from 'jspdf';
 
 interface PDFExportModalProps {
@@ -21,6 +21,7 @@ export function PDFExportModal({ isOpen, onClose, revize }: PDFExportModalProps)
   const [mistnosti, setMistnosti] = useState<Mistnost[]>([]);
   const [zarizeni, setZarizeni] = useState<Record<number, Zarizeni[]>>({});
   const [pouzitePristroje, setPouzitePristroje] = useState<MericiPristroj[]>([]);
+  const [zakaznik, setZakaznik] = useState<Zakaznik | null>(null);
   const [pdfDoc, setPdfDoc] = useState<jsPDF | null>(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -92,6 +93,14 @@ export function PDFExportModal({ isOpen, onClose, revize }: PDFExportModalProps)
         // Načíst použité měřicí přístroje
         const pristrojeData = await revizePristrojService.getByRevize(revize.id);
         setPouzitePristroje(pristrojeData);
+
+        // Načíst zákazníka (pokud existuje)
+        if (revize.zakaznikId) {
+          const zakaznikData = await zakazniciService.getById(revize.zakaznikId);
+          setZakaznik(zakaznikData || null);
+        } else {
+          setZakaznik(null);
+        }
       }
     } catch (err) {
       setError('Chyba při načítání dat');
@@ -138,6 +147,7 @@ export function PDFExportModal({ isOpen, onClose, revize }: PDFExportModalProps)
         nastaveni,
         sablona,
         pouzitePristroje,
+        zakaznik,
       });
 
       console.log('PDF generated successfully');

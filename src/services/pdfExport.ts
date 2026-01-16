@@ -1,6 +1,6 @@
 ﻿import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import type { Revize, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, Nastaveni, Sablona, MericiPristroj } from '../types';
+import type { Revize, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, Nastaveni, Sablona, MericiPristroj, Zakaznik } from '../types';
 import { addCzechFont, t } from './fontUtils';
 
 // Rozšíření jsPDF o autoTable
@@ -20,10 +20,11 @@ interface PDFExportData {
   nastaveni: Nastaveni | null;
   sablona: Sablona;
   pouzitePristroje?: MericiPristroj[]; // Použité měřicí přístroje
+  zakaznik?: Zakaznik | null; // Zákazník revize
 }
 
 export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
-  const { revize, rozvadece, okruhy, zavady, mistnosti, zarizeni, nastaveni, sablona, pouzitePristroje = [] } = data;
+  const { revize, rozvadece, okruhy, zavady, mistnosti, zarizeni, nastaveni, sablona, pouzitePristroje = [], zakaznik } = data;
   
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -61,8 +62,9 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     { id: 'nadpis', nazev: 'Nadpis', enabled: true, poradi: 2 },
     { id: 'zakladni-udaje', nazev: 'Základní údaje', enabled: true, poradi: 3 },
     { id: 'objekt', nazev: 'Objekt', enabled: true, poradi: 4 },
-    { id: 'vyhodnoceni', nazev: 'Vyhodnocení', enabled: true, poradi: 5 },
-    { id: 'podpisy', nazev: 'Podpisy', enabled: true, poradi: 6 },
+    { id: 'zakaznik', nazev: 'Zákazník', enabled: true, poradi: 5 },
+    { id: 'vyhodnoceni', nazev: 'Vyhodnocení', enabled: true, poradi: 6 },
+    { id: 'podpisy', nazev: 'Podpisy', enabled: true, poradi: 7 },
   ];
 
   // ============ ÚVODNÍ STRANA - TECHNICKÝ DOKUMENT ============
@@ -77,6 +79,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     const rowHeight = 8;
     const ramecekUdaje = sablona.uvodniStranaRamecekUdaje !== false;
     const ramecekObjekt = sablona.uvodniStranaRamecekObjekt !== false;
+    const ramecekZakaznik = sablona.uvodniStranaRamecekZakaznik !== false;
     const ramecekVyhodnoceni = sablona.uvodniStranaRamecekVyhodnoceni !== false;
     
     // Pomocná funkce pro řádek tabulky
@@ -253,6 +256,41 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       yPos += rowHeight + 4;
     };
     
+    const renderZakaznik = () => {
+      if (sablona.uvodniStranaZobrazitZakaznika === false) return;
+      if (!zakaznik) return;
+      
+      doc.setFillColor(240, 240, 240);
+      doc.rect(margin, yPos, contentWidth, 6, 'F');
+      doc.setFont('Roboto', 'bold');
+      doc.setFontSize(baseFontSize - 1);
+      doc.setTextColor(0, 0, 0);
+      doc.text(t('Údaje o zákazníkovi'), margin + 2, yPos + 4);
+      yPos += 6;
+      
+      drawTableRow(yPos, [{ label: 'Název:', value: zakaznik.nazev || '-', width: contentWidth }], rowHeight, ramecekZakaznik);
+      yPos += rowHeight;
+      if (zakaznik.adresa) {
+        drawTableRow(yPos, [{ label: 'Adresa:', value: zakaznik.adresa, width: contentWidth }], rowHeight, ramecekZakaznik);
+        yPos += rowHeight;
+      }
+      if (zakaznik.ico || zakaznik.dic) {
+        drawTableRow(yPos, [
+          { label: 'IČO:', value: zakaznik.ico || '-', width: contentWidth / 2 },
+          { label: 'DIČ:', value: zakaznik.dic || '-', width: contentWidth / 2 },
+        ], rowHeight, ramecekZakaznik);
+        yPos += rowHeight;
+      }
+      if (zakaznik.kontaktOsoba || zakaznik.telefon) {
+        drawTableRow(yPos, [
+          { label: 'Kontakt:', value: zakaznik.kontaktOsoba || '-', width: contentWidth / 2 },
+          { label: 'Telefon:', value: zakaznik.telefon || '-', width: contentWidth / 2 },
+        ], rowHeight, ramecekZakaznik);
+        yPos += rowHeight;
+      }
+      yPos += 4;
+    };
+    
     const renderVyhodnoceni = () => {
       if (sablona.uvodniStranaZobrazitVyhodnoceni === false) return;
       
@@ -356,6 +394,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
         case 'nadpis': renderNadpis(); break;
         case 'zakladni-udaje': renderZakladniUdaje(); break;
         case 'objekt': renderObjekt(); break;
+        case 'zakaznik': renderZakaznik(); break;
         case 'vyhodnoceni': renderVyhodnoceni(); break;
       }
     }

@@ -790,8 +790,8 @@ async function startServer() {
   const booleanFieldsSablona = [
     'jeVychozi', 'zahlaviZobrazitLogo', 'zahlaviZobrazitFirmu', 'zahlaviZobrazitTechnika',
     'uvodniStranaZobrazit', 'uvodniStranaZobrazitFirmu', 'uvodniStranaZobrazitTechnika', 
-    'uvodniStranaZobrazitObjekt', 'uvodniStranaZobrazitVyhodnoceni', 'uvodniStranaZobrazitPodpisy',
-    'uvodniStranaNadpisRamecek', 'uvodniStranaRamecekUdaje', 'uvodniStranaRamecekObjekt', 
+    'uvodniStranaZobrazitObjekt', 'uvodniStranaZobrazitZakaznika', 'uvodniStranaZobrazitVyhodnoceni', 'uvodniStranaZobrazitPodpisy',
+    'uvodniStranaNadpisRamecek', 'uvodniStranaRamecekUdaje', 'uvodniStranaRamecekObjekt', 'uvodniStranaRamecekZakaznik',
     'uvodniStranaRamecekVyhodnoceni', 'zapatiZobrazitCisloStranky', 'zapatiZobrazitDatum'
   ];
   

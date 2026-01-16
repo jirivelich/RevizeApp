@@ -405,6 +405,23 @@ export function SablonyPage() {
               </div>
             )}
 
+            {/* Údaje o zákazníkovi */}
+            {formData.uvodniStranaZobrazitZakaznika !== false && (
+              <div className="mb-2">
+                <div 
+                  className="px-1 py-0.5 font-bold text-white"
+                  style={{ backgroundColor: secondaryColor, fontSize: '4px' }}
+                >
+                  ZÁKAZNÍK
+                </div>
+                <div className="border border-slate-300 p-1" style={{ fontSize: '4.5px' }}>
+                  <div className="font-medium">VZOROVÁ FIRMA s.r.o.</div>
+                  <div className="text-slate-500" style={{ fontSize: '3.5px' }}>IČO: 12345678 • DIČ: CZ12345678</div>
+                  <div className="text-slate-500" style={{ fontSize: '3.5px' }}>Adresa zákazníka 123, Praha</div>
+                </div>
+              </div>
+            )}
+
             {/* Vyhodnocení */}
             {formData.uvodniStranaZobrazitVyhodnoceni !== false && (
               <div className="mb-2">
@@ -817,10 +834,11 @@ export function SablonyPage() {
                         {/* Nastavení rámečků sekcí */}
                         <div className="bg-slate-50 rounded-lg p-3">
                           <p className="text-sm font-medium text-slate-700 mb-2">📐 Rámečky sekcí</p>
-                          <div className="grid grid-cols-3 gap-2">
+                          <div className="grid grid-cols-4 gap-2">
                             {[
                               { key: 'uvodniStranaRamecekUdaje', label: 'Základní údaje' },
                               { key: 'uvodniStranaRamecekObjekt', label: 'Údaje o objektu' },
+                              { key: 'uvodniStranaRamecekZakaznik', label: 'Zákazník' },
                               { key: 'uvodniStranaRamecekVyhodnoceni', label: 'Vyhodnocení' },
                             ].map(item => (
                               <label 

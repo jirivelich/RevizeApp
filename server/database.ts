@@ -268,6 +268,7 @@ export async function initializeDatabase() {
         "uvodniStranaZobrazitFirmu" INTEGER DEFAULT 1,
         "uvodniStranaZobrazitTechnika" INTEGER DEFAULT 1,
         "uvodniStranaZobrazitObjekt" INTEGER DEFAULT 1,
+        "uvodniStranaZobrazitZakaznika" INTEGER DEFAULT 1,
         "uvodniStranaZobrazitVyhodnoceni" INTEGER DEFAULT 1,
         "uvodniStranaZobrazitPodpisy" INTEGER DEFAULT 1,
         "podpisyUmisteni" TEXT DEFAULT 'uvodni',
@@ -276,6 +277,7 @@ export async function initializeDatabase() {
         "uvodniStranaNadpisRamecek" INTEGER DEFAULT 1,
         "uvodniStranaRamecekUdaje" INTEGER DEFAULT 1,
         "uvodniStranaRamecekObjekt" INTEGER DEFAULT 1,
+        "uvodniStranaRamecekZakaznik" INTEGER DEFAULT 1,
         "uvodniStranaRamecekVyhodnoceni" INTEGER DEFAULT 1,
         "zapatiZobrazitCisloStranky" INTEGER DEFAULT 1,
         "zapatiZobrazitDatum" INTEGER DEFAULT 1,
@@ -334,6 +336,10 @@ export async function initializeDatabase() {
       'ALTER TABLE sablona ADD COLUMN IF NOT EXISTS "podpisyUmisteni" TEXT DEFAULT \'uvodni\'',
       // Bloky úvodní strany pro drag-and-drop editor
       'ALTER TABLE sablona ADD COLUMN IF NOT EXISTS "uvodniStranaBloky" TEXT',
+      // Zobrazení zákazníka na úvodní straně
+      'ALTER TABLE sablona ADD COLUMN IF NOT EXISTS "uvodniStranaZobrazitZakaznika" INTEGER DEFAULT 1',
+      // Rámeček kolem údajů o zákazníkovi
+      'ALTER TABLE sablona ADD COLUMN IF NOT EXISTS "uvodniStranaRamecekZakaznik" INTEGER DEFAULT 1',
     ];
     
     for (const migration of migrations) {

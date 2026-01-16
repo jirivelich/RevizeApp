@@ -244,6 +244,7 @@ export interface Sablona {
   uvodniStranaZobrazitObjekt: boolean;
   uvodniStranaZobrazitTechnika: boolean;
   uvodniStranaZobrazitFirmu: boolean;
+  uvodniStranaZobrazitZakaznika: boolean;
   uvodniStranaZobrazitVyhodnoceni: boolean;
   uvodniStranaZobrazitPodpisy: boolean;
   podpisyUmisteni: 'uvodni' | 'posledni';  // Kde zobrazit podpisy - na úvodní straně nebo na poslední
@@ -252,6 +253,7 @@ export interface Sablona {
   uvodniStranaNadpisRamecek?: boolean;  // Zobrazit rámeček kolem nadpisu
   uvodniStranaRamecekUdaje?: boolean;   // Rámeček kolem základních údajů
   uvodniStranaRamecekObjekt?: boolean;  // Rámeček kolem údajů o objektu
+  uvodniStranaRamecekZakaznik?: boolean; // Rámeček kolem údajů o zákazníkovi
   uvodniStranaRamecekVyhodnoceni?: boolean; // Rámeček kolem vyhodnocení
   uvodniStranaBloky?: UvodniStranaBlok[]; // Konfigurovatelné bloky úvodní strany
   
