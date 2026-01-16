@@ -1,17 +1,28 @@
 // PDFDesignerMain - hlavní komponenta PDF designeru
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Revize, Nastaveni } from '../../types';
+import type { Revize, Nastaveni, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, MericiPristroj, Zakaznik } from '../../types';
 import type { Widget, DesignerTemplate } from './types';
 import { useDesignerState } from './useDesignerState';
 import { Toolbar } from './Toolbar';
 import { PageCanvas } from './PageCanvas';
 import { PropertiesPanel } from './PropertiesPanel';
 import { WidgetEditor } from './WidgetEditor';
-import { SaveIcon, FolderOpenIcon, ExportIcon, CloseIcon } from './icons';
+import { SaveIcon, FolderOpenIcon, ExportIcon, CloseIcon, PreviewIcon, PDFIcon } from './icons';
+import { openPDFPreview, downloadPDF } from './pdfRenderer';
+import type { PDFRenderData } from './pdfRenderer';
 
 interface PDFDesignerMainProps {
   revize?: Revize | null;
   nastaveni?: Nastaveni | null;
+  // Rozšířená data pro náhled
+  rozvadece?: Rozvadec[];
+  okruhy?: Record<number, Okruh[]>;
+  zavady?: Zavada[];
+  mistnosti?: Mistnost[];
+  zarizeni?: Record<number, Zarizeni[]>;
+  pouzitePristroje?: MericiPristroj[];
+  zakaznik?: Zakaznik | null;
+  // Callbacks
   onClose?: () => void;
   onExport?: (template: DesignerTemplate) => void;
   initialTemplate?: DesignerTemplate;
@@ -20,6 +31,13 @@ interface PDFDesignerMainProps {
 export function PDFDesignerMain({
   revize = null,
   nastaveni = null,
+  rozvadece = [],
+  okruhy = {},
+  zavady = [],
+  mistnosti = [],
+  zarizeni = {},
+  pouzitePristroje = [],
+  zakaznik = null,
   onClose,
   onExport,
   initialTemplate,
@@ -28,7 +46,21 @@ export function PDFDesignerMain({
   const [editingWidget, setEditingWidget] = useState<Widget | null>(null);
   const [savedTemplates, setSavedTemplates] = useState<DesignerTemplate[]>([]);
   const [showTemplateList, setShowTemplateList] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Data pro PDF renderování
+  const pdfData: PDFRenderData | null = revize ? {
+    revize,
+    nastaveni,
+    rozvadece,
+    okruhy,
+    zavady,
+    mistnosti,
+    zarizeni,
+    pouzitePristroje,
+    zakaznik,
+  } : null;
 
   // Načíst uložené šablony z localStorage
   useEffect(() => {
@@ -41,6 +73,43 @@ export function PDFDesignerMain({
       }
     }
   }, []);
+
+  // Náhled PDF
+  const handlePreview = useCallback(async () => {
+    if (!pdfData) {
+      alert('Pro náhled je potřeba načíst revizi.');
+      return;
+    }
+    
+    setIsGeneratingPDF(true);
+    try {
+      await openPDFPreview(state.template, pdfData);
+    } catch (error) {
+      console.error('Failed to generate preview:', error);
+      alert('Nepodařilo se vygenerovat náhled PDF.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  }, [state.template, pdfData]);
+
+  // Stáhnout PDF
+  const handleDownloadPDF = useCallback(async () => {
+    if (!pdfData || !revize) {
+      alert('Pro stažení je potřeba načíst revizi.');
+      return;
+    }
+    
+    setIsGeneratingPDF(true);
+    try {
+      const filename = `${revize.cisloRevize || 'revize'}_${state.template.name.replace(/\s+/g, '_')}.pdf`;
+      await downloadPDF(state.template, pdfData, filename);
+    } catch (error) {
+      console.error('Failed to download PDF:', error);
+      alert('Nepodařilo se stáhnout PDF.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  }, [state.template, pdfData, revize]);
 
   // Uložit šablonu
   const handleSaveTemplate = useCallback(() => {
@@ -229,13 +298,50 @@ export function PDFDesignerMain({
             Uložit
           </button>
 
-          {/* Export */}
+          {/* Separator */}
+          <div className="w-px h-6 bg-gray-300" />
+
+          {/* Náhled PDF */}
+          <button
+            onClick={handlePreview}
+            disabled={!revize || isGeneratingPDF}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded transition-colors ${
+              !revize || isGeneratingPDF
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : 'bg-purple-500 text-white hover:bg-purple-600'
+            }`}
+            title={!revize ? 'Načtěte revizi pro náhled' : 'Náhled PDF'}
+          >
+            <PreviewIcon size={16} />
+            {isGeneratingPDF ? 'Generuji...' : 'Náhled'}
+          </button>
+
+          {/* Stáhnout PDF */}
+          <button
+            onClick={handleDownloadPDF}
+            disabled={!revize || isGeneratingPDF}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded transition-colors ${
+              !revize || isGeneratingPDF
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : 'bg-red-500 text-white hover:bg-red-600'
+            }`}
+            title={!revize ? 'Načtěte revizi pro stažení' : 'Stáhnout PDF'}
+          >
+            <PDFIcon size={16} />
+            Stáhnout PDF
+          </button>
+
+          {/* Separator */}
+          <div className="w-px h-6 bg-gray-300" />
+
+          {/* Export JSON */}
           <button
             onClick={handleExport}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+            title="Export šablony jako JSON"
           >
             <ExportIcon size={16} />
-            Exportovat
+            Export JSON
           </button>
 
           {/* Zavřít */}

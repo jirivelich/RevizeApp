@@ -1,12 +1,19 @@
 // PDFDesignerPage - stránka pro vizuální návrh PDF šablon
 import { useState, useEffect } from 'react';
 import { PDFDesigner } from '../components/PDFDesigner';
-import type { Revize, Nastaveni } from '../types';
+import type { Revize, Nastaveni, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, MericiPristroj, Zakaznik } from '../types';
 import type { DesignerTemplate } from '../components/PDFDesigner';
 
 export function PDFDesignerPage() {
   const [revize, setRevize] = useState<Revize | null>(null);
   const [nastaveni, setNastaveni] = useState<Nastaveni | null>(null);
+  const [rozvadece, setRozvadece] = useState<Rozvadec[]>([]);
+  const [okruhy, setOkruhy] = useState<Record<number, Okruh[]>>({});
+  const [zavady, setZavady] = useState<Zavada[]>([]);
+  const [mistnosti, setMistnosti] = useState<Mistnost[]>([]);
+  const [zarizeni, setZarizeni] = useState<Record<number, Zarizeni[]>>({});
+  const [pouzitePristroje, setPouzitePristroje] = useState<MericiPristroj[]>([]);
+  const [zakaznik, setZakaznik] = useState<Zakaznik | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Načíst demo data pro náhled
@@ -19,9 +26,104 @@ export function PDFDesignerPage() {
           const revizeData = await revizeResponse.json();
           if (revizeData.length > 0) {
             // Načíst detail první revize
-            const detailResponse = await fetch(`/api/revize/${revizeData[0].id}`);
+            const revizeId = revizeData[0].id;
+            const detailResponse = await fetch(`/api/revize/${revizeId}`);
             if (detailResponse.ok) {
-              setRevize(await detailResponse.json());
+              const revizeDetail = await detailResponse.json();
+              setRevize(revizeDetail);
+              
+              // Načíst zákazníka pokud existuje
+              if (revizeDetail.zakaznikId) {
+                try {
+                  const zakaznikResponse = await fetch(`/api/zakaznici/${revizeDetail.zakaznikId}`);
+                  if (zakaznikResponse.ok) {
+                    setZakaznik(await zakaznikResponse.json());
+                  }
+                } catch (e) {
+                  console.error('Failed to load zakaznik:', e);
+                }
+              }
+              
+              // Načíst rozvaděče
+              try {
+                const rozvadeceResponse = await fetch(`/api/revize/${revizeId}/rozvadece`);
+                if (rozvadeceResponse.ok) {
+                  const rozvadeceData: Rozvadec[] = await rozvadeceResponse.json();
+                  setRozvadece(rozvadeceData);
+                  
+                  // Načíst okruhy pro každý rozvaděč
+                  const okruhyMap: Record<number, Okruh[]> = {};
+                  for (const rozvadec of rozvadeceData) {
+                    if (rozvadec.id) {
+                      try {
+                        const okruhyResponse = await fetch(`/api/rozvadece/${rozvadec.id}/okruhy`);
+                        if (okruhyResponse.ok) {
+                          okruhyMap[rozvadec.id] = await okruhyResponse.json();
+                        }
+                      } catch (e) {
+                        console.error(`Failed to load okruhy for rozvadec ${rozvadec.id}:`, e);
+                      }
+                    }
+                  }
+                  setOkruhy(okruhyMap);
+                }
+              } catch (e) {
+                console.error('Failed to load rozvadece:', e);
+              }
+              
+              // Načíst závady
+              try {
+                const zavadyResponse = await fetch(`/api/revize/${revizeId}/zavady`);
+                if (zavadyResponse.ok) {
+                  setZavady(await zavadyResponse.json());
+                }
+              } catch (e) {
+                console.error('Failed to load zavady:', e);
+              }
+              
+              // Načíst místnosti a zařízení
+              try {
+                const mistnostiResponse = await fetch(`/api/revize/${revizeId}/mistnosti`);
+                if (mistnostiResponse.ok) {
+                  const mistnostiData: Mistnost[] = await mistnostiResponse.json();
+                  setMistnosti(mistnostiData);
+                  
+                  // Načíst zařízení pro každou místnost
+                  const zarizeniMap: Record<number, Zarizeni[]> = {};
+                  for (const mistnost of mistnostiData) {
+                    if (mistnost.id) {
+                      try {
+                        const zarizeniResponse = await fetch(`/api/mistnosti/${mistnost.id}/zarizeni`);
+                        if (zarizeniResponse.ok) {
+                          zarizeniMap[mistnost.id] = await zarizeniResponse.json();
+                        }
+                      } catch (e) {
+                        console.error(`Failed to load zarizeni for mistnost ${mistnost.id}:`, e);
+                      }
+                    }
+                  }
+                  setZarizeni(zarizeniMap);
+                }
+              } catch (e) {
+                console.error('Failed to load mistnosti:', e);
+              }
+              
+              // Načíst použité měřicí přístroje
+              if (revizeDetail.pouzitePristroje) {
+                try {
+                  const pristrojeIds = revizeDetail.pouzitePristroje.split(',').map((id: string) => id.trim());
+                  const pristrojeResponse = await fetch('/api/pristroje');
+                  if (pristrojeResponse.ok) {
+                    const allPristroje: MericiPristroj[] = await pristrojeResponse.json();
+                    const usedPristroje = allPristroje.filter(p => 
+                      p.id && pristrojeIds.includes(p.id.toString())
+                    );
+                    setPouzitePristroje(usedPristroje);
+                  }
+                } catch (e) {
+                  console.error('Failed to load pristroje:', e);
+                }
+              }
             }
           }
         }
@@ -64,6 +166,13 @@ export function PDFDesignerPage() {
       <PDFDesigner
         revize={revize}
         nastaveni={nastaveni}
+        rozvadece={rozvadece}
+        okruhy={okruhy}
+        zavady={zavady}
+        mistnosti={mistnosti}
+        zarizeni={zarizeni}
+        pouzitePristroje={pouzitePristroje}
+        zakaznik={zakaznik}
         onExport={handleExport}
       />
     </div>

@@ -51,3 +51,12 @@ export {
   splitTableWidget,
   needsPagination,
 } from './paginationUtils';
+
+// PDF Renderer
+export {
+  renderTemplateToPDF,
+  openPDFPreview,
+  downloadPDF,
+} from './pdfRenderer';
+
+export type { PDFRenderData } from './pdfRenderer';

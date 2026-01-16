@@ -92,6 +92,23 @@ export const RepeatIcon: React.FC<IconProps> = ({ size = 16 }) => (
   </svg>
 );
 
+// Preview / Eye icon
+export const PreviewIcon: React.FC<IconProps> = ({ size = 16 }) => (
+  <svg width={size} height={size} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>
+);
+
+// PDF icon
+export const PDFIcon: React.FC<IconProps> = ({ size = 16 }) => (
+  <svg width={size} height={size} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+    <polyline points="14,2 14,8 20,8"/>
+    <path d="M9 15v-2h1.5a1.5 1.5 0 010 3H9zM12 13h2M12 15h2M12 17h2"/>
+  </svg>
+);
+
 export const DeleteIcon: React.FC<IconProps> = ({ size = 16 }) => (
   <svg width={size} height={size} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
     <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
