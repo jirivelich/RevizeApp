@@ -1,7 +1,11 @@
 // Widget Renderer - vykreslování obsahu widgetů
 // Podle skutečné struktury typů z types/index.ts
+import { useState, useEffect } from 'react';
+import QRCode from 'qrcode';
 import type { Widget } from './types';
 import type { Revize, Nastaveni } from '../../types';
+import type { PDFRenderData } from './pdfVariables';
+import { getTableData } from './pdfVariables';
 import { VARIABLES } from './constants';
 
 interface WidgetRendererProps {
@@ -11,15 +15,17 @@ interface WidgetRendererProps {
   forExport?: boolean;
   currentPage?: number;
   totalPages?: number;
+  pdfData?: PDFRenderData;
 }
 
 export function renderWidgetContent({
   widget,
   revize,
   nastaveni,
-  forExport = false,
+  forExport: _forExport = false,
   currentPage = 1,
   totalPages = 1,
+  pdfData,
 }: WidgetRendererProps): React.ReactNode {
   // Získání hodnoty proměnné podle skutečné struktury Revize
   const getVariableValue = (key: string): string => {
@@ -257,6 +263,10 @@ export function renderWidgetContent({
         }
       };
 
+      // Získat skutečná data z pdfData pokud jsou dostupná
+      const tableData = pdfData ? getTableData(widget.tableConfig.type, pdfData) : [];
+      const hasRealData = tableData.length > 0;
+
       return (
         <div style={{ ...baseStyle, fontSize: 10, padding: 0, display: 'block', overflow: 'auto' }}>
           <table style={{ 
@@ -266,7 +276,7 @@ export function renderWidgetContent({
           }}>
             {showHeader && (
               <thead>
-                <tr style={{ backgroundColor: '#e5e7eb' }}>
+                <tr style={{ backgroundColor: '#3b82f6' }}>
                   {visibleColumns.map(col => (
                     <th 
                       key={col.id} 
@@ -275,6 +285,7 @@ export function renderWidgetContent({
                         width: `${col.width}%`,
                         textAlign: col.align,
                         fontWeight: 'bold',
+                        color: '#fff',
                       }}
                     >
                       {col.label}
@@ -284,17 +295,27 @@ export function renderWidgetContent({
               </thead>
             )}
             <tbody>
-              {/* Placeholder řádky v designeru */}
-              {!forExport && (
+              {/* Skutečná data nebo placeholder */}
+              {hasRealData ? (
+                tableData.slice(0, 5).map((row, rowIdx) => (
+                  <tr key={rowIdx} style={{ backgroundColor: rowIdx % 2 === 1 ? (alternateRowColor || '#f9fafb') : undefined }}>
+                    {visibleColumns.map(col => (
+                      <td key={col.id} style={{ ...getCellStyle(borderStyle), textAlign: col.align }}>
+                        {String(row[col.key as keyof typeof row] ?? '-')}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : (
                 <>
-                  <tr style={{ backgroundColor: alternateRowColor ? undefined : undefined }}>
+                  <tr>
                     {visibleColumns.map(col => (
                       <td key={col.id} style={{ ...getCellStyle(borderStyle), color: '#9ca3af', textAlign: col.align }}>
                         ...
                       </td>
                     ))}
                   </tr>
-                  <tr style={{ backgroundColor: alternateRowColor || undefined }}>
+                  <tr style={{ backgroundColor: alternateRowColor || '#f9fafb' }}>
                     {visibleColumns.map(col => (
                       <td key={col.id} style={{ ...getCellStyle(borderStyle), color: '#9ca3af', textAlign: col.align }}>
                         ...
@@ -305,21 +326,24 @@ export function renderWidgetContent({
               )}
             </tbody>
           </table>
-          {!forExport && (
+          {!hasRealData && (
             <div style={{ textAlign: 'center', padding: '4px', color: '#9ca3af', fontSize: 9 }}>
-              Tabulka: {widget.tableConfig.type} (data z revize)
+              Tabulka: {widget.tableConfig.type} (načti revizi pro náhled)
+            </div>
+          )}
+          {hasRealData && tableData.length > 5 && (
+            <div style={{ textAlign: 'center', padding: '4px', color: '#6b7280', fontSize: 9 }}>
+              ... a dalších {tableData.length - 5} řádků
             </div>
           )}
         </div>
       );
     }
 
-    case 'qr-code':
-      return (
-        <div style={{ ...baseStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f3f4f6' }}>
-          <span style={{ color: '#9ca3af', fontSize: '2em' }}>⬛</span>
-        </div>
-      );
+    case 'qr-code': {
+      const qrContent = replaceVariables(widget.content) || `Revize: ${revize?.cisloRevize || 'Demo'}`;
+      return <QRCodePreview content={qrContent} style={baseStyle} />;
+    }
 
     case 'signature':
       return (
@@ -333,4 +357,35 @@ export function renderWidgetContent({
     default:
       return null;
   }
+}
+
+// Komponenta pro náhled QR kódu
+function QRCodePreview({ content, style }: { content: string; style: React.CSSProperties }) {
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
+  
+  useEffect(() => {
+    QRCode.toDataURL(content, {
+      width: 150,
+      margin: 1,
+      color: { dark: '#000000', light: '#ffffff' },
+    })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(''));
+  }, [content]);
+  
+  return (
+    <div style={{ 
+      ...style, 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center',
+      backgroundColor: '#ffffff',
+    }}>
+      {qrDataUrl ? (
+        <img src={qrDataUrl} alt="QR" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+      ) : (
+        <span style={{ color: '#9ca3af', fontSize: '1.5em' }}>⬛</span>
+      )}
+    </div>
+  );
 }

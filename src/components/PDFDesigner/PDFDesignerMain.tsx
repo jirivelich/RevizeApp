@@ -454,6 +454,7 @@ export function PDFDesignerMain({
                 nastaveni={nastaveni}
                 headerHeight={state.template.headerHeight}
                 footerHeight={state.template.footerHeight}
+                pdfData={pdfData}
               />
             )}
           </div>

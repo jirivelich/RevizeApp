@@ -1,6 +1,7 @@
 // pdfRenderer.ts - Hlavní modul pro renderování šablony do PDF
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import QRCode from 'qrcode';
 import type { DesignerTemplate, Widget } from './types';
 import type { Rozvadec, Okruh, Zarizeni } from '../../types';
 import { addCzechFont, t } from '../../services/fontUtils';
@@ -102,8 +103,8 @@ async function renderWidget(
   doc: jsPDF,
   widget: Widget,
   data: PDFRenderData,
-  _template: DesignerTemplate,
-  _pageIndex: number,
+  template: DesignerTemplate,
+  pageIndex: number,
   _pageWidth: number,
   _pageHeight: number
 ): Promise<void> {
@@ -151,12 +152,15 @@ async function renderWidget(
       break;
       
     case 'page-number':
-      // pageIndex a template se používají pouze pro renderPageNumberWidget
-      renderPageNumberWidget(doc, widget, x, y, 0, 0);
+      renderPageNumberWidget(doc, widget, x, y, pageIndex + 1, template.pages.length);
       break;
       
     case 'date':
       renderDateWidget(doc, widget, x, y);
+      break;
+      
+    case 'qr-code':
+      await renderQRCodeWidget(doc, widget, x, y, width, height, data);
       break;
       
     case 'repeater':
@@ -429,14 +433,18 @@ function renderPageNumberWidget(
   widget: Widget,
   x: number,
   y: number,
-  _currentPage: number,
-  _totalPages: number
+  currentPage: number,
+  totalPages: number
 ): void {
   const style = widget.style || {};
   const template = widget.content || 'Strana {{PAGE}} z {{PAGES}}';
   
-  // Použít placeholder - bude nahrazeno později
-  const text = template;
+  // Nahradit placeholder skutečnými hodnotami
+  const text = template
+    .replace(/\{\{PAGE\}\}/g, String(currentPage))
+    .replace(/\{\{PAGES\}\}/g, String(totalPages))
+    .replace(/X/g, String(currentPage))
+    .replace(/Y/g, String(totalPages));
   
   doc.setFontSize(style.fontSize || 10);
   doc.setFont('Roboto', style.fontWeight === 'bold' ? 'bold' : 'normal');
@@ -492,6 +500,60 @@ function renderDateWidget(
   }
   
   doc.text(t(dateStr), x, y + 4);
+}
+
+async function renderQRCodeWidget(
+  doc: jsPDF,
+  widget: Widget,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  data: PDFRenderData
+): Promise<void> {
+  // Obsah QR kódu - může být proměnná nebo přímý text
+  let content = widget.content || '';
+  
+  // Pokud obsah obsahuje proměnnou, nahradit
+  if (content.includes('{{') || content.includes('${')) {
+    content = resolveVariables(content, data);
+  } else if (!content.startsWith('http') && !content.includes(' ')) {
+    // Zkusit jako proměnnou
+    const resolved = getVariableValue(content, data);
+    if (resolved !== '-') content = resolved;
+  }
+  
+  // Výchozí obsah - URL revize
+  if (!content) {
+    content = `Revize: ${data.revize?.cisloRevize || 'N/A'}`;
+  }
+  
+  try {
+    // Generovat QR kód jako data URL
+    const qrDataUrl = await QRCode.toDataURL(content, {
+      width: Math.min(width, height) * 10, // Vyšší rozlišení
+      margin: 1,
+      color: {
+        dark: '#000000',
+        light: '#ffffff',
+      },
+    });
+    
+    // Vložit do PDF jako obrázek
+    const size = Math.min(width, height);
+    const offsetX = (width - size) / 2;
+    const offsetY = (height - size) / 2;
+    doc.addImage(qrDataUrl, 'PNG', x + offsetX, y + offsetY, size, size);
+  } catch (error) {
+    console.error('QR code generation failed:', error);
+    // Fallback - nakreslit placeholder
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.5);
+    doc.rect(x, y, width, height);
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text('QR', x + width / 2, y + height / 2, { align: 'center' });
+  }
 }
 
 function renderSignatureWidget(

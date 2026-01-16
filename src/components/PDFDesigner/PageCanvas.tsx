@@ -4,6 +4,7 @@ import Draggable, { type DraggableData, type DraggableEvent } from 'react-dragga
 import { Resizable, type ResizeCallbackData } from 'react-resizable';
 import type { Widget, PageTemplate } from './types';
 import type { Revize, Nastaveni } from '../../types';
+import type { PDFRenderData } from './pdfVariables';
 import { renderWidgetContent } from './WidgetRenderer';
 import { PAGE_SIZES } from './constants';
 import { LockIcon } from './icons';
@@ -28,6 +29,7 @@ interface SingleWidgetProps {
   nastaveni: Nastaveni | null;
   currentPage: number;
   totalPages: number;
+  pdfData?: PDFRenderData;
 }
 
 // Jednotlivý widget na plátně
@@ -44,6 +46,7 @@ function CanvasWidget({
   nastaveni,
   currentPage,
   totalPages,
+  pdfData,
 }: SingleWidgetProps) {
   const nodeRef = useRef<HTMLDivElement>(null);
 
@@ -140,6 +143,7 @@ function CanvasWidget({
               nastaveni,
               currentPage,
               totalPages,
+              pdfData,
             })}
             
             {/* Selection handles - pouze pokud je vybraný a není uzamčený */}
@@ -177,6 +181,7 @@ interface PageCanvasProps {
   nastaveni: Nastaveni | null;
   headerHeight: number;
   footerHeight: number;
+  pdfData?: PDFRenderData;
 }
 
 export function PageCanvas({
@@ -198,6 +203,7 @@ export function PageCanvas({
   nastaveni,
   headerHeight,
   footerHeight,
+  pdfData,
 }: PageCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   
@@ -247,6 +253,7 @@ export function PageCanvas({
         nastaveni={nastaveni}
         currentPage={pageIndex + 1}
         totalPages={totalPages}
+        pdfData={pdfData}
       />
     ));
   };
