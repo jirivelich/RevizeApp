@@ -11,3 +11,4 @@ export { FirmyPage } from './FirmyPage';
 export { BackupRestorePage } from './BackupRestorePage';
 export { default as LoginPage } from './LoginPage';
 export { default as ZakazniciPage } from './ZakazniciPage';
+export { default as PDFDesignerPage } from './PDFDesignerPage';

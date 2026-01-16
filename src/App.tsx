@@ -17,6 +17,7 @@ import {
   FirmyPage,
   BackupRestorePage,
   ZakazniciPage,
+  PDFDesignerPage,
 } from './pages';
 
 // Error Boundary pro zachycení JavaScript chyb
@@ -91,6 +92,7 @@ function App() {
             <Route path="zakaznici" element={<ZakazniciPage />} />
             <Route path="planovani" element={<PlanovaniPage />} />
             <Route path="sablony" element={<SablonyPage />} />
+            <Route path="pdf-designer" element={<PDFDesignerPage />} />
             <Route path="backup" element={<BackupRestorePage />} />
             <Route path="nastaveni" element={<NastaveniPage />} />
           </Route>
