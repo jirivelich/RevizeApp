@@ -26,6 +26,9 @@ declare module 'jspdf' {
 // Konverze px na mm (používáme 3.78 px/mm v designeru)
 const PX_TO_MM = 1 / 3.78;
 
+// Marginy stránky v mm
+const PAGE_MARGINS = { top: 10, bottom: 15, left: 10, right: 10 };
+
 // ============================================================
 // HLAVNÍ EXPORT FUNKCE
 // ============================================================
@@ -612,6 +615,9 @@ async function renderRozvadeceRepeater(
   config: NonNullable<Widget['repeaterConfig']>
 ): Promise<void> {
   const rozvadece = data.rozvadece || [];
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const contentBottom = pageHeight - PAGE_MARGINS.bottom - 15; // 15mm pro zápatí
+  const contentTop = PAGE_MARGINS.top + 10; // 10mm pro záhlaví
   
   if (rozvadece.length === 0) {
     doc.setFontSize(10);
@@ -627,6 +633,12 @@ async function renderRozvadeceRepeater(
     const rozvadec = rozvadece[i];
     const okruhy = data.okruhy?.[rozvadec.id!] || [];
     
+    // Zkontrolovat zda se minimálně header+info vejde
+    if (currentY + 25 > contentBottom) {
+      doc.addPage();
+      currentY = contentTop;
+    }
+    
     // Nadpis rozvaděče
     const headerHeight = 8;
     doc.setFillColor(59, 130, 246);
@@ -641,9 +653,9 @@ async function renderRozvadeceRepeater(
     // Info box
     currentY = renderRozvadecInfo(doc, rozvadec, x, currentY, width);
     
-    // Tabulka okruhů
+    // Tabulka okruhů s automatickým stránkováním
     if (okruhy.length > 0) {
-      currentY = renderOkruhyTable(doc, okruhy, x, currentY, width);
+      currentY = renderOkruhyTableWithPagination(doc, okruhy, x, currentY, width, contentBottom, contentTop);
     } else {
       doc.setFontSize(8);
       doc.setTextColor(150, 150, 150);
@@ -703,17 +715,23 @@ function renderRozvadecInfo(
   return y + infoHeight + 2;
 }
 
-function renderOkruhyTable(
+/**
+ * Renderuje tabulku okruhů s automatickým stránkováním
+ */
+function renderOkruhyTableWithPagination(
   doc: jsPDF,
   okruhy: Okruh[],
   x: number,
-  y: number,
-  width: number
+  startY: number,
+  width: number,
+  contentBottom: number,
+  contentTop: number
 ): number {
   const columns = TABLE_COLUMNS.okruhy.filter(c => c.visible);
   
+  // Použít autoTable s automatickým stránkováním
   autoTable(doc, {
-    startY: y,
+    startY: startY,
     head: [columns.map(c => c.label)],
     body: okruhy.map(o => columns.map(col => {
       const key = col.key as keyof Okruh;
@@ -729,7 +747,7 @@ function renderOkruhyTable(
       
       return val?.toString() || '-';
     })),
-    margin: { left: x },
+    margin: { left: x, right: 10, top: contentTop, bottom: doc.internal.pageSize.getHeight() - contentBottom },
     tableWidth: width,
     styles: {
       font: 'Roboto',
@@ -751,9 +769,20 @@ function renderOkruhyTable(
       };
       return acc;
     }, {} as Record<number, { cellWidth: number; halign: 'left' | 'center' | 'right' }>),
+    // Automatické stránkování - opakovat hlavičku na každé stránce
+    showHead: 'everyPage',
+    // Callback při přechodu na novou stránku
+    didDrawPage: (data) => {
+      // Zde můžeme přidat header/footer na nové stránky
+      if (data.pageNumber > 1) {
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text('(pokračování tabulky okruhů)', x + 3, contentTop - 3);
+      }
+    },
   });
   
-  return doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 3 : y + 20;
+  return doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 3 : startY + 20;
 }
 
 async function renderMistnostiRepeater(
@@ -776,10 +805,19 @@ async function renderMistnostiRepeater(
   }
   
   let currentY = startY;
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const contentBottom = pageHeight - PAGE_MARGINS.bottom - 15;
+  const contentTop = PAGE_MARGINS.top + 10;
   
   for (let i = 0; i < mistnosti.length; i++) {
     const mistnost = mistnosti[i];
     const zarizeni = data.zarizeni?.[mistnost.id!] || [];
+    
+    // Kontrola stránkování - potřebujeme alespoň 25mm pro hlavičku + 1 řádek
+    if (currentY + 25 > contentBottom) {
+      doc.addPage();
+      currentY = contentTop;
+    }
     
     // Nadpis místnosti
     const headerHeight = 8;
@@ -792,9 +830,9 @@ async function renderMistnostiRepeater(
     doc.text(t(headerText), x + 3, currentY + headerHeight - 2);
     currentY += headerHeight + 2;
     
-    // Tabulka zařízení
+    // Tabulka zařízení s automatickým stránkováním
     if (zarizeni.length > 0) {
-      currentY = renderZarizeniTable(doc, zarizeni, x, currentY, width);
+      currentY = renderZarizeniTableWithPagination(doc, zarizeni, x, currentY, width, contentBottom, contentTop);
     } else {
       doc.setFontSize(8);
       doc.setTextColor(150, 150, 150);
@@ -811,24 +849,29 @@ async function renderMistnostiRepeater(
   }
 }
 
-function renderZarizeniTable(
+/**
+ * Renderuje tabulku zařízení s automatickým stránkováním
+ */
+function renderZarizeniTableWithPagination(
   doc: jsPDF,
   zarizeni: Zarizeni[],
   x: number,
-  y: number,
-  width: number
+  startY: number,
+  width: number,
+  contentBottom: number,
+  contentTop: number
 ): number {
   const columns = TABLE_COLUMNS.zarizeni.filter(c => c.visible);
   
   autoTable(doc, {
-    startY: y,
+    startY: startY,
     head: [columns.map(c => c.label)],
     body: zarizeni.map(z => columns.map(col => {
       const key = col.key as keyof Zarizeni;
       const val = z[key];
       return val?.toString() || '-';
     })),
-    margin: { left: x },
+    margin: { left: x, right: 10, top: contentTop, bottom: doc.internal.pageSize.getHeight() - contentBottom },
     tableWidth: width,
     styles: {
       font: 'Roboto',
@@ -843,9 +886,17 @@ function renderZarizeniTable(
     alternateRowStyles: {
       fillColor: [240, 253, 244],
     },
+    showHead: 'everyPage',
+    didDrawPage: (data) => {
+      if (data.pageNumber > 1) {
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text('(pokračování tabulky zařízení)', x + 3, contentTop - 3);
+      }
+    },
   });
   
-  return doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 3 : y + 20;
+  return doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 3 : startY + 20;
 }
 
 function renderSeparator(
