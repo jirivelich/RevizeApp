@@ -6,7 +6,10 @@ import { DEFAULT_WIDGET_STYLE, TABLE_COLUMNS } from './constants';
 const generateId = () => `widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 const generatePageId = () => `page_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-// Helper pro vytvoření widgetu
+// Konverze mm na px (96 DPI)
+const MM = 3.78;
+
+// Helper pro vytvoření widgetu - pozice a rozměry v mm
 const createWidget = (
   overrides: Partial<Widget> & { type: Widget['type']; x: number; y: number; width: number; height: number }
 ): Widget => ({
@@ -19,6 +22,11 @@ const createWidget = (
   zIndex: 0,
   style: { ...DEFAULT_WIDGET_STYLE },
   ...overrides,
+  // Konverze mm na px
+  x: Math.round(overrides.x * MM),
+  y: Math.round(overrides.y * MM),
+  width: Math.round(overrides.width * MM),
+  height: Math.round(overrides.height * MM),
 });
 
 // ============================================================

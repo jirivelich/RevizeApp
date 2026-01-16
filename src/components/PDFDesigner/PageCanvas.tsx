@@ -207,9 +207,9 @@ export function PageCanvas({
   const pageWidth = pageSize.width * pxPerMm;
   const pageHeight = pageSize.height * pxPerMm;
   
-  // Zóny
-  const headerZoneHeight = headerHeight;
-  const footerZoneHeight = footerHeight;
+  // Zóny - headerHeight/footerHeight jsou v mm, převedeme na px
+  const headerZoneHeight = headerHeight * pxPerMm;
+  const footerZoneHeight = footerHeight * pxPerMm;
   const contentZoneTop = headerZoneHeight;
 
   // Widgety podle zón
