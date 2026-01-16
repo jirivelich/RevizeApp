@@ -421,6 +421,50 @@ export async function initializeDatabase() {
       console.log('⚠️ Aktualizace šablon přeskočena:', e.message);
     }
 
+    // Aktualizovat existující šablony - přidat blok 'zakaznik' do úvodní strany
+    try {
+      const sablonyResult = await client.query('SELECT id, "uvodniStranaBloky" FROM sablona');
+      
+      for (const row of sablonyResult.rows) {
+        let bloky = row.uvodniStranaBloky;
+        if (!bloky || !Array.isArray(bloky)) {
+          // Pokud není, nastavit defaultní bloky
+          bloky = [
+            { id: 'hlavicka', nazev: 'Hlavička (Firma + Revizní technik)', enabled: true, poradi: 1 },
+            { id: 'nadpis', nazev: 'Nadpis dokumentu', enabled: true, poradi: 2 },
+            { id: 'zakaznik', nazev: 'Provozovatel (zákazník)', enabled: true, poradi: 3 },
+            { id: 'objekt', nazev: 'Identifikace zařízení a místo', enabled: true, poradi: 4 },
+            { id: 'zakladni-udaje', nazev: 'Základní údaje revize', enabled: true, poradi: 5 },
+            { id: 'vyhodnoceni', nazev: 'Vyhodnocení revize', enabled: true, poradi: 6 },
+            { id: 'podpisy', nazev: 'Podpisy a předání', enabled: true, poradi: 7 },
+          ];
+          await client.query('UPDATE sablona SET "uvodniStranaBloky" = $1 WHERE id = $2', [JSON.stringify(bloky), row.id]);
+          console.log('✅ Šablona ID', row.id, 'aktualizována - nastaveny defaultní bloky úvodní strany');
+        } else {
+          // Zkontrolovat zda existuje blok 'zakaznik'
+          const hasZakaznik = bloky.find((b: any) => b.id === 'zakaznik');
+          if (!hasZakaznik) {
+            // Najít blok 'objekt' a vložit před něj
+            const objektIndex = bloky.findIndex((b: any) => b.id === 'objekt');
+            if (objektIndex >= 0) {
+              // Posunout pořadí všech bloků od 'objekt' dále
+              bloky = bloky.map((b: any) => b.poradi >= bloky[objektIndex].poradi ? { ...b, poradi: b.poradi + 1 } : b);
+              // Vložit blok 'zakaznik'
+              bloky.push({ id: 'zakaznik', nazev: 'Provozovatel (zákazník)', enabled: true, poradi: bloky[objektIndex].poradi - 1 });
+            } else {
+              // Pokud není 'objekt', vložit na pozici 3
+              bloky.push({ id: 'zakaznik', nazev: 'Provozovatel (zákazník)', enabled: true, poradi: 3 });
+            }
+            bloky.sort((a: any, b: any) => a.poradi - b.poradi);
+            await client.query('UPDATE sablona SET "uvodniStranaBloky" = $1 WHERE id = $2', [JSON.stringify(bloky), row.id]);
+            console.log('✅ Šablona ID', row.id, 'aktualizována - přidán blok zakaznik');
+          }
+        }
+      }
+    } catch (e: any) {
+      console.log('⚠️ Aktualizace bloků úvodní strany přeskočena:', e.message);
+    }
+
     // Vytvořit demo uživatele pokud neexistuje
     const existingUser = await client.query('SELECT id FROM users WHERE username = $1', ['admin']);
     if (existingUser.rows.length === 0) {

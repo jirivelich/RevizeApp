@@ -677,9 +677,27 @@ export function SablonyPage() {
         </div>
         <div className="flex gap-2">
           {selectedSablona && (
-            <Button onClick={handleSave}>
-              💾 Uložit změny
-            </Button>
+            <>
+              <Button 
+                variant="secondary" 
+                onClick={() => {
+                  if (confirm('Opravdu chcete resetovat šablonu na výchozí hodnoty? Všechna nastavení budou přepsána.')) {
+                    const defaultSablona = sablonaService.getDefaultSablona();
+                    setFormData({ 
+                      ...formData, 
+                      ...defaultSablona,
+                      nazev: formData.nazev, // Zachovat název
+                      id: formData.id, // Zachovat ID
+                    });
+                  }
+                }}
+              >
+                🔄 Resetovat na výchozí
+              </Button>
+              <Button onClick={handleSave}>
+                💾 Uložit změny
+              </Button>
+            </>
           )}
           <Button variant="secondary" onClick={() => setIsCreateModalOpen(true)}>
             + Nová šablona

@@ -56,11 +56,11 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
   const secondaryColor = hexToRgb(sablona.barvaSecondary);
   const baseFontSize = sablona.fontSize;
   
-  // Výchozí bloky úvodní strany podle zákonných požadavků
+  // Výchozí bloky úvodní strany
   const defaultBloky = [
     { id: 'hlavicka', nazev: 'Hlavička (Firma + Revizní technik)', enabled: true, poradi: 1 },
     { id: 'nadpis', nazev: 'Nadpis dokumentu', enabled: true, poradi: 2 },
-    { id: 'provozovatel', nazev: 'Provozovatel (zákazník)', enabled: true, poradi: 3 },
+    { id: 'zakaznik', nazev: 'Provozovatel (zákazník)', enabled: true, poradi: 3 },
     { id: 'objekt', nazev: 'Identifikace zařízení a místo', enabled: true, poradi: 4 },
     { id: 'zakladni-udaje', nazev: 'Základní údaje revize', enabled: true, poradi: 5 },
     { id: 'vyhodnoceni', nazev: 'Vyhodnocení revize', enabled: true, poradi: 6 },
@@ -421,7 +421,6 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
         case 'zakladni-udaje': renderZakladniUdaje(); break;
         case 'objekt': renderObjekt(); break;
         case 'zakaznik': renderZakaznik(); break;
-        case 'provozovatel': renderZakaznik(); break; // Provozovatel = zákazník (požadavek a)
         case 'vyhodnoceni': renderVyhodnoceni(); break;
       }
     }
