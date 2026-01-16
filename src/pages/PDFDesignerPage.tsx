@@ -704,15 +704,19 @@ export default function PDFDesignerPage() {
     } finally {
       setPreviewLoading(false);
     }
-  }, [blocks, revize, sablony, selectedSablona, nastaveni, previewUrl]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blocks, revize, selectedSablona, nastaveni]);
 
-  // Auto-generate preview on block changes (debounced)
+  // Auto-generate preview on block changes (debounced) - only when blocks change
   useEffect(() => {
+    if (!revize || !selectedSablona) return;
+    
     const timer = setTimeout(() => {
       generatePreview();
-    }, 1000);
+    }, 1500);
     return () => clearTimeout(timer);
-  }, [blocks, generatePreview]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blocks]);
 
   const saveSablona = async () => {
     if (!selectedSablona) return;
