@@ -56,15 +56,15 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
   const secondaryColor = hexToRgb(sablona.barvaSecondary);
   const baseFontSize = sablona.fontSize;
   
-  // Výchozí bloky úvodní strany pokud nejsou definované
+  // Výchozí bloky úvodní strany podle zákonných požadavků
   const defaultBloky = [
-    { id: 'hlavicka', nazev: 'Hlavička', enabled: true, poradi: 1 },
-    { id: 'nadpis', nazev: 'Nadpis', enabled: true, poradi: 2 },
-    { id: 'zakladni-udaje', nazev: 'Základní údaje', enabled: true, poradi: 3 },
-    { id: 'objekt', nazev: 'Objekt', enabled: true, poradi: 4 },
-    { id: 'zakaznik', nazev: 'Zákazník', enabled: true, poradi: 5 },
-    { id: 'vyhodnoceni', nazev: 'Vyhodnocení', enabled: true, poradi: 6 },
-    { id: 'podpisy', nazev: 'Podpisy', enabled: true, poradi: 7 },
+    { id: 'hlavicka', nazev: 'Hlavička (Firma + Revizní technik)', enabled: true, poradi: 1 },
+    { id: 'nadpis', nazev: 'Nadpis dokumentu', enabled: true, poradi: 2 },
+    { id: 'provozovatel', nazev: 'Provozovatel (zákazník)', enabled: true, poradi: 3 },
+    { id: 'objekt', nazev: 'Identifikace zařízení a místo', enabled: true, poradi: 4 },
+    { id: 'zakladni-udaje', nazev: 'Základní údaje revize', enabled: true, poradi: 5 },
+    { id: 'vyhodnoceni', nazev: 'Vyhodnocení revize', enabled: true, poradi: 6 },
+    { id: 'podpisy', nazev: 'Podpisy a předání', enabled: true, poradi: 7 },
   ];
 
   // ============ ÚVODNÍ STRANA - TECHNICKÝ DOKUMENT ============
@@ -212,27 +212,40 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
     };
     
     const renderZakladniUdaje = () => {
-      const druhRevize = revize.typRevize === 'pravidelná' ? 'pravidelna' 
-        : revize.typRevize === 'výchozí' ? 'vychozi' : 'mimoradna';
+      // Nadpis sekce podle požadavků e) a f)
+      doc.setFillColor(240, 240, 240);
+      doc.rect(margin, yPos, contentWidth, 6, 'F');
+      doc.setFont('Roboto', 'bold');
+      doc.setFontSize(baseFontSize - 1);
+      doc.setTextColor(0, 0, 0);
+      doc.text(t('e) f) DRUH REVIZE A DATA'), margin + 2, yPos + 4);
+      yPos += 6;
       
-      const datumProvedeni = new Date(revize.datum).toLocaleDateString('cs-CZ');
-      const datumDokonceni = revize.datumDokonceni ? new Date(revize.datumDokonceni).toLocaleDateString('cs-CZ') : '-';
-      const datumVypracovani = revize.datumVypracovani ? new Date(revize.datumVypracovani).toLocaleDateString('cs-CZ') : '-';
+      // Typ revize podle požadavku e)
+      const druhRevize = revize.typRevize === 'pravidelná' ? 'PRAVIDELNÁ REVIZE' 
+        : revize.typRevize === 'výchozí' ? 'VÝCHOZÍ REVIZE' : 'MIMOŘÁDNÁ REVIZE';
+      
+      // Data podle požadavku f) - používáme existující pole
+      const datumZahajeni = new Date(revize.datum).toLocaleDateString('cs-CZ');
+      const datumUkonceni = revize.datumDokonceni ? new Date(revize.datumDokonceni).toLocaleDateString('cs-CZ') : datumZahajeni;
+      const datumVypracovani = revize.datumVypracovani ? new Date(revize.datumVypracovani).toLocaleDateString('cs-CZ') : new Date().toLocaleDateString('cs-CZ');
       const platnostDo = revize.datumPlatnosti ? new Date(revize.datumPlatnosti).toLocaleDateString('cs-CZ') : '-';
       
       drawTableRow(yPos, [
-        { label: 'Cislo zpravy:', value: revize.cisloRevize, width: contentWidth / 4 },
-        { label: 'Druh revize:', value: druhRevize, width: contentWidth / 4 },
-        { label: 'Datum provedení:', value: datumProvedeni, width: contentWidth / 4 },
-        { label: 'Datum dokonceni:', value: datumDokonceni, width: contentWidth / 4 },
+        { label: 'Číslo zprávy:', value: revize.cisloRevize, width: contentWidth / 2 },
+        { label: 'Druh revize:', value: druhRevize, width: contentWidth / 2 },
       ], rowHeight, ramecekUdaje);
       yPos += rowHeight;
       
       drawTableRow(yPos, [
-        { label: 'Datum vypracovani:', value: datumVypracovani, width: contentWidth / 4 },
-        { label: 'Platnost do:', value: platnostDo, width: contentWidth / 4 },
-        { label: 'Termin pristi revize:', value: `${revize.termin} mesicu`, width: contentWidth / 4 },
-        { label: '', value: '', width: contentWidth / 4 },
+        { label: 'Datum zahájení:', value: datumZahajeni, width: contentWidth / 2 },
+        { label: 'Datum ukončení:', value: datumUkonceni, width: contentWidth / 2 },
+      ], rowHeight, ramecekUdaje);
+      yPos += rowHeight;
+      
+      drawTableRow(yPos, [
+        { label: 'Datum vypracování:', value: datumVypracovani, width: contentWidth / 2 },
+        { label: 'Příští revize do:', value: platnostDo, width: contentWidth / 2 },
       ], rowHeight, ramecekUdaje);
       yPos += rowHeight + 4;
     };
@@ -245,14 +258,13 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.setFont('Roboto', 'bold');
       doc.setFontSize(baseFontSize - 1);
       doc.setTextColor(0, 0, 0);
-      doc.text(t('Údaje o objektu'), margin + 2, yPos + 4);
+      // Nadpis podle požadavku b) - identifikace zařízení
+      doc.text(t('b) IDENTIFIKACE REVIDOVANÉHO ZAŘÍZENÍ'), margin + 2, yPos + 4);
       yPos += 6;
       
-      drawTableRow(yPos, [{ label: 'Název objektu:', value: revize.nazev, width: contentWidth }], rowHeight, ramecekObjekt);
+      drawTableRow(yPos, [{ label: 'Druh zařízení:', value: revize.nazev || 'Elektrická instalace', width: contentWidth }], rowHeight, ramecekObjekt);
       yPos += rowHeight;
-      drawTableRow(yPos, [{ label: 'Adresa objektu:', value: revize.adresa, width: contentWidth }], rowHeight, ramecekObjekt);
-      yPos += rowHeight;
-      drawTableRow(yPos, [{ label: 'Objednatel:', value: revize.objednatel, width: contentWidth }], rowHeight, ramecekObjekt);
+      drawTableRow(yPos, [{ label: 'Místo umístění:', value: revize.adresa, width: contentWidth }], rowHeight, ramecekObjekt);
       yPos += rowHeight + 4;
     };
     
@@ -265,13 +277,14 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.setFont('Roboto', 'bold');
       doc.setFontSize(baseFontSize - 1);
       doc.setTextColor(0, 0, 0);
-      doc.text(t('Údaje o zákazníkovi'), margin + 2, yPos + 4);
+      // Nadpis podle požadavku a) - provozovatel
+      doc.text(t('a) PROVOZOVATEL / OBJEDNATEL'), margin + 2, yPos + 4);
       yPos += 6;
       
-      drawTableRow(yPos, [{ label: 'Název:', value: zakaznik.nazev || '-', width: contentWidth }], rowHeight, ramecekZakaznik);
+      drawTableRow(yPos, [{ label: 'Název/Jméno:', value: zakaznik.nazev || '-', width: contentWidth }], rowHeight, ramecekZakaznik);
       yPos += rowHeight;
       if (zakaznik.adresa) {
-        drawTableRow(yPos, [{ label: 'Adresa:', value: zakaznik.adresa, width: contentWidth }], rowHeight, ramecekZakaznik);
+        drawTableRow(yPos, [{ label: 'Sídlo/Adresa:', value: zakaznik.adresa, width: contentWidth }], rowHeight, ramecekZakaznik);
         yPos += rowHeight;
       }
       if (zakaznik.ico || zakaznik.dic) {
@@ -283,7 +296,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       }
       if (zakaznik.kontaktOsoba || zakaznik.telefon) {
         drawTableRow(yPos, [
-          { label: 'Kontakt:', value: zakaznik.kontaktOsoba || '-', width: contentWidth / 2 },
+          { label: 'Kontaktní osoba:', value: zakaznik.kontaktOsoba || '-', width: contentWidth / 2 },
           { label: 'Telefon:', value: zakaznik.telefon || '-', width: contentWidth / 2 },
         ], rowHeight, ramecekZakaznik);
         yPos += rowHeight;
@@ -300,15 +313,17 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
       doc.setFont('Roboto', 'bold');
       doc.setFontSize(baseFontSize - 1);
       doc.setTextColor(0, 0, 0);
-      doc.text(t('VYHODNOCENÍ REVIZE'), margin + 2, yPos + 4);
+      // Nadpis podle požadavku l)
+      doc.text(t('l) ZÁVĚREČNÉ ZHODNOCENÍ'), margin + 2, yPos + 4);
       yPos += 10;
 
+      // Text vyhodnocení podle požadavku l)
       const vysledekText = revize.vysledek === 'schopno' 
-        ? t('Elektrická instalace JE SCHOPNA bezpečného provozu')
+        ? t('Vyhrazené elektrické zařízení JE z hlediska bezpečnosti SCHOPNO PROVOZU')
         : revize.vysledek === 'neschopno'
-        ? t('Elektrická instalace NENÍ SCHOPNA bezpečného provozu')
+        ? t('Vyhrazené elektrické zařízení NENÍ z hlediska bezpečnosti SCHOPNO PROVOZU')
         : revize.vysledek === 'podmíněně schopno'
-        ? t('Elektrická instalace je PODMÍNĚNĚ SCHOPNA bezpečného provozu')
+        ? t('Vyhrazené elektrické zařízení je PODMÍNĚNĚ SCHOPNO PROVOZU')
         : t('VÝSLEDEK REVIZE NEBYL STANOVEN');
 
       const vysledekColor: [number, number, number] = revize.vysledek === 'schopno' 
@@ -406,6 +421,7 @@ export async function generatePDF(data: PDFExportData): Promise<jsPDF> {
         case 'zakladni-udaje': renderZakladniUdaje(); break;
         case 'objekt': renderObjekt(); break;
         case 'zakaznik': renderZakaznik(); break;
+        case 'provozovatel': renderZakaznik(); break; // Provozovatel = zákazník (požadavek a)
         case 'vyhodnoceni': renderVyhodnoceni(); break;
       }
     }

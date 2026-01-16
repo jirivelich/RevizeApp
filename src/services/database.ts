@@ -479,7 +479,7 @@ export const sablonaService = {
   getDefaultSablona(): Omit<Sablona, 'id' | 'createdAt' | 'updatedAt'> {
     return {
       nazev: 'Výchozí šablona',
-      popis: 'Základní šablona pro revizní zprávu',
+      popis: 'Šablona podle požadavků na revizní zprávu vyhrazeného elektrického zařízení',
       jeVychozi: true,
       zahlaviZobrazitLogo: true,
       zahlaviZobrazitFirmu: true,
@@ -492,48 +492,51 @@ export const sablonaService = {
       uvodniStranaZobrazitZakaznika: true,
       uvodniStranaZobrazitVyhodnoceni: true,
       uvodniStranaZobrazitPodpisy: true,
-      podpisyUmisteni: 'uvodni',  // Výchozí: podpisy na úvodní straně
-      uvodniStranaNadpis: 'ZPRAVA O REVIZI ELEKTRICKE INSTALACE',
-      uvodniStranaNadpisFontSize: 18,
+      podpisyUmisteni: 'uvodni',
+      uvodniStranaNadpis: 'ZPRÁVA O REVIZI VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ',
+      uvodniStranaNadpisFontSize: 16,
       uvodniStranaNadpisRamecek: true,
       uvodniStranaRamecekUdaje: true,
       uvodniStranaRamecekObjekt: true,
       uvodniStranaRamecekZakaznik: true,
       uvodniStranaRamecekVyhodnoceni: true,
+      // Bloky úvodní strany podle zákonných požadavků
       uvodniStranaBloky: [
-        { id: 'hlavicka', nazev: 'Hlavička (Firma + Technik)', enabled: true, poradi: 1 },
+        { id: 'hlavicka', nazev: 'Hlavička (Firma + Revizní technik)', enabled: true, poradi: 1 },        // d) technik
         { id: 'nadpis', nazev: 'Nadpis dokumentu', enabled: true, poradi: 2 },
-        { id: 'zakladni-udaje', nazev: 'Základní údaje (číslo, datum, typ)', enabled: true, poradi: 3 },
-        { id: 'objekt', nazev: 'Údaje o objektu', enabled: true, poradi: 4 },
-        { id: 'zakaznik', nazev: 'Údaje o zákazníkovi', enabled: true, poradi: 5 },
-        { id: 'vyhodnoceni', nazev: 'Vyhodnocení revize', enabled: true, poradi: 6 },
-        { id: 'podpisy', nazev: 'Podpisy', enabled: true, poradi: 7 },
+        { id: 'provozovatel', nazev: 'Provozovatel (zákazník)', enabled: true, poradi: 3 },              // a) provozovatel
+        { id: 'objekt', nazev: 'Identifikace zařízení a místo', enabled: true, poradi: 4 },              // b) identifikace
+        { id: 'zakladni-udaje', nazev: 'Základní údaje revize', enabled: true, poradi: 5 },              // e) typ, f) data
+        { id: 'vyhodnoceni', nazev: 'Vyhodnocení revize', enabled: true, poradi: 6 },                    // l) závěr
+        { id: 'podpisy', nazev: 'Podpisy a předání', enabled: true, poradi: 7 },                         // d) podpis, o) předání
       ],
+      // Sekce dokumentu podle zákonných požadavků (a-o)
       sekce: [
-        { id: 'zakladni-udaje', nazev: 'Základní údaje', enabled: true, poradi: 1 },
-        { id: 'objekt', nazev: 'Údaje o objektu', enabled: true, poradi: 2 },
-        { id: 'vymezeni-rozsahu', nazev: 'Vymezení rozsahu revize', enabled: true, poradi: 3 },
-        { id: 'charakteristika-zarizeni', nazev: 'Charakteristika zařízení', enabled: true, poradi: 4 },
-        { id: 'pristroje', nazev: 'Použité měřicí přístroje', enabled: true, poradi: 5 },
-        { id: 'podklady', nazev: 'Podklady pro revizi', enabled: true, poradi: 6 },
-        { id: 'provedene-ukony', nazev: 'Provedené úkony', enabled: true, poradi: 7 },
-        { id: 'vyhodnoceni-predchozich', nazev: 'Vyhodnocení předchozích revizí', enabled: true, poradi: 8 },
-        { id: 'rozvadece', nazev: 'Rozvaděče a okruhy', enabled: true, poradi: 9 },
-        { id: 'mereni', nazev: 'Výsledky měření', enabled: true, poradi: 10 },
-        { id: 'mistnosti', nazev: 'Místnosti a zařízení', enabled: true, poradi: 11 },
-        { id: 'zaver', nazev: 'Závěr revize', enabled: true, poradi: 12 },
-        { id: 'podpisy', nazev: 'Podpisy', enabled: true, poradi: 13 },
-        { id: 'zavady', nazev: 'Závady (příloha)', enabled: true, poradi: 14 },
+        { id: 'provozovatel', nazev: 'a) Identifikace provozovatele', enabled: true, poradi: 1 },        // a)
+        { id: 'identifikace-zarizeni', nazev: 'b) Identifikace revidovaného zařízení', enabled: true, poradi: 2 }, // b)
+        { id: 'rozsah-revize', nazev: 'c) Vymezení rozsahu revize', enabled: true, poradi: 3 },          // c)
+        { id: 'revizni-technik', nazev: 'd) Revizní technik', enabled: true, poradi: 4 },                // d)
+        { id: 'typ-revize', nazev: 'e) Typ a druh revize', enabled: true, poradi: 5 },                   // e)
+        { id: 'data-revize', nazev: 'f) Data revize', enabled: true, poradi: 6 },                        // f)
+        { id: 'merici-pristroje', nazev: 'g) Soupis měřicích přístrojů', enabled: true, poradi: 7 },     // g)
+        { id: 'podklady', nazev: 'h) Podklady pro revizi', enabled: true, poradi: 8 },                   // h)
+        { id: 'provedene-ukony', nazev: 'i) Soupis provedených úkonů', enabled: true, poradi: 9 },       // i)
+        { id: 'namerene-hodnoty', nazev: 'j) Naměřené hodnoty', enabled: true, poradi: 10 },             // j)
+        { id: 'zavady', nazev: 'k) Přehled zjištěných závad', enabled: true, poradi: 11 },               // k)
+        { id: 'zaver', nazev: 'l) Závěrečné zhodnocení', enabled: true, poradi: 12 },                    // l)
+        { id: 'vyhodnoceni-predchozich', nazev: 'm) Vyhodnocení předchozích revizí', enabled: true, poradi: 13 }, // m)
+        { id: 'pristi-revize', nazev: 'n) Lhůta příští revize', enabled: true, poradi: 14 },             // n)
+        { id: 'predani', nazev: 'o) Potvrzení o předání', enabled: true, poradi: 15 },                   // o)
       ],
       sloupceOkruhu: [
         { id: 'cislo', nazev: 'Č.', enabled: true, poradi: 1 },
         { id: 'jistic', nazev: 'Jistič', enabled: true, poradi: 2 },
-        { id: 'nazev', nazev: 'Název', enabled: true, poradi: 3 },
+        { id: 'nazev', nazev: 'Název okruhu', enabled: true, poradi: 3 },
         { id: 'vodic', nazev: 'Vodič', enabled: true, poradi: 4 },
-        { id: 'izolacniOdpor', nazev: 'Iz. odpor', enabled: true, poradi: 5 },
-        { id: 'impedanceSmycky', nazev: 'Imp. smyčky', enabled: true, poradi: 6 },
-        { id: 'proudovyChranicMa', nazev: 'Pr. chrán.', enabled: false, poradi: 7 },
-        { id: 'casOdpojeni', nazev: 'Čas odp.', enabled: false, poradi: 8 },
+        { id: 'izolacniOdpor', nazev: 'Iz. odpor [MΩ]', enabled: true, poradi: 5 },
+        { id: 'impedanceSmycky', nazev: 'Zs [Ω]', enabled: true, poradi: 6 },
+        { id: 'proudovyChranicMa', nazev: 'IΔn [mA]', enabled: true, poradi: 7 },
+        { id: 'casOdpojeni', nazev: 'tA [ms]', enabled: true, poradi: 8 },
       ],
       zapatiZobrazitCisloStranky: true,
       zapatiZobrazitDatum: true,
