@@ -850,12 +850,8 @@ async function startServer() {
       const now = new Date().toISOString();
       const data = { ...req.body };
       
-      // Konvertovat boolean na integer pro PostgreSQL
-      const booleanFields = ['jeVychozi', 'zahlaviZobrazitLogo', 'zahlaviZobrazitFirmu', 'zahlaviZobrazitTechnika',
-        'uvodniStranaZobrazit', 'uvodniStranaZobrazitFirmu', 'uvodniStranaZobrazitTechnika', 
-        'uvodniStranaZobrazitObjekt', 'uvodniStranaZobrazitVyhodnoceni', 'uvodniStranaZobrazitPodpisy',
-        'uvodniStranaNadpisRamecek', 'uvodniStranaRamecekUdaje', 'uvodniStranaRamecekObjekt', 
-        'uvodniStranaRamecekVyhodnoceni', 'zapatiZobrazitCisloStranky', 'zapatiZobrazitDatum'];
+      // Konvertovat boolean na integer pro PostgreSQL - použít stejný seznam jako pro čtení
+      const booleanFields = booleanFieldsSablona;
       
       for (const field of booleanFields) {
         if (field in data) {
@@ -894,12 +890,8 @@ async function startServer() {
       const now = new Date().toISOString();
       const data = { ...req.body, updatedAt: now };
       
-      // Konvertovat boolean na integer pro PostgreSQL
-      const booleanFields = ['jeVychozi', 'zahlaviZobrazitLogo', 'zahlaviZobrazitFirmu', 'zahlaviZobrazitTechnika',
-        'uvodniStranaZobrazit', 'uvodniStranaZobrazitFirmu', 'uvodniStranaZobrazitTechnika', 
-        'uvodniStranaZobrazitObjekt', 'uvodniStranaZobrazitVyhodnoceni', 'uvodniStranaZobrazitPodpisy',
-        'uvodniStranaNadpisRamecek', 'uvodniStranaRamecekUdaje', 'uvodniStranaRamecekObjekt', 
-        'uvodniStranaRamecekVyhodnoceni', 'zapatiZobrazitCisloStranky', 'zapatiZobrazitDatum'];
+      // Konvertovat boolean na integer pro PostgreSQL - použít stejný seznam jako pro čtení
+      const booleanFields = booleanFieldsSablona;
       
       for (const field of booleanFields) {
         if (field in data) {

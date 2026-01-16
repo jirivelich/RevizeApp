@@ -264,6 +264,7 @@ export async function initializeDatabase() {
         "fontSize" INTEGER,
         sekce TEXT,
         "sloupceOkruhu" TEXT,
+        "uvodniStranaBloky" TEXT,
         "uvodniStranaZobrazit" INTEGER DEFAULT 1,
         "uvodniStranaZobrazitFirmu" INTEGER DEFAULT 1,
         "uvodniStranaZobrazitTechnika" INTEGER DEFAULT 1,

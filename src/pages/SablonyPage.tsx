@@ -153,26 +153,44 @@ export function SablonyPage() {
 
   const handleSave = async () => {
     if (selectedSablona?.id && formData) {
-      await sablonaService.update(selectedSablona.id, formData);
-      await loadData();
+      try {
+        await sablonaService.update(selectedSablona.id, formData);
+        await loadData();
+        // Znovu načíst aktualizovanou šablonu
+        const updatedSablona = await sablonaService.getById(selectedSablona.id);
+        if (updatedSablona) {
+          setSelectedSablona(updatedSablona);
+          setFormData(updatedSablona);
+        }
+        alert('Šablona byla úspěšně uložena');
+      } catch (error) {
+        console.error('Chyba při ukládání šablony:', error);
+        alert('Chyba při ukládání šablony');
+      }
     }
   };
 
   const handleCreateNew = async () => {
     if (!newSablonaName.trim()) return;
     
-    const defaultSablona = sablonaService.getDefaultSablona();
-    defaultSablona.nazev = newSablonaName.trim();
-    defaultSablona.jeVychozi = false;
-    const newId = await sablonaService.create(defaultSablona);
-    await loadData();
-    const newSablona = await sablonaService.getById(newId);
-    if (newSablona) {
-      setSelectedSablona(newSablona);
-      setFormData(newSablona);
+    try {
+      const defaultSablona = sablonaService.getDefaultSablona();
+      defaultSablona.nazev = newSablonaName.trim();
+      defaultSablona.jeVychozi = false;
+      const newId = await sablonaService.create(defaultSablona);
+      await loadData();
+      const newSablona = await sablonaService.getById(newId);
+      if (newSablona) {
+        setSelectedSablona(newSablona);
+        setFormData(newSablona);
+      }
+      setIsCreateModalOpen(false);
+      setNewSablonaName('');
+      alert('Šablona byla vytvořena');
+    } catch (error) {
+      console.error('Chyba při vytváření šablony:', error);
+      alert('Chyba při vytváření šablony: ' + (error as Error).message);
     }
-    setIsCreateModalOpen(false);
-    setNewSablonaName('');
   };
 
   const handleDelete = async () => {
