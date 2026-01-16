@@ -786,16 +786,34 @@ async function startServer() {
   });
 
   // ==================== ŠABLONY ====================
+  // Helper pro konverzi INTEGER polí na boolean
+  const booleanFieldsSablona = [
+    'jeVychozi', 'zahlaviZobrazitLogo', 'zahlaviZobrazitFirmu', 'zahlaviZobrazitTechnika',
+    'uvodniStranaZobrazit', 'uvodniStranaZobrazitFirmu', 'uvodniStranaZobrazitTechnika', 
+    'uvodniStranaZobrazitObjekt', 'uvodniStranaZobrazitVyhodnoceni', 'uvodniStranaZobrazitPodpisy',
+    'uvodniStranaNadpisRamecek', 'uvodniStranaRamecekUdaje', 'uvodniStranaRamecekObjekt', 
+    'uvodniStranaRamecekVyhodnoceni', 'zapatiZobrazitCisloStranky', 'zapatiZobrazitDatum'
+  ];
+  
+  const parseSablonaRow = (row: any) => {
+    const result = { ...row };
+    // Konvertovat INTEGER na boolean
+    for (const field of booleanFieldsSablona) {
+      if (field in result) {
+        result[field] = result[field] === 1 || result[field] === true;
+      }
+    }
+    // Parsovat JSON pole
+    result.sekce = row.sekce ? JSON.parse(row.sekce) : [];
+    result.sloupceOkruhu = row.sloupceOkruhu ? JSON.parse(row.sloupceOkruhu) : [];
+    result.uvodniStranaBloky = row.uvodniStranaBloky ? JSON.parse(row.uvodniStranaBloky) : undefined;
+    return result;
+  };
+
   app.get('/api/sablony', authMiddleware, async (req, res) => {
     try {
       const result = await pool.query('SELECT * FROM sablona ORDER BY nazev');
-      // Parsovat JSON pole
-      const sablony = result.rows.map(row => ({
-        ...row,
-        sekce: row.sekce ? JSON.parse(row.sekce) : [],
-        sloupceOkruhu: row.sloupceOkruhu ? JSON.parse(row.sloupceOkruhu) : [],
-        uvodniStranaBloky: row.uvodniStranaBloky ? JSON.parse(row.uvodniStranaBloky) : undefined,
-      }));
+      const sablony = result.rows.map(parseSablonaRow);
       res.json(sablony);
     } catch (error) {
       console.error('Error getting sablony:', error);
@@ -809,13 +827,7 @@ async function startServer() {
       if (result.rows.length === 0) {
         return res.json(null);
       }
-      const row = result.rows[0];
-      res.json({
-        ...row,
-        sekce: row.sekce ? JSON.parse(row.sekce) : [],
-        sloupceOkruhu: row.sloupceOkruhu ? JSON.parse(row.sloupceOkruhu) : [],
-        uvodniStranaBloky: row.uvodniStranaBloky ? JSON.parse(row.uvodniStranaBloky) : undefined,
-      });
+      res.json(parseSablonaRow(result.rows[0]));
     } catch (error) {
       console.error('Error getting vychozi sablona:', error);
       res.status(500).json({ error: (error as Error).message });
@@ -826,13 +838,7 @@ async function startServer() {
     try {
       const result = await pool.query('SELECT * FROM sablona WHERE id = $1', [req.params.id]);
       if (result.rows.length === 0) return res.status(404).json({ error: 'Šablona nenalezena' });
-      const row = result.rows[0];
-      res.json({
-        ...row,
-        sekce: row.sekce ? JSON.parse(row.sekce) : [],
-        sloupceOkruhu: row.sloupceOkruhu ? JSON.parse(row.sloupceOkruhu) : [],
-        uvodniStranaBloky: row.uvodniStranaBloky ? JSON.parse(row.uvodniStranaBloky) : undefined,
-      });
+      res.json(parseSablonaRow(result.rows[0]));
     } catch (error) {
       console.error('Error getting sablona:', error);
       res.status(500).json({ error: (error as Error).message });
