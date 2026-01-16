@@ -81,6 +81,97 @@ const PAGE_SIZES = {
 // Konverze mm na px (96 DPI)
 const MM_TO_PX = 3.78;
 
+// Komponenta pro draggable widget - musí být separátní kvůli useRef
+interface DraggableWidgetProps {
+  widget: Widget;
+  zoom: number;
+  scaledWidth: number;
+  scaledHeight: number;
+  isSelected: boolean;
+  onSelect: () => void;
+  onDrag: (id: string, e: DraggableEvent, data: DraggableData) => void;
+  onResize: (id: string, e: React.SyntheticEvent, data: ResizeCallbackData) => void;
+  onDuplicate: (widget: Widget) => void;
+  onEdit: (widget: Widget) => void;
+  onDelete: (id: string) => void;
+  renderContent: (widget: Widget) => React.ReactNode;
+}
+
+function DraggableWidget({
+  widget,
+  zoom,
+  scaledWidth,
+  scaledHeight,
+  isSelected,
+  onSelect,
+  onDrag,
+  onResize,
+  onDuplicate,
+  onEdit,
+  onDelete,
+  renderContent,
+}: DraggableWidgetProps) {
+  const nodeRef = useRef<HTMLDivElement>(null);
+
+  return (
+    <Draggable
+      nodeRef={nodeRef}
+      position={{ x: widget.position.x * zoom, y: widget.position.y * zoom }}
+      onStop={(e, data) => onDrag(widget.id, e, { ...data, x: data.x / zoom, y: data.y / zoom })}
+      handle=".drag-handle"
+      bounds="parent"
+    >
+      <div ref={nodeRef} style={{ position: 'absolute' }}>
+        <Resizable
+          width={widget.size.width * zoom}
+          height={widget.size.height * zoom}
+          onResize={(e, data) => onResize(widget.id, e, { ...data, size: { width: data.size.width / zoom, height: data.size.height / zoom } })}
+          minConstraints={[50 * zoom, 20 * zoom]}
+          maxConstraints={[scaledWidth - widget.position.x * zoom, scaledHeight - widget.position.y * zoom]}
+        >
+          <div
+            className={`group ${isSelected ? 'ring-2 ring-blue-500' : 'ring-1 ring-transparent hover:ring-blue-300'}`}
+            style={{
+              width: widget.size.width * zoom,
+              height: widget.size.height * zoom,
+              position: 'relative',
+            }}
+            onClick={(e) => { e.stopPropagation(); onSelect(); }}
+          >
+            {/* Widget toolbar */}
+            <div className={`drag-handle absolute -top-7 left-0 right-0 h-7 bg-blue-500 text-white text-xs px-2 flex items-center justify-between rounded-t cursor-move z-20 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+              <span className="truncate capitalize">{widget.type}</span>
+              <div className="flex gap-1">
+                <button onClick={(e) => { e.stopPropagation(); onDuplicate(widget); }} className="hover:bg-blue-600 p-0.5 rounded" title="Duplikovat">
+                  <IconCopy />
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); onEdit(widget); }} className="hover:bg-blue-600 p-0.5 rounded" title="Upravit">
+                  <IconSettings />
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); onDelete(widget.id); }} className="hover:bg-red-600 p-0.5 rounded" title="Smazat">
+                  <IconTrash />
+                </button>
+              </div>
+            </div>
+            
+            {/* Widget content */}
+            <div 
+              style={{ 
+                transform: `scale(${zoom})`, 
+                transformOrigin: 'top left',
+                width: widget.size.width,
+                height: widget.size.height,
+              }}
+            >
+              {renderContent(widget)}
+            </div>
+          </div>
+        </Resizable>
+      </div>
+    </Draggable>
+  );
+}
+
 export default function PDFDesignerPage() {
   const [template, setTemplate] = useState<DesignerTemplate>({
     name: 'Nová šablona',
@@ -469,67 +560,23 @@ export default function PDFDesignerPage() {
             }}
             onClick={() => setSelectedWidget(null)}
           >
-            {template.widgets.map(widget => {
-              const nodeRef = useRef<HTMLDivElement>(null);
-              return (
-                <Draggable
-                  key={widget.id}
-                  nodeRef={nodeRef}
-                  position={{ x: widget.position.x * zoom, y: widget.position.y * zoom }}
-                  onStop={(_e, data) => handleDrag(widget.id, _e, { ...data, x: data.x / zoom, y: data.y / zoom })}
-                  handle=".drag-handle"
-                  bounds="parent"
-                >
-                  <div ref={nodeRef} style={{ position: 'absolute' }}>
-                    <Resizable
-                      width={widget.size.width * zoom}
-                      height={widget.size.height * zoom}
-                      onResize={(_e, data) => handleResize(widget.id, _e, { ...data, size: { width: data.size.width / zoom, height: data.size.height / zoom } })}
-                      minConstraints={[50 * zoom, 20 * zoom]}
-                      maxConstraints={[scaledWidth - widget.position.x * zoom, scaledHeight - widget.position.y * zoom]}
-                    >
-                      <div
-                        className={`group ${selectedWidget === widget.id ? 'ring-2 ring-blue-500' : 'ring-1 ring-transparent hover:ring-blue-300'}`}
-                        style={{
-                          width: widget.size.width * zoom,
-                          height: widget.size.height * zoom,
-                          position: 'relative',
-                        }}
-                        onClick={(e) => { e.stopPropagation(); setSelectedWidget(widget.id); }}
-                      >
-                        {/* Widget toolbar */}
-                        <div className={`drag-handle absolute -top-7 left-0 right-0 h-7 bg-blue-500 text-white text-xs px-2 flex items-center justify-between rounded-t cursor-move z-20 ${selectedWidget === widget.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                          <span className="truncate capitalize">{widget.type}</span>
-                          <div className="flex gap-1">
-                            <button onClick={(e) => { e.stopPropagation(); duplicateWidget(widget); }} className="hover:bg-blue-600 p-0.5 rounded" title="Duplikovat">
-                              <IconCopy />
-                            </button>
-                            <button onClick={(e) => { e.stopPropagation(); setEditingWidget(widget); }} className="hover:bg-blue-600 p-0.5 rounded" title="Upravit">
-                              <IconSettings />
-                            </button>
-                            <button onClick={(e) => { e.stopPropagation(); deleteWidget(widget.id); }} className="hover:bg-red-600 p-0.5 rounded" title="Smazat">
-                              <IconTrash />
-                            </button>
-                          </div>
-                        </div>
-                        
-                        {/* Widget content */}
-                        <div 
-                          style={{ 
-                            transform: `scale(${zoom})`, 
-                            transformOrigin: 'top left',
-                            width: widget.size.width,
-                            height: widget.size.height,
-                          }}
-                        >
-                          {renderWidgetContent(widget)}
-                        </div>
-                      </div>
-                    </Resizable>
-                  </div>
-                </Draggable>
-              );
-            })}
+            {template.widgets.map(widget => (
+              <DraggableWidget
+                key={widget.id}
+                widget={widget}
+                zoom={zoom}
+                scaledWidth={scaledWidth}
+                scaledHeight={scaledHeight}
+                isSelected={selectedWidget === widget.id}
+                onSelect={() => setSelectedWidget(widget.id)}
+                onDrag={handleDrag}
+                onResize={handleResize}
+                onDuplicate={duplicateWidget}
+                onEdit={setEditingWidget}
+                onDelete={deleteWidget}
+                renderContent={renderWidgetContent}
+              />
+            ))}
           </div>
         </div>
 
