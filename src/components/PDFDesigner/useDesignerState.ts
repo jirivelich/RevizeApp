@@ -19,15 +19,6 @@ import { createRevizniZpravaTemplate, createEmptyTemplate } from './defaultTempl
 const generateId = () => `widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 const generatePageId = () => `page_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-// Výchozí stránka (pro přidávání nových stránek)
-const createDefaultPage = (index: number = 0): PageTemplate => ({
-  id: generatePageId(),
-  name: index === 0 ? 'Titulní strana' : `Strana ${index + 1}`,
-  size: 'a4',
-  orientation: 'portrait',
-  widgets: [],
-});
-
 // Stav historie pro undo/redo
 interface HistoryState {
   past: DesignerTemplate[];
@@ -51,7 +42,7 @@ export function useDesignerState(initialTemplate?: DesignerTemplate) {
   
   // Bezpečný setter pro currentPageIndex
   const safeSetCurrentPageIndex = useCallback((index: number) => {
-    setCurrentPageIndex(prevIndex => {
+    setCurrentPageIndex(() => {
       const maxIndex = template.pages.length - 1;
       if (index < 0) return 0;
       if (index > maxIndex) return maxIndex >= 0 ? maxIndex : 0;
@@ -206,7 +197,7 @@ export function useDesignerState(initialTemplate?: DesignerTemplate) {
           borderColor: '#e5e7eb',
           borderStyle: 'dashed',
         },
-        itemTemplate: [],
+        template: [],
       } : undefined,
     };
 

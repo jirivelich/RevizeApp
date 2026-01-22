@@ -38,7 +38,6 @@ import {
   GridIcon,
   ZoomInIcon,
   ZoomOutIcon,
-  AddPageIcon,
   HeaderIcon,
   FooterIcon,
 } from './icons';
@@ -145,7 +144,7 @@ export function Toolbar({
   onZoomIn,
   onZoomOut,
   scale,
-  onAddPage,
+  onAddPage: _onAddPage,
   selectedCount,
   hasGroupSelection,
   activeZone,

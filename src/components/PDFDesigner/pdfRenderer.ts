@@ -123,9 +123,7 @@ export async function renderTemplateToPDF(
       // přesuneme ho tak, aby byl těsně za skutečným koncem dynamického widgetu
       if (lastDynamicDesignEndY > 0 && widgetDesignY > lastDynamicDesignEndY) {
         // Widget je v designeru pod dynamickým widgetem
-        // Původní Y pozice widgetu v PDF by byla: widgetDesignY * PX_TO_MM + contentZoneOffset
         // Chceme ho přesunout na: lastDynamicEndY + malá mezera (3mm)
-        const originalY = widgetDesignY * PX_TO_MM + contentZoneOffset;
         const targetY = lastDynamicEndY + 3;  // 3mm mezera za dynamickým widgetem
         // yOffset musí být takový, aby (widgetDesignY * PX_TO_MM) + yOffset = targetY
         yOffset = targetY - (widgetDesignY * PX_TO_MM);
