@@ -10,7 +10,20 @@ import { WidgetEditor } from './WidgetEditor';
 import { SaveIcon, FolderOpenIcon, ExportIcon, CloseIcon, PreviewIcon, PDFIcon } from './icons';
 import { openPDFPreview, downloadPDF } from './pdfRenderer';
 import { openHTMLPreview } from './htmlRenderer';
+import { pdfSablonyApi } from '../../services/api';
 import type { PDFRenderData } from './pdfRenderer';
+
+// Typ pro šablonu z databáze
+interface DbPdfSablona {
+  id: number;
+  nazev: string;
+  popis?: string;
+  jeVychozi: number;
+  userId?: number;
+  template: DesignerTemplate;
+  createdAt: string;
+  updatedAt: string;
+}
 
 interface PDFDesignerMainProps {
   revize?: Revize | null;
@@ -61,8 +74,12 @@ export function PDFDesignerMain({
   const state = useDesignerState(getInitialTemplate());
   const [editingWidget, setEditingWidget] = useState<Widget | null>(null);
   const [savedTemplates, setSavedTemplates] = useState<DesignerTemplate[]>([]);
+  const [dbTemplates, setDbTemplates] = useState<DbPdfSablona[]>([]);
+  const [currentDbId, setCurrentDbId] = useState<number | null>(null);
   const [showTemplateList, setShowTemplateList] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Automaticky ukládat aktuální šablonu při každé změně
@@ -135,6 +152,24 @@ export function PDFDesignerMain({
       }
     }
   }, []);
+
+  // Načíst šablony z databáze
+  useEffect(() => {
+    loadDbTemplates();
+  }, []);
+
+  const loadDbTemplates = async () => {
+    try {
+      setIsLoading(true);
+      const templates = await pdfSablonyApi.getAll() as DbPdfSablona[];
+      console.log('Načteno šablon z DB:', templates.length);
+      setDbTemplates(templates);
+    } catch (error) {
+      console.error('Chyba při načítání šablon z DB:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Náhled HTML (pro rychlé debugování)
   const handlePreview = useCallback(() => {
@@ -231,17 +266,73 @@ export function PDFDesignerMain({
       setSavedTemplates(newTemplates);
       
       console.log('Šablona uložena:', templateToSave.name, 'Velikost:', jsonString.length, 'bytes');
-      alert('Šablona byla uložena!');
+      alert('Šablona byla uložena lokálně!');
     } catch (error) {
       console.error('Chyba při ukládání šablony:', error);
       alert('Nepodařilo se uložit šablonu: ' + (error instanceof Error ? error.message : 'Neznámá chyba'));
     }
-  }, [state.template, savedTemplates]);
+  }, [state.template, savedTemplates, serializeWidget]);
+
+  // Uložit šablonu do databáze
+  const handleSaveToDb = useCallback(async () => {
+    try {
+      setIsSaving(true);
+      
+      // Vytvořit čistou kopii šablony
+      const templateToSave = {
+        ...state.template,
+        updatedAt: new Date().toISOString(),
+        pages: state.template.pages.map(page => ({
+          ...page,
+          widgets: page.widgets.map(widget => serializeWidget(widget)),
+        })),
+      };
+      
+      const sablonaData = {
+        nazev: state.template.name,
+        popis: state.template.description || '',
+        jeVychozi: false,
+        template: templateToSave,
+      };
+      
+      if (currentDbId) {
+        // Aktualizovat existující
+        await pdfSablonyApi.update(currentDbId, sablonaData);
+        console.log('Šablona aktualizována v DB:', currentDbId);
+      } else {
+        // Vytvořit novou
+        const result = await pdfSablonyApi.create(sablonaData) as DbPdfSablona;
+        setCurrentDbId(result.id);
+        console.log('Šablona vytvořena v DB:', result.id);
+      }
+      
+      // Znovu načíst seznam šablon
+      await loadDbTemplates();
+      alert('Šablona byla uložena do databáze!');
+    } catch (error) {
+      console.error('Chyba při ukládání do DB:', error);
+      alert('Nepodařilo se uložit šablonu do databáze: ' + (error instanceof Error ? error.message : 'Neznámá chyba'));
+    } finally {
+      setIsSaving(false);
+    }
+  }, [state.template, currentDbId, serializeWidget]);
 
   // Načíst šablonu
   const handleLoadTemplate = useCallback((template: DesignerTemplate) => {
     state.loadTemplate(template);
+    setCurrentDbId(null);
     setShowTemplateList(false);
+  }, [state]);
+
+  // Načíst šablonu z databáze
+  const handleLoadDbTemplate = useCallback((dbSablona: DbPdfSablona) => {
+    const template = typeof dbSablona.template === 'string' 
+      ? JSON.parse(dbSablona.template) 
+      : dbSablona.template;
+    state.loadTemplate(template);
+    setCurrentDbId(dbSablona.id);
+    setShowTemplateList(false);
+    console.log('Načtena šablona z DB:', dbSablona.id, dbSablona.nazev);
   }, [state]);
 
   // Smazat šablonu
@@ -251,6 +342,21 @@ export function PDFDesignerMain({
     setSavedTemplates(newTemplates);
     localStorage.setItem('pdfDesignerTemplates', JSON.stringify(newTemplates));
   }, [savedTemplates]);
+
+  // Smazat šablonu z databáze
+  const handleDeleteDbTemplate = useCallback(async (dbId: number) => {
+    if (!confirm('Opravdu chcete smazat tuto šablonu z databáze?')) return;
+    try {
+      await pdfSablonyApi.delete(dbId);
+      if (currentDbId === dbId) {
+        setCurrentDbId(null);
+      }
+      await loadDbTemplates();
+    } catch (error) {
+      console.error('Chyba při mazání z DB:', error);
+      alert('Nepodařilo se smazat šablonu.');
+    }
+  }, [currentDbId]);
 
   // Export
   const handleExport = useCallback(() => {
@@ -352,37 +458,46 @@ export function PDFDesignerMain({
             >
               <FolderOpenIcon size={16} />
               Načíst
+              {isLoading && <span className="ml-1 text-xs">...</span>}
             </button>
             
             {showTemplateList && (
-              <div className="absolute right-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                <div className="p-2 border-b border-gray-100">
-                  <span className="text-xs font-medium text-gray-500">Uložené šablony</span>
+              <div className="absolute right-0 top-full mt-1 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                {/* Šablony z databáze */}
+                <div className="p-2 border-b border-gray-100 bg-blue-50">
+                  <span className="text-xs font-medium text-blue-600">📦 Šablony z databáze</span>
                 </div>
-                {savedTemplates.length === 0 ? (
+                {dbTemplates.length === 0 ? (
                   <div className="p-3 text-sm text-gray-400 text-center">
-                    Žádné uložené šablony
+                    Žádné šablony v databázi
                   </div>
                 ) : (
-                  <div className="max-h-64 overflow-y-auto">
-                    {savedTemplates.map(template => (
+                  <div className="max-h-48 overflow-y-auto">
+                    {dbTemplates.map(dbTemplate => (
                       <div
-                        key={template.id}
-                        className="flex items-center justify-between px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                        key={dbTemplate.id}
+                        className={`flex items-center justify-between px-3 py-2 hover:bg-blue-50 cursor-pointer ${
+                          currentDbId === dbTemplate.id ? 'bg-blue-100' : ''
+                        }`}
                       >
                         <div 
                           className="flex-1"
-                          onClick={() => handleLoadTemplate(template)}
+                          onClick={() => handleLoadDbTemplate(dbTemplate)}
                         >
-                          <div className="text-sm font-medium">{template.name}</div>
+                          <div className="text-sm font-medium flex items-center gap-1">
+                            {dbTemplate.nazev}
+                            {dbTemplate.jeVychozi ? <span className="text-xs text-green-600">★</span> : null}
+                            {currentDbId === dbTemplate.id && <span className="text-xs text-blue-500">(aktivní)</span>}
+                          </div>
                           <div className="text-xs text-gray-400">
-                            {new Date(template.updatedAt).toLocaleDateString('cs-CZ')}
+                            {new Date(dbTemplate.updatedAt).toLocaleDateString('cs-CZ')}
+                            {dbTemplate.popis && ` • ${dbTemplate.popis}`}
                           </div>
                         </div>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeleteTemplate(template.id);
+                            handleDeleteDbTemplate(dbTemplate.id);
                           }}
                           className="p-1 text-red-500 hover:bg-red-50 rounded"
                         >
@@ -392,10 +507,47 @@ export function PDFDesignerMain({
                     ))}
                   </div>
                 )}
+                
+                {/* Lokální šablony */}
+                {savedTemplates.length > 0 && (
+                  <>
+                    <div className="p-2 border-b border-t border-gray-100 bg-gray-50">
+                      <span className="text-xs font-medium text-gray-500">💾 Lokální šablony (localStorage)</span>
+                    </div>
+                    <div className="max-h-32 overflow-y-auto">
+                      {savedTemplates.map(template => (
+                        <div
+                          key={template.id}
+                          className="flex items-center justify-between px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                        >
+                          <div 
+                            className="flex-1"
+                            onClick={() => handleLoadTemplate(template)}
+                          >
+                            <div className="text-sm font-medium">{template.name}</div>
+                            <div className="text-xs text-gray-400">
+                              {new Date(template.updatedAt).toLocaleDateString('cs-CZ')}
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteTemplate(template.id);
+                            }}
+                            className="p-1 text-red-500 hover:bg-red-50 rounded"
+                          >
+                            <CloseIcon size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
                 <div className="p-2 border-t border-gray-100">
                   <button
                     onClick={() => {
                       state.resetTemplate();
+                      setCurrentDbId(null);
                       setShowTemplateList(false);
                     }}
                     className="w-full px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded"
@@ -407,13 +559,29 @@ export function PDFDesignerMain({
             )}
           </div>
 
-          {/* Uložit */}
+          {/* Uložit lokálně */}
           <button
             onClick={handleSaveTemplate}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+            title="Uložit lokálně (do prohlížeče)"
           >
             <SaveIcon size={16} />
-            Uložit
+            Lokálně
+          </button>
+
+          {/* Uložit do databáze */}
+          <button
+            onClick={handleSaveToDb}
+            disabled={isSaving}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded transition-colors ${
+              isSaving 
+                ? 'bg-blue-300 text-white cursor-wait' 
+                : 'bg-blue-500 text-white hover:bg-blue-600'
+            }`}
+            title="Uložit do databáze (na server)"
+          >
+            <SaveIcon size={16} />
+            {isSaving ? 'Ukládám...' : currentDbId ? 'Aktualizovat' : 'Do databáze'}
           </button>
 
           {/* Separator */}

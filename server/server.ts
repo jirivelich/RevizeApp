@@ -933,6 +933,124 @@ async function startServer() {
     }
   });
 
+  // ==================== PDF DESIGNER ŠABLONY ====================
+  // Získat všechny PDF šablony (uživatele + výchozí)
+  app.get('/api/pdf-sablony', authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user?.id;
+      const result = await pool.query(
+        `SELECT * FROM "pdfSablona" 
+         WHERE "userId" = $1 OR "userId" IS NULL OR "jeVychozi" = 1 
+         ORDER BY "jeVychozi" DESC, nazev`,
+        [userId]
+      );
+      res.json(result.rows);
+    } catch (error) {
+      console.error('Error getting pdf sablony:', error);
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Získat výchozí PDF šablonu
+  app.get('/api/pdf-sablony/vychozi', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM "pdfSablona" WHERE "jeVychozi" = 1 LIMIT 1');
+      res.json(result.rows[0] || null);
+    } catch (error) {
+      console.error('Error getting vychozi pdf sablona:', error);
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Získat konkrétní PDF šablonu
+  app.get('/api/pdf-sablony/:id', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM "pdfSablona" WHERE id = $1', [req.params.id]);
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Šablona nenalezena' });
+      }
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error('Error getting pdf sablona:', error);
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Vytvořit novou PDF šablonu
+  app.post('/api/pdf-sablony', authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { nazev, popis, jeVychozi, template } = req.body;
+      const userId = req.user?.id;
+      const now = new Date().toISOString();
+
+      // Pokud je výchozí, odstranit příznak u ostatních
+      if (jeVychozi) {
+        await pool.query('UPDATE "pdfSablona" SET "jeVychozi" = 0 WHERE "jeVychozi" = 1');
+      }
+
+      const result = await pool.query(
+        `INSERT INTO "pdfSablona" (nazev, popis, "jeVychozi", "userId", template, "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        [nazev, popis || null, jeVychozi ? 1 : 0, userId, JSON.stringify(template), now, now]
+      );
+
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error('Error creating pdf sablona:', error);
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Aktualizovat PDF šablonu
+  app.put('/api/pdf-sablony/:id', authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { nazev, popis, jeVychozi, template } = req.body;
+      const now = new Date().toISOString();
+
+      // Pokud je výchozí, odstranit příznak u ostatních
+      if (jeVychozi) {
+        await pool.query('UPDATE "pdfSablona" SET "jeVychozi" = 0 WHERE "jeVychozi" = 1 AND id != $1', [req.params.id]);
+      }
+
+      const result = await pool.query(
+        `UPDATE "pdfSablona" 
+         SET nazev = $1, popis = $2, "jeVychozi" = $3, template = $4, "updatedAt" = $5
+         WHERE id = $6 RETURNING *`,
+        [nazev, popis || null, jeVychozi ? 1 : 0, JSON.stringify(template), now, req.params.id]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Šablona nenalezena' });
+      }
+
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error('Error updating pdf sablona:', error);
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Smazat PDF šablonu
+  app.delete('/api/pdf-sablony/:id', authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user?.id;
+      // Pouze vlastní šablony lze mazat
+      const result = await pool.query(
+        'DELETE FROM "pdfSablona" WHERE id = $1 AND ("userId" = $2 OR "userId" IS NULL) RETURNING id',
+        [req.params.id, userId]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Šablona nenalezena nebo nemáte oprávnění ji smazat' });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting pdf sablona:', error);
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
   // ==================== NASTAVENÍ ====================
   app.get('/api/nastaveni', authMiddleware, async (req, res) => {
     try {

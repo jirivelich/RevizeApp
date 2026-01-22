@@ -130,6 +130,50 @@ export const backupApi = {
   },
 };
 
+// ==================== PDF DESIGNER ŠABLONY ====================
+export const pdfSablonyApi = {
+  async getAll() {
+    return fetch(`${API_BASE_URL}/pdf-sablony`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
+
+  async getById(id: number | string) {
+    return fetch(`${API_BASE_URL}/pdf-sablony/${id}`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
+
+  async getVychozi() {
+    return fetch(`${API_BASE_URL}/pdf-sablony/vychozi`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
+
+  async create(data: { nazev: string; popis?: string; jeVychozi?: boolean; template: any }) {
+    return fetch(`${API_BASE_URL}/pdf-sablony`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse);
+  },
+
+  async update(id: number | string, data: { nazev: string; popis?: string; jeVychozi?: boolean; template: any }) {
+    return fetch(`${API_BASE_URL}/pdf-sablony/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(handleResponse);
+  },
+
+  async delete(id: number | string) {
+    return fetch(`${API_BASE_URL}/pdf-sablony/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
+};
+
 // ==================== HEALTH CHECK ====================
 export async function checkServerHealth() {
   try {

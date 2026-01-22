@@ -291,6 +291,20 @@ export async function initializeDatabase() {
       )
     `);
 
+    // PDF Designer šablony (JSON struktura)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS "pdfSablona" (
+        id SERIAL PRIMARY KEY,
+        nazev TEXT NOT NULL,
+        popis TEXT,
+        "jeVychozi" INTEGER DEFAULT 0,
+        "userId" INTEGER REFERENCES users(id),
+        template JSONB NOT NULL,
+        "createdAt" TEXT NOT NULL,
+        "updatedAt" TEXT NOT NULL
+      )
+    `);
+
     await client.query(`
       CREATE TABLE IF NOT EXISTS "zavadaKatalog" (
         id SERIAL PRIMARY KEY,
