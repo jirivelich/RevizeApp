@@ -24,10 +24,14 @@ export function WidgetEditor({ widget, onSave, onClose }: WidgetEditorProps) {
     });
   };
 
-  const updateTableConfig = (updates: Partial<typeof editedWidget.tableConfig>) => {
+  const updateTableConfig = (updates: Partial<NonNullable<typeof editedWidget.tableConfig>>) => {
+    if (!editedWidget.tableConfig) {
+      console.warn('Attempting to update tableConfig on widget without tableConfig');
+      return;
+    }
     setEditedWidget({
       ...editedWidget,
-      tableConfig: { ...editedWidget.tableConfig!, ...updates }
+      tableConfig: { ...editedWidget.tableConfig, ...updates }
     });
   };
 
@@ -126,6 +130,80 @@ export function WidgetEditor({ widget, onSave, onClose }: WidgetEditorProps) {
               />
             )}
 
+            {/* Repeater widget */}
+            {editedWidget.type === 'repeater' && (
+              <div className="space-y-3">
+                <Select
+                  label="Typ opakující se skupiny"
+                  value={editedWidget.repeaterConfig?.type || 'rozvadece'}
+                  onChange={(e) => {
+                    const type = e.target.value as 'rozvadece' | 'mistnosti';
+                    setEditedWidget({
+                      ...editedWidget,
+                      repeaterConfig: {
+                        ...editedWidget.repeaterConfig!,
+                        type,
+                      },
+                    });
+                  }}
+                  options={[
+                    { value: 'rozvadece', label: 'Rozvaděče s okruhy' },
+                    { value: 'mistnosti', label: 'Místnosti se zařízeními' },
+                  ]}
+                />
+                <Input
+                  label="Mezera mezi položkami (px)"
+                  type="number"
+                  min={0}
+                  max={50}
+                  value={editedWidget.repeaterConfig?.gap || 15}
+                  onChange={(e) => {
+                    setEditedWidget({
+                      ...editedWidget,
+                      repeaterConfig: {
+                        ...editedWidget.repeaterConfig!,
+                        gap: parseInt(e.target.value) || 15,
+                      },
+                    });
+                  }}
+                />
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={editedWidget.repeaterConfig?.showSeparator ?? true}
+                    onChange={(e) => {
+                      setEditedWidget({
+                        ...editedWidget,
+                        repeaterConfig: {
+                          ...editedWidget.repeaterConfig!,
+                          showSeparator: e.target.checked,
+                        },
+                      });
+                    }}
+                    className="rounded border-gray-300"
+                  />
+                  <span className="text-sm text-gray-700">Zobrazit oddělovač mezi položkami</span>
+                </label>
+                <div className="p-3 bg-blue-50 rounded text-xs text-blue-700">
+                  <strong>🔄 Opakující se skupina</strong>
+                  <br /><br />
+                  {editedWidget.repeaterConfig?.type === 'rozvadece' ? (
+                    <>Pro každý rozvaděč se v PDF zobrazí:
+                    <br />• Modrý nadpis s názvem rozvaděče
+                    <br />• Info box (umístění, typ, krytí)
+                    <br />• Tabulka okruhů s automatickým stránkováním
+                    </>
+                  ) : (
+                    <>Pro každou místnost se v PDF zobrazí:
+                    <br />• Nadpis s názvem místnosti
+                    <br />• Info box (typ, plocha, patro)
+                    <br />• Tabulka zařízení
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Image widget */}
             {editedWidget.type === 'image' && (
               <>
@@ -200,7 +278,20 @@ export function WidgetEditor({ widget, onSave, onClose }: WidgetEditorProps) {
             <Select
               label="Zóna umístění"
               value={editedWidget.zone}
-              onChange={(e) => setEditedWidget({ ...editedWidget, zone: e.target.value as 'header' | 'content' | 'footer' })}
+              onChange={(e) => {
+                const newZone = e.target.value as 'header' | 'content' | 'footer';
+                // Při změně zóny přepočítat Y pozici, aby widget zůstal viditelný
+                let newY = editedWidget.y;
+                if (newZone === 'header' || newZone === 'footer') {
+                  // Header/footer mají omezenou výšku (~95px pro 25mm, ~75px pro 20mm)
+                  // Omezit Y na max 50px, aby widget byl viditelný
+                  newY = Math.max(0, Math.min(editedWidget.y, 50));
+                } else if (editedWidget.zone !== 'content' && newZone === 'content') {
+                  // Při přesunu z header/footer do content, resetovat Y na 10
+                  newY = 10;
+                }
+                setEditedWidget({ ...editedWidget, zone: newZone, y: newY });
+              }}
               options={[
                 { value: 'header', label: 'Záhlaví (opakuje se)' },
                 { value: 'content', label: 'Obsah stránky' },

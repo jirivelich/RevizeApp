@@ -46,8 +46,18 @@ export function useDesignerState(initialTemplate?: DesignerTemplate) {
   // Aktuální šablona
   const template = history.present;
 
-  // Vybraná stránka
+  // Vybraná stránka - s validací indexu
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  
+  // Bezpečný setter pro currentPageIndex
+  const safeSetCurrentPageIndex = useCallback((index: number) => {
+    setCurrentPageIndex(prevIndex => {
+      const maxIndex = template.pages.length - 1;
+      if (index < 0) return 0;
+      if (index > maxIndex) return maxIndex >= 0 ? maxIndex : 0;
+      return index;
+    });
+  }, [template.pages.length]);
 
   // Vybrané widgety
   const [selectedWidgetIds, setSelectedWidgetIds] = useState<string[]>([]);
@@ -60,8 +70,13 @@ export function useDesignerState(initialTemplate?: DesignerTemplate) {
   const [showZones, setShowZones] = useState(true);
   const [scale, setScale] = useState(1);
 
-  // Aktuální stránka
-  const currentPage = template.pages[currentPageIndex];
+  // Aktuální stránka - s bezpečným přístupem
+  const currentPage = template.pages[currentPageIndex] || template.pages[0];
+  
+  // Kontrola validity currentPageIndex při změně template
+  if (currentPageIndex >= template.pages.length && template.pages.length > 0) {
+    safeSetCurrentPageIndex(template.pages.length - 1);
+  }
 
   // Vybrané widgety
   const selectedWidgets = useMemo(() => {
@@ -119,12 +134,31 @@ export function useDesignerState(initialTemplate?: DesignerTemplate) {
     updateTemplate({ ...template, pages: newPages });
   }, [template, updateTemplate]);
 
-  // Přidat stránku
+  // Přidat stránku - zkopíruje header a footer widgety z aktuální stránky
   const addPage = useCallback(() => {
-    const newPage = createDefaultPage(template.pages.length);
+    const newPageId = generatePageId();
+    const currentPageWidgets = currentPage?.widgets || [];
+    
+    // Najít widgety v header a footer zónách a zkopírovat je s novými ID
+    const headerFooterWidgets = currentPageWidgets
+      .filter(w => w.zone === 'header' || w.zone === 'footer')
+      .map(w => ({
+        ...w,
+        id: generateId(),
+        pageId: newPageId,
+      }));
+    
+    const newPage: PageTemplate = {
+      id: newPageId,
+      name: `Strana ${template.pages.length + 1}`,
+      size: currentPage?.size || 'a4',
+      orientation: currentPage?.orientation || 'portrait',
+      widgets: headerFooterWidgets,
+    };
+    
     updateTemplate({ ...template, pages: [...template.pages, newPage] });
     setCurrentPageIndex(template.pages.length);
-  }, [template, updateTemplate]);
+  }, [template, updateTemplate, currentPage]);
 
   // Smazat stránku
   const deletePage = useCallback((pageIndex: number) => {
@@ -149,8 +183,8 @@ export function useDesignerState(initialTemplate?: DesignerTemplate) {
                type === 'signature' ? 'Podpis' : '',
       x: 20,
       y: 20,
-      width: type === 'table' ? 500 : type === 'line' ? 200 : type === 'image' ? 150 : 150,
-      height: type === 'table' ? 200 : type === 'line' ? 2 : type === 'image' ? 100 : 30,
+      width: type === 'table' ? 500 : type === 'repeater' ? 550 : type === 'line' ? 200 : type === 'image' ? 150 : 150,
+      height: type === 'table' ? 200 : type === 'repeater' ? 400 : type === 'line' ? 2 : type === 'image' ? 100 : 30,
       style: { ...DEFAULT_WIDGET_STYLE },
       zone,
       pageId: currentPage.id,
@@ -161,6 +195,18 @@ export function useDesignerState(initialTemplate?: DesignerTemplate) {
         columns: TABLE_COLUMNS.rozvadece.map(c => ({ ...c })),
         showHeader: true,
         borderStyle: 'all',
+      } : undefined,
+      repeaterConfig: type === 'repeater' ? {
+        type: 'rozvadece',
+        direction: 'vertical',
+        gap: 15,
+        showSeparator: true,
+        separatorStyle: {
+          borderWidth: 1,
+          borderColor: '#e5e7eb',
+          borderStyle: 'dashed',
+        },
+        itemTemplate: [],
       } : undefined,
     };
 
@@ -314,14 +360,16 @@ export function useDesignerState(initialTemplate?: DesignerTemplate) {
 
   // Z-index operace
   const bringToFront = useCallback(() => {
-    const maxZ = Math.max(...currentPage.widgets.map(w => w.zIndex));
+    if (!currentPage || currentPage.widgets.length === 0 || selectedWidgets.length === 0) return;
+    const maxZ = Math.max(0, ...currentPage.widgets.map(w => w.zIndex));
     selectedWidgets.forEach((w, i) => {
       updateWidget(w.id, { zIndex: maxZ + i + 1 });
     });
   }, [currentPage, selectedWidgets, updateWidget]);
 
   const sendToBack = useCallback(() => {
-    const minZ = Math.min(...currentPage.widgets.map(w => w.zIndex));
+    if (!currentPage || currentPage.widgets.length === 0 || selectedWidgets.length === 0) return;
+    const minZ = Math.min(0, ...currentPage.widgets.map(w => w.zIndex));
     selectedWidgets.forEach((w, i) => {
       updateWidget(w.id, { zIndex: minZ - selectedWidgets.length + i });
     });
@@ -339,20 +387,90 @@ export function useDesignerState(initialTemplate?: DesignerTemplate) {
     });
   }, [selectedWidgets, updateWidget]);
 
-  // Seskupení (zatím jednoduché - přiřazení groupId)
+  // Seskupení - vytvoří kontejnerový widget obsahující vybrané widgety
   const groupWidgets = useCallback(() => {
-    if (selectedWidgets.length < 2) return;
-    const groupId = `group_${Date.now()}`;
-    selectedWidgets.forEach(w => {
-      updateWidget(w.id, { groupId });
-    });
-  }, [selectedWidgets, updateWidget]);
+    if (selectedWidgets.length < 2) {
+      console.log('Seskupení: Potřeba vybrat alespoň 2 widgety');
+      return;
+    }
+    
+    // Najít bounding box všech vybraných widgetů
+    const minX = Math.min(...selectedWidgets.map(w => w.x));
+    const minY = Math.min(...selectedWidgets.map(w => w.y));
+    const maxX = Math.max(...selectedWidgets.map(w => w.x + w.width));
+    const maxY = Math.max(...selectedWidgets.map(w => w.y + w.height));
+    
+    // Vytvořit children s relativními pozicemi
+    const children: Widget[] = selectedWidgets.map(w => ({
+      ...w,
+      x: w.x - minX, // Relativní X
+      y: w.y - minY, // Relativní Y
+    }));
+    
+    // Vytvořit group widget
+    const groupWidget: Widget = {
+      id: generateId(),
+      type: 'group',
+      name: `Skupina (${selectedWidgets.length} položek)`,
+      content: '',
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY,
+      style: {
+        borderStyle: 'dashed',
+        borderWidth: 1,
+        borderColor: '#8b5cf6',
+        backgroundColor: 'transparent',
+      },
+      locked: false,
+      zone: selectedWidgets[0].zone, // Převzít zónu z prvního widgetu
+      pageId: selectedWidgets[0].pageId,
+      zIndex: Math.max(...selectedWidgets.map(w => w.zIndex)) + 1,
+      children,
+    };
+    
+    // Odstranit původní widgety a přidat group widget
+    const selectedIds = new Set(selectedWidgets.map(w => w.id));
+    const newWidgets = [
+      ...currentPage.widgets.filter(w => !selectedIds.has(w.id)),
+      groupWidget,
+    ];
+    
+    updatePage(currentPageIndex, { widgets: newWidgets });
+    setSelectedWidgetIds([groupWidget.id]);
+    
+    console.log('Vytvořena skupina:', groupWidget.id, 'obsahující:', children.map(c => c.id));
+  }, [selectedWidgets, currentPage, currentPageIndex, updatePage]);
 
+  // Rozeskupení - rozloží kontejnerový widget zpět na jednotlivé widgety
   const ungroupWidgets = useCallback(() => {
-    selectedWidgets.forEach(w => {
-      updateWidget(w.id, { groupId: undefined });
-    });
-  }, [selectedWidgets, updateWidget]);
+    const groupWidget = selectedWidgets.find(w => w.type === 'group' && w.children);
+    if (!groupWidget || !groupWidget.children) {
+      console.log('Rozeskupení: Vyberte skupinu');
+      return;
+    }
+    
+    // Převést children zpět na absolutní pozice
+    const extractedWidgets: Widget[] = groupWidget.children.map(child => ({
+      ...child,
+      x: child.x + groupWidget.x, // Absolutní X
+      y: child.y + groupWidget.y, // Absolutní Y
+      pageId: groupWidget.pageId,
+      zone: groupWidget.zone,
+    }));
+    
+    // Odstranit group widget a přidat extrahované widgety
+    const newWidgets = [
+      ...currentPage.widgets.filter(w => w.id !== groupWidget.id),
+      ...extractedWidgets,
+    ];
+    
+    updatePage(currentPageIndex, { widgets: newWidgets });
+    setSelectedWidgetIds(extractedWidgets.map(w => w.id));
+    
+    console.log('Rozeskupeno:', extractedWidgets.map(w => w.id));
+  }, [selectedWidgets, currentPage, currentPageIndex, updatePage]);
 
   // Zoom
   const zoomIn = useCallback(() => {

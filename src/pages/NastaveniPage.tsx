@@ -11,6 +11,9 @@ export function NastaveniPage() {
     firmaDic: '',
     reviznniTechnikJmeno: '',
     reviznniTechnikCisloOpravneni: '',
+    reviznniTechnikOsvedceni: '',
+    reviznniTechnikAdresa: '',
+    reviznniTechnikIco: '',
     kontaktEmail: '',
     kontaktTelefon: '',
     logo: '',
@@ -173,6 +176,21 @@ export function NastaveniPage() {
             label="Číslo oprávnění"
             value={nastaveni.reviznniTechnikCisloOpravneni}
             onChange={(e) => setNastaveni({ ...nastaveni, reviznniTechnikCisloOpravneni: e.target.value })}
+          />
+          <Input
+            label="Osvědčení"
+            value={nastaveni.reviznniTechnikOsvedceni || ''}
+            onChange={(e) => setNastaveni({ ...nastaveni, reviznniTechnikOsvedceni: e.target.value })}
+          />
+          <Input
+            label="Adresa"
+            value={nastaveni.reviznniTechnikAdresa || ''}
+            onChange={(e) => setNastaveni({ ...nastaveni, reviznniTechnikAdresa: e.target.value })}
+          />
+          <Input
+            label="IČO"
+            value={nastaveni.reviznniTechnikIco || ''}
+            onChange={(e) => setNastaveni({ ...nastaveni, reviznniTechnikIco: e.target.value })}
           />
           <Input
             label="E-mail"

@@ -92,6 +92,16 @@ export const RepeatIcon: React.FC<IconProps> = ({ size = 16 }) => (
   </svg>
 );
 
+// Page Break - zalomení stránky
+export const PageBreakIcon: React.FC<IconProps> = ({ size = 16 }) => (
+  <svg width={size} height={size} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+    <path d="M3 12h18" strokeDasharray="4 2"/>
+    <path d="M4 5h16M4 8h12"/>
+    <path d="M4 16h12M4 19h16"/>
+    <path d="M17 9l2-2 2 2M17 15l2 2 2-2"/>
+  </svg>
+);
+
 // Preview / Eye icon
 export const PreviewIcon: React.FC<IconProps> = ({ size = 16 }) => (
   <svg width={size} height={size} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>

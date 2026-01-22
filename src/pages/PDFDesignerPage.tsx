@@ -19,14 +19,18 @@ function getAuthHeaders(): HeadersInit {
 
 async function authFetch<T>(url: string): Promise<T | null> {
   try {
+    console.log(`📡 Fetching ${url}...`);
     const response = await fetch(url, { headers: getAuthHeaders() });
     if (response.ok) {
-      return await response.json();
+      const data = await response.json();
+      console.log(`✅ ${url} OK:`, Array.isArray(data) ? `${data.length} items` : data);
+      return data;
     }
-    console.error(`Fetch ${url} failed:`, response.status);
+    const errorText = await response.text();
+    console.error(`❌ Fetch ${url} failed:`, response.status, errorText);
     return null;
   } catch (e) {
-    console.error(`Fetch ${url} error:`, e);
+    console.error(`❌ Fetch ${url} error:`, e);
     return null;
   }
 }
@@ -66,7 +70,9 @@ export function PDFDesignerPage() {
           }
           
           // Načíst rozvaděče
-          const rozvadeceData = await authFetch<Rozvadec[]>(`/api/revize/${revizeId}/rozvadece`);
+          console.log('🔌 Načítám rozvaděče pro revizi:', revizeId);
+          const rozvadeceData = await authFetch<Rozvadec[]>(`/api/rozvadece/${revizeId}`);
+          console.log('🔌 Načteno rozvaděčů:', rozvadeceData?.length || 0, rozvadeceData);
           if (rozvadeceData) {
             setRozvadece(rozvadeceData);
             
@@ -74,19 +80,21 @@ export function PDFDesignerPage() {
             const okruhyMap: Record<number, Okruh[]> = {};
             for (const rozvadec of rozvadeceData) {
               if (rozvadec.id) {
-                const okruhyData = await authFetch<Okruh[]>(`/api/rozvadece/${rozvadec.id}/okruhy`);
+                const okruhyData = await authFetch<Okruh[]>(`/api/okruhy/${rozvadec.id}`);
+                console.log(`⚡ Načteno okruhů pro rozvaděč ${rozvadec.id}:`, okruhyData?.length || 0);
                 if (okruhyData) okruhyMap[rozvadec.id] = okruhyData;
               }
             }
             setOkruhy(okruhyMap);
+            console.log('⚡ Celkem okruhů:', Object.values(okruhyMap).flat().length);
           }
           
           // Načíst závady
-          const zavadyData = await authFetch<Zavada[]>(`/api/revize/${revizeId}/zavady`);
+          const zavadyData = await authFetch<Zavada[]>(`/api/zavady/revize/${revizeId}`);
           if (zavadyData) setZavady(zavadyData);
           
           // Načíst místnosti a zařízení
-          const mistnostiData = await authFetch<Mistnost[]>(`/api/revize/${revizeId}/mistnosti`);
+          const mistnostiData = await authFetch<Mistnost[]>(`/api/mistnosti/revize/${revizeId}`);
           if (mistnostiData) {
             setMistnosti(mistnostiData);
             
@@ -94,7 +102,7 @@ export function PDFDesignerPage() {
             const zarizeniMap: Record<number, Zarizeni[]> = {};
             for (const mistnost of mistnostiData) {
               if (mistnost.id) {
-                const zarizeniData = await authFetch<Zarizeni[]>(`/api/mistnosti/${mistnost.id}/zarizeni`);
+                const zarizeniData = await authFetch<Zarizeni[]>(`/api/zarizeni/${mistnost.id}`);
                 if (zarizeniData) zarizeniMap[mistnost.id] = zarizeniData;
               }
             }
@@ -146,6 +154,10 @@ export function PDFDesignerPage() {
     );
   }
 
+  // Spočítat celkový počet okruhů
+  const celkemOkruhu = Object.values(okruhy).flat().length;
+  const celkemZarizeni = Object.values(zarizeni).flat().length;
+
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col">
       {/* Info panel o načtených datech */}
@@ -156,7 +168,10 @@ export function PDFDesignerPage() {
             <span className="text-blue-600">
               📋 Revize č. {revize.cisloRevize || revize.id} - {revize.nazev || 'bez názvu'}
               {zakaznik && ` | 👤 ${zakaznik.nazev}`}
-              {rozvadece.length > 0 && ` | 🔌 ${rozvadece.length} rozvaděčů`}
+              {rozvadece.length > 0 && ` | 🔌 ${rozvadece.length} rozv.`}
+              {celkemOkruhu > 0 && ` | ⚡ ${celkemOkruhu} okr.`}
+              {mistnosti.length > 0 && ` | 🏠 ${mistnosti.length} míst.`}
+              {celkemZarizeni > 0 && ` | 💡 ${celkemZarizeni} zař.`}
               {zavady.length > 0 && ` | ⚠️ ${zavady.length} závad`}
             </span>
           ) : (

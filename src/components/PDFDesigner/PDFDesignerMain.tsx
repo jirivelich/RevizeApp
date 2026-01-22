@@ -9,6 +9,7 @@ import { PropertiesPanel } from './PropertiesPanel';
 import { WidgetEditor } from './WidgetEditor';
 import { SaveIcon, FolderOpenIcon, ExportIcon, CloseIcon, PreviewIcon, PDFIcon } from './icons';
 import { openPDFPreview, downloadPDF } from './pdfRenderer';
+import { openHTMLPreview } from './htmlRenderer';
 import type { PDFRenderData } from './pdfRenderer';
 
 interface PDFDesignerMainProps {
@@ -42,12 +43,37 @@ export function PDFDesignerMain({
   onExport,
   initialTemplate,
 }: PDFDesignerMainProps) {
-  const state = useDesignerState(initialTemplate);
+  // Načíst uloženou šablonu z localStorage při startu
+  const getInitialTemplate = (): DesignerTemplate | undefined => {
+    if (initialTemplate) return initialTemplate;
+    try {
+      const saved = localStorage.getItem('pdfDesignerCurrentTemplate');
+      if (saved) {
+        console.log('Načítám aktuální šablonu z localStorage');
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Chyba při načítání šablony:', e);
+    }
+    return undefined;
+  };
+  
+  const state = useDesignerState(getInitialTemplate());
   const [editingWidget, setEditingWidget] = useState<Widget | null>(null);
   const [savedTemplates, setSavedTemplates] = useState<DesignerTemplate[]>([]);
   const [showTemplateList, setShowTemplateList] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Automaticky ukládat aktuální šablonu při každé změně
+  useEffect(() => {
+    try {
+      const templateJson = JSON.stringify(state.template);
+      localStorage.setItem('pdfDesignerCurrentTemplate', templateJson);
+    } catch (e) {
+      console.error('Chyba při automatickém ukládání:', e);
+    }
+  }, [state.template]);
 
   // Demo data pro náhled pokud není revize
   const demoRevize: Revize = {
@@ -81,20 +107,47 @@ export function PDFDesignerMain({
     zakaznik,
   };
 
+  // Debug: Zobrazit počet načtených dat
+  useEffect(() => {
+    console.log('📊 PDF Data načtena:', {
+      revize: revize?.cisloRevize || demoRevize.cisloRevize,
+      rozvadece: rozvadece.length,
+      okruhy: Object.keys(okruhy).length > 0 ? Object.values(okruhy).flat().length : 0,
+      zavady: zavady.length,
+      mistnosti: mistnosti.length,
+      zarizeni: Object.keys(zarizeni).length > 0 ? Object.values(zarizeni).flat().length : 0,
+      pouzitePristroje: pouzitePristroje.length,
+      zakaznik: zakaznik?.nazev || null,
+    });
+  }, [revize, rozvadece, okruhy, zavady, mistnosti, zarizeni, pouzitePristroje, zakaznik]);
+
   // Načíst uložené šablony z localStorage
   useEffect(() => {
     const saved = localStorage.getItem('pdfDesignerTemplates');
+    console.log('Načítám šablony z localStorage:', saved ? `${saved.length} bytes` : 'nic');
     if (saved) {
       try {
-        setSavedTemplates(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        console.log('Načteno šablon:', parsed.length, parsed.map((t: DesignerTemplate) => t.name));
+        setSavedTemplates(parsed);
       } catch (e) {
         console.error('Failed to load templates:', e);
       }
     }
   }, []);
 
+  // Náhled HTML (pro rychlé debugování)
+  const handlePreview = useCallback(() => {
+    try {
+      openHTMLPreview(state.template, pdfData);
+    } catch (error) {
+      console.error('Failed to generate HTML preview:', error);
+      alert('Nepodařilo se vygenerovat HTML náhled.');
+    }
+  }, [state.template, pdfData]);
+
   // Náhled PDF
-  const handlePreview = useCallback(async () => {
+  const handlePDFPreview = useCallback(async () => {
     setIsGeneratingPDF(true);
     try {
       await openPDFPreview(state.template, pdfData);
@@ -125,13 +178,64 @@ export function PDFDesignerMain({
     }
   }, [state.template, pdfData, revize]);
 
+  // Helper funkce pro serializaci widgetu (rekurzivní pro skupiny)
+  const serializeWidget = useCallback((widget: Widget): any => {
+    const serialized: any = {
+      id: widget.id,
+      type: widget.type,
+      name: widget.name,
+      content: widget.content,
+      x: widget.x,
+      y: widget.y,
+      width: widget.width,
+      height: widget.height,
+      style: { ...widget.style },
+      locked: widget.locked,
+      zone: widget.zone,
+      pageId: widget.pageId,
+      zIndex: widget.zIndex,
+      tableConfig: widget.tableConfig ? { ...widget.tableConfig } : undefined,
+      repeaterConfig: widget.repeaterConfig ? { ...widget.repeaterConfig } : undefined,
+      groupId: widget.groupId,
+      autoGrow: widget.autoGrow,
+      overflowBehavior: widget.overflowBehavior,
+      minHeight: widget.minHeight,
+    };
+    
+    // Rekurzivně serializovat children pro skupiny
+    if (widget.children && widget.children.length > 0) {
+      serialized.children = widget.children.map(child => serializeWidget(child));
+    }
+    
+    return serialized;
+  }, []);
+
   // Uložit šablonu
   const handleSaveTemplate = useCallback(() => {
-    const newTemplates = savedTemplates.filter(t => t.id !== state.template.id);
-    newTemplates.push({ ...state.template, updatedAt: new Date().toISOString() });
-    setSavedTemplates(newTemplates);
-    localStorage.setItem('pdfDesignerTemplates', JSON.stringify(newTemplates));
-    alert('Šablona byla uložena!');
+    try {
+      // Vytvořit čistou kopii šablony bez neserializovatelných dat
+      const templateToSave = {
+        ...state.template,
+        updatedAt: new Date().toISOString(),
+        pages: state.template.pages.map(page => ({
+          ...page,
+          widgets: page.widgets.map(widget => serializeWidget(widget)),
+        })),
+      };
+      
+      const newTemplates = savedTemplates.filter(t => t.id !== state.template.id);
+      newTemplates.push(templateToSave);
+      
+      const jsonString = JSON.stringify(newTemplates);
+      localStorage.setItem('pdfDesignerTemplates', jsonString);
+      setSavedTemplates(newTemplates);
+      
+      console.log('Šablona uložena:', templateToSave.name, 'Velikost:', jsonString.length, 'bytes');
+      alert('Šablona byla uložena!');
+    } catch (error) {
+      console.error('Chyba při ukládání šablony:', error);
+      alert('Nepodařilo se uložit šablonu: ' + (error instanceof Error ? error.message : 'Neznámá chyba'));
+    }
   }, [state.template, savedTemplates]);
 
   // Načíst šablonu
@@ -227,7 +331,7 @@ export function PDFDesignerMain({
   }, [editingWidget, state]);
 
   return (
-    <div ref={containerRef} className="h-full flex flex-col bg-gray-100">
+    <div ref={containerRef} className="flex flex-col bg-gray-100" style={{ height: '100vh', maxHeight: '100vh', overflow: 'hidden' }}>
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -315,19 +419,34 @@ export function PDFDesignerMain({
           {/* Separator */}
           <div className="w-px h-6 bg-gray-300" />
 
-          {/* Náhled PDF */}
+          {/* Náhled HTML (rychlý) */}
           <button
             onClick={handlePreview}
+            disabled={!revize}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded transition-colors ${
+              !revize
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : 'bg-purple-500 text-white hover:bg-purple-600'
+            }`}
+            title={!revize ? 'Načtěte revizi pro náhled' : 'HTML náhled (rychlý)'}
+          >
+            <PreviewIcon size={16} />
+            Náhled
+          </button>
+
+          {/* Náhled PDF */}
+          <button
+            onClick={handlePDFPreview}
             disabled={!revize || isGeneratingPDF}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded transition-colors ${
               !revize || isGeneratingPDF
                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                : 'bg-purple-500 text-white hover:bg-purple-600'
+                : 'bg-orange-500 text-white hover:bg-orange-600'
             }`}
             title={!revize ? 'Načtěte revizi pro náhled' : 'Náhled PDF'}
           >
-            <PreviewIcon size={16} />
-            {isGeneratingPDF ? 'Generuji...' : 'Náhled'}
+            <PDFIcon size={16} />
+            {isGeneratingPDF ? 'Generuji...' : 'PDF náhled'}
           </button>
 
           {/* Stáhnout PDF */}
@@ -401,12 +520,13 @@ export function PDFDesignerMain({
         scale={state.scale}
         onAddPage={state.addPage}
         selectedCount={state.selectedWidgetIds.length}
+        hasGroupSelection={state.selectedWidgets.some(w => w.type === 'group')}
         activeZone={state.activeZone}
         onSetActiveZone={state.setActiveZone}
       />
 
       {/* Main content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex min-h-0">
         {/* Page tabs */}
         <div className="w-16 bg-gray-200 border-r border-gray-300 overflow-y-auto flex-shrink-0">
           {state.template.pages.map((page, index) => (
@@ -414,19 +534,34 @@ export function PDFDesignerMain({
               key={page.id}
               onClick={() => state.setCurrentPageIndex(index)}
               className={`
-                p-2 cursor-pointer border-b border-gray-300 transition-colors
+                p-2 cursor-pointer border-b border-gray-300 transition-colors relative group
                 ${index === state.currentPageIndex ? 'bg-white' : 'hover:bg-gray-100'}
               `}
             >
               <div className="w-10 h-14 bg-white border border-gray-300 rounded shadow-sm mx-auto flex items-center justify-center text-xs text-gray-500">
                 {index + 1}
               </div>
+              {/* Delete page button - only show if more than 1 page */}
+              {state.template.pages.length > 1 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.confirm(`Opravdu chcete smazat stránku ${index + 1}?`)) {
+                      state.deletePage(index);
+                    }
+                  }}
+                  className="absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                  title={`Smazat stránku ${index + 1}`}
+                >
+                  ×
+                </button>
+              )}
             </div>
           ))}
         </div>
 
         {/* Canvas area */}
-        <div className="flex-1 overflow-auto p-6 bg-gray-300">
+        <div className="flex-1 overflow-auto p-6 bg-gray-300 min-h-0">
           <div 
             style={{ 
               transform: `scale(${state.scale})`, 
@@ -445,6 +580,7 @@ export function PDFDesignerMain({
                 onUpdateWidget={state.updateWidget}
                 onToggleLockWidget={state.toggleLockWidget}
                 onDeselectAll={state.deselectAll}
+                onEditWidget={handleEditWidget}
                 snapToGrid={state.template.snapToGrid}
                 gridSize={state.template.gridSize}
                 showGrid={state.showGrid}

@@ -175,6 +175,9 @@ export interface Nastaveni {
   firmaDic?: string;
   reviznniTechnikJmeno: string;
   reviznniTechnikCisloOpravneni: string;
+  reviznniTechnikOsvedceni?: string;
+  reviznniTechnikAdresa?: string;
+  reviznniTechnikIco?: string;
   kontaktEmail?: string;
   kontaktTelefon?: string;
   logo?: string; // Base64 encoded image

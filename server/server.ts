@@ -11,11 +11,13 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3001;
-const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
+const CORS_ORIGINS = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',')
+  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
 
 // Middleware
 app.use(cors({
-  origin: CORS_ORIGIN,
+  origin: CORS_ORIGINS,
   credentials: true,
   optionsSuccessStatus: 200
 }));
@@ -1147,7 +1149,7 @@ async function startServer() {
     console.log(`\n🚀 RevizeApp Server běží na http://localhost:${PORT}`);
     console.log(`📊 Zdravotní kontrola: http://localhost:${PORT}/api/health`);
     console.log(`🐘 Databáze: PostgreSQL`);
-    console.log(`🌐 CORS povolena pro: ${CORS_ORIGIN}\n`);
+    console.log(`🌐 CORS povolena pro: ${CORS_ORIGINS.join(', ')}\n`);
   });
 }
 

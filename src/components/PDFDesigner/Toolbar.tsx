@@ -14,6 +14,7 @@ import {
   QRCodeIcon,
   SignatureIcon,
   RepeatIcon,
+  PageBreakIcon,
   UndoIcon,
   RedoIcon,
   AlignLeftIcon,
@@ -67,6 +68,7 @@ interface ToolbarProps {
   scale: number;
   onAddPage: () => void;
   selectedCount: number;
+  hasGroupSelection?: boolean;
   activeZone: PageZone;
   onSetActiveZone: (zone: PageZone) => void;
 }
@@ -85,6 +87,8 @@ const getWidgetIcon = (type: WidgetType) => {
     'date': <DateIcon />,
     'qr-code': <QRCodeIcon />,
     'signature': <SignatureIcon />,
+    'page-break': <PageBreakIcon />,
+    'group': <GroupIcon />,
   };
   return icons[type] || <BoxIcon />;
 };
@@ -143,6 +147,7 @@ export function Toolbar({
   scale,
   onAddPage,
   selectedCount,
+  hasGroupSelection,
   activeZone,
   onSetActiveZone,
 }: ToolbarProps) {
@@ -232,7 +237,7 @@ export function Toolbar({
         <ToolButton onClick={onGroup} disabled={!hasMultiSelection} title="Seskupit">
           <GroupIcon />
         </ToolButton>
-        <ToolButton onClick={onUngroup} disabled={!hasSelection} title="Rozdělit skupinu">
+        <ToolButton onClick={onUngroup} disabled={!hasGroupSelection} title="Rozdělit skupinu">
           <UngroupIcon />
         </ToolButton>
         <ToolButton onClick={onLockSelected} disabled={!hasSelection} title="Zamknout">
@@ -266,12 +271,6 @@ export function Toolbar({
           <ZoomInIcon />
         </ToolButton>
 
-        <Divider />
-
-        {/* Přidat stránku */}
-        <ToolButton onClick={onAddPage} title="Přidat stránku">
-          <AddPageIcon />
-        </ToolButton>
       </div>
 
       {/* Druhý řádek - zóny */}

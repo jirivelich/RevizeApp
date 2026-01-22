@@ -80,6 +80,9 @@ export const VARIABLES: Variable[] = [
   // Technik (z Nastavení)
   { key: 'technik.jmeno', label: 'Jméno technika', category: 'Technik' },
   { key: 'technik.cisloOpravneni', label: 'Číslo oprávnění', category: 'Technik' },
+  { key: 'technik.osvedceni', label: 'Osvědčení', category: 'Technik' },
+  { key: 'technik.adresa', label: 'Adresa technika', category: 'Technik' },
+  { key: 'technik.ico', label: 'IČO technika', category: 'Technik' },
   { key: 'technik.telefon', label: 'Telefon technika', category: 'Technik' },
   { key: 'technik.email', label: 'E-mail technika', category: 'Technik' },
   
@@ -199,6 +202,7 @@ export const WIDGET_TYPES = [
   { type: 'date', label: 'Datum', icon: 'calendar' },
   { type: 'qr-code', label: 'QR kód', icon: 'qr' },
   { type: 'signature', label: 'Podpis', icon: 'pen' },
+  { type: 'page-break', label: 'Zalomení stránky', icon: 'page-break' },
 ] as const;
 
 // Typy tabulek s popisky

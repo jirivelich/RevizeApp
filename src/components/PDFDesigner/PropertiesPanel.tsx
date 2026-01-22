@@ -42,7 +42,7 @@ export function PropertiesPanel({
   const selectedWidget = selectedWidgets.length === 1 ? selectedWidgets[0] : null;
 
   return (
-    <div className="w-72 bg-white border-l border-gray-200 overflow-y-auto">
+    <div className="w-72 bg-white border-l border-gray-200 overflow-y-auto flex-shrink-0 min-h-0">
       {/* Template Settings */}
       <div className="border-b border-gray-200">
         <div className="px-3 py-2 bg-gray-50 font-medium text-sm text-gray-700">
@@ -117,7 +117,11 @@ export function PropertiesPanel({
             <span>📃 Strana {currentPageIndex + 1}</span>
             {template.pages.length > 1 && (
               <button
-                onClick={() => onDeletePage(currentPageIndex)}
+                onClick={() => {
+                  if (window.confirm(`Opravdu chcete smazat stránku ${currentPageIndex + 1}?`)) {
+                    onDeletePage(currentPageIndex);
+                  }
+                }}
                 className="text-red-500 hover:text-red-700 text-xs"
                 title="Smazat stránku"
               >
@@ -268,7 +272,11 @@ export function PropertiesPanel({
               <label className="block text-xs font-medium text-gray-600 mb-1">Zóna</label>
               <div className="flex gap-1">
                 <button
-                  onClick={() => onUpdateWidget(selectedWidget.id, { zone: 'header' })}
+                  onClick={() => {
+                    // Při změně zóny resetovat Y na 10px od začátku nové zóny
+                    const newY = selectedWidget.y < 0 ? 10 : selectedWidget.y;
+                    onUpdateWidget(selectedWidget.id, { zone: 'header', y: Math.max(0, Math.min(newY, 50)) });
+                  }}
                   className={`flex-1 py-1.5 text-xs rounded border flex items-center justify-center gap-1 ${
                     selectedWidget.zone === 'header'
                       ? 'bg-blue-50 border-blue-500 text-blue-700'
@@ -279,7 +287,11 @@ export function PropertiesPanel({
                   Záhlaví
                 </button>
                 <button
-                  onClick={() => onUpdateWidget(selectedWidget.id, { zone: 'content' })}
+                  onClick={() => {
+                    // Při změně zóny resetovat Y na kladnou hodnotu
+                    const newY = selectedWidget.y < 0 ? 10 : selectedWidget.y;
+                    onUpdateWidget(selectedWidget.id, { zone: 'content', y: Math.max(0, newY) });
+                  }}
                   className={`flex-1 py-1.5 text-xs rounded border flex items-center justify-center gap-1 ${
                     selectedWidget.zone === 'content'
                       ? 'bg-blue-50 border-blue-500 text-blue-700'
@@ -290,7 +302,11 @@ export function PropertiesPanel({
                   Obsah
                 </button>
                 <button
-                  onClick={() => onUpdateWidget(selectedWidget.id, { zone: 'footer' })}
+                  onClick={() => {
+                    // Při změně zóny resetovat Y na 10px od začátku nové zóny
+                    const newY = selectedWidget.y < 0 ? 10 : selectedWidget.y;
+                    onUpdateWidget(selectedWidget.id, { zone: 'footer', y: Math.max(0, Math.min(newY, 50)) });
+                  }}
                   className={`flex-1 py-1.5 text-xs rounded border flex items-center justify-center gap-1 ${
                     selectedWidget.zone === 'footer'
                       ? 'bg-green-50 border-green-500 text-green-700'

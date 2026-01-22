@@ -18,7 +18,6 @@ import {
   BackupRestorePage,
   ZakazniciPage,
   PDFDesignerPage,
-  PdfmeDesignerPage,
 } from './pages';
 
 // Error Boundary pro zachycení JavaScript chyb
@@ -94,7 +93,6 @@ function App() {
             <Route path="planovani" element={<PlanovaniPage />} />
             <Route path="sablony" element={<SablonyPage />} />
             <Route path="pdf-designer" element={<PDFDesignerPage />} />
-            <Route path="pdfme-designer" element={<PdfmeDesignerPage />} />
             <Route path="backup" element={<BackupRestorePage />} />
             <Route path="nastaveni" element={<NastaveniPage />} />
           </Route>

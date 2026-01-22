@@ -78,6 +78,9 @@ export function getVariableValue(
     const technikMap: Record<string, string> = {
       jmeno: nastaveni.reviznniTechnikJmeno || '',
       cisloOpravneni: nastaveni.reviznniTechnikCisloOpravneni || '',
+      osvedceni: nastaveni.reviznniTechnikOsvedceni || '',
+      adresa: nastaveni.reviznniTechnikAdresa || '',
+      ico: nastaveni.reviznniTechnikIco || '',
       telefon: nastaveni.kontaktTelefon || '',
       email: nastaveni.kontaktEmail || '',
     };

@@ -11,7 +11,9 @@ export type WidgetType =
   | 'date'
   | 'qr-code'
   | 'signature'
-  | 'repeater'; // Opakující se skupina widgetů (např. pro rozvaděče)
+  | 'repeater' // Opakující se skupina widgetů (např. pro rozvaděče)
+  | 'page-break' // Zalomení stránky - vynucené přerušení na novou stránku
+  | 'group'; // Kontejnerový widget - obsahuje další widgety jako děti
 
 export type TableType = 
   | 'rozvadece' 
@@ -69,7 +71,8 @@ export interface Widget {
   zIndex: number;
   tableConfig?: TableConfig;
   repeaterConfig?: RepeaterConfig; // Pro typ 'repeater'
-  groupId?: string;
+  groupId?: string; // DEPRECATED - použít children místo toho
+  children?: Widget[]; // Pro typ 'group' - vnořené widgety s relativními pozicemi
   // Automatické stránkování
   autoGrow?: boolean; // Widget může přetékat na další stránky
   overflowBehavior?: 'clip' | 'continue' | 'shrink'; // Co dělat když obsah přetéká

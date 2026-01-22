@@ -240,6 +240,9 @@ export async function initializeDatabase() {
         "firmaDic" TEXT,
         "reviznniTechnikJmeno" TEXT,
         "reviznniTechnikCisloOpravneni" TEXT,
+        "reviznniTechnikOsvedceni" TEXT,
+        "reviznniTechnikAdresa" TEXT,
+        "reviznniTechnikIco" TEXT,
         "kontaktEmail" TEXT,
         "kontaktTelefon" TEXT,
         logo TEXT,
@@ -341,6 +344,10 @@ export async function initializeDatabase() {
       'ALTER TABLE sablona ADD COLUMN IF NOT EXISTS "uvodniStranaZobrazitZakaznika" INTEGER DEFAULT 1',
       // Rámeček kolem údajů o zákazníkovi
       'ALTER TABLE sablona ADD COLUMN IF NOT EXISTS "uvodniStranaRamecekZakaznik" INTEGER DEFAULT 1',
+      // Nová pole pro revizního technika - adresa, IČO a osvědčení
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "reviznniTechnikAdresa" TEXT',
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "reviznniTechnikIco" TEXT',
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "reviznniTechnikOsvedceni" TEXT',
     ];
     
     for (const migration of migrations) {

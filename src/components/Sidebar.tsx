@@ -10,7 +10,6 @@ const navItems = [
   { path: '/planovani', label: 'Plánování', icon: '📅' },
   { path: '/sablony', label: 'Šablony PDF', icon: '🎨' },
   { path: '/pdf-designer', label: 'PDF Designer', icon: '✏️' },
-  { path: '/pdfme-designer', label: 'pdfme Designer', icon: '📄' },
   { path: '/backup', label: 'Backup', icon: '💾' },
   { path: '/nastaveni', label: 'Nastavení', icon: '⚙️' },
 ];

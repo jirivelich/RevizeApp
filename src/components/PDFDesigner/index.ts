@@ -59,4 +59,10 @@ export {
   downloadPDF,
 } from './pdfRenderer';
 
+// HTML Renderer
+export {
+  renderTemplateToHTML,
+  openHTMLPreview,
+} from './htmlRenderer';
+
 export type { PDFRenderData } from './pdfRenderer';

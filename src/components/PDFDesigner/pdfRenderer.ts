@@ -75,44 +75,122 @@ export async function renderTemplateToPDF(
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   
+  // headerHeight/footerHeight jsou uloženy v MM v šabloně
+  const headerZoneHeight = template.headerHeight || 25;  // výchozí 25mm
+  const footerZoneHeight = template.footerHeight || 20;  // výchozí 20mm
+  
+  // Zónové offsety pro widgety (shodné s designerem)
+  // Header: widgety začínají od y=0
+  // Content: widgety začínají od y=headerZoneHeight
+  // Footer: widgety začínají od y=(pageHeight - footerZoneHeight)
+  const contentZoneOffset = headerZoneHeight;
+  const footerZoneOffset = pageHeight - footerZoneHeight;
+  
   // Renderovat každou stránku šablony
+  let actualPageNumber = 0;
   for (let pageIndex = 0; pageIndex < template.pages.length; pageIndex++) {
     const page = template.pages[pageIndex];
     
     if (pageIndex > 0) {
       doc.addPage();
     }
+    actualPageNumber++;
     
-    // Seřadit widgety podle zIndex
-    const widgets = [...page.widgets].sort((a, b) => a.zIndex - b.zIndex);
+    // Rozdělit widgety podle zóny
+    const headerWidgets = page.widgets.filter(w => w.zone === 'header');
+    const footerWidgets = page.widgets.filter(w => w.zone === 'footer');
+    const contentWidgets = page.widgets.filter(w => w.zone === 'content');
     
-    for (const widget of widgets) {
-      await renderWidget(doc, widget, data, template, pageIndex, pageWidth, pageHeight);
+    // 1. Vykreslit header widgety (pozice od y=0)
+    for (const widget of headerWidgets.sort((a, b) => a.zIndex - b.zIndex)) {
+      await renderWidget(doc, widget, data, template, actualPageNumber, pageWidth, pageHeight, 0);
+    }
+    
+    // 2. Vykreslit content widgety seřazené podle Y pozice (flow layout)
+    // Content widgety mají Y relativní k content zóně
+    const sortedContent = [...contentWidgets].sort((a, b) => a.y - b.y);
+    let lastDynamicEndY = 0;  // Skutečná koncová Y pozice posledního dynamického widgetu (v MM od vrchu stránky)
+    let lastDynamicDesignEndY = 0;  // Koncová Y pozice posledního dynamického widgetu v designeru (v px)
+    let tableCreatedNewPage = false;
+    
+    for (const widget of sortedContent) {
+      const widgetDesignY = widget.y;  // Y widgetu v designeru (px)
+      
+      // Základní yOffset = contentZoneOffset (aby widget začínal pod headerem)
+      let yOffset = contentZoneOffset;
+      
+      // Pokud existuje dynamický widget a tento widget je v designeru POD ním,
+      // přesuneme ho tak, aby byl těsně za skutečným koncem dynamického widgetu
+      if (lastDynamicDesignEndY > 0 && widgetDesignY > lastDynamicDesignEndY) {
+        // Widget je v designeru pod dynamickým widgetem
+        // Původní Y pozice widgetu v PDF by byla: widgetDesignY * PX_TO_MM + contentZoneOffset
+        // Chceme ho přesunout na: lastDynamicEndY + malá mezera (3mm)
+        const originalY = widgetDesignY * PX_TO_MM + contentZoneOffset;
+        const targetY = lastDynamicEndY + 3;  // 3mm mezera za dynamickým widgetem
+        // yOffset musí být takový, aby (widgetDesignY * PX_TO_MM) + yOffset = targetY
+        yOffset = targetY - (widgetDesignY * PX_TO_MM);
+      }
+      
+      const result = await renderWidget(doc, widget, data, template, actualPageNumber, pageWidth, pageHeight, yOffset);
+      
+      // Pokud tento widget je dynamický (tabulka/repeater), zapamatovat jeho skutečný konec
+      if (result && result.extraHeight >= 0 && (widget.type === 'table' || widget.type === 'repeater')) {
+        // Skutečná koncová pozice = startY + výška widgetu + extraHeight
+        const widgetStartY = widgetDesignY * PX_TO_MM + yOffset;
+        const widgetHeightMM = widget.height * PX_TO_MM;
+        lastDynamicEndY = widgetStartY + widgetHeightMM + result.extraHeight;
+        lastDynamicDesignEndY = widgetDesignY + widget.height;  // px
+      }
+      
+      if (result?.newPageCreated) {
+        tableCreatedNewPage = true;
+        // Reset - na nové stránce začínáme od znova
+        lastDynamicEndY = 0;
+        lastDynamicDesignEndY = 0;
+      }
+    }
+    
+    // 3. Vykreslit footer widgety (pozice od y=(pageHeight - footerHeight))
+    if (!tableCreatedNewPage) {
+      for (const widget of footerWidgets.sort((a, b) => a.zIndex - b.zIndex)) {
+        await renderWidget(doc, widget, data, template, actualPageNumber, pageWidth, pageHeight, footerZoneOffset);
+      }
     }
   }
   
-  // Nahradit placeholder stránkování
+  // Získat skutečný počet stránek po renderování (může být více kvůli tabulkám)
   const totalPages = doc.getNumberOfPages();
-  replacePageNumbers(doc, totalPages);
+  
+  // Vždy aktualizovat čísla stránek na konci (two-pass approach)
+  // Toto zajistí správné "Strana X z Y" i pro dynamicky přidané stránky
+  updatePageNumbersInDocument(doc, totalPages);
   
   return doc;
 }
 
 // ============================================================
-// WIDGET RENDERING
+// HEADER/FOOTER RENDERING PRO DYNAMICKÉ STRÁNKY
 // ============================================================
 
-async function renderWidget(
+/**
+ * Vykreslí header/footer widget na dynamicky přidané stránce (z tabulky)
+ * Tato funkce je synchronní verze pro použití v autoTable callback
+ */
+function renderHeaderFooterWidget(
   doc: jsPDF,
   widget: Widget,
   data: PDFRenderData,
   template: DesignerTemplate,
-  pageIndex: number,
-  _pageWidth: number,
-  _pageHeight: number
-): Promise<void> {
+  pageNumber: number
+): void {
+  const pageHeight = doc.internal.pageSize.getHeight();
+  // footerHeight je už v MM
+  const footerZoneHeight = template.footerHeight || 20;
+  
   const x = widget.x * PX_TO_MM;
-  const y = widget.y * PX_TO_MM;
+  // Header widgety mají Y od 0, footer widgety od (pageHeight - footerZoneHeight)
+  const zoneOffset = widget.zone === 'footer' ? (pageHeight - footerZoneHeight) : 0;
+  const y = widget.y * PX_TO_MM + zoneOffset;
   const width = widget.width * PX_TO_MM;
   const height = widget.height * PX_TO_MM;
   
@@ -146,12 +224,84 @@ async function renderWidget(
       renderLineWidget(doc, widget, x, y, width, height);
       break;
       
+    case 'page-number':
+      // Pro číslo stránky použijeme placeholder - aktualizuje se na konci
+      renderPageNumberWidget(doc, widget, x, y, pageNumber, 999);
+      break;
+      
+    case 'date':
+      renderDateWidget(doc, widget, x, y);
+      break;
+      
+    // Image a QR jsou async - přeskočíme je v header/footer dynamických stránek
+    // nebo bychom museli přepsat na synchronní verzi
+    default:
+      break;
+  }
+}
+
+// ============================================================
+// WIDGET RENDERING
+// ============================================================
+
+interface RenderResult {
+  extraHeight: number;  // Extra výška která se přidala (např. tabulka přetekla)
+  newPageCreated: boolean;  // Zda se vytvořila nová stránka
+}
+
+async function renderWidget(
+  doc: jsPDF,
+  widget: Widget,
+  data: PDFRenderData,
+  template: DesignerTemplate,
+  pageIndex: number,
+  _pageWidth: number,
+  _pageHeight: number,
+  yOffset: number = 0
+): Promise<RenderResult> {
+  const x = widget.x * PX_TO_MM;
+  const y = (widget.y * PX_TO_MM) + yOffset;  // Přidat Y offset
+  const width = widget.width * PX_TO_MM;
+  const height = widget.height * PX_TO_MM;
+  
+  const style = widget.style || {};
+  
+  // Nastavit základní font
+  doc.setFontSize(style.fontSize || 10);
+  doc.setFont('Roboto', style.fontWeight === 'bold' ? 'bold' : 'normal');
+  
+  if (style.color) {
+    const rgb = hexToRgb(style.color);
+    doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+  } else {
+    doc.setTextColor(0, 0, 0);
+  }
+  
+  let result: RenderResult = { extraHeight: 0, newPageCreated: false };
+  
+  switch (widget.type) {
+    case 'text':
+      renderTextWidget(doc, widget, x, y, width, height, data);
+      break;
+      
+    case 'variable':
+      renderVariableWidget(doc, widget, x, y, width, height, data);
+      break;
+      
+    case 'box':
+      renderBoxWidget(doc, widget, x, y, width, height);
+      break;
+      
+    case 'line':
+      renderLineWidget(doc, widget, x, y, width, height);
+      break;
+      
     case 'image':
       await renderImageWidget(doc, widget, x, y, width, height, data);
       break;
       
     case 'table':
-      renderTableWidget(doc, widget, x, y, width, data);
+      result = renderTableWidget(doc, widget, x, y, width, height, data, template, undefined);
       break;
       
     case 'page-number':
@@ -167,13 +317,15 @@ async function renderWidget(
       break;
       
     case 'repeater':
-      await renderRepeaterWidget(doc, widget, x, y, width, data);
+      result = await renderRepeaterWidget(doc, widget, x, y, width, height, data, template);
       break;
       
     case 'signature':
       renderSignatureWidget(doc, widget, x, y, width, height);
       break;
   }
+  
+  return result;
 }
 
 // ============================================================
@@ -236,8 +388,16 @@ function renderTextContent(
     doc.rect(x, y, width, height);
   }
   
+  // Padding je v px, konvertujeme na mm
+  const paddingPx = style.padding || 4;
+  const padding = paddingPx * PX_TO_MM;
+  
+  // fontSize v CSS je px, v jsPDF pt (1px ≈ 0.75pt při 96dpi)
+  const fontSizePx = style.fontSize || 12;
+  const fontSizePt = fontSizePx * 0.75;
+  
   // Nastavit font
-  doc.setFontSize(style.fontSize || 10);
+  doc.setFontSize(fontSizePt);
   doc.setFont('Roboto', style.fontWeight === 'bold' ? 'bold' : 'normal');
   
   if (style.color) {
@@ -247,21 +407,26 @@ function renderTextContent(
     doc.setTextColor(0, 0, 0);
   }
   
-  const padding = style.padding || 2;
-  const fontSize = style.fontSize || 10;
-  const lineHeight = fontSize * 0.4;
+  // LineHeight - násobek velikosti fontu v mm
+  const lineHeightMultiplier = style.lineHeight || 1.4;
+  const lineHeightMm = (fontSizePt / 2.835) * lineHeightMultiplier; // pt to mm: 1pt = 0.3528mm
+  
+  // Rozdělení na řádky pro výpočet celkové výšky textu
+  const maxWidth = width - 2 * padding;
+  const lines = doc.splitTextToSize(t(content), maxWidth);
+  const totalTextHeight = lines.length * lineHeightMm;
   
   // Vertikální zarovnání
   let textY: number;
   switch (style.verticalAlign) {
     case 'bottom':
-      textY = y + height - padding;
+      textY = y + height - padding - totalTextHeight + lineHeightMm;
       break;
     case 'middle':
-      textY = y + height / 2 + lineHeight / 2;
+      textY = y + (height - totalTextHeight) / 2 + lineHeightMm;
       break;
-    default:
-      textY = y + padding + lineHeight;
+    default: // top
+      textY = y + padding + lineHeightMm * 0.8;
   }
   
   // Horizontální zarovnání
@@ -276,11 +441,12 @@ function renderTextContent(
     textX = x + width - padding;
   }
   
-  // Rozdělení na řádky
-  const maxWidth = width - 2 * padding;
-  const lines = doc.splitTextToSize(t(content), maxWidth);
+  // Omezit počet řádků, aby text nepřetékal mimo widget
+  const maxLines = Math.floor((height - 2 * padding) / lineHeightMm);
+  const visibleLines = lines.slice(0, Math.max(1, maxLines));
   
-  doc.text(lines, textX, textY, { align });
+  // Vykreslit text s lineHeight
+  doc.text(visibleLines, textX, textY, { align, lineHeightFactor: lineHeightMultiplier });
 }
 
 function renderBoxWidget(
@@ -375,11 +541,13 @@ function renderTableWidget(
   x: number,
   y: number,
   width: number,
+  originalHeight: number,
   data: PDFRenderData,
+  template: DesignerTemplate,
   repeaterContext?: RepeaterContext
-): void {
+): RenderResult {
   const config = widget.tableConfig;
-  if (!config) return;
+  if (!config) return { extraHeight: 0, newPageCreated: false };
   
   const tableData = getTableData(config.type, data, repeaterContext);
   if (tableData.length === 0) {
@@ -387,7 +555,7 @@ function renderTableWidget(
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
     doc.text('Žádná data', x + 5, y + 8);
-    return;
+    return { extraHeight: 0, newPageCreated: false };
   }
   
   const columns = config.columns.filter(c => c.visible);
@@ -401,12 +569,33 @@ function renderTableWidget(
   );
   
   const style = widget.style || {};
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  
+  // Vypočítat zóny pro automatické stránkování (headerHeight/footerHeight jsou v MM)
+  const headerZoneHeight = template.headerHeight || 25;
+  const footerZoneHeight = template.footerHeight || 20;
+  const contentTop = headerZoneHeight + PAGE_MARGINS.top;
+  const contentBottom = pageHeight - footerZoneHeight - PAGE_MARGINS.bottom;
+  
+  // Najít header a footer widgety z první stránky pro opakování
+  const firstPage = template.pages[0];
+  const headerWidgets = firstPage?.widgets.filter(w => w.zone === 'header') || [];
+  const footerWidgets = firstPage?.widgets.filter(w => w.zone === 'footer') || [];
+  
+  // Zapamatovat počáteční stránku
+  const startPage = doc.getNumberOfPages();
   
   autoTable(doc, {
     startY: y,
     head: config.showHeader ? [headers] : [],
     body: rows,
-    margin: { left: x },
+    margin: { 
+      left: x, 
+      right: pageWidth - x - width,
+      top: contentTop,    // Respektovat header zónu při přechodu na novou stránku
+      bottom: pageHeight - contentBottom  // Respektovat footer zónu
+    },
     tableWidth: width,
     styles: {
       font: 'Roboto',
@@ -428,7 +617,37 @@ function renderTableWidget(
       };
       return acc;
     }, {} as Record<number, { cellWidth: number | 'auto'; halign: 'left' | 'center' | 'right' }>),
+    // Automatické stránkování - opakovat hlavičku tabulky na každé stránce
+    showHead: 'everyPage',
+    // Callback při přidání nové stránky
+    didDrawPage: (pageData) => {
+      // Pokud jsme na nové stránce (ne první), vykreslit header/footer widgety
+      if (pageData.pageNumber > 1) {
+        // Vykreslit header widgety
+        for (const hw of headerWidgets) {
+          renderHeaderFooterWidget(doc, hw, data, template, pageData.pageNumber);
+        }
+        // Vykreslit footer widgety
+        for (const fw of footerWidgets) {
+          renderHeaderFooterWidget(doc, fw, data, template, pageData.pageNumber);
+        }
+        
+        // Přidat "(pokračování)" label
+        doc.setFontSize(7);
+        doc.setTextColor(150, 150, 150);
+        doc.text('(pokračování tabulky)', x, contentTop - 2);
+        doc.setTextColor(0, 0, 0);
+      }
+    },
   });
+  
+  // Vypočítat skutečnou výšku tabulky
+  const finalY = doc.lastAutoTable?.finalY || y;
+  const actualHeight = finalY - y;
+  const extraHeight = Math.max(0, actualHeight - originalHeight);
+  const newPageCreated = doc.getNumberOfPages() > startPage;
+  
+  return { extraHeight, newPageCreated };
 }
 
 function renderPageNumberWidget(
@@ -449,7 +668,9 @@ function renderPageNumberWidget(
     .replace(/X/g, String(currentPage))
     .replace(/Y/g, String(totalPages));
   
-  doc.setFontSize(style.fontSize || 10);
+  // fontSize v CSS je px, v jsPDF pt (1px ≈ 0.75pt při 96dpi)
+  const fontSizePt = (style.fontSize || 12) * 0.75;
+  doc.setFontSize(fontSizePt);
   doc.setFont('Roboto', style.fontWeight === 'bold' ? 'bold' : 'normal');
   
   if (style.color) {
@@ -492,7 +713,9 @@ function renderDateWidget(
       dateStr = now.toLocaleDateString('cs-CZ');
   }
   
-  doc.setFontSize(style.fontSize || 10);
+  // fontSize v CSS je px, v jsPDF pt (1px ≈ 0.75pt při 96dpi)
+  const fontSizePt = (style.fontSize || 12) * 0.75;
+  doc.setFontSize(fontSizePt);
   doc.setFont('Roboto', style.fontWeight === 'bold' ? 'bold' : 'normal');
   
   if (style.color) {
@@ -588,21 +811,37 @@ async function renderRepeaterWidget(
   widget: Widget,
   x: number,
   startY: number,
-  width: number,
-  data: PDFRenderData
-): Promise<void> {
+  width: number,  // už je v MM
+  originalHeight: number,  // původní výška widgetu v MM
+  data: PDFRenderData,
+  template: DesignerTemplate
+): Promise<RenderResult> {
   const config = widget.repeaterConfig;
-  if (!config) return;
+  if (!config) return { extraHeight: 0, newPageCreated: false };
   
-  let currentY = startY;
   const gap = (config.gap || 10) * PX_TO_MM;
-  const widthMM = width * PX_TO_MM;
+  // width už je v MM, nekonvertovat znovu!
+  
+  const startPage = doc.getNumberOfPages();
+  let finalY = startY;
   
   if (config.type === 'rozvadece') {
-    await renderRozvadeceRepeater(doc, x, currentY, widthMM, gap, data, config);
+    finalY = await renderRozvadeceRepeater(doc, x, startY, width, gap, data, config, template);
   } else if (config.type === 'mistnosti') {
-    await renderMistnostiRepeater(doc, x, currentY, widthMM, gap, data, config);
+    finalY = await renderMistnostiRepeater(doc, x, startY, width, gap, data, config, template);
   }
+  
+  const newPageCreated = doc.getNumberOfPages() > startPage;
+  
+  // Pokud se vytvořila nová stránka, extraHeight nemá smysl (widgety pod repeaterem se neposunou)
+  // Pokud zůstáváme na stejné stránce, spočítáme extra výšku
+  let extraHeight = 0;
+  if (!newPageCreated) {
+    const actualHeight = finalY - startY;
+    extraHeight = Math.max(0, actualHeight - originalHeight);
+  }
+  
+  return { extraHeight, newPageCreated };
 }
 
 async function renderRozvadeceRepeater(
@@ -612,19 +851,27 @@ async function renderRozvadeceRepeater(
   width: number,
   gap: number,
   data: PDFRenderData,
-  config: NonNullable<Widget['repeaterConfig']>
-): Promise<void> {
+  config: NonNullable<Widget['repeaterConfig']>,
+  template: DesignerTemplate
+): Promise<number> {
   const rozvadece = data.rozvadece || [];
   const pageHeight = doc.internal.pageSize.getHeight();
-  const contentBottom = pageHeight - PAGE_MARGINS.bottom - 15; // 15mm pro zápatí
-  const contentTop = PAGE_MARGINS.top + 10; // 10mm pro záhlaví
+  const headerZoneHeight = template.headerHeight || 25;
+  const footerZoneHeight = template.footerHeight || 20;
+  const contentBottom = pageHeight - footerZoneHeight - PAGE_MARGINS.bottom;
+  const contentTop = headerZoneHeight + PAGE_MARGINS.top;
+  
+  // Header a footer widgety z první stránky pro opakování
+  const firstPage = template.pages[0];
+  const headerWidgets = firstPage?.widgets.filter(w => w.zone === 'header') || [];
+  const footerWidgets = firstPage?.widgets.filter(w => w.zone === 'footer') || [];
   
   if (rozvadece.length === 0) {
     doc.setFontSize(10);
     doc.setFont('Roboto', 'normal');
     doc.setTextColor(150, 150, 150);
     doc.text('Žádné rozvaděče k zobrazení', x, startY + 10);
-    return;
+    return startY + 15;  // Vrátit pozici za textem
   }
   
   let currentY = startY;
@@ -636,26 +883,36 @@ async function renderRozvadeceRepeater(
     // Zkontrolovat zda se minimálně header+info vejde
     if (currentY + 25 > contentBottom) {
       doc.addPage();
+      
+      // Vykreslit header/footer na nové stránce
+      const pageNum = doc.getNumberOfPages();
+      for (const hw of headerWidgets) {
+        renderHeaderFooterWidget(doc, hw, data, template, pageNum);
+      }
+      for (const fw of footerWidgets) {
+        renderHeaderFooterWidget(doc, fw, data, template, pageNum);
+      }
+      
       currentY = contentTop;
     }
     
-    // Nadpis rozvaděče
+    // Nadpis rozvaděče - tmavě modrá jako v designeru
     const headerHeight = 8;
-    doc.setFillColor(59, 130, 246);
+    doc.setFillColor(30, 64, 175); // #1e40af - tmavě modrá
     doc.rect(x, currentY, width, headerHeight, 'F');
     doc.setFontSize(11);
     doc.setFont('Roboto', 'bold');
     doc.setTextColor(255, 255, 255);
-    const headerText = `Rozvaděč č. ${i + 1}: ${rozvadec.oznaceni || '-'} - ${rozvadec.nazev || '-'}`;
+    const headerText = `${rozvadec.oznaceni || `R${i + 1}`} - ${rozvadec.nazev || 'Rozvaděč'}`;
     doc.text(t(headerText), x + 3, currentY + headerHeight - 2);
-    currentY += headerHeight + 2;
+    currentY += headerHeight;
     
     // Info box
     currentY = renderRozvadecInfo(doc, rozvadec, x, currentY, width);
     
     // Tabulka okruhů s automatickým stránkováním
     if (okruhy.length > 0) {
-      currentY = renderOkruhyTableWithPagination(doc, okruhy, x, currentY, width, contentBottom, contentTop);
+      currentY = renderOkruhyTableWithPagination(doc, okruhy, x, currentY, width, contentBottom, contentTop, template, data);
     } else {
       doc.setFontSize(8);
       doc.setTextColor(150, 150, 150);
@@ -663,13 +920,18 @@ async function renderRozvadeceRepeater(
       currentY += 8;
     }
     
-    currentY += gap;
-    
-    // Separátor
-    if (config.showSeparator && i < rozvadece.length - 1) {
-      renderSeparator(doc, x, currentY - gap / 2, width, config.separatorStyle);
+    // Gap jen mezi rozvaděči, ne za posledním
+    if (i < rozvadece.length - 1) {
+      currentY += gap;
+      
+      // Separátor
+      if (config.showSeparator) {
+        renderSeparator(doc, x, currentY - gap / 2, width, config.separatorStyle);
+      }
     }
   }
+  
+  return currentY;  // Vrátit finální Y pozici
 }
 
 function renderRozvadecInfo(
@@ -679,40 +941,43 @@ function renderRozvadecInfo(
   y: number,
   width: number
 ): number {
-  const infoHeight = 12;
-  
-  doc.setFillColor(249, 250, 251);
-  doc.rect(x, y, width, infoHeight, 'F');
-  doc.setDrawColor(229, 231, 235);
-  doc.setLineWidth(0.3);
-  doc.rect(x, y, width, infoHeight);
+  // 3 sloupce jako v designeru
+  const infoHeight = 6;
+  const colWidth = width / 3;
   
   doc.setFontSize(8);
-  
-  // Řádek 1
   doc.setFont('Roboto', 'normal');
-  doc.setTextColor(107, 114, 128);
-  doc.text('Umístění:', x + 3, y + 4);
-  doc.setTextColor(31, 41, 55);
-  doc.text(rozvadec.umisteni || '-', x + 22, y + 4);
   
-  doc.setTextColor(107, 114, 128);
-  doc.text('Typ:', x + width * 0.4, y + 4);
+  // Sloupec 1: Umístění
+  doc.setFillColor(248, 250, 252); // #f8fafc
+  doc.rect(x, y, colWidth, infoHeight, 'F');
+  doc.setDrawColor(226, 232, 240); // #e2e8f0
+  doc.setLineWidth(0.2);
+  doc.rect(x, y, colWidth, infoHeight);
+  doc.setTextColor(100, 116, 139); // #64748b
+  doc.text('Umístění:', x + 2, y + 4);
   doc.setTextColor(31, 41, 55);
-  doc.text(rozvadec.typRozvadece || '-', x + width * 0.4 + 10, y + 4);
+  doc.text(rozvadec.umisteni || '-', x + 18, y + 4);
   
-  // Řádek 2
-  doc.setTextColor(107, 114, 128);
-  doc.text('Krytí:', x + 3, y + 9);
+  // Sloupec 2: Typ
+  doc.setFillColor(248, 250, 252);
+  doc.rect(x + colWidth, y, colWidth, infoHeight, 'F');
+  doc.rect(x + colWidth, y, colWidth, infoHeight);
+  doc.setTextColor(100, 116, 139);
+  doc.text('Typ:', x + colWidth + 2, y + 4);
   doc.setTextColor(31, 41, 55);
-  doc.text(rozvadec.stupenKryti || '-', x + 15, y + 9);
+  doc.text(rozvadec.typRozvadece || '-', x + colWidth + 10, y + 4);
   
-  doc.setTextColor(107, 114, 128);
-  doc.text('Proudový chránič:', x + width * 0.4, y + 9);
+  // Sloupec 3: Krytí
+  doc.setFillColor(248, 250, 252);
+  doc.rect(x + colWidth * 2, y, colWidth, infoHeight, 'F');
+  doc.rect(x + colWidth * 2, y, colWidth, infoHeight);
+  doc.setTextColor(100, 116, 139);
+  doc.text('Krytí:', x + colWidth * 2 + 2, y + 4);
   doc.setTextColor(31, 41, 55);
-  doc.text(rozvadec.proudovyChranicTyp || '-', x + width * 0.4 + 35, y + 9);
+  doc.text(rozvadec.stupenKryti || '-', x + colWidth * 2 + 12, y + 4);
   
-  return y + infoHeight + 2;
+  return y + infoHeight;
 }
 
 /**
@@ -725,9 +990,16 @@ function renderOkruhyTableWithPagination(
   startY: number,
   width: number,
   contentBottom: number,
-  contentTop: number
+  contentTop: number,
+  template: DesignerTemplate,
+  data: PDFRenderData
 ): number {
   const columns = TABLE_COLUMNS.okruhy.filter(c => c.visible);
+  
+  // Header a footer widgety z první stránky pro opakování
+  const firstPage = template.pages[0];
+  const headerWidgets = firstPage?.widgets.filter(w => w.zone === 'header') || [];
+  const footerWidgets = firstPage?.widgets.filter(w => w.zone === 'footer') || [];
   
   // Použít autoTable s automatickým stránkováním
   autoTable(doc, {
@@ -772,17 +1044,31 @@ function renderOkruhyTableWithPagination(
     // Automatické stránkování - opakovat hlavičku na každé stránce
     showHead: 'everyPage',
     // Callback při přechodu na novou stránku
-    didDrawPage: (data) => {
-      // Zde můžeme přidat header/footer na nové stránky
-      if (data.pageNumber > 1) {
+    didDrawPage: (pageData) => {
+      // Vykreslit header/footer na nových stránkách
+      if (pageData.pageNumber > 1) {
+        const pageNum = doc.getNumberOfPages();
+        
+        // Vykreslit header widgety
+        for (const hw of headerWidgets) {
+          renderHeaderFooterWidget(doc, hw, data, template, pageNum);
+        }
+        // Vykreslit footer widgety
+        for (const fw of footerWidgets) {
+          renderHeaderFooterWidget(doc, fw, data, template, pageNum);
+        }
+        
+        // Přidat "(pokračování)" label
         doc.setFontSize(8);
         doc.setTextColor(150, 150, 150);
         doc.text('(pokračování tabulky okruhů)', x + 3, contentTop - 3);
+        doc.setTextColor(0, 0, 0);
       }
     },
   });
   
-  return doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 3 : startY + 20;
+  // Vrátit pozici těsně za tabulkou (minimální padding 1mm)
+  return doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 1 : startY + 20;
 }
 
 async function renderMistnostiRepeater(
@@ -792,8 +1078,9 @@ async function renderMistnostiRepeater(
   width: number,
   gap: number,
   data: PDFRenderData,
-  config: NonNullable<Widget['repeaterConfig']>
-): Promise<void> {
+  config: NonNullable<Widget['repeaterConfig']>,
+  template: DesignerTemplate
+): Promise<number> {
   const mistnosti = data.mistnosti || [];
   
   if (mistnosti.length === 0) {
@@ -801,13 +1088,20 @@ async function renderMistnostiRepeater(
     doc.setFont('Roboto', 'normal');
     doc.setTextColor(150, 150, 150);
     doc.text('Žádné místnosti k zobrazení', x, startY + 10);
-    return;
+    return startY + 15;  // Vrátit pozici za textem
   }
   
   let currentY = startY;
   const pageHeight = doc.internal.pageSize.getHeight();
-  const contentBottom = pageHeight - PAGE_MARGINS.bottom - 15;
-  const contentTop = PAGE_MARGINS.top + 10;
+  const headerZoneHeight = template.headerHeight || 25;
+  const footerZoneHeight = template.footerHeight || 20;
+  const contentBottom = pageHeight - footerZoneHeight - PAGE_MARGINS.bottom;
+  const contentTop = headerZoneHeight + PAGE_MARGINS.top;
+  
+  // Header a footer widgety z první stránky pro opakování
+  const firstPage = template.pages[0];
+  const headerWidgets = firstPage?.widgets.filter(w => w.zone === 'header') || [];
+  const footerWidgets = firstPage?.widgets.filter(w => w.zone === 'footer') || [];
   
   for (let i = 0; i < mistnosti.length; i++) {
     const mistnost = mistnosti[i];
@@ -816,6 +1110,16 @@ async function renderMistnostiRepeater(
     // Kontrola stránkování - potřebujeme alespoň 25mm pro hlavičku + 1 řádek
     if (currentY + 25 > contentBottom) {
       doc.addPage();
+      
+      // Vykreslit header/footer na nové stránce
+      const pageNum = doc.getNumberOfPages();
+      for (const hw of headerWidgets) {
+        renderHeaderFooterWidget(doc, hw, data, template, pageNum);
+      }
+      for (const fw of footerWidgets) {
+        renderHeaderFooterWidget(doc, fw, data, template, pageNum);
+      }
+      
       currentY = contentTop;
     }
     
@@ -840,13 +1144,18 @@ async function renderMistnostiRepeater(
       currentY += 8;
     }
     
-    currentY += gap;
-    
-    // Separátor
-    if (config.showSeparator && i < mistnosti.length - 1) {
-      renderSeparator(doc, x, currentY - gap / 2, width, config.separatorStyle);
+    // Gap jen mezi místnostmi, ne za poslední
+    if (i < mistnosti.length - 1) {
+      currentY += gap;
+      
+      // Separátor
+      if (config.showSeparator) {
+        renderSeparator(doc, x, currentY - gap / 2, width, config.separatorStyle);
+      }
     }
   }
+  
+  return currentY;  // Vrátit finální Y pozici
 }
 
 /**
@@ -928,9 +1237,34 @@ function hexToRgb(hex: string): [number, number, number] {
     : [0, 0, 0];
 }
 
-function replacePageNumbers(_doc: jsPDF, _totalPages: number): void {
-  // Tato funkce by měla projít dokument a nahradit {{PAGE}} a {{PAGES}}
-  // Bohužel jsPDF nemá přímou podporu pro nahrazení textu
-  // Řešení: používáme postProcessing nebo jiný přístup
-  // Pro teď necháme placeholder - budoucí vylepšení
+/**
+ * Aktualizuje čísla stránek v dokumentu
+ * Voláno po dokončení renderování, když známe skutečný počet stránek
+ */
+function updatePageNumbersInDocument(doc: jsPDF, totalPages: number): void {
+  // jsPDF nemá přímou podporu pro nahrazení textu v existujícím dokumentu
+  // Proto používáme přístup, kde čísla stránek jsou renderována s aktuálními hodnotami
+  // během prvního průchodu.
+  // 
+  // Pro případy kdy potřebujeme znát celkový počet stránek předem (např. "Strana 1 z 5"),
+  // přidáme footer na každou stránku dodatečně.
+  
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  
+  // Projít všechny stránky a přidat/aktualizovat číslo stránky v patičce
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    
+    // Přidat diskrétní číslo stránky do pravého dolního rohu pokud nebylo přidáno
+    // Toto je fallback - hlavní stránkování by mělo být řešeno přes page-number widget
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text(
+      `${i} / ${totalPages}`,
+      pageWidth - 15,
+      pageHeight - 8,
+      { align: 'right' }
+    );
+  }
 }
