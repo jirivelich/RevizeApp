@@ -1,34 +1,31 @@
-// PDFDesignerMain - hlavní komponenta PDF designeru
-import { useState, useEffect, useCallback, useRef } from 'react';
-import type { Revize, Nastaveni, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, MericiPristroj, Zakaznik } from '../../types';
-import type { Widget, DesignerTemplate } from './types';
-import { useDesignerState } from './useDesignerState';
-import { Toolbar } from './Toolbar';
-import { PageCanvas } from './PageCanvas';
-import { PropertiesPanel } from './PropertiesPanel';
-import { WidgetEditor } from './WidgetEditor';
-import { SaveIcon, FolderOpenIcon, ExportIcon, CloseIcon, PreviewIcon, PDFIcon } from './icons';
-import { openPDFPreview, downloadPDF } from './pdfRenderer';
-import { openHTMLPreview } from './htmlRenderer';
-import { pdfSablonyApi } from '../../services/api';
-import type { PDFRenderData } from './pdfRenderer';
+// PDFDesignerMain.tsx - Šablonový editor pro revizní zprávy
+// Nahrazuje původní drag & drop designer jednodušším přístupem:
+// Editor šablony (HTML + {{proměnné}}) + Živý náhled
 
-// Typ pro šablonu z databáze
-interface DbPdfSablona {
-  id: number;
-  nazev: string;
-  popis?: string;
-  jeVychozi: number;
-  userId?: number;
-  template: DesignerTemplate;
-  createdAt: string;
-  updatedAt: string;
-}
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import type { Revize, Nastaveni, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, MericiPristroj, Zakaznik } from '../../types';
+import type { HtmlTemplate } from './defaultHtmlTemplates';
+import { DEFAULT_HTML_TEMPLATES } from './defaultHtmlTemplates';
+import { DEFAULT_TEMPLATE_CSS } from './defaultHtmlTemplates';
+import {
+  processTemplate,
+  createTemplateContext,
+  renderFullDocument,
+  TEMPLATE_VARIABLES,
+  INSERTABLE_BLOCKS,
+} from './templateEngine';
+import type { PageOptions } from './templateEngine';
+import { openPDFPreview, downloadPDF, openHTMLPreview } from './pdfRenderer';
+import type { PDFRenderData } from './pdfVariables';
+import { pdfSablonyApi } from '../../services/api';
+
+// ============================================================
+// TYPY
+// ============================================================
 
 interface PDFDesignerMainProps {
   revize?: Revize | null;
   nastaveni?: Nastaveni | null;
-  // Rozšířená data pro náhled
   rozvadece?: Rozvadec[];
   okruhy?: Record<number, Okruh[]>;
   zavady?: Zavada[];
@@ -36,11 +33,25 @@ interface PDFDesignerMainProps {
   zarizeni?: Record<number, Zarizeni[]>;
   pouzitePristroje?: MericiPristroj[];
   zakaznik?: Zakaznik | null;
-  // Callbacks
   onClose?: () => void;
-  onExport?: (template: DesignerTemplate) => void;
-  initialTemplate?: DesignerTemplate;
+  onExport?: (template: any) => void;
+  initialTemplate?: any;
 }
+
+// DB šablona
+interface DbPdfSablona {
+  id: number;
+  nazev: string;
+  popis?: string;
+  jeVychozi: number;
+  template: any;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================================
+// KOMPONENTA
+// ============================================================
 
 export function PDFDesignerMain({
   revize = null,
@@ -52,50 +63,12 @@ export function PDFDesignerMain({
   zarizeni = {},
   pouzitePristroje = [],
   zakaznik = null,
-  onClose,
-  onExport,
-  initialTemplate,
 }: PDFDesignerMainProps) {
-  // Načíst uloženou šablonu z localStorage při startu
-  const getInitialTemplate = (): DesignerTemplate | undefined => {
-    if (initialTemplate) return initialTemplate;
-    try {
-      const saved = localStorage.getItem('pdfDesignerCurrentTemplate');
-      if (saved) {
-        console.log('Načítám aktuální šablonu z localStorage');
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error('Chyba při načítání šablony:', e);
-    }
-    return undefined;
-  };
-  
-  const state = useDesignerState(getInitialTemplate());
-  const [editingWidget, setEditingWidget] = useState<Widget | null>(null);
-  const [savedTemplates, setSavedTemplates] = useState<DesignerTemplate[]>([]);
-  const [dbTemplates, setDbTemplates] = useState<DbPdfSablona[]>([]);
-  const [currentDbId, setCurrentDbId] = useState<number | null>(null);
-  const [showTemplateList, setShowTemplateList] = useState(false);
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  
-  // Automaticky ukládat aktuální šablonu při každé změně
-  useEffect(() => {
-    try {
-      const templateJson = JSON.stringify(state.template);
-      localStorage.setItem('pdfDesignerCurrentTemplate', templateJson);
-    } catch (e) {
-      console.error('Chyba při automatickém ukládání:', e);
-    }
-  }, [state.template]);
 
   // Demo data pro náhled pokud není revize
   const demoRevize: Revize = {
     id: 0,
-    cisloRevize: 'DEMO-2024-001',
+    cisloRevize: 'DEMO-2026-001',
     nazev: 'Elektrická instalace - demo',
     adresa: 'Ukázková ulice 123, 110 00 Praha',
     objednatel: 'Demo zákazník s.r.o.',
@@ -111,7 +84,6 @@ export function PDFDesignerMain({
     updatedAt: new Date(),
   };
 
-  // Data pro PDF renderování - použít reálná nebo demo data
   const pdfData: PDFRenderData = {
     revize: revize || demoRevize,
     nastaveni,
@@ -124,676 +96,566 @@ export function PDFDesignerMain({
     zakaznik,
   };
 
-  // Debug: Zobrazit počet načtených dat
-  useEffect(() => {
-    console.log('📊 PDF Data načtena:', {
-      revize: revize?.cisloRevize || demoRevize.cisloRevize,
-      rozvadece: rozvadece.length,
-      okruhy: Object.keys(okruhy).length > 0 ? Object.values(okruhy).flat().length : 0,
-      zavady: zavady.length,
-      mistnosti: mistnosti.length,
-      zarizeni: Object.keys(zarizeni).length > 0 ? Object.values(zarizeni).flat().length : 0,
-      pouzitePristroje: pouzitePristroje.length,
-      zakaznik: zakaznik?.nazev || null,
-    });
-  }, [revize, rozvadece, okruhy, zavady, mistnosti, zarizeni, pouzitePristroje, zakaznik]);
+  // ── Stav šablony ──
+  const [templateHtml, setTemplateHtml] = useState(DEFAULT_HTML_TEMPLATES[0].html);
+  const [templateCss, setTemplateCss] = useState(DEFAULT_TEMPLATE_CSS);
+  const [templateName, setTemplateName] = useState(DEFAULT_HTML_TEMPLATES[0].name);
+  const [pageOptions, setPageOptions] = useState<PageOptions>({
+    pageSize: 'a4',
+    orientation: 'portrait',
+    margins: { top: 15, right: 15, bottom: 15, left: 15 },
+  });
 
-  // Načíst uložené šablony z localStorage
+  // ── UI stav ──
+  const [activeTab, setActiveTab] = useState<'html' | 'css'>('html');
+  const [showVarPicker, setShowVarPicker] = useState(false);
+  const [showBlockPicker, setShowBlockPicker] = useState(false);
+  const [showTemplateList, setShowTemplateList] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [varFilter, setVarFilter] = useState('');
+
+  // DB šablony
+  const [dbTemplates, setDbTemplates] = useState<DbPdfSablona[]>([]);
+  const [currentDbId, setCurrentDbId] = useState<number | null>(null);
+
+  const editorRef = useRef<HTMLTextAreaElement>(null);
+  const previewRef = useRef<HTMLIFrameElement>(null);
+
+  // ── Načtení z localStorage ──
   useEffect(() => {
-    const saved = localStorage.getItem('pdfDesignerTemplates');
-    console.log('Načítám šablony z localStorage:', saved ? `${saved.length} bytes` : 'nic');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        console.log('Načteno šablon:', parsed.length, parsed.map((t: DesignerTemplate) => t.name));
-        setSavedTemplates(parsed);
-      } catch (e) {
-        console.error('Failed to load templates:', e);
+    try {
+      const saved = localStorage.getItem('htmlTemplateEditor');
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.html) setTemplateHtml(data.html);
+        if (data.css) setTemplateCss(data.css);
+        if (data.name) setTemplateName(data.name);
+        if (data.pageOptions) setPageOptions(data.pageOptions);
       }
-    }
+    } catch { /* ignore */ }
   }, []);
 
-  // Načíst šablony z databáze
+  // ── Auto-save do localStorage ──
+  useEffect(() => {
+    try {
+      localStorage.setItem('htmlTemplateEditor', JSON.stringify({
+        html: templateHtml,
+        css: templateCss,
+        name: templateName,
+        pageOptions,
+      }));
+    } catch { /* ignore */ }
+  }, [templateHtml, templateCss, templateName, pageOptions]);
+
+  // ── Načíst DB šablony ──
   useEffect(() => {
     loadDbTemplates();
   }, []);
 
   const loadDbTemplates = async () => {
     try {
-      setIsLoading(true);
       const templates = await pdfSablonyApi.getAll() as DbPdfSablona[];
-      console.log('Načteno šablon z DB:', templates.length);
       setDbTemplates(templates);
-    } catch (error) {
-      console.error('Chyba při načítání šablon z DB:', error);
-    } finally {
-      setIsLoading(false);
+    } catch (e) {
+      console.error('Chyba při načítání šablon:', e);
     }
   };
 
-  // Náhled HTML (pro rychlé debugování)
-  const handlePreview = useCallback(() => {
+  // ── Živý náhled ──
+  const renderedPreview = useMemo(() => {
     try {
-      openHTMLPreview(state.template, pdfData);
-    } catch (error) {
-      console.error('Failed to generate HTML preview:', error);
-      alert('Nepodařilo se vygenerovat HTML náhled.');
+      const context = createTemplateContext(pdfData);
+      const body = processTemplate(templateHtml, context);
+      return renderFullDocument(body, templateCss, pageOptions, templateName);
+    } catch (e) {
+      return `<html><body><pre style="color:red;">Chyba v šabloně:\n${String(e)}</pre></body></html>`;
     }
-  }, [state.template, pdfData]);
+  }, [templateHtml, templateCss, pdfData, pageOptions, templateName]);
 
-  // Náhled PDF
+  // Aktualizovat iframe náhled
+  useEffect(() => {
+    const iframe = previewRef.current;
+    if (iframe?.contentDocument) {
+      iframe.contentDocument.open();
+      iframe.contentDocument.write(renderedPreview);
+      iframe.contentDocument.close();
+    }
+  }, [renderedPreview]);
+
+  // ── Vložit text na pozici kurzoru ──
+  const insertAtCursor = useCallback((text: string) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    const current = activeTab === 'html' ? templateHtml : templateCss;
+    const newContent = current.slice(0, start) + text + current.slice(end);
+
+    if (activeTab === 'html') {
+      setTemplateHtml(newContent);
+    } else {
+      setTemplateCss(newContent);
+    }
+
+    // Nastavit kurzor za vložený text
+    requestAnimationFrame(() => {
+      editor.focus();
+      editor.setSelectionRange(start + text.length, start + text.length);
+    });
+  }, [activeTab, templateHtml, templateCss]);
+
+  // ── Akce ──
+  const handleHTMLPreview = useCallback(() => {
+    openHTMLPreview(templateHtml, templateCss, pdfData, pageOptions);
+  }, [templateHtml, templateCss, pdfData, pageOptions]);
+
   const handlePDFPreview = useCallback(async () => {
-    setIsGeneratingPDF(true);
+    setIsGenerating(true);
     try {
-      await openPDFPreview(state.template, pdfData);
-    } catch (error) {
-      console.error('Failed to generate preview:', error);
-      alert('Nepodařilo se vygenerovat náhled PDF.');
+      await openPDFPreview(templateHtml, templateCss, pdfData, pageOptions);
+    } catch (e) {
+      alert('Chyba při generování PDF: ' + String(e));
     } finally {
-      setIsGeneratingPDF(false);
+      setIsGenerating(false);
     }
-  }, [state.template, pdfData]);
+  }, [templateHtml, templateCss, pdfData, pageOptions]);
 
-  // Stáhnout PDF
   const handleDownloadPDF = useCallback(async () => {
-    if (!pdfData || !revize) {
-      alert('Pro stažení je potřeba načíst revizi.');
-      return;
-    }
-    
-    setIsGeneratingPDF(true);
+    setIsGenerating(true);
     try {
-      const filename = `${revize.cisloRevize || 'revize'}_${state.template.name.replace(/\s+/g, '_')}.pdf`;
-      await downloadPDF(state.template, pdfData, filename);
-    } catch (error) {
-      console.error('Failed to download PDF:', error);
-      alert('Nepodařilo se stáhnout PDF.');
+      const r = revize || demoRevize;
+      const filename = `${r.cisloRevize || 'revize'}_${templateName.replace(/\s+/g, '_')}.pdf`;
+      await downloadPDF(templateHtml, templateCss, pdfData, pageOptions, filename);
+    } catch (e) {
+      alert('Chyba při stahování PDF: ' + String(e));
     } finally {
-      setIsGeneratingPDF(false);
+      setIsGenerating(false);
     }
-  }, [state.template, pdfData, revize]);
+  }, [templateHtml, templateCss, pdfData, pageOptions, revize, templateName]);
 
-  // Helper funkce pro serializaci widgetu (rekurzivní pro skupiny)
-  const serializeWidget = useCallback((widget: Widget): any => {
-    const serialized: any = {
-      id: widget.id,
-      type: widget.type,
-      name: widget.name,
-      content: widget.content,
-      x: widget.x,
-      y: widget.y,
-      width: widget.width,
-      height: widget.height,
-      style: { ...widget.style },
-      locked: widget.locked,
-      zone: widget.zone,
-      pageId: widget.pageId,
-      zIndex: widget.zIndex,
-      tableConfig: widget.tableConfig ? { ...widget.tableConfig } : undefined,
-      repeaterConfig: widget.repeaterConfig ? { ...widget.repeaterConfig } : undefined,
-      groupId: widget.groupId,
-      autoGrow: widget.autoGrow,
-      overflowBehavior: widget.overflowBehavior,
-      minHeight: widget.minHeight,
-    };
-    
-    // Rekurzivně serializovat children pro skupiny
-    if (widget.children && widget.children.length > 0) {
-      serialized.children = widget.children.map(child => serializeWidget(child));
-    }
-    
-    return serialized;
-  }, []);
-
-  // Uložit šablonu
-  const handleSaveTemplate = useCallback(() => {
-    try {
-      // Vytvořit čistou kopii šablony bez neserializovatelných dat
-      const templateToSave = {
-        ...state.template,
-        updatedAt: new Date().toISOString(),
-        pages: state.template.pages.map(page => ({
-          ...page,
-          widgets: page.widgets.map(widget => serializeWidget(widget)),
-        })),
-      };
-      
-      const newTemplates = savedTemplates.filter(t => t.id !== state.template.id);
-      newTemplates.push(templateToSave);
-      
-      const jsonString = JSON.stringify(newTemplates);
-      localStorage.setItem('pdfDesignerTemplates', jsonString);
-      setSavedTemplates(newTemplates);
-      
-      console.log('Šablona uložena:', templateToSave.name, 'Velikost:', jsonString.length, 'bytes');
-      alert('Šablona byla uložena lokálně!');
-    } catch (error) {
-      console.error('Chyba při ukládání šablony:', error);
-      alert('Nepodařilo se uložit šablonu: ' + (error instanceof Error ? error.message : 'Neznámá chyba'));
-    }
-  }, [state.template, savedTemplates, serializeWidget]);
-
-  // Uložit šablonu do databáze
   const handleSaveToDb = useCallback(async () => {
+    setIsSaving(true);
     try {
-      setIsSaving(true);
-      
-      // Vytvořit čistou kopii šablony
-      const templateToSave = {
-        ...state.template,
-        updatedAt: new Date().toISOString(),
-        pages: state.template.pages.map(page => ({
-          ...page,
-          widgets: page.widgets.map(widget => serializeWidget(widget)),
-        })),
+      const templateData = {
+        type: 'html-template' as const,
+        html: templateHtml,
+        css: templateCss,
+        pageSize: pageOptions.pageSize,
+        orientation: pageOptions.orientation,
+        margins: pageOptions.margins,
       };
-      
-      const sablonaData = {
-        nazev: state.template.name,
-        popis: state.template.description || '',
-        jeVychozi: false,
-        template: templateToSave,
-      };
-      
+
       if (currentDbId) {
-        // Aktualizovat existující
-        await pdfSablonyApi.update(currentDbId, sablonaData);
-        console.log('Šablona aktualizována v DB:', currentDbId);
+        await pdfSablonyApi.update(currentDbId, {
+          nazev: templateName,
+          template: templateData,
+        });
       } else {
-        // Vytvořit novou
-        const result = await pdfSablonyApi.create(sablonaData) as DbPdfSablona;
+        const result = await pdfSablonyApi.create({
+          nazev: templateName,
+          template: templateData,
+        }) as DbPdfSablona;
         setCurrentDbId(result.id);
-        console.log('Šablona vytvořena v DB:', result.id);
       }
-      
-      // Znovu načíst seznam šablon
+
       await loadDbTemplates();
-      alert('Šablona byla uložena do databáze!');
-    } catch (error) {
-      console.error('Chyba při ukládání do DB:', error);
-      alert('Nepodařilo se uložit šablonu do databáze: ' + (error instanceof Error ? error.message : 'Neznámá chyba'));
+      alert('Šablona uložena!');
+    } catch (e) {
+      alert('Chyba při ukládání: ' + String(e));
     } finally {
       setIsSaving(false);
     }
-  }, [state.template, currentDbId, serializeWidget]);
+  }, [templateHtml, templateCss, pageOptions, templateName, currentDbId]);
 
-  // Načíst šablonu
-  const handleLoadTemplate = useCallback((template: DesignerTemplate) => {
-    state.loadTemplate(template);
-    setCurrentDbId(null);
-    setShowTemplateList(false);
-  }, [state]);
-
-  // Načíst šablonu z databáze
-  const handleLoadDbTemplate = useCallback((dbSablona: DbPdfSablona) => {
-    const template = typeof dbSablona.template === 'string' 
-      ? JSON.parse(dbSablona.template) 
-      : dbSablona.template;
-    state.loadTemplate(template);
-    setCurrentDbId(dbSablona.id);
-    setShowTemplateList(false);
-    console.log('Načtena šablona z DB:', dbSablona.id, dbSablona.nazev);
-  }, [state]);
-
-  // Smazat šablonu
-  const handleDeleteTemplate = useCallback((templateId: string) => {
-    if (!confirm('Opravdu chcete smazat tuto šablonu?')) return;
-    const newTemplates = savedTemplates.filter(t => t.id !== templateId);
-    setSavedTemplates(newTemplates);
-    localStorage.setItem('pdfDesignerTemplates', JSON.stringify(newTemplates));
-  }, [savedTemplates]);
-
-  // Smazat šablonu z databáze
-  const handleDeleteDbTemplate = useCallback(async (dbId: number) => {
-    if (!confirm('Opravdu chcete smazat tuto šablonu z databáze?')) return;
-    try {
-      await pdfSablonyApi.delete(dbId);
-      if (currentDbId === dbId) {
-        setCurrentDbId(null);
-      }
-      await loadDbTemplates();
-    } catch (error) {
-      console.error('Chyba při mazání z DB:', error);
-      alert('Nepodařilo se smazat šablonu.');
-    }
-  }, [currentDbId]);
-
-  // Export
-  const handleExport = useCallback(() => {
-    if (onExport) {
-      onExport(state.template);
+  const handleLoadTemplate = useCallback((tmpl: HtmlTemplate | DbPdfSablona) => {
+    if ('html' in tmpl) {
+      // Výchozí šablona
+      setTemplateHtml(tmpl.html);
+      setTemplateCss(tmpl.css);
+      setTemplateName(tmpl.name);
+      setPageOptions({
+        pageSize: tmpl.pageSize,
+        orientation: tmpl.orientation,
+        margins: tmpl.margins,
+      });
+      setCurrentDbId(null);
     } else {
-      // Export jako JSON
-      const blob = new Blob([JSON.stringify(state.template, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${state.template.name.replace(/\s+/g, '_')}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+      // DB šablona
+      const t = tmpl.template;
+      if (t?.type === 'html-template') {
+        setTemplateHtml(t.html || '');
+        setTemplateCss(t.css || DEFAULT_TEMPLATE_CSS);
+        setTemplateName(tmpl.nazev);
+        setPageOptions({
+          pageSize: t.pageSize || 'a4',
+          orientation: t.orientation || 'portrait',
+          margins: t.margins || { top: 15, right: 15, bottom: 15, left: 15 },
+        });
+        setCurrentDbId(tmpl.id);
+      } else {
+        alert('Tato šablona je ve starém formátu (designer) a nelze ji načíst v novém editoru.');
+      }
     }
-  }, [state.template, onExport]);
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignorovat pokud je focus v inputu
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-
-      // Ctrl+Z - Undo
-      if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault();
-        state.undo();
-      }
-      // Ctrl+Y nebo Ctrl+Shift+Z - Redo
-      if ((e.ctrlKey && e.key === 'y') || (e.ctrlKey && e.shiftKey && e.key === 'z')) {
-        e.preventDefault();
-        state.redo();
-      }
-      // Delete - smazat vybrané
-      if (e.key === 'Delete' && state.selectedWidgetIds.length > 0) {
-        e.preventDefault();
-        state.deleteSelectedWidgets();
-      }
-      // Ctrl+D - duplikovat
-      if (e.ctrlKey && e.key === 'd' && state.selectedWidgetIds.length === 1) {
-        e.preventDefault();
-        state.duplicateWidget(state.selectedWidgetIds[0]);
-      }
-      // Ctrl+G - seskupit
-      if (e.ctrlKey && e.key === 'g' && !e.shiftKey && state.selectedWidgets.length > 1) {
-        e.preventDefault();
-        state.groupWidgets();
-      }
-      // Ctrl+Shift+G - rozdělit skupinu
-      if (e.ctrlKey && e.shiftKey && e.key === 'G') {
-        e.preventDefault();
-        state.ungroupWidgets();
-      }
-      // Escape - deselect
-      if (e.key === 'Escape') {
-        state.deselectAll();
-        setEditingWidget(null);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [state]);
-
-  // Otevřít editor widgetu
-  const handleEditWidget = useCallback((widget: Widget) => {
-    setEditingWidget(widget);
+    setShowTemplateList(false);
   }, []);
 
-  // Uložit změny widgetu z editoru
-  const handleSaveWidget = useCallback((updates: Partial<Widget>) => {
-    if (editingWidget) {
-      state.updateWidget(editingWidget.id, updates);
+  // ── Filtrované proměnné pro picker ──
+  const filteredVars = useMemo(() => {
+    if (!varFilter) return TEMPLATE_VARIABLES;
+    const lower = varFilter.toLowerCase();
+    return TEMPLATE_VARIABLES.filter(v =>
+      v.label.toLowerCase().includes(lower) || v.key.toLowerCase().includes(lower)
+    );
+  }, [varFilter]);
+
+  const varCategories = useMemo(() => {
+    const cats = new Map<string, typeof filteredVars>();
+    for (const v of filteredVars) {
+      if (!cats.has(v.category)) cats.set(v.category, []);
+      cats.get(v.category)!.push(v);
     }
-    setEditingWidget(null);
-  }, [editingWidget, state]);
+    return cats;
+  }, [filteredVars]);
+
+  // ============================================================
+  // RENDER
+  // ============================================================
 
   return (
-    <div ref={containerRef} className="flex flex-col bg-gray-100" style={{ height: '100vh', maxHeight: '100vh', overflow: 'hidden' }}>
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-semibold text-gray-800">
-            📐 PDF Designer
-          </h1>
-          <span className="text-sm text-gray-500">
-            {state.template.name}
-          </span>
+    <div className="h-full flex flex-col bg-gray-100">
+      {/* ── Toolbar ── */}
+      <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-2 flex-wrap">
+        {/* Název šablony */}
+        <input
+          type="text"
+          value={templateName}
+          onChange={e => setTemplateName(e.target.value)}
+          className="border border-gray-300 rounded px-2 py-1 text-sm font-medium w-48"
+        />
+
+        <div className="h-5 border-l border-gray-300 mx-1" />
+
+        {/* Šablony */}
+        <div className="relative">
+          <button
+            onClick={() => setShowTemplateList(!showTemplateList)}
+            className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded border border-gray-300"
+          >
+            📋 Šablony
+          </button>
+          {showTemplateList && (
+            <div className="absolute left-0 top-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 w-80 max-h-96 overflow-auto">
+              <div className="p-2 border-b border-gray-200 font-medium text-sm text-gray-600">
+                Výchozí šablony
+              </div>
+              {DEFAULT_HTML_TEMPLATES.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => handleLoadTemplate(t)}
+                  className="w-full text-left px-3 py-2 hover:bg-blue-50 text-sm border-b border-gray-100"
+                >
+                  <div className="font-medium">{t.name}</div>
+                  <div className="text-xs text-gray-500">{t.description}</div>
+                </button>
+              ))}
+              {dbTemplates.length > 0 && (
+                <>
+                  <div className="p-2 border-b border-gray-200 font-medium text-sm text-gray-600">
+                    Uložené šablony
+                  </div>
+                  {dbTemplates.map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => handleLoadTemplate(t)}
+                      className="w-full text-left px-3 py-2 hover:bg-blue-50 text-sm border-b border-gray-100"
+                    >
+                      <div className="font-medium">{t.nazev}</div>
+                      <div className="text-xs text-gray-500">
+                        {t.template?.type === 'html-template' ? '📝 HTML šablona' : '🔧 Starý formát'}
+                      </div>
+                    </button>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Načíst šablonu */}
-          <div className="relative">
-            <button
-              onClick={() => setShowTemplateList(!showTemplateList)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
-            >
-              <FolderOpenIcon size={16} />
-              Načíst
-              {isLoading && <span className="ml-1 text-xs">...</span>}
-            </button>
-            
-            {showTemplateList && (
-              <div className="absolute right-0 top-full mt-1 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                {/* Šablony z databáze */}
-                <div className="p-2 border-b border-gray-100 bg-blue-50">
-                  <span className="text-xs font-medium text-blue-600">📦 Šablony z databáze</span>
-                </div>
-                {dbTemplates.length === 0 ? (
-                  <div className="p-3 text-sm text-gray-400 text-center">
-                    Žádné šablony v databázi
+        {/* Uložit */}
+        <button
+          onClick={handleSaveToDb}
+          disabled={isSaving}
+          className="px-3 py-1.5 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded disabled:opacity-50"
+        >
+          {isSaving ? '⏳' : '💾'} Uložit
+        </button>
+
+        <div className="h-5 border-l border-gray-300 mx-1" />
+
+        {/* Vložit proměnnou */}
+        <div className="relative">
+          <button
+            onClick={() => { setShowVarPicker(!showVarPicker); setShowBlockPicker(false); }}
+            className="px-3 py-1.5 text-sm bg-amber-50 hover:bg-amber-100 rounded border border-amber-300 text-amber-800"
+          >
+            {'{ }'} Proměnná
+          </button>
+          {showVarPicker && (
+            <div className="absolute left-0 top-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 w-80 max-h-96 overflow-auto">
+              <div className="p-2 border-b border-gray-200">
+                <input
+                  type="text"
+                  placeholder="Hledat proměnnou..."
+                  value={varFilter}
+                  onChange={e => setVarFilter(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                  autoFocus
+                />
+              </div>
+              {Array.from(varCategories.entries()).map(([cat, vars]) => (
+                <div key={cat}>
+                  <div className="px-3 py-1 bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+                    {cat}
                   </div>
-                ) : (
-                  <div className="max-h-48 overflow-y-auto">
-                    {dbTemplates.map(dbTemplate => (
-                      <div
-                        key={dbTemplate.id}
-                        className={`flex items-center justify-between px-3 py-2 hover:bg-blue-50 cursor-pointer ${
-                          currentDbId === dbTemplate.id ? 'bg-blue-100' : ''
-                        }`}
-                      >
-                        <div 
-                          className="flex-1"
-                          onClick={() => handleLoadDbTemplate(dbTemplate)}
-                        >
-                          <div className="text-sm font-medium flex items-center gap-1">
-                            {dbTemplate.nazev}
-                            {dbTemplate.jeVychozi ? <span className="text-xs text-green-600">★</span> : null}
-                            {currentDbId === dbTemplate.id && <span className="text-xs text-blue-500">(aktivní)</span>}
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            {new Date(dbTemplate.updatedAt).toLocaleDateString('cs-CZ')}
-                            {dbTemplate.popis && ` • ${dbTemplate.popis}`}
-                          </div>
+                  {vars.map(v => (
+                    <button
+                      key={v.key}
+                      onClick={() => {
+                        insertAtCursor(`{{${v.key}}}`);
+                        setShowVarPicker(false);
+                        setVarFilter('');
+                      }}
+                      className="w-full text-left px-3 py-1.5 hover:bg-blue-50 text-sm flex justify-between items-center"
+                    >
+                      <span>{v.label}</span>
+                      <code className="text-xs text-gray-400 bg-gray-100 px-1 rounded">
+                        {`{{${v.key}}}`}
+                      </code>
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Vložit blok */}
+        <div className="relative">
+          <button
+            onClick={() => { setShowBlockPicker(!showBlockPicker); setShowVarPicker(false); }}
+            className="px-3 py-1.5 text-sm bg-green-50 hover:bg-green-100 rounded border border-green-300 text-green-800"
+          >
+            ＋ Blok
+          </button>
+          {showBlockPicker && (
+            <div className="absolute left-0 top-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 w-72 max-h-96 overflow-auto">
+              {INSERTABLE_BLOCKS.map(b => (
+                <button
+                  key={b.id}
+                  onClick={() => {
+                    insertAtCursor('\n' + b.html + '\n');
+                    setShowBlockPicker(false);
+                  }}
+                  className="w-full text-left px-3 py-2 hover:bg-green-50 text-sm border-b border-gray-100"
+                >
+                  <div className="font-medium">{b.label}</div>
+                  <div className="text-xs text-gray-500">{b.description}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1" />
+
+        {/* Nastavení stránky */}
+        <div className="relative">
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded border border-gray-300"
+          >
+            ⚙️ Stránka
+          </button>
+          {showSettings && (
+            <div className="absolute right-0 top-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 w-64 p-3">
+              <div className="space-y-2 text-sm">
+                <div>
+                  <label className="text-gray-600 text-xs">Formát:</label>
+                  <select
+                    value={pageOptions.pageSize}
+                    onChange={e => setPageOptions(p => ({ ...p, pageSize: e.target.value as any }))}
+                    className="ml-2 border border-gray-300 rounded px-1 py-0.5 text-sm"
+                  >
+                    <option value="a4">A4</option>
+                    <option value="a5">A5</option>
+                    <option value="letter">Letter</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-gray-600 text-xs">Orientace:</label>
+                  <select
+                    value={pageOptions.orientation}
+                    onChange={e => setPageOptions(p => ({ ...p, orientation: e.target.value as any }))}
+                    className="ml-2 border border-gray-300 rounded px-1 py-0.5 text-sm"
+                  >
+                    <option value="portrait">Na výšku</option>
+                    <option value="landscape">Na šířku</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-gray-600 text-xs block">Okraje (mm):</label>
+                  <div className="grid grid-cols-4 gap-1 mt-1">
+                    {(['top', 'right', 'bottom', 'left'] as const).map(side => (
+                      <div key={side} className="text-center">
+                        <div className="text-[10px] text-gray-400">
+                          {side === 'top' ? 'Nahoře' : side === 'right' ? 'Vpravo' : side === 'bottom' ? 'Dole' : 'Vlevo'}
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteDbTemplate(dbTemplate.id);
-                          }}
-                          className="p-1 text-red-500 hover:bg-red-50 rounded"
-                        >
-                          <CloseIcon size={14} />
-                        </button>
+                        <input
+                          type="number"
+                          value={pageOptions.margins[side]}
+                          onChange={e => setPageOptions(p => ({
+                            ...p,
+                            margins: { ...p.margins, [side]: Number(e.target.value) },
+                          }))}
+                          className="w-full border border-gray-300 rounded px-1 py-0.5 text-xs text-center"
+                          min={0}
+                          max={50}
+                        />
                       </div>
                     ))}
                   </div>
-                )}
-                
-                {/* Lokální šablony */}
-                {savedTemplates.length > 0 && (
-                  <>
-                    <div className="p-2 border-b border-t border-gray-100 bg-gray-50">
-                      <span className="text-xs font-medium text-gray-500">💾 Lokální šablony (localStorage)</span>
-                    </div>
-                    <div className="max-h-32 overflow-y-auto">
-                      {savedTemplates.map(template => (
-                        <div
-                          key={template.id}
-                          className="flex items-center justify-between px-3 py-2 hover:bg-gray-50 cursor-pointer"
-                        >
-                          <div 
-                            className="flex-1"
-                            onClick={() => handleLoadTemplate(template)}
-                          >
-                            <div className="text-sm font-medium">{template.name}</div>
-                            <div className="text-xs text-gray-400">
-                              {new Date(template.updatedAt).toLocaleDateString('cs-CZ')}
-                            </div>
-                          </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteTemplate(template.id);
-                            }}
-                            className="p-1 text-red-500 hover:bg-red-50 rounded"
-                          >
-                            <CloseIcon size={14} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-                <div className="p-2 border-t border-gray-100">
-                  <button
-                    onClick={() => {
-                      state.resetTemplate();
-                      setCurrentDbId(null);
-                      setShowTemplateList(false);
-                    }}
-                    className="w-full px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 rounded"
-                  >
-                    + Nová prázdná šablona
-                  </button>
                 </div>
               </div>
-            )}
-          </div>
-
-          {/* Uložit lokálně */}
-          <button
-            onClick={handleSaveTemplate}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
-            title="Uložit lokálně (do prohlížeče)"
-          >
-            <SaveIcon size={16} />
-            Lokálně
-          </button>
-
-          {/* Uložit do databáze */}
-          <button
-            onClick={handleSaveToDb}
-            disabled={isSaving}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded transition-colors ${
-              isSaving 
-                ? 'bg-blue-300 text-white cursor-wait' 
-                : 'bg-blue-500 text-white hover:bg-blue-600'
-            }`}
-            title="Uložit do databáze (na server)"
-          >
-            <SaveIcon size={16} />
-            {isSaving ? 'Ukládám...' : currentDbId ? 'Aktualizovat' : 'Do databáze'}
-          </button>
-
-          {/* Separator */}
-          <div className="w-px h-6 bg-gray-300" />
-
-          {/* Náhled HTML (rychlý) */}
-          <button
-            onClick={handlePreview}
-            disabled={!revize}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded transition-colors ${
-              !revize
-                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                : 'bg-purple-500 text-white hover:bg-purple-600'
-            }`}
-            title={!revize ? 'Načtěte revizi pro náhled' : 'HTML náhled (rychlý)'}
-          >
-            <PreviewIcon size={16} />
-            Náhled
-          </button>
-
-          {/* Náhled PDF */}
-          <button
-            onClick={handlePDFPreview}
-            disabled={!revize || isGeneratingPDF}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded transition-colors ${
-              !revize || isGeneratingPDF
-                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                : 'bg-orange-500 text-white hover:bg-orange-600'
-            }`}
-            title={!revize ? 'Načtěte revizi pro náhled' : 'Náhled PDF'}
-          >
-            <PDFIcon size={16} />
-            {isGeneratingPDF ? 'Generuji...' : 'PDF náhled'}
-          </button>
-
-          {/* Stáhnout PDF */}
-          <button
-            onClick={handleDownloadPDF}
-            disabled={!revize || isGeneratingPDF}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded transition-colors ${
-              !revize || isGeneratingPDF
-                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                : 'bg-red-500 text-white hover:bg-red-600'
-            }`}
-            title={!revize ? 'Načtěte revizi pro stažení' : 'Stáhnout PDF'}
-          >
-            <PDFIcon size={16} />
-            Stáhnout PDF
-          </button>
-
-          {/* Separator */}
-          <div className="w-px h-6 bg-gray-300" />
-
-          {/* Export JSON */}
-          <button
-            onClick={handleExport}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-            title="Export šablony jako JSON"
-          >
-            <ExportIcon size={16} />
-            Export JSON
-          </button>
-
-          {/* Zavřít */}
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
-              title="Zavřít"
-            >
-              <CloseIcon size={20} />
-            </button>
+            </div>
           )}
         </div>
+
+        {/* Náhled / Export */}
+        <button
+          onClick={handleHTMLPreview}
+          className="px-3 py-1.5 text-sm bg-purple-100 hover:bg-purple-200 rounded border border-purple-300 text-purple-800"
+          title="Otevřít HTML náhled v novém okně"
+        >
+          🌐 HTML
+        </button>
+        <button
+          onClick={handlePDFPreview}
+          disabled={isGenerating}
+          className="px-3 py-1.5 text-sm bg-red-100 hover:bg-red-200 rounded border border-red-300 text-red-800 disabled:opacity-50"
+          title="Vygenerovat PDF náhled"
+        >
+          {isGenerating ? '⏳' : '📄'} PDF
+        </button>
+        <button
+          onClick={handleDownloadPDF}
+          disabled={isGenerating}
+          className="px-3 py-1.5 text-sm bg-green-600 text-white hover:bg-green-700 rounded disabled:opacity-50"
+          title="Stáhnout PDF"
+        >
+          ⬇️ Stáhnout PDF
+        </button>
       </div>
 
-      {/* Toolbar */}
-      <Toolbar
-        onAddWidget={state.addWidget}
-        onUndo={state.undo}
-        onRedo={state.redo}
-        canUndo={state.canUndo}
-        canRedo={state.canRedo}
-        onAlign={state.alignWidgets}
-        onDistribute={state.distributeWidgets}
-        onGroup={state.groupWidgets}
-        onUngroup={state.ungroupWidgets}
-        onLockSelected={state.lockSelectedWidgets}
-        onUnlockSelected={state.unlockSelectedWidgets}
-        onBringForward={state.bringForward}
-        onSendBackward={state.sendBackward}
-        onBringToFront={state.bringToFront}
-        onSendToBack={state.sendToBack}
-        onDuplicate={() => {
-          if (state.selectedWidgetIds.length === 1) {
-            state.duplicateWidget(state.selectedWidgetIds[0]);
-          }
-        }}
-        onDelete={state.deleteSelectedWidgets}
-        onToggleGrid={state.toggleGrid}
-        showGrid={state.showGrid}
-        onZoomIn={state.zoomIn}
-        onZoomOut={state.zoomOut}
-        scale={state.scale}
-        onAddPage={state.addPage}
-        selectedCount={state.selectedWidgetIds.length}
-        hasGroupSelection={state.selectedWidgets.some(w => w.type === 'group')}
-        activeZone={state.activeZone}
-        onSetActiveZone={state.setActiveZone}
-      />
-
-      {/* Main content */}
-      <div className="flex-1 flex min-h-0">
-        {/* Page tabs */}
-        <div className="w-16 bg-gray-200 border-r border-gray-300 overflow-y-auto flex-shrink-0">
-          {state.template.pages.map((page, index) => (
-            <div
-              key={page.id}
-              onClick={() => state.setCurrentPageIndex(index)}
-              className={`
-                p-2 cursor-pointer border-b border-gray-300 transition-colors relative group
-                ${index === state.currentPageIndex ? 'bg-white' : 'hover:bg-gray-100'}
-              `}
+      {/* ── Hlavní obsah: editor + náhled ── */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Editor panel */}
+        <div className="w-1/2 flex flex-col border-r border-gray-300">
+          {/* Záložky HTML/CSS */}
+          <div className="flex bg-gray-50 border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab('html')}
+              className={`px-4 py-2 text-sm font-medium ${
+                activeTab === 'html'
+                  ? 'bg-white border-b-2 border-blue-500 text-blue-700'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
             >
-              <div className="w-10 h-14 bg-white border border-gray-300 rounded shadow-sm mx-auto flex items-center justify-center text-xs text-gray-500">
-                {index + 1}
-              </div>
-              {/* Delete page button - only show if more than 1 page */}
-              {state.template.pages.length > 1 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (window.confirm(`Opravdu chcete smazat stránku ${index + 1}?`)) {
-                      state.deletePage(index);
-                    }
-                  }}
-                  className="absolute top-1 right-1 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                  title={`Smazat stránku ${index + 1}`}
-                >
-                  ×
-                </button>
-              )}
+              📝 HTML šablona
+            </button>
+            <button
+              onClick={() => setActiveTab('css')}
+              className={`px-4 py-2 text-sm font-medium ${
+                activeTab === 'css'
+                  ? 'bg-white border-b-2 border-blue-500 text-blue-700'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              🎨 CSS styly
+            </button>
+            <div className="flex-1" />
+            <div className="flex items-center px-3 text-xs text-gray-400">
+              {activeTab === 'html' ? `${templateHtml.length} znaků` : `${templateCss.length} znaků`}
             </div>
-          ))}
+          </div>
+
+          {/* Textarea editor */}
+          <textarea
+            ref={editorRef}
+            value={activeTab === 'html' ? templateHtml : templateCss}
+            onChange={e => {
+              if (activeTab === 'html') {
+                setTemplateHtml(e.target.value);
+              } else {
+                setTemplateCss(e.target.value);
+              }
+            }}
+            className="flex-1 p-4 font-mono text-sm leading-relaxed bg-gray-900 text-gray-100 resize-none focus:outline-none"
+            spellCheck={false}
+            wrap="off"
+            placeholder={
+              activeTab === 'html'
+                ? 'Sem napište HTML šablonu...\n\nPoužijte {{revize.nazev}} pro vložení proměnné\n{{#each rozvadece}}...{{/each}} pro cyklus'
+                : '/* Vlastní CSS styly */'
+            }
+          />
         </div>
 
-        {/* Canvas area */}
-        <div className="flex-1 overflow-auto p-6 bg-gray-300 min-h-0">
-          <div 
-            style={{ 
-              transform: `scale(${state.scale})`, 
-              transformOrigin: 'top left',
-              display: 'inline-block',
-            }}
-          >
-            {state.currentPage && (
-              <PageCanvas
-                page={state.currentPage}
-                pageIndex={state.currentPageIndex}
-                totalPages={state.template.pages.length}
-                widgets={state.currentPage.widgets}
-                selectedWidgetIds={state.selectedWidgetIds}
-                onSelectWidget={state.selectWidget}
-                onUpdateWidget={state.updateWidget}
-                onToggleLockWidget={state.toggleLockWidget}
-                onDeselectAll={state.deselectAll}
-                onEditWidget={handleEditWidget}
-                snapToGrid={state.template.snapToGrid}
-                gridSize={state.template.gridSize}
-                showGrid={state.showGrid}
-                showZones={state.showZones}
-                scale={state.scale}
-                revize={revize}
-                nastaveni={nastaveni}
-                headerHeight={state.template.headerHeight}
-                footerHeight={state.template.footerHeight}
-                pdfData={pdfData}
+        {/* Náhled panel */}
+        <div className="w-1/2 flex flex-col bg-gray-200">
+          <div className="bg-gray-50 border-b border-gray-200 px-4 py-2 text-sm text-gray-600 flex items-center justify-between">
+            <span>👁️ Živý náhled</span>
+            <span className="text-xs text-gray-400">
+              {pageOptions.pageSize.toUpperCase()} | {pageOptions.orientation === 'portrait' ? 'Na výšku' : 'Na šířku'}
+            </span>
+          </div>
+          <div className="flex-1 overflow-auto p-4 flex justify-center">
+            <div
+              style={{
+                width: pageOptions.orientation === 'landscape' ? '297mm' : '210mm',
+                minHeight: pageOptions.orientation === 'landscape' ? '210mm' : '297mm',
+                transform: 'scale(0.7)',
+                transformOrigin: 'top center',
+              }}
+            >
+              <iframe
+                ref={previewRef}
+                className="w-full bg-white shadow-lg"
+                style={{
+                  width: pageOptions.orientation === 'landscape' ? '297mm' : '210mm',
+                  minHeight: pageOptions.orientation === 'landscape' ? '210mm' : '297mm',
+                  height: '1200px',
+                  border: 'none',
+                }}
+                title="Náhled šablony"
               />
-            )}
+            </div>
           </div>
         </div>
-
-        {/* Properties panel */}
-        <PropertiesPanel
-          template={state.template}
-          selectedWidgets={state.selectedWidgets}
-          currentPageIndex={state.currentPageIndex}
-          onUpdateTemplate={state.updateTemplate}
-          onUpdatePage={state.updatePage}
-          onUpdateWidget={state.updateWidget}
-          onDeleteWidget={state.deleteWidget}
-          onDuplicateWidget={state.duplicateWidget}
-          onToggleLockWidget={state.toggleLockWidget}
-          onDeletePage={state.deletePage}
-          onEditWidget={handleEditWidget}
-        />
       </div>
 
-      {/* Widget Editor Modal */}
-      {editingWidget && (
-        <WidgetEditor
-          widget={editingWidget}
-          onSave={handleSaveWidget}
-          onClose={() => setEditingWidget(null)}
-        />
-      )}
-
-      {/* Template list backdrop */}
-      {showTemplateList && (
-        <div 
+      {/* Kliknutí kamkoliv zavře dropdown */}
+      {(showVarPicker || showBlockPicker || showTemplateList || showSettings) && (
+        <div
           className="fixed inset-0 z-40"
-          onClick={() => setShowTemplateList(false)}
+          onClick={() => {
+            setShowVarPicker(false);
+            setShowBlockPicker(false);
+            setShowTemplateList(false);
+            setShowSettings(false);
+          }}
         />
       )}
     </div>

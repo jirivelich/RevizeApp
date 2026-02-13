@@ -1725,7 +1725,7 @@ export function RevizeDetailPage() {
                     {z.poznamka && (
                       <p className="text-sm text-slate-500 mt-1 italic">{z.poznamka}</p>
                     )}
-                    {z.fotky && z.fotky.length > 0 && (
+                    {Array.isArray(z.fotky) && z.fotky.length > 0 && (
                       <div className="flex gap-2 mt-2">
                         {z.fotky.slice(0, 4).map((foto, index) => (
                           <img
@@ -1736,7 +1736,7 @@ export function RevizeDetailPage() {
                             onClick={() => setLightboxImage(foto)}
                           />
                         ))}
-                        {z.fotky.length > 4 && (
+                        {Array.isArray(z.fotky) && z.fotky.length > 4 && (
                           <span className="w-12 h-12 flex items-center justify-center bg-slate-200 rounded text-sm font-medium text-slate-600">
                             +{z.fotky.length - 4}
                           </span>

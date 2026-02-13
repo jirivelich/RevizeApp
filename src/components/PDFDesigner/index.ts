@@ -1,68 +1,33 @@
-// PDFDesigner - barrel export
+// PDFDesigner - barrel export (šablonový přístup)
 export { default as PDFDesigner } from './PDFDesignerMain';
-export { Toolbar } from './Toolbar';
-export { PageCanvas } from './PageCanvas';
-export { PropertiesPanel } from './PropertiesPanel';
-export { WidgetEditor } from './WidgetEditor';
-export { DraggableWidget } from './DraggableWidget';
-export { renderWidgetContent } from './WidgetRenderer';
-export { useDesignerState } from './useDesignerState';
 
-// Types
-export type {
-  Widget,
-  WidgetType,
-  WidgetStyle,
-  PageZone,
-  PageTemplate,
-  DesignerTemplate,
-  TableConfig,
-  TableColumn,
-  TableType,
-  PageSize,
-  Variable,
-  RepeaterType,
-  RepeaterConfig,
-  RepeaterItemTemplate,
-} from './types';
+// Template Engine
+export {
+  processTemplate,
+  createTemplateContext,
+  renderFullDocument,
+  TEMPLATE_VARIABLES,
+  INSERTABLE_BLOCKS,
+} from './templateEngine';
 
-// Constants
-export {
-  VARIABLES,
-  TABLE_COLUMNS,
-  TABLE_TYPES,
-  WIDGET_TYPES,
-  PAGE_SIZES,
-  DEFAULT_WIDGET_STYLE,
-  REPEATER_TYPES,
-  ROZVADEC_REPEATER_TEMPLATE,
-} from './constants';
-// Default templates
-export {
-  createRevizniZpravaTemplate,
-  createEmptyTemplate,
-  DEFAULT_TEMPLATES,
-} from './defaultTemplates';
-
-// Pagination utilities
-export {
-  processPagination,
-  calculateTableRowsPerPage,
-  splitTableWidget,
-  needsPagination,
-} from './paginationUtils';
+export type { PageOptions, VariableInfo, InsertableBlock } from './templateEngine';
 
 // PDF Renderer
 export {
-  renderTemplateToPDF,
   openPDFPreview,
   downloadPDF,
+  openHTMLPreview,
+  generatePDFFromTemplate,
 } from './pdfRenderer';
 
-// HTML Renderer
-export {
-  renderTemplateToHTML,
-  openHTMLPreview,
-} from './htmlRenderer';
+export type { PDFRenderData, PageOptions as PdfPageOptions } from './pdfRenderer';
 
-export type { PDFRenderData } from './pdfRenderer';
+// Default Templates
+export {
+  DEFAULT_HTML_TEMPLATES,
+  DEFAULT_TEMPLATE_CSS,
+  REVIZNI_ZPRAVA_HTML,
+  JEDNODUCHA_ZPRAVA_HTML,
+} from './defaultHtmlTemplates';
+
+export type { HtmlTemplate } from './defaultHtmlTemplates';

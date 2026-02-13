@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { PDFDesigner } from '../components/PDFDesigner';
 import { revizeApi, nastaveniApi } from '../services/api';
 import type { Revize, Nastaveni, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, MericiPristroj, Zakaznik } from '../types';
-import type { DesignerTemplate } from '../components/PDFDesigner';
 
 // Helper pro autentizovaný fetch
 function getAuthHeaders(): HeadersInit {
@@ -136,11 +135,9 @@ export function PDFDesignerPage() {
     loadData();
   }, []);
 
-  // Export šablony jako PDF (zatím jen log)
-  const handleExport = (template: DesignerTemplate) => {
-    console.log('Exporting template:', template);
-    // TODO: Implementovat skutečný export do PDF pomocí html2pdf nebo jsPDF
-    alert(`Šablona "${template.name}" připravena k exportu.\n\nPočet stránek: ${template.pages.length}\nCelkem widgetů: ${template.pages.reduce((sum, p) => sum + p.widgets.length, 0)}`);
+  // Export šablony
+  const handleExport = () => {
+    console.log('Export requested');
   };
 
   if (loading) {

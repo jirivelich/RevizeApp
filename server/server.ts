@@ -402,7 +402,11 @@ async function startServer() {
   app.get('/api/zavady', authMiddleware, async (req, res) => {
     try {
       const result = await pool.query('SELECT * FROM zavada');
-      res.json(result.rows);
+      const rows = result.rows.map((row: Record<string, unknown>) => ({
+        ...row,
+        fotky: typeof row.fotky === 'string' ? JSON.parse(row.fotky) : (row.fotky || []),
+      }));
+      res.json(rows);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
@@ -411,7 +415,11 @@ async function startServer() {
   app.get('/api/zavady/revize/:revizeId', authMiddleware, async (req, res) => {
     try {
       const result = await pool.query('SELECT * FROM zavada WHERE "revizeId" = $1', [req.params.revizeId]);
-      res.json(result.rows);
+      const rows = result.rows.map((row: Record<string, unknown>) => ({
+        ...row,
+        fotky: typeof row.fotky === 'string' ? JSON.parse(row.fotky) : (row.fotky || []),
+      }));
+      res.json(rows);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
