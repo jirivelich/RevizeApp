@@ -1,0 +1,392 @@
+/* ========================================
+   REPORT PRINT – Tisková šablona revizní zprávy
+   POZN: @page margin-box pravidla jsou v JS (pagedPageCSS)
+         aby je Vite nezničil
+   ======================================== */
+
+/* ── Pozadí stránky ── */
+.report-print-bg {
+  background: #e2e8f0;
+  min-height: 100vh;
+}
+
+/* ── Toolbar ── */
+.print-hide {
+  display: block;
+}
+
+/* ── Skrytý zdrojový obsah ── */
+.report-source {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 210mm;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ── Pagedjs cílový kontejner ── */
+.report-preview {
+  padding: 24px 0;
+}
+
+/* ── String-set prvky (vizuálně skryté, ale v layoutu) ── */
+.report-string-number,
+.report-string-title,
+.report-string-firma {
+  display: block;
+  height: 0;
+  overflow: hidden;
+  font-size: 0;
+  line-height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Hlavní obsah stránky ── */
+.report-page {
+  font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+  font-size: 10pt;
+  line-height: 1.45;
+  color: #1e293b;
+}
+
+/* ── Záhlaví dokumentu ── */
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #1e40af;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+}
+
+.report-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.report-logo {
+  max-height: 50px;
+  max-width: 120px;
+  object-fit: contain;
+}
+
+.report-header-firma-name {
+  font-size: 13pt;
+  font-weight: 700;
+  color: #1e40af;
+}
+
+.report-header-firma-detail {
+  font-size: 8.5pt;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.report-header-right {
+  text-align: right;
+}
+
+.report-header-info {
+  font-size: 9pt;
+  margin-bottom: 2px;
+}
+
+.report-header-info-label {
+  color: #64748b;
+  margin-right: 4px;
+}
+
+.report-header-info-value {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* ── Nadpis dokumentu ── */
+.report-title {
+  text-align: center;
+  font-size: 14pt;
+  font-weight: 800;
+  color: #1e293b;
+  margin-top: 14px;
+  margin-bottom: 2px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.report-subtitle {
+  text-align: center;
+  font-size: 11pt;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 18px;
+}
+
+/* ── Sekce ── */
+.report-section {
+  margin-bottom: 12px;
+  break-inside: auto;
+}
+
+.report-section-title {
+  font-size: 10.5pt;
+  font-weight: 700;
+  color: #1e40af;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 3px;
+  margin-bottom: 6px;
+  break-after: avoid;
+}
+
+.report-section-content {
+  padding-left: 2px;
+}
+
+/* ── Podsekce ── */
+.report-subsection {
+  margin-bottom: 10px;
+  break-inside: auto;
+}
+
+.report-subsection-title {
+  font-size: 9.5pt;
+  font-weight: 600;
+  color: #334155;
+  background: #f1f5f9;
+  padding: 4px 8px;
+  border-radius: 3px;
+  margin-bottom: 4px;
+  border-left: 3px solid #1e40af;
+  break-after: avoid;
+}
+
+/* ── Info tabulka (key: value) ── */
+.report-info-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9.5pt;
+}
+
+.report-info-table td {
+  padding: 3px 6px;
+  vertical-align: top;
+}
+
+.report-info-table .label-cell {
+  width: 200px;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+}
+
+/* ── Datová tabulka ── */
+.report-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8.5pt;
+  margin-top: 4px;
+  break-inside: auto;
+}
+
+.report-data-table th {
+  background: #1e40af;
+  color: white;
+  padding: 4px 6px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 8pt;
+  border: 1px solid #1e3a8a;
+}
+
+.report-data-table td {
+  padding: 3px 6px;
+  border: 1px solid #cbd5e1;
+  vertical-align: top;
+}
+
+.report-data-table tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.report-data-table thead {
+  display: table-header-group;
+}
+
+.report-data-table tr {
+  break-inside: avoid;
+}
+
+/* ── Text ── */
+.report-text {
+  font-size: 9.5pt;
+  color: #1e293b;
+  white-space: pre-line;
+}
+
+.report-text p {
+  margin: 2px 0 0 0;
+}
+
+.report-empty {
+  font-size: 9pt;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* ── Výsledek revize ── */
+.report-result {
+  border: 2px solid #16a34a;
+  border-radius: 6px;
+  padding: 12px 16px;
+  text-align: center;
+  margin: 6px 0;
+  break-inside: avoid;
+}
+
+.report-result-label {
+  font-size: 10pt;
+  color: #475569;
+  margin-bottom: 4px;
+}
+
+.report-result-value {
+  font-size: 14pt;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+/* ── Podpisy ── */
+.report-signatures {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  margin-top: 10px;
+  break-inside: avoid;
+}
+
+.report-signature-box {
+  flex: 1;
+  text-align: center;
+}
+
+.report-signature-label {
+  font-size: 9pt;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 4px;
+}
+
+.report-signature-name {
+  font-size: 10pt;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.report-signature-cert {
+  font-size: 8pt;
+  color: #64748b;
+  margin-bottom: 30px;
+}
+
+.report-signature-line {
+  border-top: 1px solid #1e293b;
+  margin: 0 20px;
+}
+
+.report-signature-hint {
+  font-size: 7.5pt;
+  color: #94a3b8;
+  margin-top: 3px;
+}
+
+.report-date-line {
+  margin-top: 20px;
+  font-size: 9.5pt;
+  color: #475569;
+}
+
+/* ========================================
+   PAGEDJS – úpravy generovaných stránek
+   ======================================== */
+.pagedjs_page {
+  background: white !important;
+  margin-bottom: 24px !important;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.12) !important;
+  border-radius: 2px;
+}
+
+.pagedjs_pages {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+/* Barvy v pagedjs margin-boxech */
+.pagedjs_margin-top-left .pagedjs_margin-content,
+.pagedjs_margin-top-right .pagedjs_margin-content {
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 4px;
+}
+
+.pagedjs_margin-bottom-left .pagedjs_margin-content,
+.pagedjs_margin-bottom-center .pagedjs_margin-content,
+.pagedjs_margin-bottom-right .pagedjs_margin-content {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 4px;
+}
+
+/* ========================================
+   TISKOVÁ MÉDIA – @media print
+   ======================================== */
+@media print {
+  .print-hide,
+  .print-hide * {
+    display: none !important;
+  }
+
+  .report-source {
+    display: none !important;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .report-print-bg {
+    background: white !important;
+    min-height: auto !important;
+  }
+
+  .report-preview {
+    padding: 0 !important;
+  }
+
+  .pagedjs_page {
+    box-shadow: none !important;
+    margin-bottom: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .report-data-table th {
+    background: #1e40af !important;
+    color: white !important;
+  }
+
+  .report-data-table tbody tr:nth-child(even) {
+    background: #f8fafc !important;
+  }
+
+  .report-subsection-title {
+    background: #f1f5f9 !important;
+  }
+
+  .report-result {
+    border-width: 2px !important;
+  }
+}

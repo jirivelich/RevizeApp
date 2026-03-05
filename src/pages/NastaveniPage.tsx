@@ -1,7 +1,36 @@
 import { useEffect, useState, useRef } from 'react';
 import { Button, Card, Input } from '../components/ui';
-import { nastaveniService, exportService } from '../services/database';
-import type { Nastaveni } from '../types';
+import { nastaveniService, backupService, predvolenyTextService } from '../services/database';
+import type { Nastaveni, PredvolenyText } from '../types';
+
+// Čitelné názvy tabulek
+const TABLE_LABELS: Record<string, string> = {
+  revize: 'Revize',
+  rozvadec: 'Rozváděče',
+  okruh: 'Okruhy',
+  zavada: 'Závady',
+  mistnost: 'Místnosti',
+  zarizeni: 'Zařízení',
+  zakazka: 'Zakázky',
+  mericiPristroj: 'Měřicí přístroje',
+  revizePristroj: 'Vazby revize-přístroj',
+  firma: 'Firmy',
+  nastaveni: 'Nastavení',
+  zavadaKatalog: 'Katalog závad',
+  zakaznik: 'Zákazníci',
+};
+
+// Kategorie polí pro předvolené texty
+const POLE_KATEGORIE: { key: string; label: string }[] = [
+  { key: 'popisZarizeni', label: 'Popis revidovaného zařízení' },
+  { key: 'rozsahRevize', label: 'Předmět revize je' },
+  { key: 'predmetNeni', label: 'Předmět revize není' },
+  { key: 'podklady', label: 'Podklady pro provedení revize' },
+  { key: 'provedeneUkony', label: 'Soupis provedených úkonů' },
+  { key: 'vyhodnoceniPredchozich', label: 'Vyhodnocení předchozích revizí' },
+  { key: 'vysledekOduvodneni', label: 'Odůvodnění výsledku revize' },
+  { key: 'zaver', label: 'Závěr revize' },
+];
 
 export function NastaveniPage() {
   const [nastaveni, setNastaveni] = useState<Nastaveni>({
@@ -20,17 +49,85 @@ export function NastaveniPage() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  const [activeTab, setActiveTab] = useState<'obecne' | 'texty' | 'zalohy'>('obecne');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
+  // Backup state
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isCleaning, setIsCleaning] = useState(false);
+  const [backupMessage, setBackupMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [mergeMode, setMergeMode] = useState<'replace' | 'merge'>('replace');
+  const [databaseStats, setDatabaseStats] = useState<Record<string, number> | null>(null);
+  const [databaseSize, setDatabaseSize] = useState<string | null>(null);
+  const [lastBackupDate, setLastBackupDate] = useState<string | null>(
+    localStorage.getItem('lastBackupDate')
+  );
+
+  // Předvolené texty
+  const [vlastniTexty, setVlastniTexty] = useState<PredvolenyText[]>([]);
+  const [textyLoading, setTextyLoading] = useState(false);
+  const [editingText, setEditingText] = useState<PredvolenyText | null>(null);
+  const [newText, setNewText] = useState<{ pole: string; nazev: string; text: string } | null>(null);
+
   useEffect(() => {
     loadNastaveni();
+    loadTexty();
+    loadStats();
   }, []);
+
+  const loadStats = async () => {
+    try {
+      const { stats, sizeMB } = await backupService.getDatabaseStats();
+      setDatabaseStats(stats);
+      setDatabaseSize(sizeMB);
+    } catch (error) {
+      console.error('Chyba při načítání statistiky:', error);
+    }
+  };
 
   const loadNastaveni = async () => {
     const data = await nastaveniService.get();
     if (data) {
       setNastaveni(data);
+    }
+  };
+
+  const loadTexty = async () => {
+    setTextyLoading(true);
+    try {
+      const data = await predvolenyTextService.getAll();
+      setVlastniTexty(data);
+    } catch {
+      setVlastniTexty([]);
+    } finally {
+      setTextyLoading(false);
+    }
+  };
+
+  const handleSaveText = async (item: { id?: number; pole: string; nazev: string; text: string }) => {
+    try {
+      if (item.id) {
+        await predvolenyTextService.update(item.id, { nazev: item.nazev, text: item.text });
+      } else {
+        await predvolenyTextService.create({ pole: item.pole, nazev: item.nazev, text: item.text });
+      }
+      await loadTexty();
+      setEditingText(null);
+      setNewText(null);
+    } catch (err) {
+      console.error('Chyba při ukládání textu:', err);
+    }
+  };
+
+  const handleDeleteText = async (id: number) => {
+    if (!window.confirm('Smazat tuto předvolbu?')) return;
+    try {
+      await predvolenyTextService.delete(id);
+      setVlastniTexty(prev => prev.filter(t => t.id !== id));
+    } catch (err) {
+      console.error('Chyba při mazání:', err);
     }
   };
 
@@ -57,36 +154,103 @@ export function NastaveniPage() {
     }
   };
 
-  const handleExport = async () => {
-    const data = await exportService.exportAll();
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `revizeapp-export-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
+  // Export databáze
+  const handleBackupExport = async () => {
+    setIsExporting(true);
+    setBackupMessage(null);
+    try {
+      const jsonData = await backupService.exportDatabase();
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+      const filename = `revizeapp-backup-${timestamp}.json`;
 
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        try {
-          await exportService.importAll(reader.result as string);
-          setSaveMessage('Data byla úspěšně importována.');
-          loadNastaveni();
-          setTimeout(() => setSaveMessage(''), 3000);
-        } catch (error) {
-          setSaveMessage('Chyba při importu dat.');
-        }
-      };
-      reader.readAsText(file);
+      const blob = new Blob([jsonData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setBackupMessage({
+        type: 'success',
+        text: `✅ Databáze byla úspěšně exportována jako ${filename}`,
+      });
+
+      const now = new Date().toISOString();
+      localStorage.setItem('lastBackupDate', now);
+      setLastBackupDate(now);
+      await loadStats();
+    } catch (error) {
+      setBackupMessage({
+        type: 'error',
+        text: `Chyba při exportu: ${error instanceof Error ? error.message : 'Neznámá chyba'}`,
+      });
+    } finally {
+      setIsExporting(false);
     }
   };
+
+  // Import databáze
+  const handleBackupImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    setBackupMessage(null);
+
+    try {
+      const jsonData = await file.text();
+      const result = await backupService.importDatabase(jsonData, mergeMode);
+
+      setBackupMessage({
+        type: 'success',
+        text: `✅ Import dokončen (režim: ${mergeMode === 'replace' ? 'Nahradit' : 'Sloučit'}). Importováno: ${result.imported} záznamů${result.errors > 0 ? `, chyby: ${result.errors}` : ''}.`,
+      });
+
+      await loadStats();
+      loadNastaveni();
+    } catch (error) {
+      setBackupMessage({
+        type: 'error',
+        text: `Chyba při importu: ${error instanceof Error ? error.message : 'Neznámá chyba'}`,
+      });
+    } finally {
+      setIsImporting(false);
+      if (e.target) {
+        e.target.value = '';
+      }
+    }
+  };
+
+  // Očistit staré data
+  const handleCleanOldData = async () => {
+    if (!window.confirm('Opravdu chcete smazat všechny schválené revize starší než 365 dní a jejich závislé záznamy?')) {
+      return;
+    }
+
+    setIsCleaning(true);
+    try {
+      const result = await backupService.cleanOldData(365);
+      setBackupMessage({
+        type: 'success',
+        text: result.message || `✅ Smazáno ${result.deleted} starých revizí a jejich závislých záznamů.`,
+      });
+      await loadStats();
+    } catch (error) {
+      setBackupMessage({
+        type: 'error',
+        text: `Chyba: ${error instanceof Error ? error.message : 'Neznámá chyba'}`,
+      });
+    } finally {
+      setIsCleaning(false);
+    }
+  };
+
+  const totalRecords = databaseStats
+    ? Object.values(databaseStats).reduce((sum, n) => sum + n, 0)
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -103,6 +267,46 @@ export function NastaveniPage() {
         </div>
       )}
 
+      {/* Záložky */}
+      <div className="flex gap-1 border-b border-slate-200">
+        <button
+          onClick={() => setActiveTab('obecne')}
+          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors cursor-pointer ${
+            activeTab === 'obecne'
+              ? 'bg-white text-blue-600 border border-b-white border-slate-200 -mb-px'
+              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+          }`}
+        >
+          ⚙️ Obecné
+        </button>
+        <button
+          onClick={() => setActiveTab('texty')}
+          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors cursor-pointer ${
+            activeTab === 'texty'
+              ? 'bg-white text-blue-600 border border-b-white border-slate-200 -mb-px'
+              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+          }`}
+        >
+          📋 Předvolené texty
+          {vlastniTexty.length > 0 && (
+            <span className="ml-1.5 px-1.5 py-0.5 text-[10px] bg-blue-100 text-blue-600 rounded-full">{vlastniTexty.length}</span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('zalohy')}
+          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors cursor-pointer ${
+            activeTab === 'zalohy'
+              ? 'bg-white text-blue-600 border border-b-white border-slate-200 -mb-px'
+              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+          }`}
+        >
+          💾 Zálohy
+        </button>
+      </div>
+
+      {/* ══════ TAB: OBECNÉ ══════ */}
+      {activeTab === 'obecne' && (
+        <>
       <Card title="Údaje o firmě">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
@@ -206,41 +410,14 @@ export function NastaveniPage() {
         </div>
       </Card>
 
-      <Card title="Export a Import dat">
-        <p className="text-slate-600 mb-4">
-          Exportujte všechna data do JSON souboru pro zálohu nebo importujte data z předchozí zálohy.
-        </p>
-        <div className="flex gap-4">
-          <Button onClick={handleExport}>
-            📥 Exportovat data
-          </Button>
-          <input
-            ref={importInputRef}
-            type="file"
-            accept=".json"
-            onChange={handleImport}
-            className="hidden"
-          />
-          <Button
-            variant="secondary"
-            onClick={() => importInputRef.current?.click()}
-          >
-            📤 Importovat data
-          </Button>
-        </div>
-        <p className="text-sm text-slate-500 mt-4">
-          ⚠️ Import dat přepíše všechna existující data.
-        </p>
-      </Card>
-
       <Card title="O aplikaci">
         <div className="space-y-2 text-slate-600">
           <p><strong>RevizeApp</strong> - Aplikace pro správu elektrotechnických revizí</p>
           <p>Verze: 1.0.0</p>
           <p>© 2026 RevizeApp</p>
           <p className="text-sm text-slate-500 mt-4">
-            Data jsou ukládána lokálně v prohlížeči pomocí IndexedDB. 
-            Pro zálohování dat použijte funkci Export.
+            Data jsou ukládána na serveru v PostgreSQL databázi. 
+            Pro zálohování dat použijte záložku Zálohy.
           </p>
         </div>
       </Card>
@@ -250,6 +427,262 @@ export function NastaveniPage() {
           {isSaving ? 'Ukládání...' : '💾 Uložit nastavení'}
         </Button>
       </div>
+        </>
+      )}
+
+      {/* ══════ TAB: ZÁLOHY ══════ */}
+      {activeTab === 'zalohy' && (
+        <div className="space-y-6">
+          {backupMessage && (
+            <div
+              className={`p-4 rounded-lg border ${
+                backupMessage.type === 'success'
+                  ? 'border-green-200 bg-green-50 text-green-800'
+                  : 'border-red-200 bg-red-50 text-red-800'
+              }`}
+            >
+              {backupMessage.text}
+            </div>
+          )}
+
+          {/* Statistika databáze */}
+          <Card title="📊 Statistika databáze">
+            {databaseStats ? (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                  {Object.entries(databaseStats).map(([table, count]) => (
+                    <div key={table} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                      <p className="text-xs text-slate-500 truncate" title={table}>
+                        {TABLE_LABELS[table] || table}
+                      </p>
+                      <p className="text-xl font-bold text-slate-800">{count}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center gap-6 mt-4 pt-4 border-t text-sm text-slate-600">
+                  <span>💾 Velikost DB: <strong>{databaseSize} MB</strong></span>
+                  <span>📝 Celkem záznamů: <strong>{totalRecords}</strong></span>
+                  {lastBackupDate && (
+                    <span>
+                      🕐 Poslední záloha:{' '}
+                      <strong>{new Date(lastBackupDate).toLocaleString('cs-CZ')}</strong>
+                    </span>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="text-slate-500">Načítání statistiky...</p>
+            )}
+            <div className="mt-3">
+              <Button variant="secondary" size="sm" onClick={loadStats}>
+                🔄 Obnovit statistiku
+              </Button>
+            </div>
+          </Card>
+
+          {/* Export */}
+          <Card title="📥 Export databáze">
+            <div className="space-y-4">
+              <p className="text-slate-600">
+                Exportujte všechna data do JSON souboru. Tento soubor si můžete uložit jako zálohu nebo jej sdílet.
+              </p>
+              <Button onClick={handleBackupExport} disabled={isExporting}>
+                {isExporting ? 'Probíhá export...' : '📥 Exportovat databázi'}
+              </Button>
+            </div>
+          </Card>
+
+          {/* Import */}
+          <Card title="📤 Import databáze">
+            <div className="space-y-4">
+              <p className="text-slate-600">
+                Nahrajte JSON soubor s daty. Vyberte režim importu:
+              </p>
+
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="mergeMode"
+                    value="replace"
+                    checked={mergeMode === 'replace'}
+                    onChange={(e) => setMergeMode(e.target.value as 'replace' | 'merge')}
+                  />
+                  <span className="text-sm font-medium">🔄 Nahradit vše (smazat stávající data)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="mergeMode"
+                    value="merge"
+                    checked={mergeMode === 'merge'}
+                    onChange={(e) => setMergeMode(e.target.value as 'replace' | 'merge')}
+                  />
+                  <span className="text-sm font-medium">🔗 Sloučit (zachovat stávající data)</span>
+                </label>
+              </div>
+
+              <div className="relative">
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleBackupImport}
+                  disabled={isImporting}
+                  className="hidden"
+                  id="backup-import-file"
+                />
+                <label htmlFor="backup-import-file" className="block">
+                  <Button
+                    disabled={isImporting}
+                    className="w-full cursor-pointer text-center"
+                    onClick={() => document.getElementById('backup-import-file')?.click()}
+                  >
+                    {isImporting ? 'Probíhá import...' : '📤 Vybrat soubor k importu'}
+                  </Button>
+                </label>
+              </div>
+
+              <p className="text-xs text-slate-500 border-t pt-3">
+                ⚠️ Upozornění: Import v režimu "Nahradit vše" smaže všechna stávající data. Režim "Sloučit" může vést k duplicitám.
+              </p>
+            </div>
+          </Card>
+
+          {/* Údržba */}
+          <Card title="🧹 Údržba databáze">
+            <div className="space-y-4">
+              <p className="text-slate-600">
+                Očistit staré data z databáze. Smazou se pouze schválené revize starší než 365 dní.
+              </p>
+              <Button variant="warning" onClick={handleCleanOldData} disabled={isCleaning}>
+                {isCleaning ? '🧹 Probíhá čištění...' : '🧹 Smazat stará data'}
+              </Button>
+            </div>
+          </Card>
+
+          {/* Informace */}
+          <Card title="ℹ️ O databázi">
+            <div className="space-y-3 text-sm text-slate-600">
+              <p><strong>Typ:</strong> PostgreSQL</p>
+              <p><strong>Umístění:</strong> Server (víceuživatelský přístup)</p>
+              <p><strong>Formát zálohy:</strong> JSON (všechny tabulky včetně vazeb)</p>
+              <p><strong>Verze exportu:</strong> 2.0.0</p>
+              <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200 mt-2">
+                💡 Tip: Pravidelně exportujte zálohu. Doporučujeme provádět zálohu alespoň jednou týdně nebo před každým důležitým importem.
+              </p>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* ══════ TAB: TEXTY ══════ */}
+      {activeTab === 'texty' && (
+        <div className="space-y-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-700">
+              Zde můžete spravovat vlastní předvolené texty, které se zobrazí v dropdown menu u textových polí v záložce „Revidované zařízení".
+              Texty jsou rozděleny podle jednotlivých polí revizní zprávy.
+            </p>
+          </div>
+
+          {textyLoading ? (
+            <div className="text-center py-8 text-slate-500">Načítání...</div>
+          ) : (
+            POLE_KATEGORIE.map(({ key, label }) => {
+              const textyPole = vlastniTexty.filter(t => t.pole === key);
+              return (
+                <Card key={key} title={label}>
+                  {textyPole.length > 0 ? (
+                    <div className="space-y-2">
+                      {textyPole.map(t => (
+                        <div key={t.id} className="border border-slate-200 rounded-lg overflow-hidden">
+                          {editingText?.id === t.id ? (
+                            /* Editační režim */
+                            <div className="p-3 bg-slate-50 space-y-2">
+                              <input
+                                type="text"
+                                value={editingText.nazev}
+                                onChange={(e) => setEditingText({ ...editingText, nazev: e.target.value })}
+                                className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                                placeholder="Název předvolby"
+                              />
+                              <textarea
+                                value={editingText.text}
+                                onChange={(e) => setEditingText({ ...editingText, text: e.target.value })}
+                                rows={4}
+                                className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none resize-y"
+                                placeholder="Text předvolby"
+                              />
+                              <div className="flex gap-2 justify-end">
+                                <Button variant="secondary" size="sm" onClick={() => setEditingText(null)}>Zrušit</Button>
+                                <Button size="sm" onClick={() => handleSaveText(editingText)} disabled={!editingText.nazev.trim() || !editingText.text.trim()}>Uložit</Button>
+                              </div>
+                            </div>
+                          ) : (
+                            /* Zobrazení */
+                            <div className="flex items-start">
+                              <div className="flex-1 p-3">
+                                <div className="text-sm font-semibold text-slate-800">{t.nazev}</div>
+                                <div className="text-xs text-slate-500 mt-1 whitespace-pre-wrap line-clamp-3">{t.text}</div>
+                              </div>
+                              <div className="flex items-center gap-1 p-2">
+                                <button
+                                  onClick={() => setEditingText({ ...t })}
+                                  className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
+                                  title="Upravit"
+                                >✏️</button>
+                                <button
+                                  onClick={() => t.id && handleDeleteText(t.id)}
+                                  className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                                  title="Smazat"
+                                >🗑️</button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-400 italic">Žádné vlastní předvolby pro toto pole.</p>
+                  )}
+
+                  {/* Přidání nové předvolby */}
+                  {newText?.pole === key ? (
+                    <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
+                      <input
+                        type="text"
+                        value={newText.nazev}
+                        onChange={(e) => setNewText({ ...newText, nazev: e.target.value })}
+                        className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                        placeholder="Název předvolby"
+                        autoFocus
+                      />
+                      <textarea
+                        value={newText.text}
+                        onChange={(e) => setNewText({ ...newText, text: e.target.value })}
+                        rows={4}
+                        className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none resize-y"
+                        placeholder="Text předvolby"
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <Button variant="secondary" size="sm" onClick={() => setNewText(null)}>Zrušit</Button>
+                        <Button size="sm" onClick={() => handleSaveText(newText)} disabled={!newText.nazev.trim() || !newText.text.trim()}>Uložit</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setNewText({ pole: key, nazev: '', text: '' })}
+                      className="mt-3 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-1.5 rounded transition-colors cursor-pointer font-medium"
+                    >
+                      + Přidat předvolbu
+                    </button>
+                  )}
+                </Card>
+              );
+            })
+          )}
+        </div>
+      )}
     </div>
   );
 }

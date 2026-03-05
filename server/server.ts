@@ -141,7 +141,8 @@ async function startServer() {
         'vysledekOduvodneni', 'rozsahRevize', 'predmetNeni', 'napetovaSoustava',
         'ochranaOpatreni', 'podklady', 'vyhodnoceniPredchozich',
         'pouzitePristroje', 'provedeneUkony', 'firmaJmeno', 'firmaAdresa',
-        'firmaIco', 'firmaDic', 'zaver', 'kategorieRevize', 'updatedAt'
+        'firmaIco', 'firmaDic', 'zaver', 'kategorieRevize', 'updatedAt',
+        'tiskSekce', 'popisZarizeni'
       ];
       
       const updates: Record<string, any> = { updatedAt: now };
@@ -637,6 +638,8 @@ async function startServer() {
 
   app.delete('/api/pristroje/:id', authMiddleware, async (req, res) => {
     try {
+      // Nejprve smazat vazby na revize
+      await pool.query('DELETE FROM "revizePristroj" WHERE "pristrojId" = $1', [req.params.id]);
       await pool.query('DELETE FROM "mericiPristroj" WHERE id = $1', [req.params.id]);
       res.json({ success: true });
     } catch (error) {
@@ -796,269 +799,6 @@ async function startServer() {
     }
   });
 
-  // ==================== ŠABLONY ====================
-  // Helper pro konverzi INTEGER polí na boolean
-  const booleanFieldsSablona = [
-    'jeVychozi', 'zahlaviZobrazitLogo', 'zahlaviZobrazitFirmu', 'zahlaviZobrazitTechnika',
-    'uvodniStranaZobrazit', 'uvodniStranaZobrazitFirmu', 'uvodniStranaZobrazitTechnika', 
-    'uvodniStranaZobrazitObjekt', 'uvodniStranaZobrazitZakaznika', 'uvodniStranaZobrazitVyhodnoceni', 'uvodniStranaZobrazitPodpisy',
-    'uvodniStranaNadpisRamecek', 'uvodniStranaRamecekUdaje', 'uvodniStranaRamecekObjekt', 'uvodniStranaRamecekZakaznik',
-    'uvodniStranaRamecekVyhodnoceni', 'zapatiZobrazitCisloStranky', 'zapatiZobrazitDatum'
-  ];
-  
-  const parseSablonaRow = (row: any) => {
-    const result = { ...row };
-    // Konvertovat INTEGER na boolean
-    for (const field of booleanFieldsSablona) {
-      if (field in result) {
-        result[field] = result[field] === 1 || result[field] === true;
-      }
-    }
-    // Parsovat JSON pole
-    result.sekce = row.sekce ? JSON.parse(row.sekce) : [];
-    result.sloupceOkruhu = row.sloupceOkruhu ? JSON.parse(row.sloupceOkruhu) : [];
-    result.uvodniStranaBloky = row.uvodniStranaBloky ? JSON.parse(row.uvodniStranaBloky) : undefined;
-    return result;
-  };
-
-  app.get('/api/sablony', authMiddleware, async (req, res) => {
-    try {
-      const result = await pool.query('SELECT * FROM sablona ORDER BY nazev');
-      const sablony = result.rows.map(parseSablonaRow);
-      res.json(sablony);
-    } catch (error) {
-      console.error('Error getting sablony:', error);
-      res.status(500).json({ error: (error as Error).message });
-    }
-  });
-
-  app.get('/api/sablony/vychozi/get', authMiddleware, async (req, res) => {
-    try {
-      const result = await pool.query('SELECT * FROM sablona WHERE "jeVychozi" = 1 LIMIT 1');
-      if (result.rows.length === 0) {
-        return res.json(null);
-      }
-      res.json(parseSablonaRow(result.rows[0]));
-    } catch (error) {
-      console.error('Error getting vychozi sablona:', error);
-      res.status(500).json({ error: (error as Error).message });
-    }
-  });
-
-  app.get('/api/sablony/:id', authMiddleware, async (req, res) => {
-    try {
-      const result = await pool.query('SELECT * FROM sablona WHERE id = $1', [req.params.id]);
-      if (result.rows.length === 0) return res.status(404).json({ error: 'Šablona nenalezena' });
-      res.json(parseSablonaRow(result.rows[0]));
-    } catch (error) {
-      console.error('Error getting sablona:', error);
-      res.status(500).json({ error: (error as Error).message });
-    }
-  });
-
-  app.post('/api/sablony', authMiddleware, async (req, res) => {
-    try {
-      const now = new Date().toISOString();
-      const data = { ...req.body };
-      
-      // Konvertovat boolean na integer pro PostgreSQL - použít stejný seznam jako pro čtení
-      const booleanFields = booleanFieldsSablona;
-      
-      for (const field of booleanFields) {
-        if (field in data) {
-          data[field] = data[field] ? 1 : 0;
-        }
-      }
-      
-      if (data.sekce) data.sekce = JSON.stringify(data.sekce);
-      if (data.sloupceOkruhu) data.sloupceOkruhu = JSON.stringify(data.sloupceOkruhu);
-      if (data.uvodniStranaBloky) data.uvodniStranaBloky = JSON.stringify(data.uvodniStranaBloky);
-      
-      // Pokud je tato šablona výchozí, odebrat příznak z ostatních
-      if (data.jeVychozi === 1) {
-        await pool.query('UPDATE sablona SET "jeVychozi" = 0 WHERE "jeVychozi" = 1');
-      }
-      
-      const keys = Object.keys(data);
-      const values = Object.values(data);
-      const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
-      
-      const result = await pool.query(`
-        INSERT INTO sablona (${keys.map(k => `"${k}"`).join(', ')}, "createdAt", "updatedAt")
-        VALUES (${placeholders}, $${keys.length + 1}, $${keys.length + 2})
-        RETURNING id
-      `, [...values, now, now]);
-      
-      res.json({ id: result.rows[0].id });
-    } catch (error) {
-      console.error('Error creating sablona:', error);
-      res.status(500).json({ error: (error as Error).message });
-    }
-  });
-
-  app.put('/api/sablony/:id', authMiddleware, async (req, res) => {
-    try {
-      const now = new Date().toISOString();
-      const data = { ...req.body, updatedAt: now };
-      
-      // Konvertovat boolean na integer pro PostgreSQL - použít stejný seznam jako pro čtení
-      const booleanFields = booleanFieldsSablona;
-      
-      for (const field of booleanFields) {
-        if (field in data) {
-          data[field] = data[field] ? 1 : 0;
-        }
-      }
-      
-      if (data.sekce) data.sekce = JSON.stringify(data.sekce);
-      if (data.sloupceOkruhu) data.sloupceOkruhu = JSON.stringify(data.sloupceOkruhu);
-      if (data.uvodniStranaBloky) data.uvodniStranaBloky = JSON.stringify(data.uvodniStranaBloky);
-      
-      // Pokud je tato šablona výchozí, odebrat příznak z ostatních
-      if (data.jeVychozi === 1) {
-        await pool.query('UPDATE sablona SET "jeVychozi" = 0 WHERE "jeVychozi" = 1 AND id != $1', [req.params.id]);
-      }
-      
-      const keys = Object.keys(data);
-      const values = Object.values(data);
-      
-      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
-      await pool.query(`UPDATE sablona SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
-      
-      res.json({ success: true });
-    } catch (error) {
-      console.error('Error updating sablona:', error);
-      res.status(500).json({ error: (error as Error).message });
-    }
-  });
-
-  app.delete('/api/sablony/:id', authMiddleware, async (req, res) => {
-    try {
-      await pool.query('DELETE FROM sablona WHERE id = $1', [req.params.id]);
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: (error as Error).message });
-    }
-  });
-
-  // ==================== PDF DESIGNER ŠABLONY ====================
-  // Získat všechny PDF šablony (uživatele + výchozí)
-  app.get('/api/pdf-sablony', authMiddleware, async (req: AuthRequest, res) => {
-    try {
-      const userId = req.user?.id;
-      const result = await pool.query(
-        `SELECT * FROM "pdfSablona" 
-         WHERE "userId" = $1 OR "userId" IS NULL OR "jeVychozi" = 1 
-         ORDER BY "jeVychozi" DESC, nazev`,
-        [userId]
-      );
-      res.json(result.rows);
-    } catch (error) {
-      console.error('Error getting pdf sablony:', error);
-      res.status(500).json({ error: (error as Error).message });
-    }
-  });
-
-  // Získat výchozí PDF šablonu
-  app.get('/api/pdf-sablony/vychozi', authMiddleware, async (req, res) => {
-    try {
-      const result = await pool.query('SELECT * FROM "pdfSablona" WHERE "jeVychozi" = 1 LIMIT 1');
-      res.json(result.rows[0] || null);
-    } catch (error) {
-      console.error('Error getting vychozi pdf sablona:', error);
-      res.status(500).json({ error: (error as Error).message });
-    }
-  });
-
-  // Získat konkrétní PDF šablonu
-  app.get('/api/pdf-sablony/:id', authMiddleware, async (req, res) => {
-    try {
-      const result = await pool.query('SELECT * FROM "pdfSablona" WHERE id = $1', [req.params.id]);
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'Šablona nenalezena' });
-      }
-      res.json(result.rows[0]);
-    } catch (error) {
-      console.error('Error getting pdf sablona:', error);
-      res.status(500).json({ error: (error as Error).message });
-    }
-  });
-
-  // Vytvořit novou PDF šablonu
-  app.post('/api/pdf-sablony', authMiddleware, async (req: AuthRequest, res) => {
-    try {
-      const { nazev, popis, jeVychozi, template } = req.body;
-      const userId = req.user?.id;
-      const now = new Date().toISOString();
-
-      // Pokud je výchozí, odstranit příznak u ostatních
-      if (jeVychozi) {
-        await pool.query('UPDATE "pdfSablona" SET "jeVychozi" = 0 WHERE "jeVychozi" = 1');
-      }
-
-      const result = await pool.query(
-        `INSERT INTO "pdfSablona" (nazev, popis, "jeVychozi", "userId", template, "createdAt", "updatedAt")
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-        [nazev, popis || null, jeVychozi ? 1 : 0, userId, JSON.stringify(template), now, now]
-      );
-
-      res.json(result.rows[0]);
-    } catch (error) {
-      console.error('Error creating pdf sablona:', error);
-      res.status(500).json({ error: (error as Error).message });
-    }
-  });
-
-  // Aktualizovat PDF šablonu
-  app.put('/api/pdf-sablony/:id', authMiddleware, async (req: AuthRequest, res) => {
-    try {
-      const { nazev, popis, jeVychozi, template } = req.body;
-      const now = new Date().toISOString();
-
-      // Pokud je výchozí, odstranit příznak u ostatních
-      if (jeVychozi) {
-        await pool.query('UPDATE "pdfSablona" SET "jeVychozi" = 0 WHERE "jeVychozi" = 1 AND id != $1', [req.params.id]);
-      }
-
-      const result = await pool.query(
-        `UPDATE "pdfSablona" 
-         SET nazev = $1, popis = $2, "jeVychozi" = $3, template = $4, "updatedAt" = $5
-         WHERE id = $6 RETURNING *`,
-        [nazev, popis || null, jeVychozi ? 1 : 0, JSON.stringify(template), now, req.params.id]
-      );
-
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'Šablona nenalezena' });
-      }
-
-      res.json(result.rows[0]);
-    } catch (error) {
-      console.error('Error updating pdf sablona:', error);
-      res.status(500).json({ error: (error as Error).message });
-    }
-  });
-
-  // Smazat PDF šablonu
-  app.delete('/api/pdf-sablony/:id', authMiddleware, async (req: AuthRequest, res) => {
-    try {
-      const userId = req.user?.id;
-      // Pouze vlastní šablony lze mazat
-      const result = await pool.query(
-        'DELETE FROM "pdfSablona" WHERE id = $1 AND ("userId" = $2 OR "userId" IS NULL) RETURNING id',
-        [req.params.id, userId]
-      );
-      
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'Šablona nenalezena nebo nemáte oprávnění ji smazat' });
-      }
-      
-      res.json({ success: true });
-    } catch (error) {
-      console.error('Error deleting pdf sablona:', error);
-      res.status(500).json({ error: (error as Error).message });
-    }
-  });
-
   // ==================== NASTAVENÍ ====================
   app.get('/api/nastaveni', authMiddleware, async (req, res) => {
     try {
@@ -1151,20 +891,100 @@ async function startServer() {
     }
   });
 
+  // ==================== PŘEDVOLENÉ TEXTY ====================
+  app.get('/api/predvolene-texty', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM "predvolenyText" ORDER BY pole, poradi, id');
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.get('/api/predvolene-texty/:pole', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM "predvolenyText" WHERE pole = $1 ORDER BY poradi, id', [req.params.pole]);
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/predvolene-texty', authMiddleware, async (req, res) => {
+    try {
+      const now = new Date().toISOString();
+      const { pole, nazev, text, poradi } = req.body;
+      const result = await pool.query(
+        'INSERT INTO "predvolenyText" (pole, nazev, text, poradi, "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+        [pole, nazev, text, poradi || 0, now, now]
+      );
+      res.json({ id: result.rows[0].id, success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/predvolene-texty/:id', authMiddleware, async (req, res) => {
+    try {
+      const now = new Date().toISOString();
+      const { nazev, text, poradi } = req.body;
+      await pool.query(
+        'UPDATE "predvolenyText" SET nazev = $1, text = $2, poradi = $3, "updatedAt" = $4 WHERE id = $5',
+        [nazev, text, poradi || 0, now, req.params.id]
+      );
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/predvolene-texty/:id', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM "predvolenyText" WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
   // ==================== BACKUP ====================
+
+  // Kompletní tabulky pro backup
+  const ALL_BACKUP_TABLES = [
+    'revize', 'rozvadec', 'okruh', 'zavada', 'mistnost', 'zarizeni',
+    'zakazka', 'mericiPristroj', 'revizePristroj', 'firma', 'nastaveni',
+    'zavadaKatalog', 'zakaznik', 'predvolenyText'
+  ];
+
+  // Statistiky databáze (lehký endpoint - pouze počty)
+  app.get('/api/backup/stats', authMiddleware, async (req, res) => {
+    try {
+      const stats: Record<string, number> = {};
+      for (const table of ALL_BACKUP_TABLES) {
+        const result = await pool.query(`SELECT COUNT(*) as count FROM "${table}"`);
+        stats[table] = parseInt(result.rows[0].count);
+      }
+      
+      // Velikost databáze v MB
+      const sizeResult = await pool.query(`SELECT pg_database_size(current_database()) as size`);
+      const sizeMB = (parseInt(sizeResult.rows[0].size) / 1024 / 1024).toFixed(2);
+
+      res.json({ stats, sizeMB });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Export – kompletní data
   app.get('/api/backup', authMiddleware, async (req, res) => {
     try {
-      const tables = [
-        'revize', 'rozvadec', 'okruh', 'zavada', 'mistnost', 'zarizeni',
-        'zakazka', 'mericiPristroj', 'revizePristroj', 'firma', 'nastaveni', 'sablona', 'zavadaKatalog', 'zakaznik'
-      ];
-      
       const backup: Record<string, any> = {
-        version: '1.0.0',
+        version: '2.0.0',
         timestamp: new Date().toISOString(),
+        appName: 'RevizeApp',
       };
       
-      for (const table of tables) {
+      for (const table of ALL_BACKUP_TABLES) {
         const result = await pool.query(`SELECT * FROM "${table}"`);
         backup[table] = result.rows;
       }
@@ -1175,29 +995,39 @@ async function startServer() {
     }
   });
 
+  // Import
   app.post('/api/backup/import', authMiddleware, async (req, res) => {
     try {
       const { data, mode } = req.body;
       
+      // Pořadí mazání – závislé tabulky napřed
+      const deleteOrder = [
+        'revizePristroj', 'zarizeni', 'zavada', 'okruh', 'zakazka',
+        'rozvadec', 'mistnost', 'revize', 'sablona', 'pdfSablona', 'firma',
+        'mericiPristroj', 'nastaveni', 'zavadaKatalog', 'zakaznik'
+      ];
+      
       if (mode === 'replace') {
-        const tables = [
-          'revizePristroj', 'zarizeni', 'zavada', 'okruh', 'zakazka',
-          'rozvadec', 'mistnost', 'revize', 'sablona', 'firma', 
-          'mericiPristroj', 'nastaveni', 'zavadaKatalog', 'zakaznik'
-        ];
-        for (const table of tables) {
-          await pool.query(`DELETE FROM "${table}"`);
+        for (const table of deleteOrder) {
+          try {
+            await pool.query(`DELETE FROM "${table}"`);
+          } catch (e) {
+            console.warn(`Nelze smazat tabulku ${table}:`, (e as Error).message);
+          }
         }
       }
       
-      // Pořadí importu - nejdřív nezávislé tabulky, pak závislé
+      // Pořadí importu – nezávislé tabulky napřed
       const importOrder = [
-        'nastaveni', 'firma', 'zakaznik', 'mericiPristroj', 'sablona', 'zavadaKatalog',
+        'nastaveni', 'firma', 'zakaznik', 'mericiPristroj', 'sablona',
+        'pdfSablona', 'zavadaKatalog',
         'revize', 'mistnost', 'rozvadec', 'zakazka',
         'okruh', 'zavada', 'zarizeni', 'revizePristroj'
       ];
       
-      const skipKeys = ['version', 'timestamp'];
+      const skipKeys = ['version', 'timestamp', 'appName'];
+      let importedCount = 0;
+      let errorCount = 0;
       
       // Import v definovaném pořadí
       for (const table of importOrder) {
@@ -1215,8 +1045,10 @@ async function startServer() {
               VALUES (${placeholders})
               ON CONFLICT DO NOTHING
             `, values);
+            importedCount++;
           } catch (e) {
-            console.error(`Import error for ${table}:`, e);
+            errorCount++;
+            console.error(`Import error for ${table}:`, (e as Error).message);
           }
         }
       }
@@ -1237,13 +1069,65 @@ async function startServer() {
               VALUES (${placeholders})
               ON CONFLICT DO NOTHING
             `, values);
+            importedCount++;
           } catch (e) {
-            console.error(`Import error for ${table}:`, e);
+            errorCount++;
+            console.error(`Import error for ${table}:`, (e as Error).message);
           }
         }
       }
+
+      // Reset SERIAL sekvencí po importu
+      for (const table of ALL_BACKUP_TABLES) {
+        try {
+          await pool.query(`
+            SELECT setval(
+              pg_get_serial_sequence('"${table}"', 'id'),
+              COALESCE((SELECT MAX(id) FROM "${table}"), 0) + 1,
+              false
+            )
+          `);
+        } catch (_) {
+          // Některé tabulky nemusí mít serial id
+        }
+      }
       
-      res.json({ success: true });
+      res.json({ success: true, imported: importedCount, errors: errorCount });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Čištění starých dat
+  app.post('/api/backup/clean', authMiddleware, async (req, res) => {
+    try {
+      const { daysOld = 365 } = req.body;
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+      const cutoffStr = cutoffDate.toISOString().split('T')[0];
+
+      // Získat ID starých schválených revizí
+      const oldRevize = await pool.query(
+        `SELECT id FROM revize WHERE stav = 'schváleno' AND datum < $1`,
+        [cutoffStr]
+      );
+      const ids = oldRevize.rows.map((r: any) => r.id);
+
+      if (ids.length === 0) {
+        return res.json({ success: true, deleted: 0, message: 'Žádné staré revize k vymazání' });
+      }
+
+      // Smazat závislé záznamy
+      const placeholders = ids.map((_: any, i: number) => `$${i + 1}`).join(', ');
+      await pool.query(`DELETE FROM "revizePristroj" WHERE "revizeId" IN (${placeholders})`, ids);
+      await pool.query(`DELETE FROM zarizeni WHERE "mistnostId" IN (SELECT id FROM mistnost WHERE "revizeId" IN (${placeholders}))`, ids);
+      await pool.query(`DELETE FROM zavada WHERE "revizeId" IN (${placeholders})`, ids);
+      await pool.query(`DELETE FROM okruh WHERE "rozvadecId" IN (SELECT id FROM rozvadec WHERE "revizeId" IN (${placeholders}))`, ids);
+      await pool.query(`DELETE FROM rozvadec WHERE "revizeId" IN (${placeholders})`, ids);
+      await pool.query(`DELETE FROM mistnost WHERE "revizeId" IN (${placeholders})`, ids);
+      await pool.query(`DELETE FROM revize WHERE id IN (${placeholders})`, ids);
+
+      res.json({ success: true, deleted: ids.length });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }

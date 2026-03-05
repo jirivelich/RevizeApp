@@ -43,6 +43,9 @@ export interface Revize {
   rozsahRevize?: string;        // 1.1 Předmět revize je
   predmetNeni?: string;         // 1.2 Předmětem revize není
   
+  // Popis revidovaného zařízení
+  popisZarizeni?: string;
+  
   // 2. Charakteristika zařízení
   napetovaSoustava?: string;    // 2.1 Napěťová soustava (např. "3+N+PE AC 50Hz 400/230V TN-C-S")
   ochranaOpatreni?: string;     // 2.2 Ochrana před úrazem - JSON pole opatření
@@ -58,6 +61,9 @@ export interface Revize {
   
   // i) Soupis provedených úkonů
   provedeneUkony?: string;
+  
+  // Nastavení viditelných sekcí pro tisk/náhled (JSON)
+  tiskSekce?: string;
   
   // Firma provádějící revizi (může být jiná než firma technika)
   firmaJmeno?: string;
@@ -143,6 +149,7 @@ export interface Zakazka {
   klient: string;
   adresa: string;
   datumPlanovany: string;
+  casPlanovany?: string; // HH:mm format
   datumDokonceni?: string;
   stav: 'plánováno' | 'v realizaci' | 'dokončeno' | 'zrušeno';
   priorita: 'nizká' | 'střední' | 'vysoká';
@@ -183,30 +190,6 @@ export interface Nastaveni {
   logo?: string; // Base64 encoded image
 }
 
-// Šablona pro export PDF
-export interface SablonaSekce {
-  id: string;
-  nazev: string;
-  enabled: boolean;
-  poradi: number;
-  parent?: string; // ID rodičovské sekce (pro hierarchii)
-}
-
-export interface SablonaSloupecOkruhu {
-  id: string;
-  nazev: string;
-  enabled: boolean;
-  poradi: number;
-}
-
-// Blok úvodní strany - pro drag-and-drop editor
-export interface UvodniStranaBlok {
-  id: string;
-  nazev: string;
-  enabled: boolean;
-  poradi: number;
-}
-
 // Měřící přístroje
 export interface MericiPristroj {
   id?: number;
@@ -230,57 +213,6 @@ export interface RevizePristroj {
   pristrojId: number;
 }
 
-export interface Sablona {
-  id?: number;
-  nazev: string;
-  popis?: string;
-  jeVychozi: boolean;
-  
-  // Záhlaví
-  zahlaviZobrazitLogo: boolean;
-  zahlaviZobrazitFirmu: boolean;
-  zahlaviZobrazitTechnika: boolean;
-  zahlaviCustomText?: string;
-  
-  // Úvodní strana
-  uvodniStranaZobrazit: boolean;
-  uvodniStranaZobrazitObjekt: boolean;
-  uvodniStranaZobrazitTechnika: boolean;
-  uvodniStranaZobrazitFirmu: boolean;
-  uvodniStranaZobrazitZakaznika: boolean;
-  uvodniStranaZobrazitVyhodnoceni: boolean;
-  uvodniStranaZobrazitPodpisy: boolean;
-  podpisyUmisteni: 'uvodni' | 'posledni';  // Kde zobrazit podpisy - na úvodní straně nebo na poslední
-  uvodniStranaNadpis?: string;
-  uvodniStranaNadpisFontSize?: number;  // Velikost písma nadpisu (výchozí 18)
-  uvodniStranaNadpisRamecek?: boolean;  // Zobrazit rámeček kolem nadpisu
-  uvodniStranaRamecekUdaje?: boolean;   // Rámeček kolem základních údajů
-  uvodniStranaRamecekObjekt?: boolean;  // Rámeček kolem údajů o objektu
-  uvodniStranaRamecekZakaznik?: boolean; // Rámeček kolem údajů o zákazníkovi
-  uvodniStranaRamecekVyhodnoceni?: boolean; // Rámeček kolem vyhodnocení
-  uvodniStranaBloky?: UvodniStranaBlok[]; // Konfigurovatelné bloky úvodní strany
-  
-  // Sekce dokumentu
-  sekce: SablonaSekce[];
-  
-  // Sloupce tabulky okruhů
-  sloupceOkruhu: SablonaSloupecOkruhu[];
-  
-  // Zápatí
-  zapatiZobrazitCisloStranky: boolean;
-  zapatiZobrazitDatum: boolean;
-  zapatiCustomText?: string;
-  
-  // Styly
-  barvaPrimary: string;
-  barvaSecondary: string;
-  fontFamily: string;
-  fontSize: number;
-  
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 // Katalog typických závad (databáze závad pro výběr)
 export interface ZavadaKatalog {
   id?: number;
@@ -292,4 +224,14 @@ export interface ZavadaKatalog {
   kategorie?: string;               // Kategorie závady (např. "Rozvaděče", "Vedení", "Uzemnění")
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface PredvolenyText {
+  id?: number;
+  pole: string;       // Název pole (popisZarizeni, rozsahRevize, podklady, ...)
+  nazev: string;      // Zobrazený název předvolby
+  text: string;       // Text předvolby
+  poradi?: number;    // Pořadí v seznamu
+  createdAt?: Date;
+  updatedAt?: Date;
 }

@@ -8,9 +8,6 @@ const navItems = [
   { path: '/firmy', label: 'Firmy', icon: '🏢' },
   { path: '/zakaznici', label: 'Zákazníci', icon: '👥' },
   { path: '/planovani', label: 'Plánování', icon: '📅' },
-  { path: '/sablony', label: 'Šablony PDF', icon: '🎨' },
-  { path: '/pdf-designer', label: 'PDF Designer', icon: '✏️' },
-  { path: '/backup', label: 'Backup', icon: '💾' },
   { path: '/nastaveni', label: 'Nastavení', icon: '⚙️' },
 ];
 

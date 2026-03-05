@@ -9,15 +9,13 @@ import {
   RevizePage,
   RevizeDetailPage,
   RozvadecDetailPage,
+  ReportPrintPage,
   ZavadyPage,
   PlanovaniPage,
   NastaveniPage,
-  SablonyPage,
   PristrojePage,
   FirmyPage,
-  BackupRestorePage,
   ZakazniciPage,
-  PDFDesignerPage,
 } from './pages';
 
 // Error Boundary pro zachycení JavaScript chyb
@@ -74,6 +72,11 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/revize/:id/nahled" element={
+            <ProtectedRoute>
+              <ReportPrintPage />
+            </ProtectedRoute>
+          } />
           <Route
             path="/"
             element={
@@ -91,9 +94,6 @@ function App() {
             <Route path="firmy" element={<FirmyPage />} />
             <Route path="zakaznici" element={<ZakazniciPage />} />
             <Route path="planovani" element={<PlanovaniPage />} />
-            <Route path="sablony" element={<SablonyPage />} />
-            <Route path="pdf-designer" element={<PDFDesignerPage />} />
-            <Route path="backup" element={<BackupRestorePage />} />
             <Route path="nastaveni" element={<NastaveniPage />} />
           </Route>
         </Routes>

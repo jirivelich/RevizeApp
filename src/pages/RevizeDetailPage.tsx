@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
-import { PDFExportModal } from '../components/PDFExportModal';
-import { revizeService, rozvadecService, zavadaService, mistnostService, okruhService, pristrojService, revizePristrojService, zarizeniService, firmaService, zavadaKatalogService, nastaveniService, zakazniciService } from '../services/database';
-import type { Revize, Rozvadec, Zavada, Mistnost, Okruh, MericiPristroj, Zarizeni, Firma, ZavadaKatalog, Nastaveni, Zakaznik } from '../types';
+import { revizeService, rozvadecService, zavadaService, mistnostService, okruhService, pristrojService, revizePristrojService, zarizeniService, firmaService, zavadaKatalogService, nastaveniService, zakazniciService, predvolenyTextService } from '../services/database';
+import type { Revize, Rozvadec, Zavada, Mistnost, Okruh, MericiPristroj, Zarizeni, Firma, ZavadaKatalog, Nastaveni, Zakaznik, PredvolenyText } from '../types';
 
 export function RevizeDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -12,9 +11,7 @@ export function RevizeDetailPage() {
   const [rozvadece, setRozvadece] = useState<Rozvadec[]>([]);
   const [zavady, setZavady] = useState<Zavada[]>([]);
   const [mistnosti, setMistnosti] = useState<Mistnost[]>([]);
-  const [isEditing, setIsEditing] = useState(false);
   const [isRozvadecModalOpen, setIsRozvadecModalOpen] = useState(false);
-  const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'info' | 'dokumentace' | 'rozvadece' | 'zavady' | 'mistnosti'>('info');
   
   // Rozvaděč detail state
@@ -60,6 +57,7 @@ export function RevizeDetailPage() {
   const [formData, setFormData] = useState<Partial<Revize>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [vlastniTexty, setVlastniTexty] = useState<PredvolenyText[]>([]);
   const [rozvadecFormData, setRozvadecFormData] = useState({
     nazev: '',
     oznaceni: '',
@@ -180,6 +178,14 @@ export function RevizeDetailPage() {
           console.warn('Nepodařilo se načíst zákazníky:', zakazniciError);
           setZakaznici([]);
         }
+
+        // Načíst vlastní předvolené texty
+        try {
+          const textyData = await predvolenyTextService.getAll();
+          setVlastniTexty(textyData);
+        } catch {
+          setVlastniTexty([]);
+        }
       } else {
         setError('Revize nebyla nalezena');
       }
@@ -205,7 +211,6 @@ export function RevizeDetailPage() {
       }
       
       await revizeService.update(revize.id, dataToSave);
-      setIsEditing(false);
       loadData(revize.id);
     }
   };
@@ -652,7 +657,7 @@ export function RevizeDetailPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
@@ -666,8 +671,8 @@ export function RevizeDetailPage() {
           <Button variant="secondary" onClick={() => navigate('/revize')}>
             ← Zpět
           </Button>
-          <Button variant="success" onClick={() => { console.log('Opening PDF modal'); setIsPDFModalOpen(true); }}>
-            📄 Export PDF
+          <Button variant="success" onClick={() => navigate(`/revize/${id}/nahled`)}>
+            🔍 Náhled
           </Button>
         </div>
       </div>
@@ -690,767 +695,630 @@ export function RevizeDetailPage() {
       </div>
 
       {activeTab === 'info' && (
-        <div className="space-y-4">
-          {/* Tlačítka pro úpravy */}
-          <div className="flex justify-end gap-2">
-            {isEditing ? (
-              <>
-                <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)}>
-                  Zrušit
-                </Button>
-                <Button size="sm" onClick={handleSave}>
-                  Uložit
-                </Button>
-              </>
-            ) : (
-              <Button size="sm" onClick={() => setIsEditing(true)}>
-                Upravit
-              </Button>
-            )}
+        <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden max-w-4xl mx-auto">
+
+          {/* Záhlaví */}
+          <div className="flex items-center px-4 py-2 bg-slate-50 border-b border-slate-200">
+            <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">Revizní zpráva č. {revize.cisloRevize}</span>
           </div>
 
-          {/* Identifikace */}
-          <Card title="Identifikace">
-            {isEditing ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  label="Číslo revize"
-                  value={formData.cisloRevize || ''}
-                  onChange={(e) => setFormData({ ...formData, cisloRevize: e.target.value })}
-                  disabled
-                />
-                <Input
-                  label="Název"
-                  value={formData.nazev || ''}
-                  onChange={(e) => setFormData({ ...formData, nazev: e.target.value })}
-                />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-slate-500">Číslo revize</p>
-                  <p className="font-medium font-mono">{revize.cisloRevize}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Název</p>
-                  <p className="font-medium">{revize.nazev}</p>
-                </div>
-              </div>
-            )}
-          </Card>
+          {/* ═══ SEKCE 1: IDENTIFIKACE ═══ */}
+          <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider">Identifikace revize</div>
+          <table className="w-full text-sm border-collapse">
+            <tbody>
+              <tr className="border-b border-slate-200">
+                <td className="w-[180px] px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200">Číslo revize</td>
+                <td className="px-4 py-2">
+                  <input className="w-full bg-slate-100 px-2 py-1 rounded text-sm border border-slate-300 cursor-not-allowed" value={formData.cisloRevize || ''} disabled />
+                </td>
+              </tr>
+              <tr className="border-b border-slate-200">
+                <td className="px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200">Název objektu</td>
+                <td className="px-4 py-2">
+                  <input className="w-full px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={formData.nazev || ''} onChange={(e) => setFormData({ ...formData, nazev: e.target.value })} />
+                </td>
+              </tr>
+              <tr className="border-b border-slate-200">
+                <td className="px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200">Adresa objektu</td>
+                <td className="px-4 py-2">
+                  <input className="w-full px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={formData.adresa || ''} onChange={(e) => setFormData({ ...formData, adresa: e.target.value })} />
+                </td>
+              </tr>
+              <tr className="border-b border-slate-200">
+                <td className="px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200">Kategorie</td>
+                <td className="px-4 py-2">
+                  <select className="px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={formData.kategorieRevize || 'elektro'} onChange={(e) => setFormData({ ...formData, kategorieRevize: e.target.value as any })}>
+                    <option value="elektro">⚡ Elektrické instalace</option>
+                    <option value="hromosvod">🌩️ Hromosvody</option>
+                    <option value="stroje">⚙️ Strojní zařízení</option>
+                  </select>
+                </td>
+              </tr>
+              <tr className="border-b border-slate-200">
+                <td className="px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200">Typ revize</td>
+                <td className="px-4 py-2">
+                  <select className="px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={formData.typRevize || ''} onChange={(e) => setFormData({ ...formData, typRevize: e.target.value as any })}>
+                    <option value="pravidelná">Pravidelná</option>
+                    <option value="výchozí">Výchozí</option>
+                    <option value="mimořádná">Mimořádná</option>
+                  </select>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-          {/* Místo a objednatel */}
-          <Card title="Místo a objednatel">
-            {isEditing ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input
-                    label="Adresa"
-                    value={formData.adresa || ''}
-                    onChange={(e) => setFormData({ ...formData, adresa: e.target.value })}
-                  />
-                  <Input
-                    label="Objednatel"
-                    value={formData.objednatel || ''}
-                    onChange={(e) => setFormData({ ...formData, objednatel: e.target.value })}
-                    placeholder="Nebo vyberte zákazníka níže"
-                  />
-                </div>
-                
-                {/* Výběr zákazníka */}
-                <div className="border-t pt-4">
-                  <Select
-                    label="Vybrat z uložených zákazníků"
-                    value={selectedZakaznikId}
-                    onChange={(e) => {
-                      const zakaznikId = e.target.value;
-                      setSelectedZakaznikId(zakaznikId);
-                      if (zakaznikId) {
-                        const zakaznik = zakaznici.find(z => z.id === parseInt(zakaznikId));
-                        if (zakaznik) {
-                          // Naplnit objednatele daty ze zákazníka
-                          setFormData({
-                            ...formData,
-                            objednatel: zakaznik.nazev,
-                            zakaznikId: zakaznik.id
-                          });
-                        }
-                      } else {
-                        setFormData({ ...formData, zakaznikId: undefined });
-                      }
-                    }}
-                    options={[
-                      { value: '', label: '-- Vyberte zákazníka --' },
-                      ...zakaznici.filter(z => z.id !== undefined).map(z => ({
-                        value: z.id!.toString(),
-                        label: `${z.nazev}${z.adresa ? ` (${z.adresa})` : ''}`
-                      }))
-                    ]}
-                  />
+          {/* ═══ SEKCE 2: OBJEDNATEL ═══ */}
+          <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider">Objednatel / Provozovatel</div>
+          <table className="w-full text-sm border-collapse">
+            <tbody>
+              <tr className="border-b border-slate-200">
+                <td className="w-[180px] px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200">Objednatel</td>
+                <td className="px-4 py-2">
+                  <input className="w-full px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Nebo vyberte zákazníka níže" value={formData.objednatel || ''} onChange={(e) => setFormData({ ...formData, objednatel: e.target.value })} />
+                </td>
+              </tr>
+              <tr className="border-b border-slate-200">
+                <td className="px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200">Ze zákazníků</td>
+                <td className="px-4 py-2">
+                  <select className="w-full px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={selectedZakaznikId} onChange={(e) => {
+                    const zakaznikId = e.target.value;
+                    setSelectedZakaznikId(zakaznikId);
+                    if (zakaznikId) { const zakaznik = zakaznici.find(z => z.id === parseInt(zakaznikId)); if (zakaznik) setFormData({ ...formData, objednatel: zakaznik.nazev, zakaznikId: zakaznik.id }); }
+                    else { setFormData({ ...formData, zakaznikId: undefined }); }
+                  }}>
+                    <option value="">-- Vyberte zákazníka --</option>
+                    {zakaznici.filter(z => z.id !== undefined).map(z => <option key={z.id} value={z.id!.toString()}>{z.nazev}{z.adresa ? ` (${z.adresa})` : ''}</option>)}
+                  </select>
                   {selectedZakaznikId && (() => {
                     const zakaznik = zakaznici.find(z => z.id === parseInt(selectedZakaznikId));
                     return zakaznik ? (
-                      <div className="mt-2 p-3 bg-blue-50 rounded-lg text-sm">
-                        <div className="grid grid-cols-2 gap-2">
-                          {zakaznik.adresa && <div><span className="text-gray-500">Adresa:</span> {zakaznik.adresa}</div>}
-                          {zakaznik.ico && <div><span className="text-gray-500">IČO:</span> {zakaznik.ico}</div>}
-                          {zakaznik.kontaktOsoba && <div><span className="text-gray-500">Kontakt:</span> {zakaznik.kontaktOsoba}</div>}
-                          {zakaznik.telefon && <div><span className="text-gray-500">Tel:</span> {zakaznik.telefon}</div>}
-                        </div>
+                      <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-slate-500 bg-blue-50 rounded p-2">
+                        {zakaznik.adresa && <span>Adresa: {zakaznik.adresa}</span>}
+                        {zakaznik.ico && <span>IČO: {zakaznik.ico}</span>}
+                        {zakaznik.kontaktOsoba && <span>Kontakt: {zakaznik.kontaktOsoba}</span>}
+                        {zakaznik.telefon && <span>Tel: {zakaznik.telefon}</span>}
                       </div>
                     ) : null;
                   })()}
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-slate-500">Adresa</p>
-                  <p className="font-medium">{revize?.adresa || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Objednatel</p>
-                  <p className="font-medium">{revize?.objednatel || '-'}</p>
-                  {revize?.zakaznikId && zakaznici.length > 0 && (() => {
-                    const zakaznik = zakaznici.find(z => z.id === revize.zakaznikId);
-                    return zakaznik ? (
-                      <p className="text-sm text-blue-600">
-                        <Link to="/zakaznici" className="hover:underline">
-                          👥 {zakaznik.nazev}
-                        </Link>
-                      </p>
-                    ) : null;
-                  })()}
-                </div>
-              </div>
-            )}
-          </Card>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-          {/* Datumy a termíny */}
-          <Card title="Datumy a termíny">
-            {isEditing ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <Input
-                  type="date"
-                  label="Datum revize"
-                  value={formData.datum || ''}
-                  onChange={(e) => setFormData({ ...formData, datum: e.target.value })}
-                />
-                <Input
-                  type="date"
-                  label="Datum dokončení"
-                  value={formData.datumDokonceni || ''}
-                  onChange={(e) => setFormData({ ...formData, datumDokonceni: e.target.value })}
-                />
-                <Input
-                  type="date"
-                  label="Datum vypracování"
-                  value={formData.datumVypracovani || ''}
-                  onChange={(e) => setFormData({ ...formData, datumVypracovani: e.target.value })}
-                />
-                <Select
-                  label="Termín platnosti"
-                  value={String(formData.termin || 36)}
-                  onChange={(e) => setFormData({ ...formData, termin: parseInt(e.target.value) })}
-                  options={[
-                    { value: '6', label: '6 měsíců' },
-                    { value: '12', label: '1 rok' },
-                    { value: '24', label: '2 roky' },
-                    { value: '36', label: '3 roky' },
-                    { value: '48', label: '4 roky' },
-                    { value: '60', label: '5 let' },
-                  ]}
-                />
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Platnost do</label>
-                  <p className="text-sm text-slate-500 py-2 bg-slate-50 rounded px-2">
-                    {formData.datumPlatnosti 
-                      ? new Date(formData.datumPlatnosti).toLocaleDateString('cs-CZ')
-                      : 'Vypočítá se při dokončení'}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div>
-                  <p className="text-sm text-slate-500">Datum revize</p>
-                  <p className="font-medium">{new Date(revize.datum).toLocaleDateString('cs-CZ')}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Datum dokončení</p>
-                  <p className="font-medium">
-                    {revize.datumDokonceni 
-                      ? new Date(revize.datumDokonceni).toLocaleDateString('cs-CZ')
-                      : '—'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Datum vypracování</p>
-                  <p className="font-medium">
-                    {revize.datumVypracovani 
-                      ? new Date(revize.datumVypracovani).toLocaleDateString('cs-CZ')
-                      : '—'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Termín platnosti</p>
-                  <p className="font-medium">{revize.termin} měsíců</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Platnost do</p>
-                  <p className="font-medium">
-                    {revize.datumPlatnosti 
-                      ? new Date(revize.datumPlatnosti).toLocaleDateString('cs-CZ')
-                      : '—'}
-                  </p>
-                </div>
-              </div>
-            )}
-          </Card>
+          {/* ═══ SEKCE 3: TERMÍNY ═══ */}
+          <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider">Termíny a data</div>
+          <table className="w-full text-sm border-collapse">
+            <tbody>
+              <tr className="border-b border-slate-200">
+                <td className="w-[180px] px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200">Datum revize</td>
+                <td className="px-4 py-2"><input type="date" className="px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={formData.datum || ''} onChange={(e) => setFormData({ ...formData, datum: e.target.value })} /></td>
+              </tr>
+              <tr className="border-b border-slate-200">
+                <td className="px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200">Datum dokončení</td>
+                <td className="px-4 py-2"><input type="date" className="px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={formData.datumDokonceni || ''} onChange={(e) => setFormData({ ...formData, datumDokonceni: e.target.value })} /></td>
+              </tr>
+              <tr className="border-b border-slate-200">
+                <td className="px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200">Datum vypracování</td>
+                <td className="px-4 py-2"><input type="date" className="px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={formData.datumVypracovani || ''} onChange={(e) => setFormData({ ...formData, datumVypracovani: e.target.value })} /></td>
+              </tr>
+              <tr className="border-b border-slate-200">
+                <td className="px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200">Lhůta platnosti</td>
+                <td className="px-4 py-2">
+                  <select className="px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={String(formData.termin || 36)} onChange={(e) => setFormData({ ...formData, termin: parseInt(e.target.value) })}>
+                    <option value="6">6 měsíců</option><option value="12">1 rok</option><option value="24">2 roky</option><option value="36">3 roky</option><option value="48">4 roky</option><option value="60">5 let</option>
+                  </select>
+                </td>
+              </tr>
+              <tr className="border-b border-slate-200">
+                <td className="px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200">Platnost do</td>
+                <td className="px-4 py-2"><span className={`font-medium ${formData.datumPlatnosti ? '' : 'text-slate-400'}`}>{formData.datumPlatnosti ? new Date(formData.datumPlatnosti).toLocaleDateString('cs-CZ') : 'Vypočítá se při dokončení'}</span></td>
+              </tr>
+            </tbody>
+          </table>
 
-          {/* Stav revize */}
-          <Card title="Stav revize">
-            {isEditing ? (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Select
-                  label="Kategorie"
-                  value={formData.kategorieRevize || 'elektro'}
-                  onChange={(e) => setFormData({ ...formData, kategorieRevize: e.target.value as any })}
-                  options={[
-                    { value: 'elektro', label: '⚡ Elektrické instalace' },
-                    { value: 'hromosvod', label: '🌩️ Hromosvody' },
-                    { value: 'stroje', label: '⚙️ Strojní zařízení' },
-                  ]}
-                />
-                <Select
-                  label="Typ revize"
-                  value={formData.typRevize || ''}
-                  onChange={(e) => setFormData({ ...formData, typRevize: e.target.value as any })}
-                  options={[
-                    { value: 'pravidelná', label: 'Pravidelná' },
-                    { value: 'výchozí', label: 'Výchozí' },
-                    { value: 'mimořádná', label: 'Mimořádná' },
-                  ]}
-                />
-                <Select
-                  label="Stav"
-                  value={formData.stav || ''}
-                  onChange={(e) => setFormData({ ...formData, stav: e.target.value as any })}
-                  options={[
-                    { value: 'rozpracováno', label: 'Rozpracováno' },
-                    { value: 'dokončeno', label: 'Dokončeno' },
-                    { value: 'schváleno', label: 'Schváleno' },
-                  ]}
-                />
-                <Select
-                  label="Výsledek"
-                  value={formData.vysledek || ''}
-                  onChange={(e) => setFormData({ ...formData, vysledek: e.target.value as any })}
-                  options={[
-                    { value: '', label: '-- Nevyplněno --' },
-                    { value: 'schopno', label: 'Schopno provozu' },
-                    { value: 'neschopno', label: 'Neschopno provozu' },
-                    { value: 'podmíněně schopno', label: 'Podmíněně schopno' },
-                  ]}
-                />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-sm text-slate-500">Kategorie</p>
-                  <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                    revize.kategorieRevize === 'elektro' ? 'bg-blue-100 text-blue-700' :
-                    revize.kategorieRevize === 'hromosvod' ? 'bg-purple-100 text-purple-700' :
-                    revize.kategorieRevize === 'stroje' ? 'bg-slate-100 text-slate-700' :
-                    'bg-blue-100 text-blue-700'
-                  }`}>
-                    {revize.kategorieRevize === 'elektro' ? '⚡ Elektro' :
-                     revize.kategorieRevize === 'hromosvod' ? '🌩️ Hromosvod' :
-                     revize.kategorieRevize === 'stroje' ? '⚙️ Stroje' : '⚡ Elektro'}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Typ revize</p>
-                  <p className="font-medium capitalize">{revize.typRevize}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Stav</p>
-                  <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                    revize.stav === 'dokončeno' ? 'bg-green-100 text-green-700' :
-                    revize.stav === 'rozpracováno' ? 'bg-amber-100 text-amber-700' :
-                    'bg-blue-100 text-blue-700'
-                  }`}>
-                    {revize.stav}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Výsledek</p>
-                  {revize.vysledek ? (
-                    <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                      revize.vysledek === 'schopno' ? 'bg-green-100 text-green-700' :
-                      revize.vysledek === 'neschopno' ? 'bg-red-100 text-red-700' :
-                      'bg-amber-100 text-amber-700'
-                    }`}>
-                      {revize.vysledek}
-                    </span>
-                  ) : (
-                    <p className="font-medium text-slate-400">—</p>
-                  )}
-                </div>
-              </div>
-            )}
-          </Card>
+          {/* ═══ SEKCE 4: STAV ═══ */}
+          <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider">Stav a výsledek revize</div>
+          <table className="w-full text-sm border-collapse">
+            <tbody>
+              <tr className="border-b border-slate-200">
+                <td className="w-[180px] px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200">Stav</td>
+                <td className="px-4 py-2">
+                  <select className="px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={formData.stav || ''} onChange={(e) => setFormData({ ...formData, stav: e.target.value as any })}>
+                    <option value="rozpracováno">Rozpracováno</option><option value="dokončeno">Dokončeno</option><option value="schváleno">Schváleno</option>
+                  </select>
+                </td>
+              </tr>
+              <tr className="border-b border-slate-200">
+                <td className="px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200">Výsledek</td>
+                <td className="px-4 py-2">
+                  <select className="px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={formData.vysledek || ''} onChange={(e) => setFormData({ ...formData, vysledek: e.target.value as any })}>
+                    <option value="">-- Nevyplněno --</option><option value="schopno">Schopno provozu</option><option value="neschopno">Neschopno provozu</option><option value="podmíněně schopno">Podmíněně schopno</option>
+                  </select>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-          {/* Firma provádějící revizi */}
-          <Card title="Firma provádějící revizi">
-            {isEditing ? (
-              <div className="space-y-4">
-                <p className="text-sm text-slate-500 mb-2">
-                  Pokud provádíte revizi pro jinou firmu, vyberte ji ze seznamu nebo zadejte údaje ručně. Jinak se použijí údaje z nastavení.
-                </p>
-                
-                {/* Výběr z uložených firem */}
-                <Select
-                  label="Vybrat firmu ze seznamu"
-                  value={selectedFirmaId}
-                  onChange={(e) => {
-                    const firmaId = e.target.value;
-                    setSelectedFirmaId(firmaId);
-                    if (firmaId === '') {
-                      // Výchozí firma z nastavení
-                      setFormData({
-                        ...formData,
-                        firmaJmeno: '',
-                        firmaIco: '',
-                        firmaAdresa: '',
-                        firmaDic: '',
-                      });
-                    } else {
-                      const firma = firmy.find(f => f.id?.toString() === firmaId);
-                      if (firma) {
-                        setFormData({
-                          ...formData,
-                          firmaJmeno: firma.nazev,
-                          firmaIco: firma.ico || '',
-                          firmaAdresa: firma.adresa || '',
-                          firmaDic: firma.dic || '',
-                        });
-                      }
-                    }
-                  }}
-                  options={[
-                    { value: '', label: 'Použít firmu z nastavení' },
-                    ...firmy.map(f => ({ value: f.id!.toString(), label: f.nazev }))
-                  ]}
-                />
-
-                <div className="border-t border-slate-200 pt-4 mt-4">
-                  <p className="text-sm font-medium text-slate-700 mb-3">Údaje firmy (ruční zadání nebo úprava):</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input
-                      label="Název firmy"
-                      value={formData.firmaJmeno || ''}
-                      onChange={(e) => setFormData({ ...formData, firmaJmeno: e.target.value })}
-                      placeholder="Ponechte prázdné pro použití výchozí firmy"
-                    />
-                    <Input
-                      label="IČO"
-                      value={formData.firmaIco || ''}
-                      onChange={(e) => setFormData({ ...formData, firmaIco: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <Input
-                      label="Adresa firmy"
-                      value={formData.firmaAdresa || ''}
-                      onChange={(e) => setFormData({ ...formData, firmaAdresa: e.target.value })}
-                    />
-                    <Input
-                      label="DIČ"
-                      value={formData.firmaDic || ''}
-                      onChange={(e) => setFormData({ ...formData, firmaDic: e.target.value })}
-                    />
-                  </div>
-                </div>
-                
-                {firmy.length === 0 && (
-                  <p className="text-sm text-amber-600 mt-2">
-                    💡 Tip: Můžete si předem vytvořit seznam firem v sekci <Link to="/firmy" className="underline font-medium">Firmy</Link>.
-                  </p>
-                )}
-                
-                {/* Zobrazit náhled výchozí firmy z nastavení */}
-                {selectedFirmaId === '' && nastaveni && (nastaveni.firmaJmeno || nastaveni.firmaIco) && (
-                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm font-medium text-blue-800 mb-2">📋 Náhled firmy z nastavení:</p>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div><span className="text-blue-600">Název:</span> {nastaveni.firmaJmeno || '—'}</div>
-                      <div><span className="text-blue-600">IČO:</span> {nastaveni.firmaIco || '—'}</div>
-                      <div><span className="text-blue-600">Adresa:</span> {nastaveni.firmaAdresa || '—'}</div>
-                      <div><span className="text-blue-600">DIČ:</span> {nastaveni.firmaDic || '—'}</div>
-                    </div>
-                  </div>
-                )}
-                
-                {selectedFirmaId === '' && (!nastaveni || (!nastaveni.firmaJmeno && !nastaveni.firmaIco)) && (
-                  <p className="text-sm text-amber-600 mt-4">
-                    ⚠️ V nastavení nemáte vyplněnou výchozí firmu. <Link to="/nastaveni" className="underline font-medium">Přejít do nastavení</Link>
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div>
-                {revize.firmaJmeno ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-slate-500">Název firmy</p>
-                      <p className="font-medium">{revize.firmaJmeno}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-500">IČO</p>
-                      <p className="font-medium">{revize.firmaIco || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-500">Adresa</p>
-                      <p className="font-medium">{revize.firmaAdresa || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-500">DIČ</p>
-                      <p className="font-medium">{revize.firmaDic || '—'}</p>
-                    </div>
-                  </div>
-                ) : nastaveni && (nastaveni.firmaJmeno || nastaveni.firmaIco) ? (
-                  <div>
-                    <p className="text-sm text-slate-500 italic mb-2">Firma z nastavení:</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-slate-500">Název firmy</p>
-                        <p className="font-medium">{nastaveni.firmaJmeno || '—'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-slate-500">IČO</p>
-                        <p className="font-medium">{nastaveni.firmaIco || '—'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-slate-500">Adresa</p>
-                        <p className="font-medium">{nastaveni.firmaAdresa || '—'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-slate-500">DIČ</p>
-                        <p className="font-medium">{nastaveni.firmaDic || '—'}</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-slate-500 italic">Firma není nastavena</p>
-                )}
-              </div>
+          {/* ═══ SEKCE 5: FIRMA ═══ */}
+          <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider">Firma provádějící revizi</div>
+          <div className="p-4 space-y-3 border-b border-slate-200">
+            <select className="w-full px-2 py-1.5 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={selectedFirmaId} onChange={(e) => {
+              const firmaId = e.target.value;
+              setSelectedFirmaId(firmaId);
+              if (firmaId === '') { setFormData({ ...formData, firmaJmeno: '', firmaIco: '', firmaAdresa: '', firmaDic: '' }); }
+              else { const firma = firmy.find(f => f.id?.toString() === firmaId); if (firma) setFormData({ ...formData, firmaJmeno: firma.nazev, firmaIco: firma.ico || '', firmaAdresa: firma.adresa || '', firmaDic: firma.dic || '' }); }
+            }}>
+              <option value="">Použít firmu z nastavení</option>
+              {firmy.map(f => <option key={f.id} value={f.id!.toString()}>{f.nazev}</option>)}
+            </select>
+            <table className="w-full text-sm border border-slate-200 rounded overflow-hidden">
+              <tbody>
+                <tr className="border-b border-slate-200"><td className="w-[140px] px-3 py-1.5 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200 text-xs">Název firmy</td><td className="px-3 py-1.5"><input className="w-full px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Ponechte prázdné → firma z nastavení" value={formData.firmaJmeno || ''} onChange={(e) => setFormData({ ...formData, firmaJmeno: e.target.value })} /></td></tr>
+                <tr className="border-b border-slate-200"><td className="px-3 py-1.5 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200 text-xs">IČO</td><td className="px-3 py-1.5"><input className="w-full px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={formData.firmaIco || ''} onChange={(e) => setFormData({ ...formData, firmaIco: e.target.value })} /></td></tr>
+                <tr className="border-b border-slate-200"><td className="px-3 py-1.5 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200 text-xs">Adresa</td><td className="px-3 py-1.5"><input className="w-full px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={formData.firmaAdresa || ''} onChange={(e) => setFormData({ ...formData, firmaAdresa: e.target.value })} /></td></tr>
+                <tr><td className="px-3 py-1.5 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200 text-xs">DIČ</td><td className="px-3 py-1.5"><input className="w-full px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={formData.firmaDic || ''} onChange={(e) => setFormData({ ...formData, firmaDic: e.target.value })} /></td></tr>
+              </tbody>
+            </table>
+            {selectedFirmaId === '' && nastaveni && (nastaveni.firmaJmeno || nastaveni.firmaIco) && (
+              <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded p-2">📋 Z nastavení: <strong>{nastaveni.firmaJmeno}</strong> | IČO: {nastaveni.firmaIco || '—'} | {nastaveni.firmaAdresa || '—'}</div>
             )}
-          </Card>
+            {selectedFirmaId === '' && (!nastaveni || (!nastaveni.firmaJmeno && !nastaveni.firmaIco)) && (
+              <p className="text-xs text-amber-600">⚠️ Nemáte výchozí firmu. <Link to="/nastaveni" className="underline font-medium">Nastavení</Link></p>
+            )}
+            {firmy.length === 0 && <p className="text-xs text-amber-600">💡 Tip: Seznam firem → <Link to="/firmy" className="underline font-medium">Firmy</Link></p>}
+          </div>
         </div>
       )}
 
       {/* Záložka REVIDOVANÉ ZAŘÍZENÍ */}
-      {activeTab === 'dokumentace' && (
-        <div className="space-y-4">
-          {/* Tlačítka pro úpravy */}
-          <div className="flex justify-end gap-2">
-            {isEditing ? (
-              <>
-                <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)}>
-                  Zrušit
-                </Button>
-                <Button size="sm" onClick={handleSave}>
-                  Uložit
-                </Button>
-              </>
-            ) : (
-              <Button size="sm" onClick={() => setIsEditing(true)}>
-                Upravit
-              </Button>
-            )}
+      {activeTab === 'dokumentace' && (() => {
+        const tiskSekce: Record<string, boolean> = formData.tiskSekce ? JSON.parse(formData.tiskSekce) : {};
+        const isSekceVisible = (key: string) => tiskSekce[key] !== false; // default true
+        const toggleSekce = (key: string) => {
+          const updated = { ...tiskSekce, [key]: !isSekceVisible(key) };
+          setFormData({ ...formData, tiskSekce: JSON.stringify(updated) });
+        };
+        const SekceHeader = ({ id, children, className = "bg-slate-800" }: { id: string; children: React.ReactNode; className?: string }) => (
+          <div className={`${className} text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center justify-between`}>
+            <span className={!isSekceVisible(id) ? 'opacity-50 line-through' : ''}>{children}</span>
+            <button onClick={() => toggleSekce(id)} className="flex items-center gap-1 text-[10px] font-normal normal-case tracking-normal opacity-70 hover:opacity-100 transition-opacity cursor-pointer" title={isSekceVisible(id) ? 'Skrýt v tisku' : 'Zobrazit v tisku'}>
+              {isSekceVisible(id) ? '🖨️' : '🚫'} <span className="hidden sm:inline">{isSekceVisible(id) ? 'Tisk ✓' : 'Skryto'}</span>
+            </button>
           </div>
+        );
 
-          {/* Důvod mimořádné revize - zobrazí se pouze pokud je typ mimořádná */}
-          {(formData.typRevize === 'mimořádná' || revize?.typRevize === 'mimořádná') && (
-            <Card title="📋 Důvod mimořádné revize">
-              {isEditing ? (
-                <Input
-                  label="Důvod mimořádné revize"
-                  value={formData.duvodMimoradne || ''}
-                  onChange={(e) => setFormData({ ...formData, duvodMimoradne: e.target.value })}
-                  placeholder="Např. havárie, rekonstrukce..."
-                />
-              ) : (
-                <p className="font-medium whitespace-pre-wrap">
-                  {revize?.duvodMimoradne || <span className="text-slate-400 italic">Nevyplněno</span>}
-                </p>
+        // ── Předvolené texty pro textová pole ──
+        const PREDVOLENE_TEXTY: Record<string, { label: string; text: string }[]> = {
+          popisZarizeni: [
+            { label: 'Bytový dům', text: 'Elektrická instalace bytového domu, včetně rozváděčů, rozvodů, zásuvek a osvětlení.' },
+            { label: 'Rodinný dům', text: 'Elektrická instalace rodinného domu, silnoproudé rozvody od hlavního rozváděče po koncové obvody.' },
+            { label: 'Administrativní budova', text: 'Elektroinstalace administrativní budovy – rozváděče, rozvody, osvětlení, zásuvkové obvody.' },
+            { label: 'Provozovna / dílna', text: 'Elektrická instalace provozovny, silové rozvody, motorové vývody, osvětlení.' },
+          ],
+          rozsahRevize: [
+            { label: 'Od elektroměru po obvody', text: 'Elektrická instalace od elektroměrového rozváděče po koncové obvody, včetně rozváděčů, kabelových rozvodů, spínacích a zásuvkových obvodů, osvětlení a uzemnění.' },
+            { label: 'Od hlavního rozváděče', text: 'Silnoproudá elektroinstalace objektu v rozsahu od hlavního rozváděče po poslední spotřebič, včetně rozváděčů, kabelových tras, ochranného pospojování a uzemnění.' },
+            { label: 'Celá instalace', text: 'Kompletní elektrická instalace objektu – silové i světelné rozvody, rozváděče, kabelové trasy, přípojnice, uzemnění, ochranné pospojování.' },
+          ],
+          predmetNeni: [
+            { label: 'Spotřebiče + hromosvod', text: 'Spotřebiče připojené pohyblivým přívodem, hromosvod, slaboproudé rozvody (EZS, EPS, strukturovaná kabeláž).' },
+            { label: 'Spotřebiče + nájemci', text: 'Elektrické spotřebiče, zařízení dodaná nájemci, hromosvodní soustava, telekomunikační rozvody.' },
+            { label: 'Jen hromosvod', text: 'Hromosvodní soustava – bude předmětem samostatné revize.' },
+          ],
+          podklady: [
+            { label: 'Projekt + předchozí revize', text: 'Projektová dokumentace skutečného provedení, předchozí revizní zpráva, protokoly o měření, ČSN 33 1500, ČSN 33 2000-6 ed.2.' },
+            { label: 'Vnější vlivy + projekt', text: 'Protokol o určení vnějších vlivů, projektová dokumentace, předchozí revizní zpráva.' },
+            { label: 'Pouze normy', text: 'ČSN 33 1500, ČSN 33 2000-6 ed.2, ČSN 33 2000-4-41 ed.3, ČSN EN 61439-1,2.' },
+          ],
+          provedeneUkony: [
+            { label: 'Kompletní sada úkonů', text: 'Prohlídka elektrického zařízení, kontrola značení obvodů a jistících prvků, měření izolačního odporu, měření impedance poruchové smyčky, ověření funkce proudových chráničů (RCD), kontrola ochranného pospojování, ověření sledu fází, kontrola stupně ochrany krytem.' },
+            { label: 'Základní úkony', text: 'Vizuální prohlídka, měření izolačních odporů, měření impedance smyčky, test funkce proudových chráničů, kontrola ochranných vodičů.' },
+          ],
+          vyhodnoceniPredchozich: [
+            { label: 'Nebyla předložena', text: 'Předchozí revizní zpráva nebyla předložena.' },
+            { label: 'Bez závad', text: 'Předchozí revize — bez závad. Závady z předchozí revize byly odstraněny.' },
+            { label: 'Výchozí revize', text: 'Jedná se o výchozí revizi – předchozí revize nebyla provedena.' },
+            { label: 'Závady odstraněny', text: 'Závady zjištěné předchozí revizí byly odstraněny.' },
+          ],
+          vysledekOduvodneni: [
+            { label: 'Schopno – bez závad', text: 'Při revizi nebyly zjištěny závady bránící bezpečnému provozu elektrického zařízení. Zařízení splňuje požadavky platných norem a předpisů.' },
+            { label: 'Neschopno – závady', text: 'Elektrické zařízení vykazuje závady, které brání jeho bezpečnému provozu. Závady jsou uvedeny v soupisu zjištěných závad.' },
+            { label: 'Podmíněně schopno', text: 'Elektrické zařízení je podmíněně schopno provozu za předpokladu odstranění zjištěných závad ve stanoveném termínu.' },
+          ],
+          zaver: [
+            { label: 'Schopno provozu', text: 'Na základě provedené revize konstatuji, že revidované elektrické zařízení je z hlediska bezpečnosti schopno provozu.' },
+            { label: 'Schopno + údržba', text: 'Revidované zařízení je schopno bezpečného provozu za předpokladu dodržování platných norem a předpisů. Doporučuji provádět pravidelnou údržbu a kontroly dle provozního řádu.' },
+            { label: 'Neschopno provozu', text: 'Na základě provedené revize konstatuji, že revidované elektrické zařízení není z hlediska bezpečnosti schopno provozu. Před jeho dalším provozováním je nutné odstranit zjištěné závady.' },
+          ],
+        };
+
+        // Tlačítko předvoleného textu s dropdown + správa vlastních
+        const PredvolenyTextBtn = ({ field, mode = 'replace' }: { field: string; mode?: 'replace' | 'append' }) => {
+          const [open, setOpen] = useState(false);
+          const [adding, setAdding] = useState(false);
+          const [newNazev, setNewNazev] = useState('');
+          const [newText, setNewText] = useState('');
+          const ref = useRef<HTMLDivElement>(null);
+          const builtIn = PREDVOLENE_TEXTY[field] || [];
+          const custom = vlastniTexty.filter(t => t.pole === field);
+
+          // Zavřít při kliknutí mimo
+          useEffect(() => {
+            if (!open) return;
+            const handler = (e: MouseEvent) => {
+              if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+            };
+            document.addEventListener('mousedown', handler);
+            return () => document.removeEventListener('mousedown', handler);
+          }, [open]);
+
+          const handleAdd = async () => {
+            if (!newNazev.trim() || !newText.trim()) return;
+            try {
+              await predvolenyTextService.create({ pole: field, nazev: newNazev.trim(), text: newText.trim() });
+              const updated = await predvolenyTextService.getAll();
+              setVlastniTexty(updated);
+              setNewNazev('');
+              setNewText('');
+              setAdding(false);
+            } catch (err) {
+              console.error('Chyba při ukládání předvolby:', err);
+            }
+          };
+
+          const handleDelete = async (id: number) => {
+            if (!window.confirm('Smazat tuto vlastní předvolbu?')) return;
+            try {
+              await predvolenyTextService.delete(id);
+              setVlastniTexty(prev => prev.filter(t => t.id !== id));
+            } catch (err) {
+              console.error('Chyba při mazání předvolby:', err);
+            }
+          };
+
+          const handleSaveAsCurrent = async () => {
+            const currentVal = (formData as any)[field] || '';
+            if (!currentVal.trim()) return;
+            const nazev = window.prompt('Název předvolby:');
+            if (!nazev?.trim()) return;
+            try {
+              await predvolenyTextService.create({ pole: field, nazev: nazev.trim(), text: currentVal.trim() });
+              const updated = await predvolenyTextService.getAll();
+              setVlastniTexty(updated);
+            } catch (err) {
+              console.error('Chyba:', err);
+            }
+          };
+
+          const applyText = (text: string) => {
+            const current = (formData as any)[field] || '';
+            const newVal = mode === 'append' && current ? current + '\n' + text : text;
+            setFormData({ ...formData, [field]: newVal });
+            setOpen(false);
+          };
+
+          return (
+            <div ref={ref} className="relative inline-flex items-center gap-1">
+              {(formData as any)[field]?.trim() && (
+                <button
+                  type="button"
+                  onClick={handleSaveAsCurrent}
+                  className="text-xs text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+                  title="Uložit aktuální text jako předvolbu"
+                >
+                  💾
+                </button>
               )}
-            </Card>
-          )}
-
-          {/* 1. Vymezení rozsahu revize */}
-          <Card title="1. Vymezení rozsahu revize">
-            {isEditing ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    1.1 Předmětem revize je:
-                  </label>
-                  <textarea
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={3}
-                    value={formData.rozsahRevize || ''}
-                    onChange={(e) => setFormData({ ...formData, rozsahRevize: e.target.value })}
-                    placeholder="Elektrická instalace objektu, rozváděče, obvody..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    1.2 Předmětem revize není:
-                  </label>
-                  <textarea
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={3}
-                    value={formData.predmetNeni || ''}
-                    onChange={(e) => setFormData({ ...formData, predmetNeni: e.target.value })}
-                    placeholder="Spotřebiče, zařízení dodaná nájemci, hromosvod..."
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">1.1 Předmětem revize je:</p>
-                  <p className="font-medium whitespace-pre-wrap bg-slate-50 p-3 rounded-lg min-h-[60px]">
-                    {revize?.rozsahRevize || <span className="text-slate-400 italic">Nevyplněno</span>}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">1.2 Předmětem revize není:</p>
-                  <p className="font-medium whitespace-pre-wrap bg-slate-50 p-3 rounded-lg min-h-[60px]">
-                    {revize?.predmetNeni || <span className="text-slate-400 italic">Nevyplněno</span>}
-                  </p>
-                </div>
-              </div>
-            )}
-          </Card>
-
-          {/* 2. Charakteristika zařízení */}
-          <Card title="2. Charakteristika zařízení">
-            {isEditing ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    2.1 Napěťová soustava
-                  </label>
-                  <Select
-                    value={formData.napetovaSoustava || ''}
-                    onChange={(e) => setFormData({ ...formData, napetovaSoustava: e.target.value })}
-                    options={[
-                      { value: '', label: '-- Vyberte napěťovou soustavu --' },
-                      { value: '3+N+PE AC 50Hz 400/230V TN-C-S', label: '3+N+PE AC 50Hz 400/230V TN-C-S' },
-                      { value: '3+N+PE AC 50Hz 400/230V TN-S', label: '3+N+PE AC 50Hz 400/230V TN-S' },
-                      { value: '3+PEN AC 50Hz 400/230V TN-C', label: '3+PEN AC 50Hz 400/230V TN-C' },
-                      { value: '1+N+PE AC 50Hz 230V TN-S', label: '1+N+PE AC 50Hz 230V TN-S' },
-                      { value: '1+N+PE AC 50Hz 230V TN-C-S', label: '1+N+PE AC 50Hz 230V TN-C-S' },
-                      { value: '3+PE AC 50Hz 400V TT', label: '3+PE AC 50Hz 400V TT' },
-                      { value: '1+PE AC 50Hz 230V TT', label: '1+PE AC 50Hz 230V TT' },
-                      { value: 'DC 24V SELV', label: 'DC 24V SELV' },
-                      { value: 'DC 48V PELV', label: 'DC 48V PELV' },
-                    ]}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    2.2 Ochrana před úrazem elektrickým proudem
-                  </label>
-                  <p className="text-xs text-slate-500 mb-2">Zaškrtněte opatření použitá v objektu:</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {[
-                      { id: 'zakladni-izolace', label: 'Základní izolace živých částí' },
-                      { id: 'kryty-pricka', label: 'Přepážky nebo kryty' },
-                      { id: 'zamezeni-dotyk', label: 'Zábrany nebo ochrana polohou' },
-                      { id: 'selv', label: 'Ochrana malým napětím SELV' },
-                      { id: 'pelv', label: 'Ochrana malým napětím PELV' },
-                      { id: 'ochrane-pospojovani', label: 'Ochranné pospojování' },
-                      { id: 'samocine-odpojeni', label: 'Samočinné odpojení od zdroje' },
-                      { id: 'proudovy-chranic', label: 'Doplňková ochrana proudovým chráničem' },
-                      { id: 'ochranne-oddeleni', label: 'Ochranné oddělení obvodů' },
-                      { id: 'dvojita-izolace', label: 'Dvojitá nebo zesílená izolace' },
-                      { id: 'nevodive-prostredi', label: 'Nevodivé prostředí' },
-                      { id: 'neuzemene-pospojeni', label: 'Neuzemeného místního pospojování' },
-                    ].map((opatreni) => {
-                      const currentOpatreni = formData.ochranaOpatreni 
-                        ? JSON.parse(formData.ochranaOpatreni) 
-                        : [];
-                      const isChecked = currentOpatreni.includes(opatreni.id);
-                      
-                      return (
-                        <label key={opatreni.id} className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              let updated = [...currentOpatreni];
-                              if (e.target.checked) {
-                                updated.push(opatreni.id);
-                              } else {
-                                updated = updated.filter(id => id !== opatreni.id);
-                              }
-                              setFormData({ ...formData, ochranaOpatreni: JSON.stringify(updated) });
-                            }}
-                            className="w-4 h-4 text-blue-600 rounded"
-                          />
-                          <span className="text-sm">{opatreni.label}</span>
-                        </label>
-                      );
-                    })}
+              <button
+                type="button"
+                onClick={() => { setOpen(!open); setAdding(false); }}
+                className="text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+                title="Předvolené texty"
+              >
+                📋 Předvolby
+              </button>
+              {open && (
+                <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-slate-300 rounded-lg shadow-xl min-w-[340px] max-w-[440px] py-1 max-h-96 overflow-y-auto">
+                  {/* Výchozí předvolby */}
+                  {builtIn.length > 0 && (
+                    <>
+                      <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold border-b border-slate-100">Výchozí předvolby</div>
+                      {builtIn.map((t, i) => (
+                        <button
+                          key={`b-${i}`}
+                          type="button"
+                          className="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors cursor-pointer border-b border-slate-50"
+                          onClick={() => applyText(t.text)}
+                        >
+                          <div className="text-xs font-semibold text-blue-700">{t.label}</div>
+                          <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">{t.text}</div>
+                        </button>
+                      ))}
+                    </>
+                  )}
+                  {/* Vlastní předvolby */}
+                  {custom.length > 0 && (
+                    <>
+                      <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-emerald-600 font-semibold border-b border-slate-100 mt-1">Vlastní předvolby</div>
+                      {custom.map((t) => (
+                        <div key={`c-${t.id}`} className="flex items-start group">
+                          <button
+                            type="button"
+                            className="flex-1 text-left px-3 py-2 hover:bg-emerald-50 transition-colors cursor-pointer border-b border-slate-50"
+                            onClick={() => applyText(t.text)}
+                          >
+                            <div className="text-xs font-semibold text-emerald-700">{t.nazev}</div>
+                            <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">{t.text}</div>
+                          </button>
+                          <button
+                            type="button"
+                            className="px-2 py-2 text-xs text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                            onClick={() => t.id && handleDelete(t.id)}
+                            title="Smazat"
+                          >✕</button>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                  {/* Přidat novou */}
+                  <div className="border-t border-slate-200 mt-1">
+                    {!adding ? (
+                      <button
+                        type="button"
+                        className="w-full text-left px-3 py-2 text-xs text-blue-600 hover:bg-blue-50 cursor-pointer font-medium"
+                        onClick={() => setAdding(true)}
+                      >
+                        + Přidat vlastní předvolbu
+                      </button>
+                    ) : (
+                      <div className="px-3 py-2 space-y-1.5">
+                        <input
+                          type="text"
+                          placeholder="Název předvolby"
+                          value={newNazev}
+                          onChange={(e) => setNewNazev(e.target.value)}
+                          className="w-full text-xs px-2 py-1 border border-slate-300 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none"
+                          autoFocus
+                        />
+                        <textarea
+                          placeholder="Text předvolby"
+                          value={newText}
+                          onChange={(e) => setNewText(e.target.value)}
+                          rows={3}
+                          className="w-full text-xs px-2 py-1 border border-slate-300 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none resize-none"
+                        />
+                        <div className="flex gap-1 justify-end">
+                          <button type="button" onClick={() => setAdding(false)} className="px-2 py-0.5 text-xs text-slate-500 hover:bg-slate-100 rounded cursor-pointer">Zrušit</button>
+                          <button type="button" onClick={handleAdd} className="px-2 py-0.5 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer" disabled={!newNazev.trim() || !newText.trim()}>Uložit</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">2.1 Napěťová soustava:</p>
-                  <p className="font-medium bg-blue-50 p-3 rounded-lg text-blue-800">
-                    {revize?.napetovaSoustava || <span className="text-slate-400 italic">Nevyplněno</span>}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-600 mb-2">2.2 Ochrana před úrazem elektrickým proudem:</p>
-                  {revize?.ochranaOpatreni ? (
-                    <div className="overflow-x-auto">
-                      <table className="w-full border-collapse">
-                        <thead>
-                          <tr className="bg-slate-100">
-                            <th className="border border-slate-300 px-3 py-2 text-left text-sm font-medium">Druh ochrany</th>
-                            <th className="border border-slate-300 px-3 py-2 text-center text-sm font-medium w-20">Použito</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {[
-                            { id: 'zakladni-izolace', label: 'Základní izolace živých částí' },
-                            { id: 'kryty-pricka', label: 'Přepážky nebo kryty' },
-                            { id: 'zamezeni-dotyk', label: 'Zábrany nebo ochrana polohou' },
-                            { id: 'selv', label: 'Ochrana malým napětím SELV' },
-                            { id: 'pelv', label: 'Ochrana malým napětím PELV' },
-                            { id: 'ochrane-pospojovani', label: 'Ochranné pospojování' },
-                            { id: 'samocine-odpojeni', label: 'Samočinné odpojení od zdroje' },
-                            { id: 'proudovy-chranic', label: 'Doplňková ochrana proudovým chráničem' },
-                            { id: 'ochranne-oddeleni', label: 'Ochranné oddělení obvodů' },
-                            { id: 'dvojita-izolace', label: 'Dvojitá nebo zesílená izolace' },
-                            { id: 'nevodive-prostredi', label: 'Nevodivé prostředí' },
-                            { id: 'neuzemene-pospojeni', label: 'Neuzemené místní pospojování' },
-                          ].map((opatreni) => {
-                            const currentOpatreni = JSON.parse(revize.ochranaOpatreni || '[]');
-                            const isUsed = currentOpatreni.includes(opatreni.id);
-                            
-                            return (
-                              <tr key={opatreni.id} className={isUsed ? 'bg-green-50' : ''}>
-                                <td className="border border-slate-300 px-3 py-2 text-sm">{opatreni.label}</td>
-                                <td className="border border-slate-300 px-3 py-2 text-center">
-                                  {isUsed ? (
-                                    <span className="text-green-600 font-bold">✓</span>
-                                  ) : (
-                                    <span className="text-slate-300">—</span>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <p className="text-slate-400 italic bg-slate-50 p-3 rounded-lg">Nevyplněno</p>
-                  )}
-                </div>
-              </div>
-            )}
-          </Card>
+              )}
+            </div>
+          );
+        };
+        return (
+        <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden max-w-4xl mx-auto">
 
-          {/* 2.3 Použité měřicí přístroje */}
-          <Card 
-            title="2.3 Použité měřicí přístroje"
-            actions={
-              <Button size="sm" onClick={() => setIsPristrojModalOpen(true)}>
-                + Přidat přístroj
-              </Button>
-            }
-          >
+          {/* Záhlaví */}
+          <div className="flex items-center px-4 py-2 bg-slate-50 border-b border-slate-200">
+            <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">Revidované zařízení</span>
+          </div>
+
+          {/* ═══ DŮVOD MIMOŘÁDNÉ ═══ */}
+          {(formData.typRevize === 'mimořádná' || revize?.typRevize === 'mimořádná') && (
+            <>
+              <div className="bg-amber-600 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider">📋 Důvod mimořádné revize</div>
+              <div className="px-4 py-3 border-b border-slate-200">
+                <input className="w-full px-2 py-1.5 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={formData.duvodMimoradne || ''} onChange={(e) => setFormData({ ...formData, duvodMimoradne: e.target.value })} placeholder="Např. havárie, rekonstrukce..." />
+              </div>
+            </>
+          )}
+
+          {/* ═══ POPIS ZAŘÍZENÍ ═══ */}
+          <SekceHeader id="popisZarizeni">Popis revidovaného zařízení</SekceHeader>
+          {isSekceVisible('popisZarizeni') && (
+          <div className="px-4 py-3 border-b border-slate-200">
+            <div className="flex justify-end mb-1"><PredvolenyTextBtn field="popisZarizeni" /></div>
+            <textarea className="w-full px-2 py-1.5 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" rows={4} value={formData.popisZarizeni || ''} onChange={(e) => setFormData({ ...formData, popisZarizeni: e.target.value })} placeholder="Popis revidovaného elektrického zařízení, jeho rozsah, účel, stáří, stav..." />
+          </div>
+          )}
+
+          {/* ═══ SEKCE 1: ROZSAH REVIZE ═══ */}
+          <SekceHeader id="rozsahRevize">1. Vymezení rozsahu revize</SekceHeader>
+          {isSekceVisible('rozsahRevize') && (
+          <table className="w-full text-sm border-collapse">
+            <tbody>
+              <tr className="border-b border-slate-200">
+                <td className="w-[180px] px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200 align-top">1.1 Předmětem revize je</td>
+                <td className="px-4 py-2">
+                  <div className="flex justify-end mb-1"><PredvolenyTextBtn field="rozsahRevize" /></div>
+                  <textarea className="w-full px-2 py-1.5 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" rows={3} value={formData.rozsahRevize || ''} onChange={(e) => setFormData({ ...formData, rozsahRevize: e.target.value })} placeholder="Elektrická instalace objektu, rozváděče, obvody..." />
+                </td>
+              </tr>
+              <tr className="border-b border-slate-200">
+                <td className="px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200 align-top">1.2 Předmětem revize není</td>
+                <td className="px-4 py-2">
+                  <div className="flex justify-end mb-1"><PredvolenyTextBtn field="predmetNeni" /></div>
+                  <textarea className="w-full px-2 py-1.5 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" rows={3} value={formData.predmetNeni || ''} onChange={(e) => setFormData({ ...formData, predmetNeni: e.target.value })} placeholder="Spotřebiče, zařízení dodaná nájemci, hromosvod..." />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          )}
+
+          {/* ═══ SEKCE 2: CHARAKTERISTIKA ═══ */}
+          <SekceHeader id="charakteristika">2. Charakteristika zařízení</SekceHeader>
+          {isSekceVisible('charakteristika') && (
+          <>
+          <table className="w-full text-sm border-collapse">
+            <tbody>
+              <tr className="border-b border-slate-200">
+                <td className="w-[180px] px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200">2.1 Napěťová soustava</td>
+                <td className="px-4 py-2">
+                  <select className="w-full px-2 py-1.5 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={formData.napetovaSoustava || ''} onChange={(e) => setFormData({ ...formData, napetovaSoustava: e.target.value })}>
+                    <option value="">-- Vyberte napěťovou soustavu --</option>
+                    <option value="3+N+PE AC 50Hz 400/230V TN-C-S">3+N+PE AC 50Hz 400/230V TN-C-S</option>
+                    <option value="3+N+PE AC 50Hz 400/230V TN-S">3+N+PE AC 50Hz 400/230V TN-S</option>
+                    <option value="3+PEN AC 50Hz 400/230V TN-C">3+PEN AC 50Hz 400/230V TN-C</option>
+                    <option value="1+N+PE AC 50Hz 230V TN-S">1+N+PE AC 50Hz 230V TN-S</option>
+                    <option value="1+N+PE AC 50Hz 230V TN-C-S">1+N+PE AC 50Hz 230V TN-C-S</option>
+                    <option value="3+PE AC 50Hz 400V TT">3+PE AC 50Hz 400V TT</option>
+                    <option value="1+PE AC 50Hz 230V TT">1+PE AC 50Hz 230V TT</option>
+                    <option value="DC 24V SELV">DC 24V SELV</option>
+                    <option value="DC 48V PELV">DC 48V PELV</option>
+                  </select>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          {/* 2.2 Ochrana - tabulka checkboxů */}
+          <div className="px-4 py-2 bg-slate-50 border-b border-t border-slate-200">
+            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide">2.2 Ochrana před úrazem elektrickým proudem</span>
+          </div>
+          <div className="px-4 py-3 border-b border-slate-200">
+            <p className="text-xs text-slate-500 mb-2">Zaškrtněte opatření použitá v objektu:</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+              {[
+                { id: 'zakladni-izolace', label: 'Základní izolace živých částí' },
+                { id: 'kryty-pricka', label: 'Přepážky nebo kryty' },
+                { id: 'zamezeni-dotyk', label: 'Zábrany nebo ochrana polohou' },
+                { id: 'selv', label: 'Ochrana malým napětím SELV' },
+                { id: 'pelv', label: 'Ochrana malým napětím PELV' },
+                { id: 'ochrane-pospojovani', label: 'Ochranné pospojování' },
+                { id: 'samocine-odpojeni', label: 'Samočinné odpojení od zdroje' },
+                { id: 'proudovy-chranic', label: 'Doplňková ochrana proudovým chráničem' },
+                { id: 'ochranne-oddeleni', label: 'Ochranné oddělení obvodů' },
+                { id: 'dvojita-izolace', label: 'Dvojitá nebo zesílená izolace' },
+                { id: 'nevodive-prostredi', label: 'Nevodivé prostředí' },
+                { id: 'neuzemene-pospojeni', label: 'Neuzemeného místního pospojování' },
+              ].map((opatreni) => {
+                const currentOpatreni = formData.ochranaOpatreni ? JSON.parse(formData.ochranaOpatreni) : [];
+                const isChecked = currentOpatreni.includes(opatreni.id);
+                return (
+                  <label key={opatreni.id} className="flex items-center gap-2 px-2 py-1.5 bg-slate-50 rounded hover:bg-slate-100 cursor-pointer">
+                    <input type="checkbox" checked={isChecked} onChange={(e) => {
+                      let updated = [...currentOpatreni];
+                      if (e.target.checked) { updated.push(opatreni.id); } else { updated = updated.filter((id: string) => id !== opatreni.id); }
+                      setFormData({ ...formData, ochranaOpatreni: JSON.stringify(updated) });
+                    }} className="w-4 h-4 text-blue-600 rounded" />
+                    <span className="text-sm">{opatreni.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ═══ SEKCE 3: MĚŘICÍ PŘÍSTROJE ═══ */}
+          </>)}
+          <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center justify-between">
+            <span className={!isSekceVisible('pristroje') ? 'opacity-50 line-through' : ''}>2.3 Použité měřicí přístroje</span>
+            <div className="flex items-center gap-2">
+              <Button size="sm" onClick={() => setIsPristrojModalOpen(true)} className="!py-0.5 !px-2 !text-xs bg-white/20 hover:bg-white/30 text-white border-0">+ Přidat</Button>
+              <button onClick={() => toggleSekce('pristroje')} className="flex items-center gap-1 text-[10px] font-normal normal-case tracking-normal opacity-70 hover:opacity-100 transition-opacity cursor-pointer" title={isSekceVisible('pristroje') ? 'Skrýt v tisku' : 'Zobrazit v tisku'}>
+                {isSekceVisible('pristroje') ? '🖨️' : '🚫'} <span className="hidden sm:inline">{isSekceVisible('pristroje') ? 'Tisk ✓' : 'Skryto'}</span>
+              </button>
+            </div>
+          </div>
+          {isSekceVisible('pristroje') && (
+          <>
+          <div className="border-b border-slate-200">
             {pouzitePristroje.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="bg-slate-100">
-                      <th className="border border-slate-300 px-3 py-2 text-left text-sm font-medium">Název</th>
-                      <th className="border border-slate-300 px-3 py-2 text-left text-sm font-medium">Výrobce/Model</th>
-                      <th className="border border-slate-300 px-3 py-2 text-left text-sm font-medium">Výrobní číslo</th>
-                      <th className="border border-slate-300 px-3 py-2 text-center text-sm font-medium">Platnost kalibrace</th>
-                      <th className="border border-slate-300 px-3 py-2 text-center text-sm font-medium w-20">Akce</th>
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="bg-slate-100">
+                    <th className="border-b border-r border-slate-200 px-4 py-1.5 text-left text-xs font-medium">Název</th>
+                    <th className="border-b border-r border-slate-200 px-4 py-1.5 text-left text-xs font-medium">Výrobce/Model</th>
+                    <th className="border-b border-r border-slate-200 px-4 py-1.5 text-left text-xs font-medium">Výrobní číslo</th>
+                    <th className="border-b border-r border-slate-200 px-4 py-1.5 text-center text-xs font-medium">Platnost kalibrace</th>
+                    <th className="border-b border-slate-200 px-4 py-1.5 text-center text-xs font-medium w-16">Akce</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pouzitePristroje.map((p) => (
+                    <tr key={p.id} className="hover:bg-slate-50">
+                      <td className="border-b border-r border-slate-200 px-4 py-1.5 font-medium">{p.nazev}</td>
+                      <td className="border-b border-r border-slate-200 px-4 py-1.5">{p.vyrobce} {p.model}</td>
+                      <td className="border-b border-r border-slate-200 px-4 py-1.5 font-mono">{p.vyrobniCislo}</td>
+                      <td className="border-b border-r border-slate-200 px-4 py-1.5 text-center">{new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}</td>
+                      <td className="border-b border-slate-200 px-4 py-1.5 text-center">
+                        <Button variant="danger" size="sm" onClick={async () => { if (revize?.id && p.id) { await revizePristrojService.removeFromRevize(revize.id, p.id); loadData(revize.id); } }}>✕</Button>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {pouzitePristroje.map((p) => (
-                      <tr key={p.id} className="hover:bg-slate-50">
-                        <td className="border border-slate-300 px-3 py-2 text-sm font-medium">{p.nazev}</td>
-                        <td className="border border-slate-300 px-3 py-2 text-sm">{p.vyrobce} {p.model}</td>
-                        <td className="border border-slate-300 px-3 py-2 text-sm font-mono">{p.vyrobniCislo}</td>
-                        <td className="border border-slate-300 px-3 py-2 text-sm text-center">
-                          {new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}
-                        </td>
-                        <td className="border border-slate-300 px-3 py-2 text-center">
-                          <Button 
-                            variant="danger" 
-                            size="sm"
-                            onClick={async () => {
-                              if (revize?.id && p.id) {
-                                await revizePristrojService.removeFromRevize(revize.id, p.id);
-                                loadData(revize.id);
-                              }
-                            }}
-                          >
-                            ✕
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             ) : (
-              <p className="text-center text-slate-500 py-4">
-                Zatím nejsou přiřazeny žádné měřící přístroje.
-              </p>
+              <p className="px-4 py-4 text-center text-slate-500">Zatím nejsou přiřazeny žádné měřící přístroje.</p>
             )}
-          </Card>
+          </div>
+          </>)}
 
-          {/* 2.4 Podklady pro provedení revize */}
-          <Card title="2.4 Podklady pro provedení revize">
-            {isEditing ? (
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  Seznam podkladů
-                </label>
-                <textarea
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={4}
-                  value={formData.podklady || ''}
-                  onChange={(e) => setFormData({ ...formData, podklady: e.target.value })}
-                  placeholder="Projekty, předchozí revize, protokoly o měření..."
-                />
-              </div>
-            ) : (
-              <p className="font-medium whitespace-pre-wrap bg-slate-50 p-3 rounded-lg min-h-[60px]">
-                {revize?.podklady || <span className="text-slate-400 italic">Nevyplněno</span>}
-              </p>
-            )}
-          </Card>
+          {/* ═══ SEKCE 4: PODKLADY ═══ */}
+          <SekceHeader id="podklady">2.4 Podklady pro provedení revize</SekceHeader>
+          {isSekceVisible('podklady') && (
+          <div className="px-4 py-3 border-b border-slate-200">
+            <div className="flex justify-end mb-1"><PredvolenyTextBtn field="podklady" /></div>
+            <textarea className="w-full px-2 py-1.5 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" rows={4} value={formData.podklady || ''} onChange={(e) => setFormData({ ...formData, podklady: e.target.value })} placeholder="Projekty, předchozí revize, protokoly o měření..." />
+          </div>
+          )}
+
+          {/* ═══ SEKCE 5: PROVEDENÉ ÚKONY ═══ */}
+          <SekceHeader id="provedeneUkony">3. Soupis provedených úkonů</SekceHeader>
+          {isSekceVisible('provedeneUkony') && (
+          <div className="px-4 py-3 border-b border-slate-200">
+            <div className="flex justify-end mb-1"><PredvolenyTextBtn field="provedeneUkony" /></div>
+            <textarea className="w-full px-2 py-1.5 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" rows={4} value={formData.provedeneUkony || ''} onChange={(e) => setFormData({ ...formData, provedeneUkony: e.target.value })} placeholder="Prohlídka, měření izolačního odporu, impedance smyčky, funkce proudových chráničů..." />
+          </div>
+          )}
+
+          {/* ═══ SEKCE 6: VYHODNOCENÍ PŘEDCHOZÍCH ═══ */}
+          <SekceHeader id="vyhodnoceniPredchozich">4. Vyhodnocení předchozích revizí</SekceHeader>
+          {isSekceVisible('vyhodnoceniPredchozich') && (
+          <div className="px-4 py-3 border-b border-slate-200">
+            <div className="flex justify-end mb-1"><PredvolenyTextBtn field="vyhodnoceniPredchozich" /></div>
+            <textarea className="w-full px-2 py-1.5 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" rows={3} value={formData.vyhodnoceniPredchozich || ''} onChange={(e) => setFormData({ ...formData, vyhodnoceniPredchozich: e.target.value })} placeholder="Výsledky předchozí revize, stav odstranění zjištěných závad..." />
+          </div>
+          )}
+
+          {/* ═══ SEKCE 7: VÝSLEDEK + ODŮVODNĚNÍ ═══ */}
+          <SekceHeader id="vysledekOduvodneni">5. Výsledek revize — odůvodnění</SekceHeader>
+          {isSekceVisible('vysledekOduvodneni') && (
+          <table className="w-full text-sm border-collapse">
+            <tbody>
+              <tr className="border-b border-slate-200">
+                <td className="w-[180px] px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200">Výsledek</td>
+                <td className="px-4 py-2">
+                  <select className="px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={formData.vysledek || ''} onChange={(e) => setFormData({ ...formData, vysledek: e.target.value as any })}>
+                    <option value="">-- Nevyplněno --</option><option value="schopno">Schopno provozu</option><option value="neschopno">Neschopno provozu</option><option value="podmíněně schopno">Podmíněně schopno</option>
+                  </select>
+                </td>
+              </tr>
+              <tr className="border-b border-slate-200">
+                <td className="px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200 align-top">Odůvodnění</td>
+                <td className="px-4 py-2">
+                  <div className="flex justify-end mb-1"><PredvolenyTextBtn field="vysledekOduvodneni" /></div>
+                  <textarea className="w-full px-2 py-1.5 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" rows={3} value={formData.vysledekOduvodneni || ''} onChange={(e) => setFormData({ ...formData, vysledekOduvodneni: e.target.value })} placeholder="Odůvodnění výsledku revize, pokud zařízení není schopno provozu..." />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          )}
+
+          {/* ═══ SEKCE 8: ZÁVĚR ═══ */}
+          <SekceHeader id="zaver">6. Závěr revize</SekceHeader>
+          {isSekceVisible('zaver') && (
+          <div className="px-4 py-3">
+            <div className="flex justify-end mb-1"><PredvolenyTextBtn field="zaver" /></div>
+            <textarea className="w-full px-2 py-1.5 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" rows={4} value={formData.zaver || ''} onChange={(e) => setFormData({ ...formData, zaver: e.target.value })} placeholder="Celkové shrnutí a závěr revizní zprávy..." />
+          </div>
+          )}
         </div>
-      )}
+        );
+      })()}
 
       {/* Modal pro přidání přístroje k revizi */}
       <Modal
@@ -2444,14 +2312,7 @@ export function RevizeDetailPage() {
         </form>
       </Modal>
 
-      {/* PDF Export Modal */}
-      {revize && (
-        <PDFExportModal
-          isOpen={isPDFModalOpen}
-          onClose={() => setIsPDFModalOpen(false)}
-          revize={revize}
-        />
-      )}
+
 
       {/* Lightbox pro zvětšení fotek */}
       {lightboxImage && (
@@ -2472,6 +2333,14 @@ export function RevizeDetailPage() {
             >
               ✕
             </button>
+          </div>
+        </div>
+      )}
+      {/* Fixní spodní lišta Uložit – viditelná při scrollování */}
+      {(activeTab === 'info' || activeTab === 'dokumentace') && (
+        <div className="fixed bottom-0 left-0 lg:left-64 right-0 z-50 bg-slate-800/90 backdrop-blur border-t border-slate-600 shadow-[0_-2px_8px_rgba(0,0,0,0.15)]">
+          <div className="max-w-4xl mx-auto px-4 py-1 flex justify-center">
+            <button onClick={handleSave} className="px-6 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded shadow transition-colors cursor-pointer">💾 Uložit změny</button>
           </div>
         </div>
       )}

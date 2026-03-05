@@ -1,7 +1,7 @@
 // Database service - komunikuje s backend API
 // Všechna data jsou uložena na serveru a synchronizována mezi zařízeními
 
-import type { Revize, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, Sablona, MericiPristroj, Firma, ZavadaKatalog, Zakaznik } from '../types';
+import type { Revize, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, MericiPristroj, Firma, ZavadaKatalog, Zakaznik, PredvolenyText } from '../types';
 
 // V produkci používáme relativní URL (frontend i backend na stejném serveru)
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -431,120 +431,6 @@ export const revizePristrojService = {
   },
 };
 
-// ==================== SABLONY ====================
-export const sablonaService = {
-  async getAll(): Promise<Sablona[]> {
-    return fetch(`${API_BASE_URL}/sablony`, {
-      headers: getAuthHeaders(),
-    }).then(res => handleResponse<Sablona[]>(res));
-  },
-
-  async getById(id: number): Promise<Sablona | undefined> {
-    return fetch(`${API_BASE_URL}/sablony/${id}`, {
-      headers: getAuthHeaders(),
-    }).then(res => handleResponse<Sablona | undefined>(res));
-  },
-
-  async getVychozi(): Promise<Sablona | undefined> {
-    return fetch(`${API_BASE_URL}/sablony/vychozi/get`, {
-      headers: getAuthHeaders(),
-    }).then(res => handleResponse<Sablona | undefined>(res));
-  },
-
-  async create(data: Omit<Sablona, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
-    const response = await fetch(`${API_BASE_URL}/sablony`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }).then(res => handleResponse<{ id: number }>(res));
-    return response.id;
-  },
-
-  async update(id: number, data: Partial<Sablona>): Promise<number> {
-    await fetch(`${API_BASE_URL}/sablony/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }).then(res => handleResponse<unknown>(res));
-    return 1;
-  },
-
-  async delete(id: number): Promise<void> {
-    await fetch(`${API_BASE_URL}/sablony/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    }).then(res => handleResponse<unknown>(res));
-  },
-
-  getDefaultSablona(): Omit<Sablona, 'id' | 'createdAt' | 'updatedAt'> {
-    return {
-      nazev: 'Výchozí šablona',
-      popis: 'Šablona podle požadavků na revizní zprávu vyhrazeného elektrického zařízení',
-      jeVychozi: true,
-      zahlaviZobrazitLogo: true,
-      zahlaviZobrazitFirmu: true,
-      zahlaviZobrazitTechnika: true,
-      zahlaviCustomText: '',
-      uvodniStranaZobrazit: true,
-      uvodniStranaZobrazitObjekt: true,
-      uvodniStranaZobrazitTechnika: true,
-      uvodniStranaZobrazitFirmu: true,
-      uvodniStranaZobrazitZakaznika: true,
-      uvodniStranaZobrazitVyhodnoceni: true,
-      uvodniStranaZobrazitPodpisy: true,
-      podpisyUmisteni: 'uvodni',
-      uvodniStranaNadpis: 'ZPRÁVA O REVIZI VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ',
-      uvodniStranaNadpisFontSize: 16,
-      uvodniStranaNadpisRamecek: true,
-      uvodniStranaRamecekUdaje: true,
-      uvodniStranaRamecekObjekt: true,
-      uvodniStranaRamecekZakaznik: true,
-      uvodniStranaRamecekVyhodnoceni: true,
-      // Bloky úvodní strany 
-      uvodniStranaBloky: [
-        { id: 'hlavicka', nazev: 'Hlavička (Firma + Revizní technik)', enabled: true, poradi: 1 },
-        { id: 'nadpis', nazev: 'Nadpis dokumentu', enabled: true, poradi: 2 },
-        { id: 'zakaznik', nazev: 'Provozovatel (zákazník)', enabled: true, poradi: 3 },
-        { id: 'objekt', nazev: 'Identifikace zařízení a místo', enabled: true, poradi: 4 },
-        { id: 'zakladni-udaje', nazev: 'Základní údaje revize', enabled: true, poradi: 5 },
-        { id: 'vyhodnoceni', nazev: 'Vyhodnocení revize', enabled: true, poradi: 6 },
-        { id: 'podpisy', nazev: 'Podpisy a předání', enabled: true, poradi: 7 },
-      ],
-      // Sekce dokumentu podle zákonných požadavků
-      sekce: [
-        { id: 'vymezeni-rozsahu', nazev: 'Vymezení rozsahu revize', enabled: true, poradi: 1 },
-        { id: 'charakteristika-zarizeni', nazev: 'Charakteristika zařízení', enabled: true, poradi: 2 },
-        { id: 'pristroje', nazev: 'Soupis měřicích přístrojů', enabled: true, poradi: 3 },
-        { id: 'podklady', nazev: 'Podklady pro revizi', enabled: true, poradi: 4 },
-        { id: 'provedene-ukony', nazev: 'Provedené úkony', enabled: true, poradi: 5 },
-        { id: 'vyhodnoceni-predchozich', nazev: 'Vyhodnocení předchozích revizí', enabled: true, poradi: 6 },
-        { id: 'rozvadece', nazev: 'Rozvaděče a okruhy', enabled: true, poradi: 7 },
-        { id: 'mereni', nazev: 'Naměřené hodnoty', enabled: true, poradi: 8 },
-        { id: 'mistnosti', nazev: 'Místnosti a zařízení', enabled: true, poradi: 9 },
-        { id: 'zaver', nazev: 'Závěrečné zhodnocení', enabled: true, poradi: 10 },
-        { id: 'zavady', nazev: 'Přehled zjištěných závad', enabled: true, poradi: 11 },
-      ],
-      sloupceOkruhu: [
-        { id: 'cislo', nazev: 'Č.', enabled: true, poradi: 1 },
-        { id: 'jistic', nazev: 'Jistič', enabled: true, poradi: 2 },
-        { id: 'nazev', nazev: 'Název okruhu', enabled: true, poradi: 3 },
-        { id: 'vodic', nazev: 'Vodič', enabled: true, poradi: 4 },
-        { id: 'izolacniOdpor', nazev: 'Iz. odpor [MΩ]', enabled: true, poradi: 5 },
-        { id: 'impedanceSmycky', nazev: 'Zs [Ω]', enabled: true, poradi: 6 },
-        { id: 'proudovyChranicMa', nazev: 'IΔn [mA]', enabled: true, poradi: 7 },
-        { id: 'casOdpojeni', nazev: 'tA [ms]', enabled: true, poradi: 8 },
-      ],
-      zapatiZobrazitCisloStranky: true,
-      zapatiZobrazitDatum: true,
-      zapatiCustomText: '',
-      barvaPrimary: '#1e40af',
-      barvaSecondary: '#64748b',
-      fontFamily: 'Arial',
-      fontSize: 10,
-    };
-  }
-};
-
 // ==================== NASTAVENI ====================
 export const nastaveniService = {
   async get(): Promise<Nastaveni | undefined> {
@@ -638,6 +524,45 @@ export const zavadaKatalogService = {
   }
 };
 
+// ==================== PŘEDVOLENÉ TEXTY ====================
+export const predvolenyTextService = {
+  async getAll(): Promise<PredvolenyText[]> {
+    return fetch(`${API_BASE_URL}/predvolene-texty`, {
+      headers: getAuthHeaders(),
+    }).then(res => handleResponse<PredvolenyText[]>(res));
+  },
+
+  async getByPole(pole: string): Promise<PredvolenyText[]> {
+    return fetch(`${API_BASE_URL}/predvolene-texty/${pole}`, {
+      headers: getAuthHeaders(),
+    }).then(res => handleResponse<PredvolenyText[]>(res));
+  },
+
+  async create(data: { pole: string; nazev: string; text: string; poradi?: number }): Promise<number> {
+    const response = await fetch(`${API_BASE_URL}/predvolene-texty`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(res => handleResponse<{ id: number }>(res));
+    return response.id;
+  },
+
+  async update(id: number, data: { nazev: string; text: string; poradi?: number }): Promise<void> {
+    await fetch(`${API_BASE_URL}/predvolene-texty/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(res => handleResponse<unknown>(res));
+  },
+
+  async delete(id: number): Promise<void> {
+    await fetch(`${API_BASE_URL}/predvolene-texty/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).then(res => handleResponse<unknown>(res));
+  },
+};
+
 // ==================== ZÁKAZNÍCI ====================
 export const zakazniciService = {
   async getAll(): Promise<Zakaznik[]> {
@@ -693,48 +618,27 @@ export const backupService = {
     return JSON.stringify(data, null, 2);
   },
 
-  async importDatabase(jsonData: string, mergeMode: 'replace' | 'merge' = 'replace'): Promise<void> {
+  async importDatabase(jsonData: string, mergeMode: 'replace' | 'merge' = 'replace'): Promise<{ imported: number; errors: number }> {
     const data = JSON.parse(jsonData);
-    await fetch(`${API_BASE_URL}/backup/import`, {
+    return fetch(`${API_BASE_URL}/backup/import`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ data, mode: mergeMode }),
-    }).then(res => handleResponse<unknown>(res));
+    }).then(res => handleResponse<{ imported: number; errors: number }>(res));
   },
 
-  async getDatabaseStats(): Promise<Record<string, number>> {
-    const data = await fetch(`${API_BASE_URL}/backup`, {
+  async getDatabaseStats(): Promise<{ stats: Record<string, number>; sizeMB: string }> {
+    return fetch(`${API_BASE_URL}/backup/stats`, {
       headers: getAuthHeaders(),
-    }).then(res => handleResponse<Record<string, unknown[]>>(res));
-    
-    return {
-      revize: data.revize?.length || 0,
-      rozvadece: data.rozvadec?.length || 0,
-      okruhy: data.okruh?.length || 0,
-      zavady: data.zavada?.length || 0,
-      mistnosti: data.mistnost?.length || 0,
-      zarizeni: data.zarizeni?.length || 0,
-      zakazky: data.zakazka?.length || 0,
-      firmy: data.firma?.length || 0,
-      zakaznici: data.zakaznik?.length || 0,
-      pristroje: data.mericiPristroj?.length || 0,
-      sablony: data.sablona?.length || 0,
-    };
+    }).then(res => handleResponse<{ stats: Record<string, number>; sizeMB: string }>(res));
   },
 
-  async getDatabaseSize(): Promise<string> {
-    const stats = await this.getDatabaseStats();
-    let totalSize = 0;
-    for (const count of Object.values(stats)) {
-      totalSize += count * 1;
-    }
-    return (totalSize / 1024).toFixed(2);
-  },
-
-  async cleanOldData(_daysOld: number = 365): Promise<void> {
-    // Funkce pro čištění starých dat - zatím pouze placeholder
-    // Server by měl mít endpoint pro tuto funkci
-    console.log('Clean old data - not implemented on server yet');
+  async cleanOldData(daysOld: number = 365): Promise<{ deleted: number; message?: string }> {
+    return fetch(`${API_BASE_URL}/backup/clean`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ daysOld }),
+    }).then(res => handleResponse<{ deleted: number; message?: string }>(res));
   },
 };
 
