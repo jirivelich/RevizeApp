@@ -1,14 +1,27 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
-import { rozvadecService, okruhService } from '../services/database';
-import type { Rozvadec, Okruh } from '../types';
+import { useOkruhyByRozvadec, useCreateOkruh, useUpdateOkruh, useDeleteOkruh } from '../hooks/useQueries';
+import { rozvadecService } from '../services/database';
+import type { Okruh } from '../types';
 
 export function RozvadecDetailPage() {
   const { id, revizeId } = useParams<{ id: string; revizeId: string }>();
   const navigate = useNavigate();
-  const [rozvadec, setRozvadec] = useState<Rozvadec | null>(null);
-  const [okruhy, setOkruhy] = useState<Okruh[]>([]);
+  const numericId = id ? parseInt(id) : undefined;
+
+  const { data: rozvadec = null } = useQuery({
+    queryKey: ['rozvadec', numericId],
+    queryFn: () => rozvadecService.getById(numericId!),
+    enabled: !!numericId,
+  });
+
+  const { data: okruhy = [] } = useOkruhyByRozvadec(numericId);
+  const createOkruh = useCreateOkruh();
+  const updateOkruh = useUpdateOkruh();
+  const deleteOkruh = useDeleteOkruh();
+
   const [isOkruhModalOpen, setIsOkruhModalOpen] = useState(false);
   const [editingOkruh, setEditingOkruh] = useState<Okruh | null>(null);
 
@@ -26,35 +39,15 @@ export function RozvadecDetailPage() {
     poznamka: '',
   });
 
-  useEffect(() => {
-    if (id) {
-      loadData(parseInt(id));
-    }
-  }, [id]);
-
-  const loadData = async (rozvadecId: number) => {
-    const rozvadecData = await rozvadecService.getById(rozvadecId);
-    if (rozvadecData) {
-      setRozvadec(rozvadecData);
-      setOkruhy(await okruhService.getByRozvadec(rozvadecId));
-    }
-  };
-
-  const handleAddOkruh = async (e: React.FormEvent) => {
+  const handleAddOkruh = (e: React.FormEvent) => {
     e.preventDefault();
     if (rozvadec?.id) {
+      const onDone = () => { setIsOkruhModalOpen(false); setEditingOkruh(null); resetOkruhForm(); };
       if (editingOkruh?.id) {
-        await okruhService.update(editingOkruh.id, okruhFormData);
+        updateOkruh.mutate({ id: editingOkruh.id, data: { ...okruhFormData, rozvadecId: rozvadec.id } }, { onSuccess: onDone });
       } else {
-        await okruhService.create({
-          ...okruhFormData,
-          rozvadecId: rozvadec.id,
-        });
+        createOkruh.mutate({ ...okruhFormData, rozvadecId: rozvadec.id }, { onSuccess: onDone });
       }
-      setIsOkruhModalOpen(false);
-      setEditingOkruh(null);
-      resetOkruhForm();
-      loadData(rozvadec.id);
     }
   };
 
@@ -93,10 +86,9 @@ export function RozvadecDetailPage() {
     setIsOkruhModalOpen(true);
   };
 
-  const handleDeleteOkruh = async (okruhId: number) => {
+  const handleDeleteOkruh = (okruhId: number) => {
     if (window.confirm('Opravdu chcete smazat tento okruh?')) {
-      await okruhService.delete(okruhId);
-      if (rozvadec?.id) loadData(rozvadec.id);
+      deleteOkruh.mutate({ id: okruhId, rozvadecId: numericId! });
     }
   };
 
@@ -112,8 +104,8 @@ export function RozvadecDetailPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">{rozvadec.nazev}</h1>
-          <p className="text-slate-500">{rozvadec.oznaceni} • {rozvadec.umisteni}</p>
+          <h1 className="text-lg font-bold text-slate-800">{rozvadec.nazev}</h1>
+          <p className="text-xs text-slate-400">{rozvadec.oznaceni} • {rozvadec.umisteni}</p>
         </div>
         <Button variant="secondary" onClick={() => navigate(`/revize/${revizeId}`)}>
           ← Zpět na revizi
@@ -181,14 +173,14 @@ export function RozvadecDetailPage() {
                           size="sm"
                           onClick={() => handleEditOkruh(o)}
                         >
-                          ✏️
+                          Upravit
                         </Button>
                         <Button
                           variant="danger"
                           size="sm"
                           onClick={() => handleDeleteOkruh(o.id!)}
                         >
-                          🗑️
+                          ×
                         </Button>
                       </div>
                     </td>
@@ -265,7 +257,16 @@ export function RozvadecDetailPage() {
               onChange={(e) => setOkruhFormData({ ...okruhFormData, vodic: e.target.value })}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
+            <Select
+              label="Počet fází"
+              value={String(okruhFormData.pocetFazi)}
+              onChange={(e) => setOkruhFormData({ ...okruhFormData, pocetFazi: parseInt(e.target.value) })}
+              options={[
+                { value: '1', label: '1' },
+                { value: '3', label: '3' },
+              ]}
+            />
             <Input
               type="number"
               step="0.1"
@@ -281,6 +282,26 @@ export function RozvadecDetailPage() {
               onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmycky: e.target.value ? parseFloat(e.target.value) : undefined })}
             />
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              type="number"
+              label="Proudový chránič (mA)"
+              value={okruhFormData.proudovyChranicMa || ''}
+              onChange={(e) => setOkruhFormData({ ...okruhFormData, proudovyChranicMa: e.target.value ? parseFloat(e.target.value) : undefined })}
+            />
+            <Input
+              type="number"
+              step="0.01"
+              label="Čas odpojení (s)"
+              value={okruhFormData.casOdpojeni || ''}
+              onChange={(e) => setOkruhFormData({ ...okruhFormData, casOdpojeni: e.target.value ? parseFloat(e.target.value) : undefined })}
+            />
+          </div>
+          <Input
+            label="Poznámka"
+            value={okruhFormData.poznamka}
+            onChange={(e) => setOkruhFormData({ ...okruhFormData, poznamka: e.target.value })}
+          />
         </form>
       </Modal>
     </div>

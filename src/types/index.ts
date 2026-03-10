@@ -70,6 +70,44 @@ export interface Revize {
   firmaAdresa?: string;
   firmaIco?: string;
   firmaDic?: string;
+
+  // ═══ HROMOSVOD - specifická pole ═══
+  // Základní popis LPS
+  hromosvodTridaLps?: 'I' | 'II' | 'III' | 'IV';
+  hromosvodTypOchrany?: 'vnější' | 'vnitřní' | 'kombinovaná';
+  hromosvodRokInstalace?: string;
+  hromosvodNorma?: string; // např. ČSN EN 62305
+  hromosvodPopisLps?: string;
+
+  // Jímací soustava
+  hromosvodJimaciTyp?: string;        // tyčový / mřížový / kombinovaný / vodicový
+  hromosvodJimaciMaterial?: string;    // ocel pozink / nerez / hliník / měď
+  hromosvodJimaciStav?: 'vyhovující' | 'nevyhovující' | 'částečně vyhovující';
+  hromosvodJimaciPoznamka?: string;
+
+  // Svodové vedení
+  hromosvodSvodyPocet?: number;
+  hromosvodSvodyMaterial?: string;
+  hromosvodSvodyPrurez?: string;       // např. "FeZn Ø8mm"
+  hromosvodSvodyZkusebniSvorky?: number;
+  hromosvodSvodyStav?: 'vyhovující' | 'nevyhovující' | 'částečně vyhovující';
+  hromosvodSvodyPoznamka?: string;
+
+  // Uzemňovací soustava
+  hromosvodUzemneniTyp?: string;       // základový / obvodový / tyčový / kombinovaný
+  hromosvodUzemneniMaterial?: string;
+  hromosvodUzemneniStav?: 'vyhovující' | 'nevyhovující' | 'částečně vyhovující';
+  hromosvodUzemneniPoznamka?: string;
+
+  // Ochranné pospojování (SPD)
+  hromosvodSpdTyp?: string;            // typ přepěťové ochrany
+  hromosvodSpdStav?: 'vyhovující' | 'nevyhovující' | 'nenainstalováno';
+  hromosvodEkvipotencialni?: string;   // popis ekvipotenciálních přípojnic
+  hromosvodSpdPoznamka?: string;
+
+  // Měření odporů uzemnění (JSON pole měření)
+  hromosvodMereniOdporu?: string;      // JSON: [{bod, hodnota, limit, vyhovuje}]
+
   createdAt: Date;
   updatedAt: Date;
 }

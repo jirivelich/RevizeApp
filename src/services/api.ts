@@ -139,3 +139,47 @@ export async function checkServerHealth() {
     return false;
   }
 }
+
+// ==================== AI ====================
+export const aiApi = {
+  /** Zkontrolovat, zda je AI nakonfigurováno */
+  async getStatus(): Promise<{ configured: boolean }> {
+    return fetch(`${API_BASE_URL}/ai/status`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
+
+  /** Vygenerovat text revizní zprávy z dat revize */
+  async generateReport(revizeId: number): Promise<{ text: string }> {
+    return fetch(`${API_BASE_URL}/ai/generate-report`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ revizeId }),
+    }).then(handleResponse);
+  },
+
+  /** Chat s AI asistentem */
+  async chat(
+    messages: { role: 'user' | 'assistant'; content: string }[],
+    revizeContext?: any,
+  ): Promise<{ reply: string }> {
+    return fetch(`${API_BASE_URL}/ai/chat`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ messages, revizeContext }),
+    }).then(handleResponse);
+  },
+
+  /** Auto-vyplnění pole formuláře */
+  async autofill(
+    field: string,
+    formData: Record<string, any>,
+    entityType: string,
+  ): Promise<{ suggestion: Record<string, string> }> {
+    return fetch(`${API_BASE_URL}/ai/autofill`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ field, formData, entityType }),
+    }).then(handleResponse);
+  },
+};

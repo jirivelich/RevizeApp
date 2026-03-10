@@ -1,0 +1,370 @@
+import { useState, useEffect } from 'react';
+import { Button, Card, Input, Select, Modal } from '../../components/ui';
+import { rozvadecService, okruhService } from '../../services/database';
+import { useCreateRozvadec, useDeleteRozvadec } from '../../hooks/useQueries';
+import type { Rozvadec, Okruh } from '../../types';
+
+interface RozvadeceTabProps {
+  rozvadece: Rozvadec[];
+  okruhyCounts: Record<number, number>;
+  revizeId: number;
+  onReload: () => void;
+}
+
+export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, onReload }: RozvadeceTabProps) {
+  const createRozvadec = useCreateRozvadec();
+  const deleteRozvadec = useDeleteRozvadec();
+  const [selectedRozvadec, setSelectedRozvadec] = useState<Rozvadec | null>(null);
+  const [okruhy, setOkruhy] = useState<Okruh[]>([]);
+  const [isRozvadecModalOpen, setIsRozvadecModalOpen] = useState(false);
+  const [isOkruhModalOpen, setIsOkruhModalOpen] = useState(false);
+  const [editingOkruh, setEditingOkruh] = useState<Okruh | null>(null);
+  const [draggedOkruh, setDraggedOkruh] = useState<Okruh | null>(null);
+  const [okruhyCounts, setOkruhyCounts] = useState<Record<number, number>>(propCounts);
+
+  const [rozvadecFormData, setRozvadecFormData] = useState({
+    nazev: '',
+    oznaceni: '',
+    umisteni: '',
+    typRozvadece: '',
+    stupenKryti: 'IP20',
+    poznamka: '',
+  });
+
+  const [okruhFormData, setOkruhFormData] = useState({
+    cislo: 1,
+    nazev: '',
+    jisticTyp: 'B',
+    jisticProud: '16A',
+    pocetFazi: 1,
+    vodic: '3x2,5',
+    izolacniOdpor: undefined as number | undefined,
+    impedanceSmycky: undefined as number | undefined,
+    proudovyChranicMa: undefined as number | undefined,
+    casOdpojeni: undefined as number | undefined,
+    poznamka: '',
+  });
+
+  // Sync counts from parent
+  useEffect(() => { setOkruhyCounts(propCounts); }, [propCounts]);
+
+  const handleSelectRozvadec = async (rozvadec: Rozvadec) => {
+    if (selectedRozvadec?.id === rozvadec.id) {
+      setSelectedRozvadec(null);
+      setOkruhy([]);
+    } else {
+      setSelectedRozvadec(rozvadec);
+      if (rozvadec.id) {
+        const okruhyData = await okruhService.getByRozvadec(rozvadec.id);
+        setOkruhy(okruhyData);
+      }
+    }
+  };
+
+  const handleAddRozvadec = async (e: React.FormEvent) => {
+    e.preventDefault();
+    createRozvadec.mutate(
+      { ...rozvadecFormData, revizeId } as any,
+      {
+        onSuccess: (newId) => {
+          setIsRozvadecModalOpen(false);
+          // Auto-select the newly created rozvaděč
+          setSelectedRozvadec({
+            id: newId as unknown as number,
+            ...rozvadecFormData,
+            revizeId,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+          setOkruhy([]);
+          setRozvadecFormData({ nazev: '', oznaceni: '', umisteni: '', typRozvadece: '', stupenKryti: 'IP20', poznamka: '' });
+        },
+      }
+    );
+  };
+
+  const handleDeleteRozvadec = (rozvadecId: number) => {
+    if (window.confirm('Opravdu chcete smazat tento rozvaděč?')) {
+      deleteRozvadec.mutate(
+        { id: rozvadecId, revizeId },
+        {
+          onSuccess: () => {
+            if (selectedRozvadec?.id === rozvadecId) {
+              setSelectedRozvadec(null);
+              setOkruhy([]);
+            }
+          },
+        }
+      );
+    }
+  };
+
+  const resetOkruhForm = () => {
+    const nextCislo = okruhy.length > 0 ? Math.max(...okruhy.map(o => o.cislo)) + 1 : 1;
+    setOkruhFormData({
+      cislo: nextCislo, nazev: '', jisticTyp: 'B', jisticProud: '16A', pocetFazi: 1, vodic: '3x2,5',
+      izolacniOdpor: undefined, impedanceSmycky: undefined, proudovyChranicMa: undefined, casOdpojeni: undefined, poznamka: '',
+    });
+  };
+
+  const handleAddOkruh = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedRozvadec?.id) {
+      if (editingOkruh?.id) {
+        await okruhService.update(editingOkruh.id, okruhFormData);
+      } else {
+        await okruhService.create({ ...okruhFormData, rozvadecId: selectedRozvadec.id });
+      }
+      setIsOkruhModalOpen(false);
+      setEditingOkruh(null);
+      resetOkruhForm();
+      const okruhyData = await okruhService.getByRozvadec(selectedRozvadec.id);
+      setOkruhy(okruhyData);
+      setOkruhyCounts(prev => ({ ...prev, [selectedRozvadec.id!]: okruhyData.length }));
+    }
+  };
+
+  const handleEditOkruh = (okruh: Okruh) => {
+    setEditingOkruh(okruh);
+    setOkruhFormData({
+      cislo: okruh.cislo, nazev: okruh.nazev, jisticTyp: okruh.jisticTyp, jisticProud: okruh.jisticProud,
+      pocetFazi: okruh.pocetFazi || 1, vodic: okruh.vodic, izolacniOdpor: okruh.izolacniOdpor,
+      impedanceSmycky: okruh.impedanceSmycky, proudovyChranicMa: okruh.proudovyChranicMa,
+      casOdpojeni: okruh.casOdpojeni, poznamka: okruh.poznamka || '',
+    });
+    setIsOkruhModalOpen(true);
+  };
+
+  const handleDeleteOkruh = async (okruhId: number) => {
+    if (window.confirm('Opravdu chcete smazat tento okruh?')) {
+      await okruhService.delete(okruhId);
+      if (selectedRozvadec?.id) {
+        const okruhyData = await okruhService.getByRozvadec(selectedRozvadec.id);
+        setOkruhy(okruhyData);
+        setOkruhyCounts(prev => ({ ...prev, [selectedRozvadec.id!]: okruhyData.length }));
+      }
+    }
+  };
+
+  const handleDuplicateOkruh = async (okruh: Okruh) => {
+    if (selectedRozvadec?.id) {
+      const nextCislo = okruhy.length > 0 ? Math.max(...okruhy.map(o => o.cislo)) + 1 : 1;
+      await okruhService.create({
+        rozvadecId: selectedRozvadec.id, cislo: nextCislo, nazev: okruh.nazev,
+        jisticTyp: okruh.jisticTyp, jisticProud: okruh.jisticProud, pocetFazi: okruh.pocetFazi || 1,
+        vodic: okruh.vodic, izolacniOdpor: okruh.izolacniOdpor, impedanceSmycky: okruh.impedanceSmycky,
+        proudovyChranicMa: okruh.proudovyChranicMa, casOdpojeni: okruh.casOdpojeni, poznamka: okruh.poznamka,
+      });
+      const okruhyData = await okruhService.getByRozvadec(selectedRozvadec.id);
+      setOkruhy(okruhyData);
+      setOkruhyCounts(prev => ({ ...prev, [selectedRozvadec.id!]: okruhyData.length }));
+    }
+  };
+
+  const handleDragStart = (okruh: Okruh) => { setDraggedOkruh(okruh); };
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); };
+  const handleDragEnd = () => { setDraggedOkruh(null); };
+
+  const handleDrop = async (targetOkruh: Okruh) => {
+    if (!draggedOkruh || draggedOkruh.id === targetOkruh.id) {
+      setDraggedOkruh(null);
+      return;
+    }
+    const sortedOkruhy = [...okruhy].sort((a, b) => a.cislo - b.cislo);
+    const draggedIndex = sortedOkruhy.findIndex(o => o.id === draggedOkruh.id);
+    const targetIndex = sortedOkruhy.findIndex(o => o.id === targetOkruh.id);
+    const [removed] = sortedOkruhy.splice(draggedIndex, 1);
+    sortedOkruhy.splice(targetIndex, 0, removed);
+    const updates = sortedOkruhy.map((o, index) => ({ ...o, cislo: index + 1 }));
+    for (const okruh of updates) {
+      if (okruh.id) await okruhService.update(okruh.id, { cislo: okruh.cislo });
+    }
+    setOkruhy(updates);
+    setDraggedOkruh(null);
+  };
+
+  return (
+    <>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Seznam rozvaděčů - levá strana */}
+      <div className="lg:col-span-1">
+        <Card
+          title="Rozvaděče"
+          actions={<Button size="sm" onClick={() => setIsRozvadecModalOpen(true)}>+ Přidat</Button>}
+        >
+          {rozvadece.length > 0 ? (
+            <div className="space-y-2">
+              {rozvadece.map((r) => (
+                <div
+                  key={r.id}
+                  className={`rounded-lg border transition-colors cursor-pointer ${
+                    selectedRozvadec?.id === r.id
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-slate-200 bg-slate-50 hover:border-slate-300'
+                  }`}
+                  onClick={() => handleSelectRozvadec(r)}
+                >
+                  <div className="p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="font-medium text-sm">{r.nazev}</p>
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600">
+                        {okruhyCounts[r.id!] || 0}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500">{r.oznaceni} • {r.stupenKryti}</p>
+                    <p className="text-xs text-slate-400">{r.umisteni}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-slate-500 py-6 text-sm">Zatím žádné rozvaděče.</p>
+          )}
+        </Card>
+      </div>
+
+      {/* Detail rozvaděče - pravá strana */}
+      <div className="lg:col-span-2">
+        {selectedRozvadec ? (
+          <Card
+            title={`${selectedRozvadec.nazev}`}
+            actions={
+              <div className="flex gap-2">
+                <Button size="sm" onClick={() => { resetOkruhForm(); setIsOkruhModalOpen(true); }}>+ Přidat okruh</Button>
+                <Button variant="danger" size="sm" onClick={() => handleDeleteRozvadec(selectedRozvadec.id!)}>Smazat</Button>
+              </div>
+            }
+          >
+            <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-3 bg-slate-50 rounded-lg"><p className="text-xs text-slate-500">Označení</p><p className="font-medium">{selectedRozvadec.oznaceni}</p></div>
+              <div className="p-3 bg-slate-50 rounded-lg"><p className="text-xs text-slate-500">Umístění</p><p className="font-medium">{selectedRozvadec.umisteni}</p></div>
+              <div className="p-3 bg-slate-50 rounded-lg"><p className="text-xs text-slate-500">Typ</p><p className="font-medium">{selectedRozvadec.typRozvadece || '—'}</p></div>
+              <div className="p-3 bg-slate-50 rounded-lg"><p className="text-xs text-slate-500">Krytí</p><p className="font-medium">{selectedRozvadec.stupenKryti}</p></div>
+            </div>
+
+            <h4 className="font-medium text-slate-700 mb-3">Okruhy ({okruhy.length})</h4>
+            {okruhy.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Č.</th>
+                      <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Jistič</th>
+                      <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Název</th>
+                      <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Vodič</th>
+                      <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Iz. odpor</th>
+                      <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Imp. smyčky</th>
+                      <th className="text-right py-2 px-3 font-medium text-slate-600 text-sm">Akce</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {okruhy.sort((a, b) => a.cislo - b.cislo).map((o) => (
+                      <tr
+                        key={o.id}
+                        draggable
+                        onDragStart={() => handleDragStart(o)}
+                        onDragOver={handleDragOver}
+                        onDrop={() => handleDrop(o)}
+                        onDragEnd={handleDragEnd}
+                        className={`border-b border-slate-100 hover:bg-slate-50 cursor-grab active:cursor-grabbing ${
+                          draggedOkruh?.id === o.id ? 'opacity-50 bg-blue-50' : ''
+                        }`}
+                      >
+                        <td className="py-2 px-3 font-medium">
+                          <span className="flex items-center gap-2">
+                            <span className="text-slate-400">⋮⋮</span>
+                            {o.cislo}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3">
+                          <span className="px-2 py-1 rounded text-xs font-medium bg-slate-100">
+                            {o.pocetFazi || 1}/{o.jisticTyp}{o.jisticProud.replace('A', '')}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3">{o.nazev}</td>
+                        <td className="py-2 px-3 text-slate-600">{o.vodic}</td>
+                        <td className="py-2 px-3 text-slate-600">{o.izolacniOdpor ? `${o.izolacniOdpor} MΩ` : '—'}</td>
+                        <td className="py-2 px-3 text-slate-600">{o.impedanceSmycky ? `${o.impedanceSmycky} Ω` : '—'}</td>
+                        <td className="py-2 px-3 text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button variant="secondary" size="sm" onClick={() => handleDuplicateOkruh(o)} title="Duplikovat">D</Button>
+                            <Button variant="secondary" size="sm" onClick={() => handleEditOkruh(o)} title="Upravit">U</Button>
+                            <Button variant="danger" size="sm" onClick={() => handleDeleteOkruh(o.id!)} title="Smazat">×</Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-center text-slate-500 py-6 bg-slate-50 rounded-lg">
+                Zatím žádné okruhy. Přidejte první kliknutím na tlačítko výše.
+              </p>
+            )}
+          </Card>
+        ) : (
+          <Card>
+            <div className="text-center py-12 text-slate-500">
+              <p className="text-sm text-slate-400 mb-4">Zatím žádné rozvaděče</p>
+              <p>Vyberte rozvaděč ze seznamu vlevo</p>
+              <p className="text-sm mt-1">pro zobrazení detailu a okruhů</p>
+            </div>
+          </Card>
+        )}
+      </div>
+    </div>
+
+    {/* Modal pro přidání rozvaděče */}
+    <Modal
+      isOpen={isRozvadecModalOpen}
+      onClose={() => setIsRozvadecModalOpen(false)}
+      title="Přidat rozvaděč"
+      footer={
+        <>
+          <Button variant="secondary" onClick={() => setIsRozvadecModalOpen(false)}>Zrušit</Button>
+          <Button onClick={handleAddRozvadec}>Přidat</Button>
+        </>
+      }
+    >
+      <form onSubmit={handleAddRozvadec} className="space-y-4">
+        <Input label="Název" value={rozvadecFormData.nazev} onChange={(e) => setRozvadecFormData({ ...rozvadecFormData, nazev: e.target.value })} required />
+        <Input label="Označení" value={rozvadecFormData.oznaceni} onChange={(e) => setRozvadecFormData({ ...rozvadecFormData, oznaceni: e.target.value })} required />
+        <Input label="Umístění" value={rozvadecFormData.umisteni} onChange={(e) => setRozvadecFormData({ ...rozvadecFormData, umisteni: e.target.value })} required />
+        <Input label="Typ rozvaděče" value={rozvadecFormData.typRozvadece} onChange={(e) => setRozvadecFormData({ ...rozvadecFormData, typRozvadece: e.target.value })} />
+        <Input label="Stupeň krytí" value={rozvadecFormData.stupenKryti} onChange={(e) => setRozvadecFormData({ ...rozvadecFormData, stupenKryti: e.target.value })} />
+      </form>
+    </Modal>
+
+    {/* Modal pro přidání/úpravu okruhu */}
+    <Modal
+      isOpen={isOkruhModalOpen}
+      onClose={() => { setIsOkruhModalOpen(false); setEditingOkruh(null); }}
+      title={editingOkruh ? 'Upravit okruh' : 'Přidat okruh'}
+      footer={
+        <>
+          <Button variant="secondary" onClick={() => { setIsOkruhModalOpen(false); setEditingOkruh(null); }}>Zrušit</Button>
+          <Button onClick={handleAddOkruh}>{editingOkruh ? 'Uložit' : 'Přidat'}</Button>
+        </>
+      }
+    >
+      <form onSubmit={handleAddOkruh} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <Input type="number" label="Číslo okruhu" value={okruhFormData.cislo} onChange={(e) => setOkruhFormData({ ...okruhFormData, cislo: parseInt(e.target.value) })} required />
+          <Input label="Název" value={okruhFormData.nazev} onChange={(e) => setOkruhFormData({ ...okruhFormData, nazev: e.target.value })} required />
+        </div>
+        <div className="grid grid-cols-4 gap-4">
+          <Select label="Typ jističe" value={okruhFormData.jisticTyp} onChange={(e) => setOkruhFormData({ ...okruhFormData, jisticTyp: e.target.value })} options={[{ value: 'B', label: 'B' }, { value: 'C', label: 'C' }, { value: 'D', label: 'D' }]} />
+          <Select label="Proud jističe" value={okruhFormData.jisticProud} onChange={(e) => setOkruhFormData({ ...okruhFormData, jisticProud: e.target.value })} options={[{ value: '6A', label: '6A' }, { value: '10A', label: '10A' }, { value: '16A', label: '16A' }, { value: '20A', label: '20A' }, { value: '25A', label: '25A' }, { value: '32A', label: '32A' }]} />
+          <Select label="Počet fází" value={okruhFormData.pocetFazi.toString()} onChange={(e) => setOkruhFormData({ ...okruhFormData, pocetFazi: parseInt(e.target.value) })} options={[{ value: '1', label: '1P' }, { value: '2', label: '2P' }, { value: '3', label: '3P' }]} />
+          <Input label="Vodič" value={okruhFormData.vodic} onChange={(e) => setOkruhFormData({ ...okruhFormData, vodic: e.target.value })} />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Input type="number" step="0.1" label="Izolační odpor (MΩ)" value={okruhFormData.izolacniOdpor || ''} onChange={(e) => setOkruhFormData({ ...okruhFormData, izolacniOdpor: e.target.value ? parseFloat(e.target.value) : undefined })} />
+          <Input type="number" step="0.01" label="Impedance smyčky (Ω)" value={okruhFormData.impedanceSmycky || ''} onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmycky: e.target.value ? parseFloat(e.target.value) : undefined })} />
+        </div>
+      </form>
+    </Modal>
+    </>
+  );
+}

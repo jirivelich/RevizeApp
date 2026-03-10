@@ -324,6 +324,37 @@ export async function initializeDatabase() {
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "popisZarizeni" TEXT',
       // Nastavení viditelných sekcí pro tisk
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "tiskSekce" TEXT',
+      // === Hromosvod (LPS) sloupce ===
+      // Charakteristika LPS
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodTridaLps" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodTypOchrany" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodRokInstalace" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodNorma" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodPopisLps" TEXT',
+      // Jímací soustava
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodJimaciTyp" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodJimaciMaterial" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodJimaciStav" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodJimaciPoznamka" TEXT',
+      // Svodové vedení
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodSvodyPocet" INTEGER',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodSvodyMaterial" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodSvodyPrurez" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodSvodyZkusebniSvorky" INTEGER',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodSvodyStav" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodSvodyPoznamka" TEXT',
+      // Uzemňovací soustava
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodUzemneniTyp" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodUzemneniMaterial" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodUzemneniStav" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodUzemneniPoznamka" TEXT',
+      // SPD / Ochranné pospojování
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodSpdTyp" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodSpdStav" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodEkvipotencialni" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodSpdPoznamka" TEXT',
+      // Měření odporů uzemnění (JSON pole)
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodMereniOdporu" TEXT',
     ];
     
     for (const migration of migrations) {

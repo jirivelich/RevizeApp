@@ -1,6 +1,6 @@
 export { Dashboard } from './Dashboard';
 export { RevizePage } from './RevizePage';
-export { RevizeDetailPage } from './RevizeDetailPage';
+export { RevizeDetailPage } from './RevizeDetail';
 export { RozvadecDetailPage } from './RozvadecePage';
 export { ReportPrintPage } from './ReportPrint';
 export { ZavadyPage } from './ZavadyPage';

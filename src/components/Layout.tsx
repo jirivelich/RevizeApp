@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { useState } from 'react';
 import { Sidebar } from './Sidebar';
+import { AIChatAssistant } from './AIChatAssistant';
 
 export function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -23,7 +24,7 @@ export function Layout() {
       </div>
       
       {/* Main content - s paddingem pro sidebar na velkých obrazovkách */}
-      <main className="lg:ml-64 min-h-screen bg-slate-100">
+      <main className="lg:ml-56 min-h-screen bg-slate-50">
         {/* Mobilní header s menu tlačítkem */}
         <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
           <h1 className="text-lg font-bold text-slate-800">RevizeApp</h1>
@@ -41,6 +42,7 @@ export function Layout() {
           <Outlet />
         </div>
       </main>
+      <AIChatAssistant />
     </div>
   );
 }

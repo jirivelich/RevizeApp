@@ -1,15 +1,26 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30 * 1000,        // 30s – data se považují za čerstvá
+      gcTime: 5 * 60 * 1000,       // 5 min – garbage collection
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 import {
   Dashboard,
   RevizePage,
   RevizeDetailPage,
   RozvadecDetailPage,
-  ReportPrintPage,
   ZavadyPage,
   PlanovaniPage,
   NastaveniPage,
@@ -17,6 +28,7 @@ import {
   FirmyPage,
   ZakazniciPage,
 } from './pages';
+import { NahledRouter } from './pages/NahledRouter';
 
 // Error Boundary pro zachycení JavaScript chyb
 interface ErrorBoundaryState {
@@ -53,7 +65,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
                 this.setState({ hasError: false, error: null });
                 window.location.href = '/';
               }}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              className="bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-900"
             >
               Zpět na úvodní stránku
             </button>
@@ -68,13 +80,14 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
 
 function App() {
   return (
-    <ErrorBoundary>
-      <BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
+        <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/revize/:id/nahled" element={
             <ProtectedRoute>
-              <ReportPrintPage />
+              <NahledRouter />
             </ProtectedRoute>
           } />
           <Route
@@ -99,6 +112,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </ErrorBoundary>
+    </QueryClientProvider>
   );
 }
 

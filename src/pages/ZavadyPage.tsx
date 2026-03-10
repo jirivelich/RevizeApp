@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
+import { useZavadyKatalog, useZavadyKategorie, useCreateZavadaKatalog, useUpdateZavadaKatalog, useDeleteZavadaKatalog } from '../hooks/useQueries';
+import { queryKeys } from '../hooks/queryKeys';
 import { zavadaKatalogService } from '../services/database';
 import type { ZavadaKatalog } from '../types';
 
 export function ZavadyPage() {
-  const [zavady, setZavady] = useState<ZavadaKatalog[]>([]);
-  const [kategorie, setKategorie] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingZavada, setEditingZavada] = useState<ZavadaKatalog | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -23,40 +24,37 @@ export function ZavadyPage() {
     kategorie: '',
   });
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const seeded = useRef(false);
+  const qc = useQueryClient();
+  const { data: zavady = [], isLoading } = useZavadyKatalog();
+  const { data: kategorie = [] } = useZavadyKategorie();
+  const createZavadaMut = useCreateZavadaKatalog();
+  const updateZavadaMut = useUpdateZavadaKatalog();
+  const deleteZavadaMut = useDeleteZavadaKatalog();
 
-  const loadData = async () => {
-    let zavadyData = await zavadaKatalogService.getAll();
-    
-    // Pokud je databáze prázdná, přidej výchozí závady
-    if (zavadyData.length === 0) {
-      const defaultZavady = zavadaKatalogService.getDefaultZavady();
-      for (const z of defaultZavady) {
-        await zavadaKatalogService.create(z);
-      }
-      zavadyData = await zavadaKatalogService.getAll();
+  // Auto-seed default závady pokud je DB prázdná (první spuštění)
+  useEffect(() => {
+    if (!isLoading && zavady.length === 0 && !seeded.current) {
+      seeded.current = true;
+      (async () => {
+        const defaultZavady = zavadaKatalogService.getDefaultZavady();
+        for (const z of defaultZavady) {
+          await zavadaKatalogService.create(z);
+        }
+        qc.invalidateQueries({ queryKey: queryKeys.zavadyKatalog.all });
+        qc.invalidateQueries({ queryKey: queryKeys.zavadyKatalog.kategorie });
+      })();
     }
-    
-    setZavady(zavadyData);
-    
-    // Načíst unikátní kategorie
-    const kategorieData = await zavadaKatalogService.getKategorie();
-    setKategorie(kategorieData);
-  };
+  }, [isLoading, zavady.length, qc]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const onDone = () => { setIsModalOpen(false); setEditingZavada(null); resetForm(); };
     if (editingZavada?.id) {
-      await zavadaKatalogService.update(editingZavada.id, formData);
+      updateZavadaMut.mutate({ id: editingZavada.id, data: formData }, { onSuccess: onDone });
     } else {
-      await zavadaKatalogService.create(formData);
+      createZavadaMut.mutate(formData, { onSuccess: onDone });
     }
-    setIsModalOpen(false);
-    setEditingZavada(null);
-    resetForm();
-    loadData();
   };
 
   const resetForm = () => {
@@ -85,8 +83,7 @@ export function ZavadyPage() {
 
   const handleDelete = async (id: number) => {
     if (window.confirm('Opravdu chcete smazat tuto závadu z katalogu?')) {
-      await zavadaKatalogService.delete(id);
-      loadData();
+      deleteZavadaMut.mutate(id);
     }
   };
 
@@ -112,8 +109,8 @@ export function ZavadyPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Katalog závad</h1>
-          <p className="text-slate-500">Databáze typických závad s odkazy na normy a zákony</p>
+          <h1 className="text-lg font-bold text-slate-800">Katalog závad</h1>
+          <p className="text-xs text-slate-400">Databáze typických závad s odkazy na normy a zákony</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
           + Nová závada
@@ -135,17 +132,17 @@ export function ZavadyPage() {
           <p className="text-xs sm:text-sm text-slate-500">Celkem v katalogu</p>
           <p className="text-xl sm:text-2xl font-bold">{stats.celkem}</p>
         </div>
-        <div className="bg-white rounded-lg p-3 sm:p-4 border border-red-200">
-          <p className="text-xs sm:text-sm text-red-600">C1 - Kritické</p>
-          <p className="text-xl sm:text-2xl font-bold text-red-600">{stats.kriticke}</p>
+        <div className="bg-white rounded-lg p-3 sm:p-4 border border-slate-200">
+          <p className="text-xs sm:text-sm text-slate-500">C1 - Kritické</p>
+          <p className="text-xl sm:text-2xl font-bold">{stats.kriticke}</p>
         </div>
-        <div className="bg-white rounded-lg p-3 sm:p-4 border border-orange-200">
-          <p className="text-xs sm:text-sm text-orange-600">C2 - Vážné</p>
-          <p className="text-xl sm:text-2xl font-bold text-orange-600">{stats.vazne}</p>
+        <div className="bg-white rounded-lg p-3 sm:p-4 border border-slate-200">
+          <p className="text-xs sm:text-sm text-slate-500">C2 - Vážné</p>
+          <p className="text-xl sm:text-2xl font-bold">{stats.vazne}</p>
         </div>
-        <div className="bg-white rounded-lg p-3 sm:p-4 border border-amber-200">
-          <p className="text-xs sm:text-sm text-amber-600">C3 - Drobné</p>
-          <p className="text-xl sm:text-2xl font-bold text-amber-600">{stats.drobne}</p>
+        <div className="bg-white rounded-lg p-3 sm:p-4 border border-slate-200">
+          <p className="text-xs sm:text-sm text-slate-500">C3 - Drobné</p>
+          <p className="text-xl sm:text-2xl font-bold">{stats.drobne}</p>
         </div>
       </div>
 
@@ -197,9 +194,9 @@ export function ZavadyPage() {
                   <tr key={z.id} className="border-b border-slate-100 hover:bg-slate-50">
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        z.zavaznost === 'C1' ? 'bg-red-100 text-red-700' :
-                        z.zavaznost === 'C2' ? 'bg-orange-100 text-orange-700' :
-                        'bg-amber-100 text-amber-700'
+                        z.zavaznost === 'C1' ? 'bg-red-50 text-red-600' :
+                        z.zavaznost === 'C2' ? 'bg-amber-50 text-amber-600' :
+                        'bg-slate-100 text-slate-600'
                       }`}>
                         {z.zavaznost}
                       </span>
@@ -211,13 +208,13 @@ export function ZavadyPage() {
                         {z.zneniClanku && (
                           <button
                             onClick={() => setExpandedId(expandedId === z.id ? null : z.id!)}
-                            className="text-xs text-blue-600 hover:text-blue-800 mt-1"
+                            className="text-xs text-slate-500 hover:text-slate-700 mt-1"
                           >
                             {expandedId === z.id ? '▼ Skrýt znění' : '▶ Zobrazit znění'}
                           </button>
                         )}
                         {expandedId === z.id && z.zneniClanku && (
-                          <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-slate-600 italic">
+                          <div className="mt-2 p-2 bg-slate-50 rounded text-xs text-slate-600 italic">
                             "{z.zneniClanku}"
                           </div>
                         )}
@@ -225,7 +222,7 @@ export function ZavadyPage() {
                     </td>
                     <td className="py-3 px-4">
                       {z.norma && (
-                        <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700">
+                        <span className="px-2 py-1 rounded text-xs font-medium bg-slate-100 text-slate-600">
                           {z.norma}
                         </span>
                       )}

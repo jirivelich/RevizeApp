@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
-import { pristrojService } from '../services/database';
+import { usePristroje, useCreatePristroj, useUpdatePristroj, useDeletePristroj } from '../hooks/useQueries';
 import type { MericiPristroj } from '../types';
 
 const typyPristroju = [
@@ -13,7 +13,6 @@ const typyPristroju = [
 ];
 
 export function PristrojePage() {
-  const [pristroje, setPristroje] = useState<MericiPristroj[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPristroj, setEditingPristroj] = useState<MericiPristroj | null>(null);
   const [filterTyp, setFilterTyp] = useState('');
@@ -31,25 +30,19 @@ export function PristrojePage() {
     poznamka: '',
   });
 
-  useEffect(() => {
-    loadPristroje();
-  }, []);
-
-  const loadPristroje = async () => {
-    const data = await pristrojService.getAll();
-    setPristroje(data);
-  };
+  const { data: pristroje = [] } = usePristroje();
+  const createPristroj = useCreatePristroj();
+  const updatePristroj = useUpdatePristroj();
+  const deletePristroj = useDeletePristroj();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const onDone = () => { setIsModalOpen(false); resetForm(); };
     if (editingPristroj?.id) {
-      await pristrojService.update(editingPristroj.id, formData);
+      updatePristroj.mutate({ id: editingPristroj.id, data: formData }, { onSuccess: onDone });
     } else {
-      await pristrojService.create(formData);
+      createPristroj.mutate(formData, { onSuccess: onDone });
     }
-    setIsModalOpen(false);
-    resetForm();
-    loadPristroje();
   };
 
   const resetForm = () => {
@@ -83,8 +76,7 @@ export function PristrojePage() {
 
   const handleDelete = async (id: number) => {
     if (window.confirm('Opravdu chcete smazat tento přístroj?')) {
-      await pristrojService.delete(id);
-      loadPristroje();
+      deletePristroj.mutate(id);
     }
   };
 
@@ -113,8 +105,8 @@ export function PristrojePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Přístroje a kalibrace</h1>
-          <p className="text-slate-600">Správa měřících přístrojů a jejich kalibračních termínů</p>
+          <h1 className="text-lg font-bold text-slate-800">Přístroje a kalibrace</h1>
+          <p className="text-xs text-slate-400">Správa měřících přístrojů a jejich kalibračních termínů</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
           + Přidat přístroj
@@ -140,7 +132,7 @@ export function PristrojePage() {
         </Card>
         <Card>
           <div className="text-center p-1">
-            <p className="text-2xl sm:text-3xl font-bold text-green-600">
+            <p className="text-2xl sm:text-3xl font-bold text-slate-800">
               {pristroje.filter(p => !isExpiring(p.platnostKalibrace)).length}
             </p>
             <p className="text-xs sm:text-sm text-slate-500">Platná kalibrace</p>
@@ -148,7 +140,7 @@ export function PristrojePage() {
         </Card>
         <Card>
           <div className="text-center p-1">
-            <p className="text-2xl sm:text-3xl font-bold text-amber-600">
+            <p className="text-2xl sm:text-3xl font-bold text-slate-800">
               {pristroje.filter(p => isExpiring(p.platnostKalibrace) && !isExpired(p.platnostKalibrace)).length}
             </p>
             <p className="text-xs sm:text-sm text-slate-500">Brzy expiruje</p>
@@ -156,7 +148,7 @@ export function PristrojePage() {
         </Card>
         <Card>
           <div className="text-center p-1">
-            <p className="text-2xl sm:text-3xl font-bold text-red-600">
+            <p className="text-2xl sm:text-3xl font-bold text-slate-800">
               {pristroje.filter(p => isExpired(p.platnostKalibrace)).length}
             </p>
             <p className="text-xs sm:text-sm text-slate-500">Prošlá kalibrace</p>
@@ -225,10 +217,10 @@ export function PristrojePage() {
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         isExpired(p.platnostKalibrace) 
-                          ? 'bg-red-100 text-red-700'
+                          ? 'bg-red-50 text-red-600'
                           : isExpiring(p.platnostKalibrace)
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-green-100 text-green-700'
+                            ? 'bg-amber-50 text-amber-600'
+                            : 'bg-slate-100 text-slate-600'
                       }`}>
                         {new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}
                       </span>

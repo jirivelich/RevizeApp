@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
-import { mistnostService, revizeService } from '../services/database';
-import type { Mistnost, Revize } from '../types';
+import { useRevize } from '../hooks/useQueries';
+import { mistnostService } from '../services/database';
+import type { Mistnost } from '../types';
 
 export function MistnostiPage() {
+  const { data: revize = [] } = useRevize();
   const [mistnosti, setMistnosti] = useState<(Mistnost & { revizeNazev?: string })[]>([]);
-  const [revize, setRevize] = useState<Revize[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMistnost, setEditingMistnost] = useState<Mistnost | null>(null);
 
@@ -20,15 +21,12 @@ export function MistnostiPage() {
   });
 
   useEffect(() => {
-    loadData();
-  }, []);
+    loadMistnosti();
+  }, [revize]);
 
-  const loadData = async () => {
-    const revizeData = await revizeService.getAll();
-    setRevize(revizeData);
-    
+  const loadMistnosti = async () => {
     const allMistnosti: (Mistnost & { revizeNazev?: string })[] = [];
-    for (const r of revizeData) {
+    for (const r of revize) {
       if (r.id) {
         const mistnostiRevize = await mistnostService.getByRevize(r.id);
         allMistnosti.push(...mistnostiRevize.map(m => ({
@@ -50,7 +48,7 @@ export function MistnostiPage() {
     setIsModalOpen(false);
     setEditingMistnost(null);
     resetForm();
-    loadData();
+    loadMistnosti();
   };
 
   const resetForm = () => {
@@ -82,24 +80,24 @@ export function MistnostiPage() {
   const handleDelete = async (id: number) => {
     if (window.confirm('Opravdu chcete smazat tuto místnost?')) {
       await mistnostService.delete(id);
-      loadData();
+      loadMistnosti();
     }
   };
 
   const prostrediFikce = {
-    'normální': 'bg-green-100 text-green-700',
-    'vlhké': 'bg-blue-100 text-blue-700',
-    'prašné': 'bg-amber-100 text-amber-700',
-    'nebezpečné': 'bg-red-100 text-red-700',
-    'venkovní': 'bg-cyan-100 text-cyan-700',
+    'normální': 'bg-slate-100 text-slate-600',
+    'vlhké': 'bg-slate-100 text-slate-600',
+    'prašné': 'bg-slate-100 text-slate-600',
+    'nebezpečné': 'bg-red-50 text-red-600',
+    'venkovní': 'bg-slate-100 text-slate-600',
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Místnosti</h1>
-          <p className="text-slate-500">Evidence místností a prostředí</p>
+          <h1 className="text-lg font-bold text-slate-800">Místnosti</h1>
+          <p className="text-xs text-slate-400">Evidence místností a prostředí</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
           + Nová místnost
@@ -119,15 +117,15 @@ export function MistnostiPage() {
                   <div className="flex gap-1">
                     <button
                       onClick={() => handleEdit(m)}
-                      className="text-slate-400 hover:text-slate-600"
+                      className="text-xs text-slate-400 hover:text-slate-600"
                     >
-                      ✏️
+                      Upravit
                     </button>
                     <button
                       onClick={() => handleDelete(m.id!)}
-                      className="text-slate-400 hover:text-red-600"
+                      className="text-xs text-slate-400 hover:text-red-600"
                     >
-                      🗑️
+                      ×
                     </button>
                   </div>
                 </div>

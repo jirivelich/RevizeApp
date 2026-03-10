@@ -80,7 +80,7 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
         <span
           className={`text-sm font-medium inline-flex items-center justify-center w-7 h-7 rounded-full ${
             todayClass
-              ? 'bg-blue-600 text-white'
+              ? 'bg-slate-800 text-white'
               : 'text-slate-600'
           }`}
         >

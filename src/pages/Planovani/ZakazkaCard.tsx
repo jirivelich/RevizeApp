@@ -28,7 +28,7 @@ export function ZakazkaCard({ zakazka: z, onEdit, onUpdateStav, onDelete, onCrea
             Klient: {z.klient} • {z.adresa}
           </p>
           <p className="text-sm text-slate-500">
-            📅 Plánováno: {new Date(z.datumPlanovany).toLocaleDateString('cs-CZ')}
+            Plánováno: {new Date(z.datumPlanovany).toLocaleDateString('cs-CZ')}
             {z.datumDokonceni &&
               ` • Dokončeno: ${new Date(z.datumDokonceni).toLocaleDateString('cs-CZ')}`}
           </p>
@@ -55,13 +55,13 @@ export function ZakazkaCard({ zakazka: z, onEdit, onUpdateStav, onDelete, onCrea
             size="sm"
             onClick={() => onEdit(z)}
           >
-            ✏️ Upravit
+            Upravit
           </Button>
           <Button
             size="sm"
             onClick={() => onCreateRevize(z)}
           >
-            📋 Vytvořit revizi
+            Vytvořit revizi
           </Button>
           <Button
             variant="danger"

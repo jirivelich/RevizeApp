@@ -4,6 +4,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import { pool, initializeDatabase } from './database';
 import { authMiddleware, loginUser, registerUser, AuthRequest } from './auth';
+import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion } from './ai';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -114,14 +115,14 @@ async function startServer() {
 
   app.post('/api/revize', authMiddleware, async (req, res) => {
     try {
-      const { cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav } = req.body;
+      const { cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav, kategorieRevize } = req.body;
       const now = new Date().toISOString();
       
       const result = await pool.query(`
-        INSERT INTO revize ("cisloRevize", nazev, adresa, objednatel, datum, termin, "typRevize", stav, "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        INSERT INTO revize ("cisloRevize", nazev, adresa, objednatel, datum, termin, "typRevize", stav, "kategorieRevize", "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id
-      `, [cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav, now, now]);
+      `, [cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav, kategorieRevize || 'elektro', now, now]);
       
       res.json({ id: result.rows[0].id });
     } catch (error) {
@@ -142,7 +143,19 @@ async function startServer() {
         'ochranaOpatreni', 'podklady', 'vyhodnoceniPredchozich',
         'pouzitePristroje', 'provedeneUkony', 'firmaJmeno', 'firmaAdresa',
         'firmaIco', 'firmaDic', 'zaver', 'kategorieRevize', 'updatedAt',
-        'tiskSekce', 'popisZarizeni'
+        'tiskSekce', 'popisZarizeni',
+        // Hromosvod (LPS) sloupce
+        'hromosvodTridaLps', 'hromosvodTypOchrany', 'hromosvodRokInstalace',
+        'hromosvodNorma', 'hromosvodPopisLps',
+        'hromosvodJimaciTyp', 'hromosvodJimaciMaterial', 'hromosvodJimaciStav',
+        'hromosvodJimaciPoznamka',
+        'hromosvodSvodyPocet', 'hromosvodSvodyMaterial', 'hromosvodSvodyPrurez',
+        'hromosvodSvodyZkusebniSvorky', 'hromosvodSvodyStav', 'hromosvodSvodyPoznamka',
+        'hromosvodUzemneniTyp', 'hromosvodUzemneniMaterial', 'hromosvodUzemneniStav',
+        'hromosvodUzemneniPoznamka',
+        'hromosvodSpdTyp', 'hromosvodSpdStav', 'hromosvodEkvipotencialni',
+        'hromosvodSpdPoznamka',
+        'hromosvodMereniOdporu',
       ];
       
       const updates: Record<string, any> = { updatedAt: now };
@@ -1130,6 +1143,143 @@ async function startServer() {
       res.json({ success: true, deleted: ids.length });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== AI ENDPOINTY ====================
+
+  // Helper: extrahuj srozumitelnou chybovou hlášku z Anthropic erroru
+  function getAIErrorMessage(error: any): string {
+    // Anthropic SDK error with nested message
+    if (error?.error?.error?.message) {
+      const msg = error.error.error.message;
+      if (msg.includes('credit balance is too low')) {
+        return 'Nedostatečný kredit na Anthropic účtu. Dobijte kredit na https://console.anthropic.com/settings/plans';
+      }
+      if (msg.includes('invalid x-api-key') || msg.includes('Invalid API Key')) {
+        return 'Neplatný API klíč. Zkontrolujte ANTHROPIC_API_KEY v server/.env';
+      }
+      return msg;
+    }
+    const message = (error as Error).message || 'Neznámá chyba';
+    if (message.includes('ANTHROPIC_API_KEY')) return message;
+    if (message.includes('credit balance')) return 'Nedostatečný kredit na Anthropic účtu.';
+    return message;
+  }
+  
+  // Kontrola konfigurace AI
+  app.get('/api/ai/status', authMiddleware, (_req, res) => {
+    res.json({ configured: isAIConfigured() });
+  });
+
+  // Generování revizní zprávy
+  app.post('/api/ai/generate-report', authMiddleware, async (req, res) => {
+    try {
+      const { revizeId } = req.body;
+      
+      if (!revizeId) {
+        return res.status(400).json({ error: 'revizeId je povinné' });
+      }
+
+      // Načíst všechna data revize
+      const revizeResult = await pool.query('SELECT * FROM revize WHERE id = $1', [revizeId]);
+      if (revizeResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Revize nenalezena' });
+      }
+      const revize = revizeResult.rows[0];
+
+      const [rozvadeceRes, zavadyRes, mistnostiRes, nastaveniRes] = await Promise.all([
+        pool.query('SELECT * FROM rozvadec WHERE "revizeId" = $1', [revizeId]),
+        pool.query('SELECT * FROM zavada WHERE "revizeId" = $1', [revizeId]),
+        pool.query('SELECT * FROM mistnost WHERE "revizeId" = $1', [revizeId]),
+        pool.query('SELECT * FROM nastaveni LIMIT 1'),
+      ]);
+
+      // Okruhy pro všechny rozvaděče
+      const rozvadecIds = rozvadeceRes.rows.map((r: any) => r.id);
+      let okruhy: any[] = [];
+      if (rozvadecIds.length > 0) {
+        const placeholders = rozvadecIds.map((_: any, i: number) => `$${i + 1}`).join(', ');
+        const okruhyRes = await pool.query(`SELECT * FROM okruh WHERE "rozvadecId" IN (${placeholders})`, rozvadecIds);
+        okruhy = okruhyRes.rows;
+      }
+
+      // Zařízení pro všechny místnosti
+      const mistnostIds = mistnostiRes.rows.map((m: any) => m.id);
+      let zarizeni: any[] = [];
+      if (mistnostIds.length > 0) {
+        const placeholders = mistnostIds.map((_: any, i: number) => `$${i + 1}`).join(', ');
+        const zarizeniRes = await pool.query(`SELECT * FROM zarizeni WHERE "mistnostId" IN (${placeholders})`, mistnostIds);
+        zarizeni = zarizeniRes.rows;
+      }
+
+      // Měřicí přístroje
+      const pristrojeRes = await pool.query(
+        `SELECT mp.* FROM "mericiPristroj" mp 
+         JOIN "revizePristroj" rp ON mp.id = rp."pristrojId" 
+         WHERE rp."revizeId" = $1`, [revizeId]
+      );
+
+      // Zákazník
+      let zakaznik = null;
+      if (revize.zakaznikId) {
+        const zakRes = await pool.query('SELECT * FROM zakaznik WHERE id = $1', [revize.zakaznikId]);
+        if (zakRes.rows.length > 0) zakaznik = zakRes.rows[0];
+      }
+
+      const report = await generateReport({
+        revize,
+        rozvadece: rozvadeceRes.rows,
+        okruhy,
+        zavady: zavadyRes.rows,
+        mistnosti: mistnostiRes.rows,
+        zarizeni,
+        pristroje: pristrojeRes.rows,
+        nastaveni: nastaveniRes.rows[0] || null,
+        zakaznik,
+      });
+
+      res.json({ text: report });
+    } catch (error) {
+      console.error('❌ AI generate-report error:', error);
+      const userMessage = getAIErrorMessage(error);
+      res.status(500).json({ error: userMessage });
+    }
+  });
+
+  // Chat asistent
+  app.post('/api/ai/chat', authMiddleware, async (req, res) => {
+    try {
+      const { messages, revizeContext } = req.body;
+      
+      if (!messages || !Array.isArray(messages) || messages.length === 0) {
+        return res.status(400).json({ error: 'messages je povinné pole' });
+      }
+
+      const reply = await chatWithAssistant(messages, revizeContext);
+      res.json({ reply });
+    } catch (error) {
+      console.error('❌ AI chat error:', error);
+      const userMessage = getAIErrorMessage(error);
+      res.status(500).json({ error: userMessage });
+    }
+  });
+
+  // Auto-vyplňování
+  app.post('/api/ai/autofill', authMiddleware, async (req, res) => {
+    try {
+      const { field, formData, entityType } = req.body;
+      
+      if (!field || !entityType) {
+        return res.status(400).json({ error: 'field a entityType jsou povinné' });
+      }
+
+      const suggestion = await getAutofillSuggestion({ field, formData: formData || {}, entityType });
+      res.json({ suggestion });
+    } catch (error) {
+      console.error('❌ AI autofill error:', error);
+      const userMessage = getAIErrorMessage(error);
+      res.status(500).json({ error: userMessage });
     }
   });
 

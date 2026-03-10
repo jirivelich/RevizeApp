@@ -135,8 +135,8 @@ function WeekDropZone({ id, label, direction, visible }: WeekDropZoneProps) {
         rounded-${direction === 'left' ? 'r' : 'l'}-xl
         transition-all duration-200 cursor-default
         ${isOver
-          ? 'bg-blue-500 text-white shadow-2xl w-24'
-          : 'bg-blue-100 text-blue-600 shadow-lg border border-blue-300'
+          ? 'bg-slate-700 text-white shadow-2xl w-24'
+          : 'bg-slate-100 text-slate-600 shadow-lg border border-slate-300'
         }
       `}
     >
@@ -306,7 +306,7 @@ export function WeekView({ zakazky, onZakazkaClick, onSlotClick, onMove }: WeekV
                 >
                   <div className="text-xs text-slate-500">{DAY_NAMES_SHORT[i]}</div>
                   <div className={`text-sm font-semibold ${
-                    isToday_ ? 'text-blue-600' : 'text-slate-700'
+                    isToday_ ? 'text-slate-800 font-bold' : 'text-slate-700'
                   }`}>
                     {day.getDate()}
                   </div>

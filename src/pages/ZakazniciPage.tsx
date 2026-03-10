@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button, Card, Input, Modal } from '../components/ui';
 import { zakazniciService } from '../services/database';
+import { useZakaznici, useCreateZakaznik, useUpdateZakaznik, useDeleteZakaznik } from '../hooks/useQueries';
 import type { Zakaznik, Revize } from '../types';
 
 const ZakazniciPage: React.FC = () => {
-  const [zakaznici, setZakaznici] = useState<Zakaznik[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: zakaznici = [], isLoading: loading } = useZakaznici();
+  const createZakaznik = useCreateZakaznik();
+  const updateZakaznik = useUpdateZakaznik();
+  const deleteZakaznik = useDeleteZakaznik();
+
   const [editingZakaznik, setEditingZakaznik] = useState<Zakaznik | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNewZakaznik, setIsNewZakaznik] = useState(false);
@@ -24,22 +28,6 @@ const ZakazniciPage: React.FC = () => {
     email: '',
     poznamka: '',
   });
-
-  useEffect(() => {
-    loadZakaznici();
-  }, []);
-
-  const loadZakaznici = async () => {
-    try {
-      setLoading(true);
-      const data = await zakazniciService.getAll();
-      setZakaznici(data);
-    } catch (error) {
-      console.error('Chyba při načítání zákazníků:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleNewZakaznik = () => {
     setIsNewZakaznik(true);
@@ -76,12 +64,11 @@ const ZakazniciPage: React.FC = () => {
   const handleSave = async () => {
     try {
       if (isNewZakaznik) {
-        await zakazniciService.create(formData);
+        await createZakaznik.mutateAsync(formData);
       } else if (editingZakaznik && editingZakaznik.id) {
-        await zakazniciService.update(editingZakaznik.id, formData);
+        await updateZakaznik.mutateAsync({ id: editingZakaznik.id, data: formData });
       }
       setIsModalOpen(false);
-      loadZakaznici();
     } catch (error) {
       console.error('Chyba při ukládání zákazníka:', error);
       alert('Nepodařilo se uložit zákazníka');
@@ -92,8 +79,7 @@ const ZakazniciPage: React.FC = () => {
     if (!id) return;
     if (!confirm('Opravdu chcete smazat tohoto zákazníka? Vazby na revize budou odstraněny.')) return;
     try {
-      await zakazniciService.delete(id);
-      loadZakaznici();
+      await deleteZakaznik.mutateAsync(id);
     } catch (error) {
       console.error('Chyba při mazání zákazníka:', error);
       alert('Nepodařilo se smazat zákazníka');
@@ -122,7 +108,7 @@ const ZakazniciPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-400"></div>
       </div>
     );
   }
@@ -131,13 +117,10 @@ const ZakazniciPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Zákazníci</h1>
-          <p className="text-gray-600">Správa zákazníků a jejich revizí</p>
+          <h1 className="text-lg font-bold text-slate-800">Zákazníci</h1>
+          <p className="text-xs text-slate-400">Správa zákazníků a jejich revizí</p>
         </div>
         <Button onClick={handleNewZakaznik}>
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
           Nový zákazník
         </Button>
       </div>
@@ -154,10 +137,7 @@ const ZakazniciPage: React.FC = () => {
       {/* Seznam zákazníků */}
       {filteredZakaznici.length === 0 ? (
         <Card className="p-8 text-center">
-          <svg className="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-          <p className="text-gray-500">
+          <p className="text-sm text-slate-400">
             {searchTerm ? 'Žádní zákazníci nenalezeni' : 'Zatím nemáte žádné zákazníky'}
           </p>
           {!searchTerm && (
@@ -190,12 +170,12 @@ const ZakazniciPage: React.FC = () => {
                     <td className="py-3 px-4 text-sm">{zakaznik.kontaktOsoba || '-'}</td>
                     <td className="py-3 px-4 text-sm text-slate-600">
                       {zakaznik.telefon && <div>{zakaznik.telefon}</div>}
-                      {zakaznik.email && <div className="text-blue-600">{zakaznik.email}</div>}
+                      {zakaznik.email && <div className="text-slate-600">{zakaznik.email}</div>}
                       {!zakaznik.telefon && !zakaznik.email && '-'}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <span 
-                        className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full cursor-pointer hover:bg-blue-200"
+                        className="px-2 py-1 text-xs font-medium bg-slate-100 text-slate-600 rounded cursor-pointer hover:bg-slate-200"
                         onClick={() => handleShowRevize(zakaznik)}
                         title="Zobrazit revize zákazníka"
                       >
@@ -277,11 +257,11 @@ const ZakazniciPage: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Poznámka</label>
+            <label className="block text-sm font-medium text-slate-600 mb-1">Poznámka</label>
             <textarea
               value={formData.poznamka}
               onChange={(e) => setFormData({ ...formData, poznamka: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-slate-400"
               rows={3}
             />
           </div>
@@ -305,28 +285,28 @@ const ZakazniciPage: React.FC = () => {
       >
         <div className="space-y-2">
           {selectedZakaznikRevize.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">Zákazník nemá žádné revize</p>
+            <p className="text-slate-400 text-center py-4">Žádné revize</p>
           ) : (
             selectedZakaznikRevize.map((revize) => (
-              <div key={revize.id} className="p-3 border rounded-lg hover:bg-gray-50">
+              <div key={revize.id} className="p-3 border rounded-lg hover:bg-slate-50">
                 <div className="flex justify-between items-center">
                   <div>
                     <span className="font-medium">{revize.cisloRevize || `Revize #${revize.id}`}</span>
-                    <span className="text-gray-500 ml-2">
+                    <span className="text-slate-400 ml-2">
                       {revize.datum ? new Date(revize.datum).toLocaleDateString('cs-CZ') : 'Bez data'}
                     </span>
                   </div>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    revize.stav === 'dokončeno' ? 'bg-green-100 text-green-800' :
-                    revize.stav === 'rozpracováno' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-800'
+                  <span className={`px-2 py-1 text-xs rounded ${
+                    revize.stav === 'dokončeno' ? 'bg-emerald-50 text-emerald-600' :
+                    revize.stav === 'rozpracováno' ? 'bg-amber-50 text-amber-600' :
+                    'bg-slate-100 text-slate-600'
                   }`}>
                     {revize.stav === 'dokončeno' ? 'Dokončeno' :
                      revize.stav === 'rozpracováno' ? 'Rozpracováno' : revize.stav}
                   </span>
                 </div>
                 {revize.nazev && (
-                  <p className="text-sm text-gray-600 mt-1">{revize.nazev}</p>
+                  <p className="text-sm text-slate-500 mt-1">{revize.nazev}</p>
                 )}
               </div>
             ))

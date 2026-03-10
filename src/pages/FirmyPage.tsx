@@ -1,10 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button, Card, Input, Modal } from '../components/ui';
-import { firmaService } from '../services/database';
+import { useFirmy, useCreateFirma, useUpdateFirma, useDeleteFirma } from '../hooks/useQueries';
 import type { Firma } from '../types';
 
 export function FirmyPage() {
-  const [firmy, setFirmy] = useState<Firma[]>([]);
+  const { data: firmy = [] } = useFirmy();
+  const createFirma = useCreateFirma();
+  const updateFirma = useUpdateFirma();
+  const deleteFirma = useDeleteFirma();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFirma, setEditingFirma] = useState<Firma | null>(null);
   const [formData, setFormData] = useState({
@@ -17,15 +21,6 @@ export function FirmyPage() {
     email: '',
     poznamka: '',
   });
-
-  useEffect(() => {
-    loadFirmy();
-  }, []);
-
-  const loadFirmy = async () => {
-    const data = await firmaService.getAll();
-    setFirmy(data);
-  };
 
   const resetForm = () => {
     setFormData({
@@ -65,26 +60,22 @@ export function FirmyPage() {
     resetForm();
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!formData.nazev.trim()) {
       alert('Zadejte název firmy');
       return;
     }
 
     if (editingFirma?.id) {
-      await firmaService.update(editingFirma.id, formData);
+      updateFirma.mutate({ id: editingFirma.id, data: formData }, { onSuccess: handleCloseModal });
     } else {
-      await firmaService.create(formData);
+      createFirma.mutate(formData, { onSuccess: handleCloseModal });
     }
-
-    handleCloseModal();
-    loadFirmy();
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = (id: number) => {
     if (confirm('Opravdu chcete smazat tuto firmu?')) {
-      await firmaService.delete(id);
-      loadFirmy();
+      deleteFirma.mutate(id);
     }
   };
 
@@ -92,8 +83,8 @@ export function FirmyPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Firmy</h1>
-          <p className="text-slate-500 mt-1">
+          <h1 className="text-lg font-bold text-slate-800">Firmy</h1>
+          <p className="text-xs text-slate-400 mt-1">
             Seznam firem, pro které provádíte revize. Tyto firmy můžete vybírat při vytváření revize.
           </p>
         </div>
@@ -103,11 +94,10 @@ export function FirmyPage() {
       {firmy.length === 0 ? (
         <Card>
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">🏢</div>
-            <h3 className="text-lg font-medium text-slate-800 mb-2">
+            <h3 className="text-sm font-medium text-slate-700 mb-2">
               Zatím nemáte žádné firmy
             </h3>
-            <p className="text-slate-500 mb-4">
+            <p className="text-xs text-slate-400 mb-4">
               Přidejte firmy, pro které provádíte revize jako externí technik.
             </p>
             <Button onClick={() => handleOpenModal()}>
@@ -138,7 +128,7 @@ export function FirmyPage() {
                     <td className="py-3 px-4 text-sm">{firma.kontaktOsoba || '-'}</td>
                     <td className="py-3 px-4 text-sm text-slate-600">
                       {firma.telefon && <div>{firma.telefon}</div>}
-                      {firma.email && <div className="text-blue-600">{firma.email}</div>}
+                      {firma.email && <div className="text-slate-600">{firma.email}</div>}
                       {!firma.telefon && !firma.email && '-'}
                     </td>
                     <td className="py-3 px-4">

@@ -50,16 +50,20 @@ Výchozí uživatel `admin / admin123` se vytváří automaticky. V produkci to 
 
 ---
 
-### 4. VÝKON: RevizeDetailPage — 2350 řádků, ~30 state proměnných
-**Soubor:** `src/pages/RevizeDetailPage.tsx`
+### 4. ✅ VÝKON: RevizeDetailPage — 2350 řádků, ~30 state proměnných
+**Soubor:** `src/pages/RevizeDetail/` (dříve `src/pages/RevizeDetailPage.tsx`)
 
-Jeden monolitický komponent s:
-- **~30 useState** proměnných
-- **~20 handler** funkcí
-- **5 záložek** (info, dokumentace, rozvadeče, závady, místnosti), každá s kompletním CRUD včetně modálů
-- Inline komponenty definované uvnitř renderovací funkce (`PredvolenyTextBtn`, `SekceHeader`) — tyto se znovu vytvářejí při každém renderu
-
-**Doporučení:** Rozdělit na sub-komponenty per záložka (`InfoTab`, `DokumentaceTab`, `RozvadeceTab`, `ZavadyTab`, `MistnostiTab`). Všechny inline komponenty (`PredvolenyTextBtn`, `SekceHeader`) extrahovat do samostatných souborů.
+**VYŘEŠENO** — Monolitický komponent (2350 řádků) byl rozdělen do 10 souborů ve složce `src/pages/RevizeDetail/`:
+- `RevizeDetailPage.tsx` (~200 řádků) — hlavní komponenta: routing, loadData, handleSave, tab bar, save bar
+- `InfoTab.tsx` — záložka Základní údaje (sekce 1–5)
+- `DokumentaceTab.tsx` — záložka Revidované zařízení (dokumentace, přístroje, sekce s tisk-toggle)
+- `RozvadeceTab.tsx` — záložka Rozvaděče + okruhy (CRUD, drag-drop, modály)
+- `ZavadyTab.tsx` — záložka Závady (CRUD, katalog, fotky, lightbox)
+- `MistnostiTab.tsx` — záložka Místnosti + zařízení (CRUD, modály)
+- `SekceHeader.tsx` — extrahovaná komponenta (dříve inline, re-vytvářena každým renderem)
+- `PredvolenyTextBtn.tsx` — extrahovaná komponenta s čistým `value`/`onChange` API
+- `constants.ts` — `PREDVOLENE_TEXTY` konstanty
+- `index.ts` — re-export
 
 ---
 
@@ -116,10 +120,15 @@ Navíc v `api.ts` má `backupApi.download()` chybějící auth headers.
 
 ---
 
-### 9. STAV MANAGEMENT: Žádné cachování dat
-Všechen data fetching používá raw `useState` + `useEffect`. Žádný React Query, SWR ani Context pro sdílení/cachování dat. Každý přechod mezi stránkami = kompletní re-fetch všech dat.
+### 9. ✅ STAV MANAGEMENT: Žádné cachování dat
+~~Všechen data fetching používá raw `useState` + `useEffect`. Žádný React Query, SWR ani Context pro sdílení/cachování dat. Každý přechod mezi stránkami = kompletní re-fetch všech dat.~~
 
-**Doporučení:** Zavést React Query (TanStack Query) — přinese caching, automatický refetch, loading states, error handling, a optimistické updaty.
+**Vyřešeno:** Zavedeno `@tanstack/react-query` s kompletní infrastrukturou:
+- `QueryClientProvider` v `App.tsx` (staleTime 30s, gcTime 5min)
+- Centrální query klíče v `src/hooks/queryKeys.ts`
+- 40+ custom hooks v `src/hooks/useQueries.ts` (useRevize, useFirmy, usePristroje, useZakaznici, useZakazky, useNastaveni, usePredvoleneTexty, useZavadyKatalog, useDatabaseStats + všechny mutace s automatickou invalidací cache)
+- Refaktorovány všechny stránky: Dashboard, RevizePage, FirmyPage, PristrojePage, ZavadyPage, ZakazniciPage, PlanovaniPage, MistnostiPage, RozvadecDetailPage, NastaveniPage, RevizeDetailPage
+- Sdílená cache mezi stránkami (firmy, zákazníci, přístroje, nastavení, katalog závad)
 
 ---
 

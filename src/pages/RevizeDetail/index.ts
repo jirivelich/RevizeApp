@@ -1,0 +1,1 @@
+export { RevizeDetailPage } from './RevizeDetailPage';
