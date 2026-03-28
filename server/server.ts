@@ -206,9 +206,16 @@ async function startServer() {
 
   app.delete('/api/revize/:id', authMiddleware, async (req, res) => {
     try {
-      await pool.query('DELETE FROM revize WHERE id = $1', [req.params.id]);
+      const id = req.params.id;
+      // Odpojit zakázky navázané na tuto revizi
+      await pool.query('UPDATE zakazka SET "revizeId" = NULL WHERE "revizeId" = $1', [id]);
+      // Odpojit navazující revize (predchoziRevizeId)
+      await pool.query('UPDATE revize SET "predchoziRevizeId" = NULL WHERE "predchoziRevizeId" = $1', [id]);
+      // Smazat revizi (kaskádně smaže rozvadeče, místnosti, závady, přístroje)
+      await pool.query('DELETE FROM revize WHERE id = $1', [id]);
       res.json({ success: true });
     } catch (error) {
+      console.error('Chyba při mazání revize:', error);
       res.status(500).json({ error: (error as Error).message });
     }
   });

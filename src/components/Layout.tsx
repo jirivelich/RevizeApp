@@ -24,9 +24,9 @@ export function Layout() {
       </div>
       
       {/* Main content - s paddingem pro sidebar na velkých obrazovkách */}
-      <main className="lg:ml-56 min-h-screen bg-slate-50">
+      <main className="lg:ml-56 h-screen flex flex-col bg-slate-50">
         {/* Mobilní header s menu tlačítkem */}
-        <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+        <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30 flex-shrink-0">
           <h1 className="text-lg font-bold text-slate-800">RevizeApp</h1>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -38,7 +38,7 @@ export function Layout() {
             </svg>
           </button>
         </div>
-        <div className="p-4 sm:p-6">
+        <div className="p-4 sm:p-6 flex-1 overflow-auto">
           <Outlet />
         </div>
       </main>

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Button, Card, Input, Select, Modal } from '../components/ui';
+import { Button, Input, Select, Modal } from '../components/ui';
 import { revizeService } from '../services/database';
 import { useRevize, useDeleteRevize } from '../hooks/useQueries';
 import type { KategorieRevize, Revize } from '../types';
@@ -67,6 +67,39 @@ export function RevizePage() {
   const [historieSourceCislo, setHistorieSourceCislo] = useState('');
   const [isHistorieModalOpen, setIsHistorieModalOpen] = useState(false);
   const [isLoadingHistorie, setIsLoadingHistorie] = useState(false);
+
+  // Dropdown menu pro akce
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Řazení
+  type SortKey = 'cisloRevize' | 'kategorieRevize' | 'nazev' | 'adresa' | 'datum' | 'typRevize' | 'stav';
+  const [sortKey, setSortKey] = useState<SortKey>('datum');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const SortIcon = ({ col }: { col: SortKey }) => {
+    if (sortKey !== col) return <span className="ml-1 text-slate-300">↕</span>;
+    return <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>;
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const openHistorieModal = async (revizeId: number, cisloRevize: string) => {
     setHistorieSourceId(revizeId);
@@ -180,6 +213,11 @@ export function RevizePage() {
     const matchesFilter = !filterStav || r.stav === filterStav;
     const matchesKategorie = !filterKategorie || r.kategorieRevize === filterKategorie;
     return matchesSearch && matchesFilter && matchesKategorie;
+  }).sort((a, b) => {
+    const valA = (a[sortKey] ?? '').toString().toLowerCase();
+    const valB = (b[sortKey] ?? '').toString().toLowerCase();
+    const cmp = valA.localeCompare(valB, 'cs');
+    return sortDir === 'asc' ? cmp : -cmp;
   });
 
   if (loading) {
@@ -203,8 +241,8 @@ export function RevizePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-4 h-full">
+      <div className="flex items-center justify-between flex-shrink-0">
         <div>
           <h1 className="text-lg font-bold text-slate-800">Revize</h1>
           <p className="text-xs text-slate-400">Správa revizí elektrických instalací, hromosvodů a strojních zařízení</p>
@@ -214,8 +252,9 @@ export function RevizePage() {
         </Button>
       </div>
 
-      <Card>
-        <div className="flex flex-wrap gap-4 mb-4">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex-1 min-h-0 flex flex-col overflow-hidden">
+        <div className="px-6 pt-5 pb-3 flex-shrink-0">
+          <div className="flex flex-wrap gap-4">
           <div className="flex-1 min-w-[200px]">
             <Input
               placeholder="Hledat revize..."
@@ -243,33 +282,34 @@ export function RevizePage() {
               { value: 'schváleno', label: 'Schváleno' },
             ]}
           />
+          </div>
         </div>
 
         {filteredRevize.length > 0 ? (
-          <div className="overflow-x-auto">
+          <div className="px-6 pb-4 flex-1 min-h-0 overflow-auto">
             <table className="w-full">
-              <thead>
+              <thead className="sticky top-0 bg-white z-10">
                 <tr className="border-b border-slate-200">
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Číslo</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Kategorie</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Název</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Adresa</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Datum</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Typ</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Stav</th>
-                  <th className="text-right py-3 px-4 font-medium text-slate-600">Akce</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700" onClick={() => toggleSort('cisloRevize')}>Číslo<SortIcon col="cisloRevize" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700" onClick={() => toggleSort('kategorieRevize')}>Kategorie<SortIcon col="kategorieRevize" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700" onClick={() => toggleSort('nazev')}>Název<SortIcon col="nazev" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700" onClick={() => toggleSort('adresa')}>Adresa<SortIcon col="adresa" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700" onClick={() => toggleSort('datum')}>Datum<SortIcon col="datum" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700" onClick={() => toggleSort('typRevize')}>Typ<SortIcon col="typRevize" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700" onClick={() => toggleSort('stav')}>Stav<SortIcon col="stav" /></th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider"></th>
                 </tr>
               </thead>
               <tbody>
                 {filteredRevize.map((r) => (
                   <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="py-3 px-4">
-                      <Link to={`/revize/${r.id}`} className="text-slate-700 hover:text-slate-900 font-medium hover:underline">
+                    <td className="py-2 px-3">
+                      <Link to={`/revize/${r.id}`} className="text-xs text-slate-700 hover:text-slate-900 font-medium hover:underline">
                         {r.cisloRevize}
                       </Link>
                     </td>
-                    <td className="py-3 px-4">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    <td className="py-2 px-3">
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                         r.kategorieRevize === 'elektro' ? 'bg-slate-100 text-slate-700' :
                         r.kategorieRevize === 'hromosvod' ? 'bg-slate-100 text-slate-700' :
                         r.kategorieRevize === 'stroje' ? 'bg-slate-100 text-slate-700' :
@@ -280,18 +320,18 @@ export function RevizePage() {
                          r.kategorieRevize === 'stroje' ? 'Stroje' : 'Elektro'}
                       </span>
                     </td>
-                    <td className="py-3 px-4 font-medium">{r.nazev}</td>
-                    <td className="py-3 px-4 text-slate-600">{r.adresa}</td>
-                    <td className="py-3 px-4 text-slate-600">
+                    <td className="py-2 px-3 text-xs font-medium text-slate-800">{r.nazev}</td>
+                    <td className="py-2 px-3 text-xs text-slate-500">{r.adresa}</td>
+                    <td className="py-2 px-3 text-xs text-slate-500">
                       {new Date(r.datum).toLocaleDateString('cs-CZ')}
                     </td>
-                    <td className="py-3 px-4">
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-slate-100 text-slate-700">
+                    <td className="py-2 px-3">
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700">
                         {r.typRevize}
                       </span>
                     </td>
-                    <td className="py-3 px-4">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    <td className="py-2 px-3">
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                         r.stav === 'dokončeno' ? 'bg-emerald-50 text-emerald-600' :
                         r.stav === 'rozpracováno' ? 'bg-amber-50 text-amber-600' :
                         'bg-slate-100 text-slate-600'
@@ -299,38 +339,46 @@ export function RevizePage() {
                         {r.stav}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => navigate(`/revize/${r.id}`)}
+                    <td className="py-2 px-3 text-right">
+                      <div className="relative" ref={openMenuId === r.id ? menuRef : undefined}>
+                        <button
+                          onClick={() => setOpenMenuId(openMenuId === r.id ? null : r.id!)}
+                          className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+                          title="Akce"
                         >
-                          Upravit
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => openDuplikatModal(r.id!, r.cisloRevize)}
-                          title="Vytvořit kopii revize"
-                        >
-                          📋
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => openHistorieModal(r.id!, r.cisloRevize)}
-                          title="Historie navazujících revizí"
-                        >
-                          🕐
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleDelete(r.id!)}
-                        >
-                          Smazat
-                        </Button>
+                          <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                          </svg>
+                        </button>
+                        {openMenuId === r.id && (
+                          <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
+                            <button
+                              onClick={() => { setOpenMenuId(null); navigate(`/revize/${r.id}`); }}
+                              className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                            >
+                              <span className="text-xs">✏️</span> Upravit
+                            </button>
+                            <button
+                              onClick={() => { setOpenMenuId(null); openDuplikatModal(r.id!, r.cisloRevize); }}
+                              className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                            >
+                              <span className="text-xs">📋</span> Kopírovat revizi
+                            </button>
+                            <button
+                              onClick={() => { setOpenMenuId(null); openHistorieModal(r.id!, r.cisloRevize); }}
+                              className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                            >
+                              <span className="text-xs">🕐</span> Historie
+                            </button>
+                            <div className="border-t border-slate-100 my-1"></div>
+                            <button
+                              onClick={() => { setOpenMenuId(null); handleDelete(r.id!); }}
+                              className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
+                            >
+                              <span className="text-xs">🗑️</span> Smazat
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -339,13 +387,13 @@ export function RevizePage() {
             </table>
           </div>
         ) : (
-          <p className="text-center text-slate-500 py-8">
+          <p className="text-center text-slate-500 py-8 px-6">
             {searchTerm || filterStav
               ? 'Žádné revize neodpovídají vašemu hledání.'
               : 'Zatím nemáte žádné revize. Vytvořte první kliknutím na tlačítko výše.'}
           </p>
         )}
-      </Card>
+      </div>
 
       <Modal
         isOpen={isModalOpen}
