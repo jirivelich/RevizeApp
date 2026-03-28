@@ -13,7 +13,7 @@ interface ZavadyTabProps {
   onReload: () => void;
 }
 
-export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId, onReload }: ZavadyTabProps) {
+export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId, onReload: _onReload }: ZavadyTabProps) {
   const createZavada = useCreateZavada();
   const updateZavada = useUpdateZavada();
   const deleteZavada = useDeleteZavada();

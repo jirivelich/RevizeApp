@@ -89,7 +89,7 @@ function PristrojRow({ p }: { p: MericiPristroj }) {
   );
 }
 
-function SectionCard({ title, icon, count, viewAllLink, viewAllLabel, empty, emptyLink, emptyLabel, children }: {
+function SectionCard({ title, icon: _icon, count, viewAllLink, viewAllLabel, empty, emptyLink, emptyLabel, children }: {
   title: string; icon: string; count?: number;
   viewAllLink: string; viewAllLabel?: string;
   empty: string; emptyLink: string; emptyLabel: string;

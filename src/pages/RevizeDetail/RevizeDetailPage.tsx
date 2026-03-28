@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '../../components/ui';
 import {
-  revizeService, okruhService, zarizeniService,
+  okruhService, zarizeniService,
 } from '../../services/database';
 import type { Revize, MericiPristroj, Firma, Zakaznik } from '../../types';
 import {

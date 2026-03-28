@@ -146,7 +146,7 @@ export const aiApi = {
   async getStatus(): Promise<{ configured: boolean }> {
     return fetch(`${API_BASE_URL}/ai/status`, {
       headers: getAuthHeaders(),
-    }).then(handleResponse);
+    }).then(res => handleResponse<{ configured: boolean }>(res));
   },
 
   /** Vygenerovat text revizní zprávy z dat revize */
@@ -155,7 +155,7 @@ export const aiApi = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ revizeId }),
-    }).then(handleResponse);
+    }).then(res => handleResponse<{ text: string }>(res));
   },
 
   /** Chat s AI asistentem */
@@ -167,7 +167,7 @@ export const aiApi = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ messages, revizeContext }),
-    }).then(handleResponse);
+    }).then(res => handleResponse<{ reply: string }>(res));
   },
 
   /** Auto-vyplnění pole formuláře */
@@ -180,6 +180,6 @@ export const aiApi = {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ field, formData, entityType }),
-    }).then(handleResponse);
+    }).then(res => handleResponse<{ suggestion: Record<string, string> }>(res));
   },
 };

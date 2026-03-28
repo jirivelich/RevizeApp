@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button, Card, Input, Select, Modal } from '../../components/ui';
 import { TW } from './tw';
-import { mistnostService, zarizeniService } from '../../services/database';
+import { zarizeniService } from '../../services/database';
 import { useCreateMistnost, useUpdateMistnost, useDeleteMistnost } from '../../hooks/useQueries';
 import type { Mistnost, Zarizeni } from '../../types';
 
@@ -12,7 +12,7 @@ interface MistnostiTabProps {
   onReload: () => void;
 }
 
-export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, onReload }: MistnostiTabProps) {
+export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, onReload: _onReload }: MistnostiTabProps) {
   const createMistnost = useCreateMistnost();
   const updateMistnost = useUpdateMistnost();
   const deleteMistnost = useDeleteMistnost();

@@ -102,7 +102,8 @@ export function ReportPrintPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paging, setPaging] = useState(false);
-  const [pageCount, setPageCount] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_pageCount, setPageCount] = useState(0);
 
   const sourceRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -243,9 +244,13 @@ export function ReportPrintPage() {
       await exportElektroToWord(data);
     } catch (err) {
       console.error('Word export error:', err);
-      alert('Chyba při exportu do Wordu: ' + (err instanceof Error ? err.message : 'Neznámá chyba'));
+      alert('Chyba p\u0159i exportu do Wordu: ' + (err instanceof Error ? err.message : 'Nezn\u00e1m\u00e1 chyba'));
     }
   };
+
+  // Expose for potential button usage
+  void handlePrint;
+  void handleWordExport;
 
   if (loading) {
     return (

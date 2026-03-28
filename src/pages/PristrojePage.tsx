@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
 import { usePristroje, useCreatePristroj, useUpdatePristroj, useDeletePristroj, useKalibrace, useCreateKalibrace, useDeleteKalibrace } from '../hooks/useQueries';
-import type { MericiPristroj, Kalibrace } from '../types';
+import type { MericiPristroj } from '../types';
 
 const typyPristroju = [
   { value: 'multimetr', label: 'Multimetr' },

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Button, Card, Modal } from '../../components/ui';
+import { Button, Modal } from '../../components/ui';
 import type { Revize, MericiPristroj, PredvolenyText } from '../../types';
 import { useAddPristrojToRevize, useRemovePristrojFromRevize } from '../../hooks/useQueries';
 import { TW, SectionHeader, ToggleSectionHeader } from './tw';

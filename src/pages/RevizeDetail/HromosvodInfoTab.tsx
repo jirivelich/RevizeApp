@@ -16,7 +16,7 @@ interface HromosvodInfoTabProps {
 }
 
 export function HromosvodInfoTab({
-  revize, formData, setFormData,
+  revize: _revize, formData, setFormData,
   firmy, selectedFirmaId, setSelectedFirmaId,
   nastaveni, zakaznici, selectedZakaznikId, setSelectedZakaznikId,
 }: HromosvodInfoTabProps) {

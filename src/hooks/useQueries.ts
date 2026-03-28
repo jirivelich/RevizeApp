@@ -55,7 +55,7 @@ export function useRevizeDetail(id: number | undefined) {
 export function useCreateRevize() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<Revize>) => revizeService.create(data),
+    mutationFn: (data: Partial<Revize>) => revizeService.create(data as any),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.revize.all });
     },
@@ -99,7 +99,7 @@ export function useRozvadeceByRevize(revizeId: number | undefined) {
 export function useCreateRozvadec() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<Rozvadec>) => rozvadecService.create(data),
+    mutationFn: (data: Partial<Rozvadec>) => rozvadecService.create(data as any),
     onSuccess: (_res, vars) => {
       if (vars.revizeId) {
         qc.invalidateQueries({ queryKey: queryKeys.rozvadece.byRevize(vars.revizeId) });
@@ -124,7 +124,7 @@ export function useUpdateRozvadec() {
 export function useDeleteRozvadec() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, revizeId }: { id: number; revizeId: number }) =>
+    mutationFn: ({ id, revizeId: _revizeId }: { id: number; revizeId: number }) =>
       rozvadecService.delete(id),
     onSuccess: (_res, vars) => {
       qc.invalidateQueries({ queryKey: queryKeys.rozvadece.byRevize(vars.revizeId) });
@@ -147,7 +147,7 @@ export function useOkruhyByRozvadec(rozvadecId: number | undefined) {
 export function useCreateOkruh() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<Okruh>) => okruhService.create(data),
+    mutationFn: (data: Partial<Okruh>) => okruhService.create(data as any),
     onSuccess: (_res, vars) => {
       if (vars.rozvadecId) {
         qc.invalidateQueries({ queryKey: queryKeys.okruhy.byRozvadec(vars.rozvadecId) });
@@ -172,7 +172,7 @@ export function useUpdateOkruh() {
 export function useDeleteOkruh() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, rozvadecId }: { id: number; rozvadecId: number }) =>
+    mutationFn: ({ id, rozvadecId: _rozvadecId }: { id: number; rozvadecId: number }) =>
       okruhService.delete(id),
     onSuccess: (_res, vars) => {
       qc.invalidateQueries({ queryKey: queryKeys.okruhy.byRozvadec(vars.rozvadecId) });
@@ -195,7 +195,7 @@ export function useZavadyByRevize(revizeId: number | undefined) {
 export function useCreateZavada() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<Zavada>) => zavadaService.create(data),
+    mutationFn: (data: Partial<Zavada>) => zavadaService.create(data as any),
     onSuccess: (_res, vars) => {
       if (vars.revizeId) {
         qc.invalidateQueries({ queryKey: queryKeys.zavady.byRevize(vars.revizeId) });
@@ -220,7 +220,7 @@ export function useUpdateZavada() {
 export function useDeleteZavada() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, revizeId }: { id: number; revizeId: number }) =>
+    mutationFn: ({ id, revizeId: _revizeId }: { id: number; revizeId: number }) =>
       zavadaService.delete(id),
     onSuccess: (_res, vars) => {
       qc.invalidateQueries({ queryKey: queryKeys.zavady.byRevize(vars.revizeId) });
@@ -243,7 +243,7 @@ export function useMistnostiByRevize(revizeId: number | undefined) {
 export function useCreateMistnost() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<Mistnost>) => mistnostService.create(data),
+    mutationFn: (data: Partial<Mistnost>) => mistnostService.create(data as any),
     onSuccess: (_res, vars) => {
       if (vars.revizeId) {
         qc.invalidateQueries({ queryKey: queryKeys.mistnosti.byRevize(vars.revizeId) });
@@ -268,7 +268,7 @@ export function useUpdateMistnost() {
 export function useDeleteMistnost() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, revizeId }: { id: number; revizeId: number }) =>
+    mutationFn: ({ id, revizeId: _revizeId }: { id: number; revizeId: number }) =>
       mistnostService.delete(id),
     onSuccess: (_res, vars) => {
       qc.invalidateQueries({ queryKey: queryKeys.mistnosti.byRevize(vars.revizeId) });
@@ -304,7 +304,7 @@ export function useCreateZarizeni() {
 export function useDeleteZarizeni() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, mistnostId }: { id: number; mistnostId: number }) =>
+    mutationFn: ({ id, mistnostId: _mistnostId }: { id: number; mistnostId: number }) =>
       zarizeniService.delete(id),
     onSuccess: (_res, vars) => {
       qc.invalidateQueries({ queryKey: queryKeys.zarizeni.byMistnost(vars.mistnostId) });
@@ -334,7 +334,7 @@ export function usePristrojeByRevize(revizeId: number | undefined) {
 export function useCreatePristroj() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<MericiPristroj>) => pristrojService.create(data),
+    mutationFn: (data: Partial<MericiPristroj>) => pristrojService.create(data as any),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.pristroje.all });
     },
@@ -410,7 +410,7 @@ export function useCreateKalibrace() {
 export function useDeleteKalibrace() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, pristrojId }: { id: number; pristrojId: number }) => kalibraceService.delete(id),
+    mutationFn: ({ id, pristrojId: _pristrojId }: { id: number; pristrojId: number }) => kalibraceService.delete(id),
     onSuccess: (_res, vars) => {
       qc.invalidateQueries({ queryKey: queryKeys.kalibrace.byPristroj(vars.pristrojId) });
     },
@@ -432,7 +432,7 @@ export function useFirmy() {
 export function useCreateFirma() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<Firma>) => firmaService.create(data),
+    mutationFn: (data: Partial<Firma>) => firmaService.create(data as any),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.firmy.all });
     },
@@ -475,7 +475,7 @@ export function useZakaznici() {
 export function useCreateZakaznik() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<Zakaznik>) => zakazniciService.create(data),
+    mutationFn: (data: Partial<Zakaznik>) => zakazniciService.create(data as any),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.zakaznici.all });
     },
@@ -517,7 +517,7 @@ export function useZakazky() {
 export function useCreateZakazka() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<Zakazka>) => zakazkaService.create(data),
+    mutationFn: (data: Partial<Zakazka>) => zakazkaService.create(data as any),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.zakazky.all });
     },
@@ -582,7 +582,7 @@ export function usePredvoleneTexty() {
 export function useCreatePredvolenyText() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<PredvolenyText>) => predvolenyTextService.create(data),
+    mutationFn: (data: Partial<PredvolenyText>) => predvolenyTextService.create(data as any),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.predvoleneTexty.all });
     },
@@ -593,7 +593,7 @@ export function useUpdatePredvolenyText() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<PredvolenyText> }) =>
-      predvolenyTextService.update(id, data),
+      predvolenyTextService.update(id, data as any),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.predvoleneTexty.all });
     },
@@ -633,7 +633,7 @@ export function useZavadyKategorie() {
 export function useCreateZavadaKatalog() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<ZavadaKatalog>) => zavadaKatalogService.create(data),
+    mutationFn: (data: Partial<ZavadaKatalog>) => zavadaKatalogService.create(data as any),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.zavadyKatalog.all });
       qc.invalidateQueries({ queryKey: queryKeys.zavadyKatalog.kategorie });
@@ -686,7 +686,7 @@ export function useImportDatabase() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ data, mode }: { data: unknown; mode: 'replace' | 'merge' }) =>
-      backupService.importDatabase(data, mode),
+      backupService.importDatabase(data as string, mode),
     onSuccess: () => {
       // Import mění vše – invalidovat celou cache
       qc.invalidateQueries();

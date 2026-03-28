@@ -4,14 +4,14 @@
  */
 import {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-  WidthType, AlignmentType, BorderStyle, HeadingLevel,
-  Header, Footer, PageNumber, NumberFormat,
+  WidthType, AlignmentType, BorderStyle,
+  Header, Footer, PageNumber,
   ShadingType, VerticalAlign, TableLayoutType,
-  convertMillimetersToTwip, ImageRun,
+  convertMillimetersToTwip,
 } from 'docx';
 import { saveAs } from 'file-saver';
-import type { Revize, Nastaveni, Zakaznik, Zavada, MericiPristroj } from '../types';
-import type { ReportData, RozvadecWithOkruhy, MistnostWithZarizeni } from '../pages/ReportPrint/ReportPrintPage';
+import type { Revize } from '../types';
+import type { ReportData } from '../pages/ReportPrint/ReportPrintPage';
 
 /* ═══════════════════════════════════════════
    BARVY & KONSTANTY

@@ -225,7 +225,6 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       mistoAdresa: revize.adresa || '',
       mistoDatum: revize.datum || '',
       mistoZakazka: revize.cisloRevize || '',
-      mistoHala: fd.mistoHala,
       ...fd,
     };
   }

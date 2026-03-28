@@ -6,7 +6,7 @@ interface SekceHeaderProps {
   onToggle: () => void;
 }
 
-export function SekceHeader({ id, children, className = 'bg-slate-800', visible, onToggle }: SekceHeaderProps) {
+export function SekceHeader({ id: _id, children, className = 'bg-slate-800', visible, onToggle }: SekceHeaderProps) {
   return (
     <div className={`${className} text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center justify-between`}>
       <span className={!visible ? 'opacity-50 line-through' : ''}>{children}</span>

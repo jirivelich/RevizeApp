@@ -11,7 +11,7 @@ import { WeekView } from './WeekView';
 import { ZakazkaForm } from './ZakazkaForm';
 
 // Definice kategorií - sdílená s RevizePage
-const KATEGORIE_REVIZE: { value: KategorieRevize; label: string; popis: string; icon: JSX.Element }[] = [
+const KATEGORIE_REVIZE: { value: KategorieRevize; label: string; popis: string; icon: React.ReactNode }[] = [
   {
     value: 'elektro',
     label: 'Elektrické instalace',

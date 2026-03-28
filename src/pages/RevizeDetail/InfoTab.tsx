@@ -16,7 +16,7 @@ interface InfoTabProps {
 }
 
 export function InfoTab({
-  revize, formData, setFormData,
+  revize: _revize, formData, setFormData,
   firmy, selectedFirmaId, setSelectedFirmaId,
   nastaveni, zakaznici, selectedZakaznikId, setSelectedZakaznikId,
 }: InfoTabProps) {

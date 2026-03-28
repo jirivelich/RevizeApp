@@ -688,7 +688,7 @@ export const exportService = {
   },
 
   async importAll(jsonString: string): Promise<void> {
-    return backupService.importDatabase(jsonString, 'replace');
+    await backupService.importDatabase(jsonString, 'replace');
   },
 };
 

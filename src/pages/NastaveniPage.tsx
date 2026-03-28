@@ -67,7 +67,6 @@ export function NastaveniPage() {
   const [saveMessage, setSaveMessage] = useState('');
   const [activeTab, setActiveTab] = useState<'obecne' | 'texty' | 'zalohy'>('obecne');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const importInputRef = useRef<HTMLInputElement>(null);
 
   // Backup state
   const [isExporting, setIsExporting] = useState(false);

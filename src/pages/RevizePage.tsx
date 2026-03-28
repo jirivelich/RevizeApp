@@ -6,7 +6,7 @@ import { useRevize, useDeleteRevize } from '../hooks/useQueries';
 import type { KategorieRevize, Revize } from '../types';
 
 // Definice kategorií revizí - centrální místo pro budoucí rozšíření
-const KATEGORIE_REVIZE: { value: KategorieRevize; label: string; popis: string; icon: JSX.Element }[] = [
+const KATEGORIE_REVIZE: { value: KategorieRevize; label: string; popis: string; icon: React.ReactNode }[] = [
   {
     value: 'elektro',
     label: 'Elektrické instalace',

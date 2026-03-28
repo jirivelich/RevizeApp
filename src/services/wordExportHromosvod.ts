@@ -3,18 +3,17 @@
  * Sdílí pomocné funkce z wordExport.ts
  */
 import {
-  Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-  WidthType, AlignmentType, BorderStyle,
+  Document, Packer, Paragraph, TextRun, Table,
+  AlignmentType, BorderStyle,
   Header, Footer, PageNumber,
-  ShadingType, VerticalAlign,
   convertMillimetersToTwip,
 } from 'docx';
 import { saveAs } from 'file-saver';
 import type { Revize, Nastaveni, Zakaznik, Zavada, MericiPristroj } from '../types';
 import {
-  sectionTitle, textParagraph, kvTable, dataTable, subsectionTitle,
-  emptyText, emptyLine, resultBox, signatureSection,
-  parseTiskSekce, isSekceVisible, fmtDate, thinBorder,
+  sectionTitle, textParagraph, kvTable, dataTable,
+  emptyText, resultBox, signatureSection,
+  parseTiskSekce, isSekceVisible, fmtDate,
 } from './wordExport';
 
 /* ═══════════════════════════════════════════ */

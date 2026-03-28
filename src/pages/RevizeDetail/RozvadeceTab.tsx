@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button, Card, Input, Select, Modal } from '../../components/ui';
 import { TW } from './tw';
-import { rozvadecService, okruhService } from '../../services/database';
+import { okruhService } from '../../services/database';
 import { useCreateRozvadec, useDeleteRozvadec } from '../../hooks/useQueries';
 import type { Rozvadec, Okruh } from '../../types';
 
@@ -12,7 +12,7 @@ interface RozvadeceTabProps {
   onReload: () => void;
 }
 
-export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, onReload }: RozvadeceTabProps) {
+export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, onReload: _onReload }: RozvadeceTabProps) {
   const createRozvadec = useCreateRozvadec();
   const deleteRozvadec = useDeleteRozvadec();
   const [selectedRozvadec, setSelectedRozvadec] = useState<Rozvadec | null>(null);
