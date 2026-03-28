@@ -30,12 +30,13 @@ export interface Revize {
   datumDokonceni?: string;
   datumPlatnosti?: string;
   termin: number; // počet měsíců platnosti
+  lhutaText?: string; // vlastní text místo lhůty (např. "dle určení vnějších vlivů")
   datumVypracovani?: string;
   typRevize: 'pravidelná' | 'výchozí' | 'mimořádná';
   duvodMimoradne?: string; // e) Důvod mimořádné revize
   stav: 'rozpracováno' | 'dokončeno' | 'schváleno';
   poznamka?: string;
-  vysledek?: 'schopno' | 'neschopno' | 'podmíněně schopno';
+  vysledek?: 'schopno' | 'neschopno';
   vysledekOduvodneni?: string; // l) Odůvodnění pokud není schopno provozu
   zaver?: string; // Závěr/shrnutí revize
   
@@ -64,6 +65,13 @@ export interface Revize {
   
   // Nastavení viditelných sekcí pro tisk/náhled (JSON)
   tiskSekce?: string;
+
+  // Normy – text nad nadpisem revizní zprávy
+  normySoulad?: string;
+
+  // === Historie / návaznost revizí ===
+  predchoziRevizeId?: number; // FK na předchozí revizi (řetězení)
+  skupinaRevizi?: string;     // UUID sdílené celou řadou navazujících revizí
   
   // Firma provádějící revizi (může být jiná než firma technika)
   firmaJmeno?: string;
@@ -107,6 +115,9 @@ export interface Revize {
 
   // Měření odporů uzemnění (JSON pole měření)
   hromosvodMereniOdporu?: string;      // JSON: [{bod, hodnota, limit, vyhovuje}]
+
+  // ═══ STROJNÍ ZAŘÍZENÍ - data formuláře (JSON) ═══
+  strojniData?: string;                // JSON: StrojniFormData
 
   createdAt: Date;
   updatedAt: Date;
@@ -249,6 +260,19 @@ export interface RevizePristroj {
   id?: number;
   revizeId: number;
   pristrojId: number;
+}
+
+// Historie kalibrací měřicího přístroje
+export interface Kalibrace {
+  id?: number;
+  pristrojId: number;
+  datumKalibrace: string;
+  platnostKalibrace: string;
+  kalibracniList?: string;  // Base64 encoded PDF/image
+  provedl?: string;         // Kdo provedl kalibraci
+  certifikat?: string;      // Číslo certifikátu / protokolu
+  poznamka?: string;
+  createdAt?: Date;
 }
 
 // Katalog typických závad (databáze závad pro výběr)

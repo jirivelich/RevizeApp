@@ -1,7 +1,7 @@
 // Database service - komunikuje s backend API
 // Všechna data jsou uložena na serveru a synchronizována mezi zařízeními
 
-import type { Revize, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, MericiPristroj, Firma, ZavadaKatalog, Zakaznik, PredvolenyText } from '../types';
+import type { Revize, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, MericiPristroj, Firma, ZavadaKatalog, Zakaznik, PredvolenyText, Kalibrace } from '../types';
 
 // V produkci používáme relativní URL (frontend i backend na stejném serveru)
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -74,6 +74,20 @@ export const revizeService = {
       method: 'DELETE',
       headers: getAuthHeaders(),
     }).then(res => handleResponse<unknown>(res));
+  },
+
+  async duplikovat(id: number, cisloRevize: string, typ: 'navazujici' | 'duplikat' = 'navazujici'): Promise<{ id: number; skupinaRevizi: string }> {
+    return fetch(`${API_BASE_URL}/revize/${id}/duplikovat`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ cisloRevize, typ }),
+    }).then(res => handleResponse<{ id: number; skupinaRevizi: string }>(res));
+  },
+
+  async getHistorie(id: number): Promise<Partial<Revize>[]> {
+    return fetch(`${API_BASE_URL}/revize/${id}/historie`, {
+      headers: getAuthHeaders(),
+    }).then(res => handleResponse<Partial<Revize>[]>(res));
   },
 };
 
@@ -425,6 +439,31 @@ export const revizePristrojService = {
 
   async removeFromRevize(revizeId: number, pristrojId: number): Promise<void> {
     await fetch(`${API_BASE_URL}/revize-pristroje/${revizeId}/${pristrojId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).then(res => handleResponse<unknown>(res));
+  },
+};
+
+// ==================== KALIBRACE (historie) ====================
+export const kalibraceService = {
+  async getByPristroj(pristrojId: number): Promise<Kalibrace[]> {
+    return fetch(`${API_BASE_URL}/kalibrace/${pristrojId}`, {
+      headers: getAuthHeaders(),
+    }).then(res => handleResponse<Kalibrace[]>(res));
+  },
+
+  async create(data: Omit<Kalibrace, 'id' | 'createdAt'>): Promise<number> {
+    const response = await fetch(`${API_BASE_URL}/kalibrace`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(res => handleResponse<{ id: number }>(res));
+    return response.id;
+  },
+
+  async delete(id: number): Promise<void> {
+    await fetch(`${API_BASE_URL}/kalibrace/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     }).then(res => handleResponse<unknown>(res));

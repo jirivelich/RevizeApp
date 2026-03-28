@@ -1,0 +1,474 @@
+/* ========================================
+   STROJNÍ ZAŘÍZENÍ – Tisková šablona & formulář
+   Design: IBM Plex, tmavé hlavičky, technický industriální styl
+   ======================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+/* ── CSS Proměnné ── */
+.sz-root {
+  --sz-bg: #f4f2ee;
+  --sz-surface: #ffffff;
+  --sz-border: #c8c4bc;
+  --sz-border-strong: #8a8680;
+  --sz-header-bg: #2a2825;
+  --sz-header-txt: #f4f2ee;
+  --sz-accent: #c84b2f;
+  --sz-accent2: #4a7c59;
+  --sz-label-bg: #ede9e2;
+  --sz-section-bar: #2a2825;
+  --sz-txt: #1a1816;
+  --sz-txt-muted: #6b6760;
+  --sz-input-bg: #faf9f7;
+  --sz-check-ok: #4a7c59;
+  --sz-check-no: #c84b2f;
+  --sz-check-na: #7a7570;
+  --sz-mono: 'IBM Plex Mono', monospace;
+  --sz-sans: 'IBM Plex Sans', sans-serif;
+
+  font-family: var(--sz-sans);
+  background: var(--sz-bg);
+  color: var(--sz-txt);
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ── Toolbar ── */
+.sz-toolbar {
+  background: var(--sz-header-bg);
+  color: var(--sz-header-txt);
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+
+.sz-toolbar-title h1 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: var(--sz-mono);
+  color: var(--sz-header-txt);
+  margin: 0;
+}
+
+.sz-toolbar-title .sz-sub {
+  font-size: 11px;
+  color: #9a9590;
+  margin-top: 2px;
+  font-family: var(--sz-mono);
+}
+
+.sz-toolbar-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.sz-btn {
+  border: none;
+  padding: 10px 22px;
+  font-family: var(--sz-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+}
+
+.sz-btn-excel {
+  background: var(--sz-accent2);
+}
+.sz-btn-excel:hover { background: #3a6249; transform: translateY(-1px); }
+
+.sz-btn-pdf {
+  background: var(--sz-accent);
+}
+.sz-btn-pdf:hover { background: #a33a22; transform: translateY(-1px); }
+
+.sz-btn-back {
+  background: transparent;
+  border: 1px solid #6b6760;
+  color: #9a9590;
+  padding: 8px 16px;
+}
+.sz-btn-back:hover { border-color: #f4f2ee; color: #f4f2ee; }
+
+.sz-btn:active { transform: translateY(0); }
+.sz-btn svg { width: 16px; height: 16px; }
+
+/* ── Container ── */
+.sz-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Protocol bar ── */
+.sz-protocol-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.sz-protocol-bar label {
+  font-family: var(--sz-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--sz-txt-muted);
+}
+
+.sz-protocol-bar input {
+  font-family: var(--sz-mono);
+  font-size: 13px;
+  border: 1px solid var(--sz-border-strong);
+  background: var(--sz-surface);
+  padding: 6px 10px;
+  width: 180px;
+  color: var(--sz-txt);
+}
+
+/* ── Section ── */
+.sz-section {
+  background: var(--sz-surface);
+  border: 1px solid var(--sz-border);
+}
+
+.sz-section-title {
+  background: var(--sz-section-bar);
+  color: var(--sz-header-txt);
+  padding: 9px 16px;
+  font-family: var(--sz-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sz-section-title .sz-num {
+  color: var(--sz-accent);
+  font-size: 13px;
+}
+
+.sz-section-body {
+  padding: 14px 16px;
+}
+
+/* ── Grid fields ── */
+.sz-fields-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.sz-fields-grid.sz-cols-2 { grid-template-columns: 1fr 1fr; }
+.sz-fields-grid.sz-cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.sz-fields-grid.sz-cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+.sz-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sz-field label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--sz-txt-muted);
+  font-family: var(--sz-mono);
+}
+
+.sz-field input,
+.sz-field select,
+.sz-field textarea {
+  border: 1px solid var(--sz-border);
+  background: var(--sz-input-bg);
+  padding: 7px 9px;
+  font-family: var(--sz-sans);
+  font-size: 13px;
+  color: var(--sz-txt);
+  transition: border-color 0.1s;
+  width: 100%;
+  border-radius: 0;
+}
+
+.sz-field input:focus,
+.sz-field select:focus,
+.sz-field textarea:focus {
+  outline: none;
+  border-color: var(--sz-accent);
+  background: #fff;
+}
+
+.sz-field textarea { resize: vertical; min-height: 70px; }
+.sz-field select { appearance: none; cursor: pointer; }
+
+/* ── Tabulky ── */
+.sz-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.sz-table th {
+  background: var(--sz-label-bg);
+  border: 1px solid var(--sz-border);
+  padding: 7px 10px;
+  font-family: var(--sz-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sz-txt-muted);
+  text-align: left;
+}
+
+.sz-table td {
+  border: 1px solid var(--sz-border);
+  padding: 5px 8px;
+  vertical-align: middle;
+}
+
+.sz-table tr:nth-child(even) td { background: #faf9f7; }
+
+.sz-table input[type="text"],
+.sz-table input[type="number"] {
+  border: none;
+  background: transparent;
+  width: 100%;
+  font-family: var(--sz-sans);
+  font-size: 12px;
+  padding: 2px 4px;
+  color: var(--sz-txt);
+}
+
+.sz-table input:focus {
+  outline: 1px solid var(--sz-accent);
+  background: #fff;
+}
+
+/* ── Check group ── */
+.sz-check-group {
+  display: flex;
+  gap: 6px;
+}
+
+.sz-check-btn {
+  flex: 1;
+  padding: 5px 4px;
+  font-size: 11px;
+  font-family: var(--sz-mono);
+  font-weight: 600;
+  border: 1px solid var(--sz-border);
+  background: var(--sz-input-bg);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.12s;
+  letter-spacing: 0.04em;
+  color: var(--sz-txt-muted);
+  user-select: none;
+}
+
+.sz-check-btn:hover { border-color: var(--sz-border-strong); color: var(--sz-txt); }
+.sz-check-btn.sz-active-v { background: #e8f4ec; border-color: var(--sz-check-ok); color: var(--sz-check-ok); }
+.sz-check-btn.sz-active-n { background: #fcecea; border-color: var(--sz-check-no); color: var(--sz-check-no); }
+.sz-check-btn.sz-active-na { background: #efedea; border-color: var(--sz-check-na); color: var(--sz-check-na); }
+
+/* ── Posudek ── */
+.sz-verdict-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.sz-verdict-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid var(--sz-border);
+  background: var(--sz-input-bg);
+  cursor: pointer;
+  font-family: var(--sz-mono);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.12s;
+  letter-spacing: 0.05em;
+}
+
+.sz-verdict-btn:hover { border-color: var(--sz-border-strong); }
+.sz-verdict-btn.sz-active-pass { background: #e8f4ec; border-color: var(--sz-check-ok); color: var(--sz-check-ok); }
+.sz-verdict-btn.sz-active-fail { background: #fcecea; border-color: var(--sz-check-no); color: var(--sz-check-no); }
+
+/* ── Podpisy ── */
+.sz-sign-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  padding: 20px 0 4px;
+}
+
+.sz-sign-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sz-sign-line {
+  border-bottom: 1.5px solid var(--sz-border-strong);
+  height: 40px;
+}
+
+.sz-sign-label {
+  font-family: var(--sz-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--sz-txt-muted);
+  text-align: center;
+  margin-top: 4px;
+}
+
+.sz-note {
+  font-size: 11px;
+  color: var(--sz-txt-muted);
+  font-style: italic;
+  margin-top: 6px;
+}
+
+hr.sz-divider {
+  border: none;
+  border-top: 1px dashed var(--sz-border);
+  margin: 10px 0;
+}
+
+/* ── Loading ── */
+.sz-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--sz-bg);
+  font-family: var(--sz-mono);
+  font-size: 14px;
+  color: var(--sz-txt-muted);
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .sz-fields-grid.sz-cols-2,
+  .sz-fields-grid.sz-cols-3,
+  .sz-fields-grid.sz-cols-4 { grid-template-columns: 1fr; }
+  .sz-toolbar h1 { font-size: 12px; }
+  .sz-toolbar { flex-direction: column; gap: 12px; }
+  .sz-toolbar-actions { flex-wrap: wrap; justify-content: center; }
+}
+
+/* ── Print ── */
+@media print {
+  .sz-toolbar,
+  .sz-btn,
+  .print-hide {
+    display: none !important;
+  }
+
+  .sz-root {
+    background: white !important;
+    font-size: 10pt;
+  }
+
+  .sz-container {
+    padding: 0;
+    max-width: 100%;
+  }
+
+  .sz-section {
+    break-inside: avoid;
+    border-color: #999;
+  }
+
+  .sz-section-title {
+    background: #2a2825 !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .sz-table th {
+    background: #ede9e2 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .sz-field input,
+  .sz-field select,
+  .sz-field textarea,
+  .sz-table input {
+    border: none;
+    background: transparent !important;
+    padding: 2px 0;
+  }
+
+  .sz-check-btn {
+    border: none !important;
+    background: transparent !important;
+    color: transparent !important;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .sz-check-btn.sz-active-v,
+  .sz-check-btn.sz-active-n,
+  .sz-check-btn.sz-active-na {
+    font-size: 11px !important;
+    color: inherit !important;
+  }
+
+  .sz-check-btn.sz-active-v { color: var(--sz-check-ok) !important; }
+  .sz-check-btn.sz-active-n { color: var(--sz-check-no) !important; }
+  .sz-check-btn.sz-active-na { color: var(--sz-check-na) !important; }
+
+  .sz-verdict-btn {
+    border: none !important;
+    background: transparent !important;
+    color: transparent !important;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .sz-verdict-btn.sz-active-pass {
+    font-size: 12px !important;
+    color: var(--sz-check-ok) !important;
+  }
+
+  .sz-verdict-btn.sz-active-fail {
+    font-size: 12px !important;
+    color: var(--sz-check-no) !important;
+  }
+
+  .sz-protocol-bar input {
+    border: none;
+    background: transparent;
+  }
+}

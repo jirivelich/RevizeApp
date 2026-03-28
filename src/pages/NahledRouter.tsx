@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { revizeService } from '../services/database';
 import { ReportPrintPage } from './ReportPrint';
 import { HromosvodPrintPage } from './HromosvodPrint';
+import { StrojniZarizeniPrintPage } from './StrojniZarizeniPrint';
 
 /**
  * Router-wrapper pro tiskový náhled – podle kategorieRevize
@@ -16,8 +17,12 @@ export function NahledRouter() {
   useEffect(() => {
     if (!id) return;
     revizeService.getById(parseInt(id)).then(revize => {
-      setKategorie(revize?.kategorieRevize || 'elektro');
-    }).catch(() => {
+      const raw = revize?.kategorieRevize;
+      const kat = raw ? String(raw).trim().toLowerCase() : 'elektro';
+      console.log('[NahledRouter] revize id=', id, 'raw kategorieRevize=', JSON.stringify(raw), '→', kat);
+      setKategorie(kat);
+    }).catch((err) => {
+      console.error('[NahledRouter] error loading revize:', err);
       setKategorie('elektro');
     }).finally(() => setLoading(false));
   }, [id]);
@@ -32,6 +37,10 @@ export function NahledRouter() {
 
   if (kategorie === 'hromosvod') {
     return <HromosvodPrintPage />;
+  }
+
+  if (kategorie === 'stroje') {
+    return <StrojniZarizeniPrintPage />;
   }
 
   return <ReportPrintPage />;

@@ -19,6 +19,7 @@ import {
   zakazkaService,
   pristrojService,
   revizePristrojService,
+  kalibraceService,
   nastaveniService,
   zavadaKatalogService,
   predvolenyTextService,
@@ -29,7 +30,7 @@ import { queryKeys } from './queryKeys';
 import type {
   Revize, Rozvadec, Okruh, Mistnost, Zavada,
   MericiPristroj, Firma, Zakazka, Nastaveni,
-  ZavadaKatalog, PredvolenyText, Zakaznik,
+  ZavadaKatalog, PredvolenyText, Zakaznik, Kalibrace,
 } from '../types';
 
 /* ═══════════════════════════════════════════
@@ -379,6 +380,39 @@ export function useRemovePristrojFromRevize() {
       revizePristrojService.removeFromRevize(revizeId, pristrojId),
     onSuccess: (_res, vars) => {
       qc.invalidateQueries({ queryKey: queryKeys.pristroje.byRevize(vars.revizeId) });
+    },
+  });
+}
+
+/* ═══════════════════════════════════════════
+   KALIBRACE (historie)
+   ═══════════════════════════════════════════ */
+
+export function useKalibrace(pristrojId: number | undefined) {
+  return useQuery({
+    queryKey: queryKeys.kalibrace.byPristroj(pristrojId!),
+    queryFn: () => kalibraceService.getByPristroj(pristrojId!),
+    enabled: !!pristrojId,
+  });
+}
+
+export function useCreateKalibrace() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Omit<Kalibrace, 'id' | 'createdAt'>) => kalibraceService.create(data),
+    onSuccess: (_res, vars) => {
+      qc.invalidateQueries({ queryKey: queryKeys.kalibrace.byPristroj(vars.pristrojId) });
+      qc.invalidateQueries({ queryKey: queryKeys.pristroje.all });
+    },
+  });
+}
+
+export function useDeleteKalibrace() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, pristrojId }: { id: number; pristrojId: number }) => kalibraceService.delete(id),
+    onSuccess: (_res, vars) => {
+      qc.invalidateQueries({ queryKey: queryKeys.kalibrace.byPristroj(vars.pristrojId) });
     },
   });
 }

@@ -44,6 +44,15 @@ export function RevizeDetailPage() {
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [katalogZavad, setKatalogZavad] = useState<ZavadaKatalog[]>([]);
   const [selectedKatalogZavada, setSelectedKatalogZavada] = useState<string>('');
+
+  // Historie revizí
+  const [historie, setHistorie] = useState<Partial<Revize>[]>([]);
+  const [showHistorie, setShowHistorie] = useState(false);
+  const [isDuplikatModalOpen, setIsDuplikatModalOpen] = useState(false);
+  const [duplikatCislo, setDuplikatCislo] = useState('');
+  const [duplikatTyp, setDuplikatTyp] = useState<'navazujici' | 'duplikat'>('navazujici');
+  const [isDuplikating, setIsDuplikating] = useState(false);
+
   const [zavadaFormData, setZavadaFormData] = useState({
     popis: '',
     zavaznost: 'C2' as Zavada['zavaznost'],
@@ -194,6 +203,43 @@ export function RevizeDetailPage() {
       setError(err instanceof Error ? err.message : 'Chyba při načítání dat');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Načíst historii navazujících revizí
+  const loadHistorie = async (revizeId: number) => {
+    try {
+      const data = await revizeService.getHistorie(revizeId);
+      setHistorie(data);
+    } catch {
+      setHistorie([]);
+    }
+  };
+
+  // Generování čísla revize (rrrrmmddhhmm)
+  const generateCisloRevize = () => {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    return `${yyyy}${mm}${dd}${hh}${min}`;
+  };
+
+  // Duplikovat revizi pro následnou periodickou revizi
+  const handleDuplikovat = async () => {
+    if (!revize?.id || !duplikatCislo.trim()) return;
+    setIsDuplikating(true);
+    try {
+      const result = await revizeService.duplikovat(revize.id, duplikatCislo.trim(), duplikatTyp);
+      setIsDuplikatModalOpen(false);
+      setDuplikatCislo('');
+      navigate(`/revize/${result.id}`);
+    } catch (err) {
+      alert('Chyba při duplikaci: ' + (err instanceof Error ? err.message : 'Neznámá chyba'));
+    } finally {
+      setIsDuplikating(false);
     }
   };
 
@@ -667,15 +713,142 @@ export function RevizeDetailPage() {
           </div>
           <h1 className="text-2xl font-bold text-slate-800">{revize.nazev}</h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button variant="secondary" onClick={() => navigate('/revize')}>
             ← Zpět
+          </Button>
+          <Button variant="secondary" onClick={() => { setDuplikatCislo(generateCisloRevize()); setDuplikatTyp('navazujici'); setIsDuplikatModalOpen(true); }}>
+            📋 Kopírovat revizi
+          </Button>
+          <Button variant="secondary" onClick={async () => { if (revize?.id) { await loadHistorie(revize.id); setShowHistorie(p => !p); } }}>
+            🕐 Historie
           </Button>
           <Button variant="success" onClick={() => navigate(`/revize/${id}/nahled`)}>
             🔍 Náhled
           </Button>
         </div>
       </div>
+
+      {/* Historie navazujících revizí */}
+      {showHistorie && (
+        <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-slate-800 text-white px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center justify-between">
+            <span>🕐 Historie revizí tohoto objektu</span>
+            <button onClick={() => setShowHistorie(false)} className="text-slate-300 hover:text-white">✕</button>
+          </div>
+          <div className="p-4">
+            {historie.length === 0 ? (
+              <div className="text-sm text-slate-500 text-center py-4">
+                <div className="text-2xl mb-2">📭</div>
+                <p>Tato revize nemá žádné navazující ani předchozí revize.</p>
+                <p className="text-xs mt-1 text-slate-400">Použijte tlačítko „📋 Kopírovat revizi" s typem „Navazující" pro vytvoření propojené revize.</p>
+              </div>
+            ) : (
+            <div className="relative">
+              {/* Vertikální čára */}
+              <div className="absolute left-3 top-2 bottom-2 w-0.5 bg-slate-200"></div>
+              <div className="space-y-3">
+                {historie.map((h, idx) => {
+                  const isCurrent = h.id === revize?.id;
+                  return (
+                    <div key={h.id} className={`flex items-start gap-3 pl-1 ${isCurrent ? 'opacity-100' : 'opacity-70'}`}>
+                      {/* Tečka na timeline */}
+                      <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center text-[10px] z-10 ${
+                        isCurrent
+                          ? 'bg-blue-500 border-blue-600 text-white'
+                          : h.stav === 'dokončeno' || h.stav === 'schváleno'
+                            ? 'bg-emerald-100 border-emerald-400 text-emerald-600'
+                            : 'bg-white border-slate-300 text-slate-500'
+                      }`}>
+                        {idx + 1}
+                      </div>
+                      {/* Obsah */}
+                      <div className={`flex-1 rounded border px-3 py-2 text-sm ${isCurrent ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-200'}`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-semibold text-slate-800">
+                            {h.cisloRevize}
+                            {isCurrent && <span className="ml-2 text-xs text-blue-600">(aktuální)</span>}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                            h.stav === 'dokončeno' ? 'bg-emerald-50 text-emerald-600' :
+                            h.stav === 'rozpracováno' ? 'bg-amber-50 text-amber-600' :
+                            'bg-slate-100 text-slate-600'
+                          }`}>{h.stav}</span>
+                        </div>
+                        <div className="text-xs text-slate-500 mt-0.5">
+                          {h.datum} · {h.typRevize || '–'} · {h.vysledek || 'nevyplněno'}
+                        </div>
+                        {!isCurrent && h.id && (
+                          <button
+                            onClick={() => navigate(`/revize/${h.id}`)}
+                            className="text-xs text-blue-500 hover:underline mt-1"
+                          >
+                            Otevřít →
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal pro duplikaci revize */}
+      <Modal isOpen={isDuplikatModalOpen} onClose={() => setIsDuplikatModalOpen(false)} title="Kopie revize">
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            Kopie této revize s novým číslem zprávy. Budou zkopírovány všechny údaje (rozvaděče, okruhy, místnosti, přístroje), ale ne závady.
+          </p>
+
+          {/* Výběr typu */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Typ kopie</label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setDuplikatTyp('navazujici')}
+                className={`p-3 rounded-lg border-2 text-left transition-all ${
+                  duplikatTyp === 'navazujici'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-slate-200 hover:border-slate-400'
+                }`}
+              >
+                <p className="font-semibold text-sm">🔗 Navazující revize</p>
+                <p className="text-xs text-slate-500 mt-1">Propojena s historií. Pro periodické revize stejného objektu.</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDuplikatTyp('duplikat')}
+                className={`p-3 rounded-lg border-2 text-left transition-all ${
+                  duplikatTyp === 'duplikat'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-slate-200 hover:border-slate-400'
+                }`}
+              >
+                <p className="font-semibold text-sm">📋 Nezávislý duplikát</p>
+                <p className="text-xs text-slate-500 mt-1">Samostatná kopie bez vazby na historii.</p>
+              </button>
+            </div>
+          </div>
+
+          <Input
+            label="Číslo nové revizní zprávy"
+            value={duplikatCislo}
+            onChange={(e) => setDuplikatCislo(e.target.value)}
+            placeholder="např. 202603281200"
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setIsDuplikatModalOpen(false)}>Zrušit</Button>
+            <Button onClick={handleDuplikovat} disabled={isDuplikating || !duplikatCislo.trim()}>
+              {isDuplikating ? 'Vytvářím...' : duplikatTyp === 'navazujici' ? '🔗 Vytvořit navazující' : '📋 Vytvořit duplikát'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <div className="flex gap-2 border-b border-slate-200 overflow-x-auto scrollbar-thin">
         {tabs.map((tab) => (
@@ -832,7 +1005,7 @@ export function RevizeDetailPage() {
                 <td className="px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200">Výsledek</td>
                 <td className="px-4 py-2">
                   <select className="px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none" value={formData.vysledek || ''} onChange={(e) => setFormData({ ...formData, vysledek: e.target.value as any })}>
-                    <option value="">-- Nevyplněno --</option><option value="schopno">Schopno provozu</option><option value="neschopno">Neschopno provozu</option><option value="podmíněně schopno">Podmíněně schopno</option>
+                    <option value="">-- Nevyplněno --</option><option value="schopno">Schopno provozu</option><option value="neschopno">Neschopno provozu</option>
                   </select>
                 </td>
               </tr>
@@ -1189,7 +1362,7 @@ export function RevizeDetailPage() {
                 { id: 'selv', label: 'Ochrana malým napětím SELV' },
                 { id: 'pelv', label: 'Ochrana malým napětím PELV' },
                 { id: 'ochrane-pospojovani', label: 'Ochranné pospojování' },
-                { id: 'samocine-odpojeni', label: 'Samočinné odpojení od zdroje' },
+                { id: 'samocine-odpojeni', label: 'Automatické odpojení od zdroje' },
                 { id: 'proudovy-chranic', label: 'Doplňková ochrana proudovým chráničem' },
                 { id: 'ochranne-oddeleni', label: 'Ochranné oddělení obvodů' },
                 { id: 'dvojita-izolace', label: 'Dvojitá nebo zesílená izolace' },

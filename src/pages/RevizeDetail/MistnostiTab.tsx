@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button, Card, Input, Select, Modal } from '../../components/ui';
+import { TW } from './tw';
 import { mistnostService, zarizeniService } from '../../services/database';
 import { useCreateMistnost, useUpdateMistnost, useDeleteMistnost } from '../../hooks/useQueries';
 import type { Mistnost, Zarizeni } from '../../types';
@@ -177,7 +178,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
                   <div className="p-3">
                     <div className="flex items-center justify-between mb-1">
                       <p className="font-medium text-sm">{m.nazev}</p>
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600">
                         {zarizeniCounts[m.id!] || 0}
                       </span>
                     </div>
@@ -221,14 +222,14 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-slate-200">
-                      <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Název</th>
-                      <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Ks</th>
-                      <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Třída</th>
-                      <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Příkon</th>
-                      <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Ochrana před dotykem</th>
-                      <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Stav</th>
-                      <th className="text-right py-2 px-3 font-medium text-slate-600 text-sm">Akce</th>
+                    <tr>
+                      <th className={TW.th}>Název</th>
+                      <th className={TW.th}>Ks</th>
+                      <th className={TW.th}>Třída</th>
+                      <th className={TW.th}>Příkon</th>
+                      <th className={TW.th}>Ochrana před dotykem</th>
+                      <th className={TW.th}>Stav</th>
+                      <th className={TW.th + ' text-right'}>Akce</th>
                     </tr>
                   </thead>
                   <tbody>

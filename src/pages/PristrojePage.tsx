@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
-import { usePristroje, useCreatePristroj, useUpdatePristroj, useDeletePristroj } from '../hooks/useQueries';
-import type { MericiPristroj } from '../types';
+import { usePristroje, useCreatePristroj, useUpdatePristroj, useDeletePristroj, useKalibrace, useCreateKalibrace, useDeleteKalibrace } from '../hooks/useQueries';
+import type { MericiPristroj, Kalibrace } from '../types';
 
 const typyPristroju = [
   { value: 'multimetr', label: 'Multimetr' },
@@ -18,6 +18,15 @@ export function PristrojePage() {
   const [filterTyp, setFilterTyp] = useState('');
   const [showExpiring, setShowExpiring] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [historyPristroj, setHistoryPristroj] = useState<MericiPristroj | null>(null);
+  const [isKalibraceModalOpen, setIsKalibraceModalOpen] = useState(false);
+  const [kalibraceForm, setKalibraceForm] = useState({
+    datumKalibrace: new Date().toISOString().split('T')[0],
+    platnostKalibrace: '',
+    provedl: '',
+    certifikat: '',
+    poznamka: '',
+  });
 
   const [formData, setFormData] = useState({
     nazev: '',
@@ -34,6 +43,9 @@ export function PristrojePage() {
   const createPristroj = useCreatePristroj();
   const updatePristroj = useUpdatePristroj();
   const deletePristroj = useDeletePristroj();
+  const { data: kalibrace = [] } = useKalibrace(historyPristroj?.id);
+  const createKalibrace = useCreateKalibrace();
+  const deleteKalibrace = useDeleteKalibrace();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -230,6 +242,13 @@ export function PristrojePage() {
                         <Button
                           variant="secondary"
                           size="sm"
+                          onClick={() => setHistoryPristroj(p)}
+                        >
+                          Kalibrace
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
                           onClick={() => handleEdit(p)}
                         >
                           Upravit
@@ -333,6 +352,158 @@ export function PristrojePage() {
             placeholder="Volitelná poznámka..."
           />
         </form>
+      </Modal>
+
+      {/* Modal – historie kalibrací */}
+      <Modal
+        isOpen={!!historyPristroj}
+        onClose={() => { setHistoryPristroj(null); setIsKalibraceModalOpen(false); }}
+        title={`Kalibrace – ${historyPristroj?.nazev || ''}`}
+        footer={
+          <Button variant="secondary" onClick={() => { setHistoryPristroj(null); setIsKalibraceModalOpen(false); }}>
+            Zavřít
+          </Button>
+        }
+      >
+        <div className="space-y-4">
+          {/* Info o přístroji */}
+          <div className="bg-slate-50 rounded-lg p-3 text-sm">
+            <div className="grid grid-cols-2 gap-2">
+              <span className="text-slate-500">Výrobce / Model:</span>
+              <span className="font-medium">{historyPristroj?.vyrobce} {historyPristroj?.model}</span>
+              <span className="text-slate-500">Výrobní číslo:</span>
+              <span className="font-mono">{historyPristroj?.vyrobniCislo}</span>
+              <span className="text-slate-500">Aktuální kalibrace:</span>
+              <span className="font-medium">
+                {historyPristroj?.datumKalibrace ? new Date(historyPristroj.datumKalibrace).toLocaleDateString('cs-CZ') : '—'}
+                {' → '}
+                {historyPristroj?.platnostKalibrace ? new Date(historyPristroj.platnostKalibrace).toLocaleDateString('cs-CZ') : '—'}
+              </span>
+            </div>
+          </div>
+
+          {/* Tlačítko přidat novou kalibraci */}
+          {!isKalibraceModalOpen && (
+            <Button size="sm" onClick={() => {
+              setKalibraceForm({
+                datumKalibrace: new Date().toISOString().split('T')[0],
+                platnostKalibrace: '',
+                provedl: '',
+                certifikat: '',
+                poznamka: '',
+              });
+              setIsKalibraceModalOpen(true);
+            }}>+ Nová kalibrace</Button>
+          )}
+
+          {/* Formulář nové kalibrace */}
+          {isKalibraceModalOpen && (
+            <div className="border border-blue-200 bg-blue-50/50 rounded-lg p-4 space-y-3">
+              <h4 className="text-sm font-semibold text-blue-800">Nový kalibrační záznam</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  type="date"
+                  label="Datum kalibrace"
+                  value={kalibraceForm.datumKalibrace}
+                  onChange={(e) => setKalibraceForm({ ...kalibraceForm, datumKalibrace: e.target.value })}
+                  required
+                />
+                <Input
+                  type="date"
+                  label="Platnost do"
+                  value={kalibraceForm.platnostKalibrace}
+                  onChange={(e) => setKalibraceForm({ ...kalibraceForm, platnostKalibrace: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label="Provedl"
+                  value={kalibraceForm.provedl}
+                  onChange={(e) => setKalibraceForm({ ...kalibraceForm, provedl: e.target.value })}
+                  placeholder="Kalibrační laboratoř..."
+                />
+                <Input
+                  label="Č. certifikátu"
+                  value={kalibraceForm.certifikat}
+                  onChange={(e) => setKalibraceForm({ ...kalibraceForm, certifikat: e.target.value })}
+                  placeholder="KAL-2026-001"
+                />
+              </div>
+              <Input
+                label="Poznámka"
+                value={kalibraceForm.poznamka}
+                onChange={(e) => setKalibraceForm({ ...kalibraceForm, poznamka: e.target.value })}
+                placeholder="Volitelná poznámka..."
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (!historyPristroj?.id || !kalibraceForm.datumKalibrace || !kalibraceForm.platnostKalibrace) return;
+                    createKalibrace.mutate({
+                      pristrojId: historyPristroj.id,
+                      datumKalibrace: kalibraceForm.datumKalibrace,
+                      platnostKalibrace: kalibraceForm.platnostKalibrace,
+                      provedl: kalibraceForm.provedl || undefined,
+                      certifikat: kalibraceForm.certifikat || undefined,
+                      poznamka: kalibraceForm.poznamka || undefined,
+                    }, {
+                      onSuccess: () => setIsKalibraceModalOpen(false),
+                    });
+                  }}
+                >
+                  Uložit
+                </Button>
+                <Button size="sm" variant="secondary" onClick={() => setIsKalibraceModalOpen(false)}>Zrušit</Button>
+              </div>
+            </div>
+          )}
+
+          {/* Seznam kalibrací */}
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Historie kalibrací</h4>
+            {kalibrace.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">Datum</th>
+                      <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">Platnost do</th>
+                      <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">Provedl</th>
+                      <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">Certifikát</th>
+                      <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">Poznámka</th>
+                      <th className="py-2 px-3 w-10"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {kalibrace.map((k, idx) => (
+                      <tr key={k.id} className={`border-b border-slate-100 ${idx === 0 ? 'bg-emerald-50/50' : ''}`}>
+                        <td className="py-2 px-3 font-medium">
+                          {new Date(k.datumKalibrace).toLocaleDateString('cs-CZ')}
+                          {idx === 0 && <span className="ml-1.5 text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded font-semibold">aktuální</span>}
+                        </td>
+                        <td className="py-2 px-3">{new Date(k.platnostKalibrace).toLocaleDateString('cs-CZ')}</td>
+                        <td className="py-2 px-3 text-slate-600">{k.provedl || '—'}</td>
+                        <td className="py-2 px-3 font-mono text-xs text-slate-600">{k.certifikat || '—'}</td>
+                        <td className="py-2 px-3 text-slate-500 text-xs">{k.poznamka || ''}</td>
+                        <td className="py-2 px-3 text-center">
+                          <button
+                            onClick={() => { if (k.id && historyPristroj?.id) deleteKalibrace.mutate({ id: k.id, pristrojId: historyPristroj.id }); }}
+                            className="text-red-400 hover:text-red-600 cursor-pointer text-xs"
+                            title="Smazat záznam"
+                          >✕</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-center text-slate-400 py-4 text-sm">Zatím žádné záznamy kalibrací.</p>
+            )}
+          </div>
+        </div>
       </Modal>
     </div>
   );

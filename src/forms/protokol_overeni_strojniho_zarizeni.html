@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zpráva o ověření strojního zařízení</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #f4f2ee;
+    --surface: #ffffff;
+    --border: #c8c4bc;
+    --border-strong: #8a8680;
+    --header-bg: #2a2825;
+    --header-txt: #f4f2ee;
+    --accent: #c84b2f;
+    --accent2: #4a7c59;
+    --label-bg: #ede9e2;
+    --section-bar: #2a2825;
+    --txt: #1a1816;
+    --txt-muted: #6b6760;
+    --input-bg: #faf9f7;
+    --check-ok: #4a7c59;
+    --check-no: #c84b2f;
+    --check-na: #7a7570;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--txt);
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  .page-header {
+    background: var(--header-bg);
+    color: var(--header-txt);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+
+  .page-header h1 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+  }
+
+  .page-header .sub {
+    font-size: 11px;
+    color: #9a9590;
+    margin-top: 2px;
+    font-family: var(--mono);
+  }
+
+  .export-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px 22px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .export-btn:hover { background: #a33a22; transform: translateY(-1px); }
+  .export-btn:active { transform: translateY(0); }
+
+  .export-btn svg { width: 16px; height: 16px; }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 28px 24px 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* Protocol number bar */
+  .protocol-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 10px 0;
+  }
+  .protocol-bar label {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--txt-muted);
+  }
+  .protocol-bar input {
+    font-family: var(--mono);
+    font-size: 13px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    padding: 6px 10px;
+    width: 180px;
+    color: var(--txt);
+  }
+
+  /* Section */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  .section-title {
+    background: var(--section-bar);
+    color: var(--header-txt);
+    padding: 9px 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title .num {
+    color: var(--accent);
+    font-size: 13px;
+  }
+
+  .section-body { padding: 14px 16px; }
+
+  /* Grid fields */
+  .fields-grid {
+    display: grid;
+    gap: 8px;
+  }
+  .fields-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .fields-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .fields-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .field label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--txt-muted);
+    font-family: var(--mono);
+  }
+  .field input, .field select, .field textarea {
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    padding: 7px 9px;
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--txt);
+    transition: border-color 0.1s;
+    width: 100%;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #fff;
+  }
+  .field textarea { resize: vertical; min-height: 70px; }
+  .field select { appearance: none; cursor: pointer; }
+
+  /* Tables */
+  .proto-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  .proto-table th {
+    background: var(--label-bg);
+    border: 1px solid var(--border);
+    padding: 7px 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--txt-muted);
+    text-align: left;
+  }
+  .proto-table td {
+    border: 1px solid var(--border);
+    padding: 5px 8px;
+    vertical-align: middle;
+  }
+  .proto-table tr:nth-child(even) td { background: #faf9f7; }
+  .proto-table input[type="text"],
+  .proto-table input[type="number"] {
+    border: none;
+    background: transparent;
+    width: 100%;
+    font-family: var(--sans);
+    font-size: 12px;
+    padding: 2px 4px;
+    color: var(--txt);
+  }
+  .proto-table input:focus { outline: 1px solid var(--accent); background: #fff; }
+
+  /* Radio group for check rows */
+  .check-group {
+    display: flex;
+    gap: 6px;
+  }
+  .check-btn {
+    flex: 1;
+    padding: 5px 4px;
+    font-size: 11px;
+    font-family: var(--mono);
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.12s;
+    letter-spacing: 0.04em;
+    color: var(--txt-muted);
+    user-select: none;
+  }
+  .check-btn:hover { border-color: var(--border-strong); color: var(--txt); }
+  .check-btn.active-v { background: #e8f4ec; border-color: var(--check-ok); color: var(--check-ok); }
+  .check-btn.active-n { background: #fcecea; border-color: var(--check-no); color: var(--check-no); }
+  .check-btn.active-na { background: #efedea; border-color: var(--check-na); color: var(--check-na); }
+
+  /* Posudek */
+  .verdict-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .verdict-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    background: var(--input-bg);
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.12s;
+    letter-spacing: 0.05em;
+  }
+  .verdict-btn:hover { border-color: var(--border-strong); }
+  .verdict-btn.active-pass { background: #e8f4ec; border-color: var(--check-ok); color: var(--check-ok); }
+  .verdict-btn.active-fail { background: #fcecea; border-color: var(--check-no); color: var(--check-no); }
+
+  /* Podpisy */
+  .sign-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    padding: 20px 0 4px;
+  }
+  .sign-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .sign-line {
+    border-bottom: 1.5px solid var(--border-strong);
+    height: 40px;
+  }
+  .sign-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--txt-muted);
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  .note {
+    font-size: 11px;
+    color: var(--txt-muted);
+    font-style: italic;
+    margin-top: 6px;
+  }
+
+  /* Divider */
+  hr.divider {
+    border: none;
+    border-top: 1px dashed var(--border);
+    margin: 10px 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .fields-grid.cols-2, .fields-grid.cols-3, .fields-grid.cols-4 { grid-template-columns: 1fr; }
+    .page-header h1 { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div>
+    <div class="sub">Formulář</div>
+    <h1>Zpráva o ověření strojního zařízení</h1>
+  </div>
+  <button class="export-btn" onclick="exportExcel()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <path d="M12 15V3M12 15l-4-4M12 15l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17"/>
+    </svg>
+    Exportovat do Excelu
+  </button>
+</div>
+
+<div class="container">
+
+  <!-- Protocol number -->
+  <div class="protocol-bar">
+    <label>Číslo protokolu:</label>
+    <input type="text" id="proto_num" placeholder="např. REV-2025-001">
+  </div>
+
+  <!-- 1. Revizní technik -->
+  <div class="section">
+    <div class="section-title"><span class="num">01</span> Revizní technik</div>
+    <div class="section-body">
+      <div class="fields-grid cols-3" style="gap:10px">
+        <div class="field" style="grid-column:1/3"><label>Jméno a příjmení</label><input type="text" id="rt_jmeno" placeholder="Ing. ..."></div>
+        <div class="field"><label>Číslo oprávnění</label><input type="text" id="rt_opravneni" placeholder="E1A …"></div>
+        <div class="field"><label>Číslo osvědčení</label><input type="text" id="rt_osvedceni" placeholder="č. osvědčení …"></div>
+        <div class="field" style="grid-column:1/3"><label>Adresa / IČO</label><input type="text" id="rt_adresa"></div>
+        <div class="field"><label>Telefon</label><input type="text" id="rt_tel"></div>
+        <div class="field"><label>E-mail</label><input type="text" id="rt_email"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Objednatel -->
+  <div class="section">
+    <div class="section-title"><span class="num">02</span> Objednatel</div>
+    <div class="section-body">
+      <div class="fields-grid cols-2" style="gap:10px">
+        <div class="field"><label>Název / jméno</label><input type="text" id="obj_nazev"></div>
+        <div class="field"><label>IČO</label><input type="text" id="obj_ico"></div>
+        <div class="field" style="grid-column:1/3"><label>Adresa</label><input type="text" id="obj_adresa"></div>
+        <div class="field"><label>Kontaktní osoba</label><input type="text" id="obj_kontakt"></div>
+        <div class="field"><label>Telefon / E-mail</label><input type="text" id="obj_tel"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Místo ověření -->
+  <div class="section">
+    <div class="section-title"><span class="num">03</span> Místo ověření</div>
+    <div class="section-body">
+      <div class="fields-grid cols-4" style="gap:10px">
+        <div class="field" style="grid-column:1/3"><label>Adresa</label><input type="text" id="misto_adresa"></div>
+        <div class="field"><label>Datum ověření</label><input type="date" id="misto_datum"></div>
+        <div class="field"><label>Číslo zakázky</label><input type="text" id="misto_zakazka"></div>
+        <div class="field" style="grid-column:1/3"><label>Hala / pracoviště</label><input type="text" id="misto_hala"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Štítek stroje -->
+  <div class="section">
+    <div class="section-title"><span class="num">04</span> Identifikace strojního zařízení – štítek</div>
+    <div class="section-body">
+      <div class="fields-grid cols-3" style="gap:10px">
+        <div class="field" style="grid-column:1/3"><label>Název / typ stroje</label><input type="text" id="stroj_nazev"></div>
+        <div class="field"><label>Výrobní číslo (SN)</label><input type="text" id="stroj_sn"></div>
+        <div class="field"><label>Výrobce</label><input type="text" id="stroj_vyrobce"></div>
+        <div class="field"><label>Rok výroby</label><input type="text" id="stroj_rok"></div>
+        <div class="field"><label>Napájení (V / Hz)</label><input type="text" id="stroj_napajeni" placeholder="3×400V / 50Hz"></div>
+        <div class="field"><label>Příkon (kW)</label><input type="text" id="stroj_prikon"></div>
+        <div class="field"><label>Jmenovitý proud (A)</label><input type="text" id="stroj_proud"></div>
+        <div class="field"><label>Stupeň ochrany IP</label><input type="text" id="stroj_ip" placeholder="IP54"></div>
+        <div class="field"><label>Třída ochrany</label>
+          <select id="stroj_trida">
+            <option value="">— vyberte —</option>
+            <option>I (ochranné uzemnění)</option>
+            <option>II (dvojitá izolace)</option>
+            <option>III (SELV)</option>
+          </select>
+        </div>
+        <div class="field"><label>CE / Prohlášení o shodě</label>
+          <select id="stroj_ce">
+            <option value="">— vyberte —</option>
+            <option>Ano</option>
+            <option>Ne</option>
+            <option>Nelze ověřit</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Jištění -->
+  <div class="section">
+    <div class="section-title"><span class="num">05</span> Jištění strojního zařízení</div>
+    <div class="section-body">
+      <table class="proto-table" id="tbl_jisteni">
+        <thead><tr>
+          <th style="width:24%">Prvek jištění</th>
+          <th style="width:22%">Typ / označení</th>
+          <th style="width:16%">Jmenovitá hodnota</th>
+          <th style="width:18%">Charakteristika</th>
+          <th style="width:12%">Stav</th>
+          <th style="width:8%">Pozn.</th>
+        </tr></thead>
+        <tbody id="jisteni_body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 6. Izolační odpor -->
+  <div class="section">
+    <div class="section-title"><span class="num">06</span> Měření izolačního odporu (ČSN EN 60204-1)</div>
+    <div class="section-body">
+      <table class="proto-table">
+        <thead><tr>
+          <th style="width:32%">Měřené místo / obvod</th>
+          <th style="width:15%">Zkušební napětí (V)</th>
+          <th style="width:18%">Naměřená hodnota (MΩ)</th>
+          <th style="width:15%">Požadavek (min.)</th>
+          <th style="width:12%">Výsledek</th>
+          <th style="width:8%">Pozn.</th>
+        </tr></thead>
+        <tbody id="izolace_body"></tbody>
+      </table>
+      <p class="note">V = Vyhovuje &nbsp;|&nbsp; N = Nevyhovuje &nbsp;|&nbsp; NA = Neaplikováno</p>
+    </div>
+  </div>
+
+  <!-- 7. Spojitost PE -->
+  <div class="section">
+    <div class="section-title"><span class="num">07</span> Měření spojitosti ochranných vodičů (PE)</div>
+    <div class="section-body">
+      <table class="proto-table">
+        <thead><tr>
+          <th style="width:32%">Měřené místo</th>
+          <th style="width:16%">Proud zkoušky (A)</th>
+          <th style="width:18%">Naměřený odpor (Ω)</th>
+          <th style="width:15%">Požadavek</th>
+          <th style="width:12%">Výsledek</th>
+          <th style="width:7%">Pozn.</th>
+        </tr></thead>
+        <tbody id="spojitost_body"></tbody>
+      </table>
+      <p class="note">V = Vyhovuje &nbsp;|&nbsp; N = Nevyhovuje &nbsp;|&nbsp; NA = Neaplikováno</p>
+    </div>
+  </div>
+
+  <!-- 8. RCD -->
+  <div class="section">
+    <div class="section-title"><span class="num">08</span> Měření proudových chráničů (RCD)</div>
+    <div class="section-body">
+      <table class="proto-table">
+        <thead><tr>
+          <th>Označení RCD</th>
+          <th>IΔn (mA)</th>
+          <th>Typ (AC/A/B)</th>
+          <th>Čas vybavení (ms)</th>
+          <th>Limit (ms)</th>
+          <th>Výsledek</th>
+          <th>Pozn.</th>
+        </tr></thead>
+        <tbody id="rcd_body"></tbody>
+      </table>
+      <p class="note">V = Vyhovuje &nbsp;|&nbsp; N = Nevyhovuje &nbsp;|&nbsp; NA = Neaplikováno</p>
+    </div>
+  </div>
+
+  <!-- 9. Funkční kontroly -->
+  <div class="section">
+    <div class="section-title"><span class="num">09</span> Funkční kontroly</div>
+    <div class="section-body">
+      <table class="proto-table">
+        <thead><tr>
+          <th style="width:40%">Kontrolovaný prvek</th>
+          <th style="width:30%">Výsledek</th>
+          <th>Poznámka</th>
+        </tr></thead>
+        <tbody id="kontroly_body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 10. Měřicí přístroje -->
+  <div class="section">
+    <div class="section-title"><span class="num">10</span> Použité měřicí přístroje</div>
+    <div class="section-body">
+      <table class="proto-table">
+        <thead><tr>
+          <th style="width:30%">Přístroj / typ</th>
+          <th style="width:20%">Výrobní číslo</th>
+          <th style="width:18%">Kalibrován do</th>
+          <th style="width:16%">Třída přesnosti</th>
+          <th>Poznámka</th>
+        </tr></thead>
+        <tbody id="pristroje_body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 11. Posudek -->
+  <div class="section">
+    <div class="section-title"><span class="num">11</span> Posudek</div>
+    <div class="section-body">
+      <div style="margin-bottom:14px">
+        <div style="font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--txt-muted);margin-bottom:8px;">Celkový výsledek ověření</div>
+        <div class="verdict-row">
+          <button class="verdict-btn" id="verdict_pass" onclick="setVerdict('pass')">✓ &nbsp; VYHOVUJE</button>
+          <button class="verdict-btn" id="verdict_fail" onclick="setVerdict('fail')">✗ &nbsp; NEVYHOVUJE – vyžadována nápravná opatření</button>
+        </div>
+      </div>
+      <hr class="divider">
+      <div class="fields-grid" style="gap:10px;margin-top:10px">
+        <div class="field"><label>Zjištěné závady / nedostatky</label><textarea id="posudek_zavady" rows="3"></textarea></div>
+        <div class="field"><label>Doporučení / termín odstranění závad</label><textarea id="posudek_doporuceni" rows="2"></textarea></div>
+        <div class="field"><label>Použité normy a předpisy</label><textarea id="posudek_normy" rows="2" placeholder="ČSN EN 60204-1, zákon č. 250/2021 Sb., …"></textarea></div>
+      </div>
+      <div class="sign-row">
+        <div class="sign-block"><div class="sign-line"></div><div class="sign-label">Revizní technik – jméno, podpis, razítko</div></div>
+        <div class="sign-block"><div class="sign-line"></div><div class="sign-label">Zástupce objednatele – jméno, podpis</div></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ── DATA DEFINITIONS ────────────────────────────────────────────────────────
+
+const jisteniRows = [
+  ["Hlavní jistič", "", "", ""],
+  ["Motorový spouštěč", "", "", ""],
+  ["Proudový chránič (RCD)", "", "", ""],
+  ["Přepěťová ochrana (SPD)", "", "", ""],
+  ["Jiné:", "", "", ""],
+];
+
+const izolaceRows = [
+  ["L1, L2, L3 → PE (napájení)", "500 V DC", "", "≥ 1 MΩ"],
+  ["Řídicí obvody → PE", "250 V DC", "", "≥ 1 MΩ"],
+  ["Bezpečnostní obvody → PE", "250 V DC", "", "≥ 1 MΩ"],
+  ["Topné obvody → PE", "500 V DC", "", "≥ 1 MΩ"],
+  ["Jiné:", "", "", ""],
+];
+
+const spojitostRows = [
+  ["Rozvaděč → kostra stroje", "≥ 200 mA", "", "≤ 0,1 Ω"],
+  ["Kostra → pohyblivé části", "≥ 200 mA", "", "≤ 0,1 Ω"],
+  ["Kostra → kryt motoru", "≥ 200 mA", "", "≤ 0,1 Ω"],
+  ["Jiné:", "", "", ""],
+];
+
+const rcdRows = [
+  ["RCD 1", "30", "", "", "≤ 300"],
+  ["RCD 2", "30", "", "", "≤ 300"],
+  ["RCD 3", "30", "", "", "≤ 300"],
+];
+
+const kontrolyRows = [
+  "STOP tlačítko – nouzové zastavení (Emergency Stop)",
+  "STOP tlačítko – provozní zastavení",
+  "START tlačítko – funkce a označení",
+  "Bezpečnostní relé / modul",
+  "Bezpečnostní kryt / dveřní spínač (interlocking)",
+  "Světelná závora / bezpečnostní mat",
+  "Ovládací panel – označení a čitelnost prvků",
+  "Signalizace provozních stavů (indikátory)",
+  "Nouzové osvětlení (pokud je součástí stroje)",
+  "Uzemňovací svorka stroje – přítomnost a stav",
+  "Označení vodičů a svorek",
+  "Stav kabelových průchodek a vývodnic",
+  "Krytí rozvaděče / el. zařízení (IP)",
+  "Jiné:",
+];
+
+const pristrojeRows = [
+  ["", "", "", "", ""],
+  ["", "", "", "", ""],
+  ["", "", "", "", ""],
+];
+
+// ── RENDER TABLES ────────────────────────────────────────────────────────────
+
+function inp(id, val="", placeholder="", type="text") {
+  return `<input type="${type}" id="${id}" value="${esc(val)}" placeholder="${placeholder}">`;
+}
+function esc(s) { return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function renderJisteni() {
+  const tb = document.getElementById('jisteni_body');
+  tb.innerHTML = jisteniRows.map((r,i) => `<tr>
+    <td>${inp(`ji_nazev_${i}`, r[0])}</td>
+    <td>${inp(`ji_typ_${i}`)}</td>
+    <td>${inp(`ji_hodnota_${i}`)}</td>
+    <td>${inp(`ji_char_${i}`)}</td>
+    <td><div class="check-group" data-group="ji_stav_${i}">
+      ${checkBtn('ji_stav_'+i,'V','V')}${checkBtn('ji_stav_'+i,'N','N')}${checkBtn('ji_stav_'+i,'NA','NA')}
+    </div></td>
+    <td>${inp(`ji_pozn_${i}`)}</td>
+  </tr>`).join('');
+}
+
+function renderIzolace() {
+  const tb = document.getElementById('izolace_body');
+  tb.innerHTML = izolaceRows.map((r,i) => `<tr>
+    <td>${inp(`iz_misto_${i}`, r[0])}</td>
+    <td>${inp(`iz_napeti_${i}`, r[1])}</td>
+    <td>${inp(`iz_hodnota_${i}`)}</td>
+    <td>${inp(`iz_pozadavek_${i}`, r[3])}</td>
+    <td><div class="check-group" data-group="iz_vysl_${i}">
+      ${checkBtn('iz_vysl_'+i,'V','V')}${checkBtn('iz_vysl_'+i,'N','N')}${checkBtn('iz_vysl_'+i,'NA','NA')}
+    </div></td>
+    <td>${inp(`iz_pozn_${i}`)}</td>
+  </tr>`).join('');
+}
+
+function renderSpojitost() {
+  const tb = document.getElementById('spojitost_body');
+  tb.innerHTML = spojitostRows.map((r,i) => `<tr>
+    <td>${inp(`sp_misto_${i}`, r[0])}</td>
+    <td>${inp(`sp_proud_${i}`, r[1])}</td>
+    <td>${inp(`sp_hodnota_${i}`)}</td>
+    <td>${inp(`sp_pozadavek_${i}`, r[3])}</td>
+    <td><div class="check-group" data-group="sp_vysl_${i}">
+      ${checkBtn('sp_vysl_'+i,'V','V')}${checkBtn('sp_vysl_'+i,'N','N')}${checkBtn('sp_vysl_'+i,'NA','NA')}
+    </div></td>
+    <td>${inp(`sp_pozn_${i}`)}</td>
+  </tr>`).join('');
+}
+
+function renderRcd() {
+  const tb = document.getElementById('rcd_body');
+  tb.innerHTML = rcdRows.map((r,i) => `<tr>
+    <td>${inp(`rcd_nazev_${i}`, r[0])}</td>
+    <td>${inp(`rcd_idn_${i}`)}</td>
+    <td>${inp(`rcd_typ_${i}`)}</td>
+    <td>${inp(`rcd_cas_${i}`)}</td>
+    <td>${inp(`rcd_limit_${i}`, r[4])}</td>
+    <td><div class="check-group" data-group="rcd_vysl_${i}">
+      ${checkBtn('rcd_vysl_'+i,'V','V')}${checkBtn('rcd_vysl_'+i,'N','N')}${checkBtn('rcd_vysl_'+i,'NA','NA')}
+    </div></td>
+    <td>${inp(`rcd_pozn_${i}`)}</td>
+  </tr>`).join('');
+}
+
+function renderKontrolyTable() {
+  const tb = document.getElementById('kontroly_body');
+  tb.innerHTML = kontrolyRows.map((label,i) => `<tr>
+    <td>${i < kontrolyRows.length-1 ? esc(label) : inp(`kont_nazev_${i}`, label)}</td>
+    <td><div class="check-group" data-group="kont_vysl_${i}">
+      ${checkBtn('kont_vysl_'+i,'V','Vyhovuje')}${checkBtn('kont_vysl_'+i,'N','Nevyhovuje')}${checkBtn('kont_vysl_'+i,'NA','N/A')}
+    </div></td>
+    <td>${inp(`kont_pozn_${i}`)}</td>
+  </tr>`).join('');
+}
+
+function renderPristroje() {
+  const tb = document.getElementById('pristroje_body');
+  tb.innerHTML = pristrojeRows.map((_,i) => `<tr>
+    <td>${inp(`pr_typ_${i}`)}</td>
+    <td>${inp(`pr_sn_${i}`)}</td>
+    <td>${inp(`pr_kal_${i}`, '', 'dd.mm.rrrr')}</td>
+    <td>${inp(`pr_trida_${i}`)}</td>
+    <td>${inp(`pr_pozn_${i}`)}</td>
+  </tr>`).join('');
+}
+
+function checkBtn(group, val, label) {
+  return `<button class="check-btn" data-group="${group}" data-val="${val}" onclick="toggleCheck(this)">${label}</button>`;
+}
+
+// ── INTERACTIONS ─────────────────────────────────────────────────────────────
+
+function toggleCheck(btn) {
+  const group = btn.dataset.group;
+  const siblings = document.querySelectorAll(`[data-group="${group}"]`);
+  const wasActive = btn.classList.contains('active-v') || btn.classList.contains('active-n') || btn.classList.contains('active-na');
+  siblings.forEach(b => b.classList.remove('active-v','active-n','active-na'));
+  if (!wasActive) {
+    const v = btn.dataset.val;
+    if(v==='V') btn.classList.add('active-v');
+    else if(v==='N') btn.classList.add('active-n');
+    else btn.classList.add('active-na');
+  }
+}
+
+let verdictVal = '';
+function setVerdict(v) {
+  document.getElementById('verdict_pass').classList.remove('active-pass');
+  document.getElementById('verdict_fail').classList.remove('active-fail');
+  if(verdictVal === v) { verdictVal=''; return; }
+  verdictVal = v;
+  if(v==='pass') document.getElementById('verdict_pass').classList.add('active-pass');
+  else document.getElementById('verdict_fail').classList.add('active-fail');
+}
+
+function getCheckVal(group) {
+  const active = document.querySelector(`[data-group="${group}"].active-v, [data-group="${group}"].active-n, [data-group="${group}"].active-na`);
+  return active ? active.dataset.val : '';
+}
+
+function val(id) {
+  const el = document.getElementById(id);
+  return el ? el.value : '';
+}
+
+// ── EXCEL EXPORT ─────────────────────────────────────────────────────────────
+
+function exportExcel() {
+  const wb = XLSX.utils.book_new();
+
+  // ── Helpers
+  function row(cells) { return cells; }
+  function hdr(label) { return { v: label, t:'s', s:{ font:{bold:true}, fill:{fgColor:{rgb:"D9D9D9"}}, alignment:{wrapText:true} } }; }
+  function sec(label) { return { v: label, t:'s', s:{ font:{bold:true, sz:12, color:{rgb:"FFFFFF"}}, fill:{fgColor:{rgb:"2A2825"}}, alignment:{indent:1} } }; }
+  function lbl(label) { return { v: label, t:'s', s:{ font:{bold:true}, fill:{fgColor:{rgb:"EDE9E2"}} } }; }
+  function dat(v)  { return { v: v||'', t:'s' }; }
+  function empty() { return { v:'', t:'s' }; }
+
+  const ws_data = [];
+  const merges = [];
+
+  function addMerge(r1,c1,r2,c2) { merges.push({s:{r:r1,c:c1},e:{r:r2,c:c2}}); }
+
+  let r = 0;
+
+  // Title
+  ws_data.push([{ v:'ZPRÁVA O OVĚŘENÍ STROJNÍHO ZAŘÍZENÍ', t:'s', s:{font:{bold:true,sz:14,color:{rgb:"FFFFFF"}},fill:{fgColor:{rgb:"2A2825"}},alignment:{horizontal:'center'}} }, ...Array(5).fill(empty())]);
+  addMerge(r,0,r,5); r++;
+  ws_data.push([lbl('Číslo protokolu:'), dat(val('proto_num')), empty(),empty(),empty(),empty()]);
+  addMerge(r,1,r,5); r++;
+  ws_data.push(Array(6).fill(empty())); r++;
+
+  // Section helper
+  function addSection(title, fields) {
+    ws_data.push([sec(title),...Array(5).fill(empty())]);
+    addMerge(r,0,r,5); r++;
+    fields.forEach(([label, value, span]) => {
+      if(span) {
+        ws_data.push([lbl(label), dat(value), empty(),empty(),empty(),empty()]);
+        addMerge(r,1,r,5);
+      } else {
+        ws_data.push([lbl(label), dat(value)]);
+      }
+      r++;
+    });
+    ws_data.push(Array(6).fill(empty())); r++;
+  }
+
+  // 1. Revizní technik
+  addSection('1. REVIZNÍ TECHNIK', [
+    ['Jméno a příjmení', val('rt_jmeno')],
+    ['Číslo oprávnění', val('rt_opravneni')],
+    ['Číslo osvědčení', val('rt_osvedceni')],
+    ['Adresa / IČO', val('rt_adresa'), true],
+    ['Telefon', val('rt_tel')],
+    ['E-mail', val('rt_email')],
+  ]);
+
+  // 2. Objednatel
+  addSection('2. OBJEDNATEL', [
+    ['Název / jméno', val('obj_nazev')],
+    ['IČO', val('obj_ico')],
+    ['Adresa', val('obj_adresa'), true],
+    ['Kontaktní osoba', val('obj_kontakt')],
+    ['Telefon / E-mail', val('obj_tel')],
+  ]);
+
+  // 3. Místo
+  addSection('3. MÍSTO OVĚŘENÍ', [
+    ['Adresa', val('misto_adresa'), true],
+    ['Hala / pracoviště', val('misto_hala')],
+    ['Datum ověření', val('misto_datum')],
+    ['Číslo zakázky', val('misto_zakazka')],
+  ]);
+
+  // 4. Stroj
+  addSection('4. IDENTIFIKACE STROJNÍHO ZAŘÍZENÍ – ŠTÍTEK', [
+    ['Název / typ', val('stroj_nazev'), true],
+    ['Výrobní číslo (SN)', val('stroj_sn')],
+    ['Výrobce', val('stroj_vyrobce')],
+    ['Rok výroby', val('stroj_rok')],
+    ['Napájení (V/Hz)', val('stroj_napajeni')],
+    ['Příkon (kW)', val('stroj_prikon')],
+    ['Jmenovitý proud (A)', val('stroj_proud')],
+    ['Stupeň ochrany IP', val('stroj_ip')],
+    ['Třída ochrany', val('stroj_trida')],
+    ['CE / Prohlášení o shodě', val('stroj_ce')],
+  ]);
+
+  // 5. Jištění
+  ws_data.push([sec('5. JIŠTĚNÍ STROJNÍHO ZAŘÍZENÍ'),...Array(5).fill(empty())]);
+  addMerge(r,0,r,5); r++;
+  ws_data.push([hdr('Prvek jištění'), hdr('Typ / označení'), hdr('Jmenovitá hodnota'), hdr('Charakteristika'), hdr('Stav'), hdr('Poznámka')]);
+  r++;
+  jisteniRows.forEach((_,i) => {
+    ws_data.push([
+      dat(val(`ji_nazev_${i}`)), dat(val(`ji_typ_${i}`)), dat(val(`ji_hodnota_${i}`)),
+      dat(val(`ji_char_${i}`)), dat(getCheckVal(`ji_stav_${i}`)), dat(val(`ji_pozn_${i}`))
+    ]); r++;
+  });
+  ws_data.push(Array(6).fill(empty())); r++;
+
+  // 6. Izolační odpor
+  ws_data.push([sec('6. MĚŘENÍ IZOLAČNÍHO ODPORU (ČSN EN 60204-1)'),...Array(5).fill(empty())]);
+  addMerge(r,0,r,5); r++;
+  ws_data.push([hdr('Měřené místo / obvod'), hdr('Zkušební napětí (V)'), hdr('Naměřená hodnota (MΩ)'), hdr('Požadavek (min.)'), hdr('Výsledek'), hdr('Poznámka')]);
+  r++;
+  izolaceRows.forEach((_,i) => {
+    ws_data.push([
+      dat(val(`iz_misto_${i}`)), dat(val(`iz_napeti_${i}`)), dat(val(`iz_hodnota_${i}`)),
+      dat(val(`iz_pozadavek_${i}`)), dat(getCheckVal(`iz_vysl_${i}`)), dat(val(`iz_pozn_${i}`))
+    ]); r++;
+  });
+  ws_data.push(Array(6).fill(empty())); r++;
+
+  // 7. Spojitost PE
+  ws_data.push([sec('7. MĚŘENÍ SPOJITOSTI OCHRANNÝCH VODIČŮ (PE)'),...Array(5).fill(empty())]);
+  addMerge(r,0,r,5); r++;
+  ws_data.push([hdr('Měřené místo'), hdr('Proud zkoušky (A)'), hdr('Naměřený odpor (Ω)'), hdr('Požadavek'), hdr('Výsledek'), hdr('Poznámka')]);
+  r++;
+  spojitostRows.forEach((_,i) => {
+    ws_data.push([
+      dat(val(`sp_misto_${i}`)), dat(val(`sp_proud_${i}`)), dat(val(`sp_hodnota_${i}`)),
+      dat(val(`sp_pozadavek_${i}`)), dat(getCheckVal(`sp_vysl_${i}`)), dat(val(`sp_pozn_${i}`))
+    ]); r++;
+  });
+  ws_data.push(Array(6).fill(empty())); r++;
+
+  // 8. RCD
+  ws_data.push([sec('8. MĚŘENÍ PROUDOVÝCH CHRÁNIČŮ (RCD)'),...Array(5).fill(empty())]);
+  addMerge(r,0,r,5); r++;
+  ws_data.push([hdr('Označení RCD'), hdr('IΔn (mA)'), hdr('Typ (AC/A/B)'), hdr('Čas vybavení (ms)'), hdr('Limit (ms)'), hdr('Výsledek')]);
+  r++;
+  rcdRows.forEach((_,i) => {
+    ws_data.push([
+      dat(val(`rcd_nazev_${i}`)), dat(val(`rcd_idn_${i}`)), dat(val(`rcd_typ_${i}`)),
+      dat(val(`rcd_cas_${i}`)), dat(val(`rcd_limit_${i}`)), dat(getCheckVal(`rcd_vysl_${i}`))
+    ]); r++;
+  });
+  ws_data.push(Array(6).fill(empty())); r++;
+
+  // 9. Funkční kontroly
+  ws_data.push([sec('9. FUNKČNÍ KONTROLY'),...Array(5).fill(empty())]);
+  addMerge(r,0,r,5); r++;
+  ws_data.push([hdr('Kontrolovaný prvek'), hdr('Výsledek'), hdr('Poznámka'), empty(), empty(), empty()]);
+  addMerge(r,2,r,5); r++;
+  kontrolyRows.forEach((label,i) => {
+    const lv = i === kontrolyRows.length-1 ? val(`kont_nazev_${i}`) : label;
+    ws_data.push([dat(lv), dat(getCheckVal(`kont_vysl_${i}`)), dat(val(`kont_pozn_${i}`)), empty(),empty(),empty()]);
+    addMerge(r,2,r,5); r++;
+  });
+  ws_data.push(Array(6).fill(empty())); r++;
+
+  // 10. Přístroje
+  ws_data.push([sec('10. POUŽITÉ MĚŘICÍ PŘÍSTROJE'),...Array(5).fill(empty())]);
+  addMerge(r,0,r,5); r++;
+  ws_data.push([hdr('Přístroj / typ'), hdr('Výrobní číslo'), hdr('Kalibrován do'), hdr('Třída přesnosti'), hdr('Poznámka'), empty()]);
+  addMerge(r,4,r,5); r++;
+  pristrojeRows.forEach((_,i) => {
+    ws_data.push([
+      dat(val(`pr_typ_${i}`)), dat(val(`pr_sn_${i}`)), dat(val(`pr_kal_${i}`)),
+      dat(val(`pr_trida_${i}`)), dat(val(`pr_pozn_${i}`)), empty()
+    ]); r++;
+  });
+  ws_data.push(Array(6).fill(empty())); r++;
+
+  // 11. Posudek
+  ws_data.push([sec('11. POSUDEK'),...Array(5).fill(empty())]);
+  addMerge(r,0,r,5); r++;
+  const verdictText = verdictVal==='pass' ? 'VYHOVUJE' : verdictVal==='fail' ? 'NEVYHOVUJE – vyžadována nápravná opatření' : '';
+  ws_data.push([lbl('Celkový výsledek:'), {v: verdictText, t:'s', s:{font:{bold:true, color:{rgb: verdictVal==='pass'?"2E7D32":verdictVal==='fail'?"C62828":"000000"}}}}, empty(),empty(),empty(),empty()]);
+  addMerge(r,1,r,5); r++;
+  ws_data.push([lbl('Zjištěné závady / nedostatky:'), dat(val('posudek_zavady')), empty(),empty(),empty(),empty()]);
+  addMerge(r,1,r,5); r++;
+  ws_data.push([lbl('Doporučení / termín:'), dat(val('posudek_doporuceni')), empty(),empty(),empty(),empty()]);
+  addMerge(r,1,r,5); r++;
+  ws_data.push([lbl('Použité normy a předpisy:'), dat(val('posudek_normy')), empty(),empty(),empty(),empty()]);
+  addMerge(r,1,r,5); r++;
+
+  // ── Build sheet
+  const ws = XLSX.utils.aoa_to_sheet(ws_data);
+  ws['!merges'] = merges;
+  ws['!cols'] = [
+    {wch:34}, {wch:22}, {wch:18}, {wch:18}, {wch:12}, {wch:20}
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Protokol');
+
+  // Filename
+  const cislo = val('proto_num') || 'protokol';
+  const datum = val('misto_datum') || new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `Overeni_${cislo.replace(/[^a-zA-Z0-9\-_]/g,'_')}_${datum}.xlsx`);
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+renderJisteni();
+renderIzolace();
+renderSpojitost();
+renderRcd();
+renderKontrolyTable();
+renderPristroje();
+</script>
+</body>
+</html>

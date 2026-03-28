@@ -8,11 +8,8 @@
 .report-print-bg {
   background: #e2e8f0;
   min-height: 100vh;
-}
-
-/* ── Toolbar ── */
-.print-hide {
-  display: block;
+  position: relative;
+  z-index: 1;
 }
 
 /* ── Skrytý zdrojový obsah ── */
@@ -56,9 +53,9 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  border-bottom: 2px solid #1e40af;
-  padding-bottom: 10px;
-  margin-bottom: 14px;
+  border-bottom: 2px solid #b0b0b0;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .report-header-left {
@@ -76,12 +73,12 @@
 .report-header-firma-name {
   font-size: 13pt;
   font-weight: 700;
-  color: #1e40af;
+  color: #1e293b;
 }
 
 .report-header-firma-detail {
   font-size: 8.5pt;
-  color: #475569;
+  color: #374151;
   line-height: 1.4;
 }
 
@@ -95,7 +92,7 @@
 }
 
 .report-header-info-label {
-  color: #64748b;
+  color: #475569;
   margin-right: 4px;
 }
 
@@ -104,37 +101,46 @@
   color: #1e293b;
 }
 
+/* ── Normy / soulad (nad nadpisem) ── */
+.report-normy-text {
+  text-align: center;
+  font-size: 8pt;
+  color: #374151;
+  margin-top: 10px;
+  margin-bottom: 2px;
+}
+
 /* ── Nadpis dokumentu ── */
 .report-title {
   text-align: center;
-  font-size: 14pt;
+  font-size: 22pt;
   font-weight: 800;
-  color: #1e293b;
-  margin-top: 14px;
-  margin-bottom: 2px;
+  color: #000000;
+  margin-top: 8px;
+  margin-bottom: 1px;
   letter-spacing: 0.3px;
   text-transform: uppercase;
 }
 
 .report-subtitle {
   text-align: center;
-  font-size: 11pt;
+  font-size: 10.5pt;
   font-weight: 600;
-  color: #334155;
-  margin-bottom: 18px;
+  color: #1e293b;
+  margin-bottom: 10px;
 }
 
 /* ── Sekce ── */
 .report-section {
-  margin-bottom: 12px;
+  margin-bottom: 20px;
   break-inside: auto;
 }
 
 .report-section-title {
   font-size: 10.5pt;
   font-weight: 700;
-  color: #1e40af;
-  border-bottom: 1px solid #cbd5e1;
+  color: #000000;
+  border-bottom: 1px solid #b0b0b0;
   padding-bottom: 3px;
   margin-bottom: 6px;
   break-after: avoid;
@@ -142,6 +148,52 @@
 
 .report-section-content {
   padding-left: 2px;
+}
+
+/* ── Vynucený zlom stránky ── */
+.report-page-break {
+  break-before: page;
+}
+
+/* ── Kompaktní strana 1 ── */
+.report-page-1 .report-section {
+  margin-bottom: 10px;
+}
+
+.report-page-1 .report-section-title {
+  font-size: 9.5pt;
+  padding-bottom: 2px;
+  margin-bottom: 4px;
+}
+
+.report-page-1 .report-info-table td {
+  padding: 1.5px 6px;
+}
+
+.report-page-1 .report-result {
+  padding: 6px 12px;
+  margin: 3px 0;
+}
+
+.report-page-1 .report-result-label {
+  font-size: 9pt;
+  margin-bottom: 2px;
+}
+
+.report-page-1 .report-result-value {
+  font-size: 12pt;
+}
+
+.report-page-1 .report-signatures {
+  margin-top: 4px;
+}
+
+.report-page-1 .report-signature-cert {
+  margin-bottom: 70px;
+}
+
+.report-page-1 .report-date-line {
+  margin-top: 8px;
 }
 
 /* ── Podsekce ── */
@@ -158,7 +210,7 @@
   padding: 4px 8px;
   border-radius: 3px;
   margin-bottom: 4px;
-  border-left: 3px solid #1e40af;
+  border-left: 3px solid #b0b0b0;
   break-after: avoid;
 }
 
@@ -170,14 +222,14 @@
 }
 
 .report-info-table td {
-  padding: 3px 6px;
+  padding: 2px 4px;
   vertical-align: top;
 }
 
 .report-info-table .label-cell {
-  width: 200px;
+  width: 160px;
   font-weight: 600;
-  color: #475569;
+  color: #374151;
   white-space: nowrap;
 }
 
@@ -191,19 +243,20 @@
 }
 
 .report-data-table th {
-  background: #1e40af;
+  background: #3e4a5b;
   color: white;
   padding: 4px 6px;
   text-align: left;
   font-weight: 600;
   font-size: 8pt;
-  border: 1px solid #1e3a8a;
+  border: 1px solid #2d3748;
 }
 
 .report-data-table td {
   padding: 3px 6px;
   border: 1px solid #cbd5e1;
   vertical-align: top;
+  color: #000000;
 }
 
 .report-data-table tbody tr:nth-child(even) {
@@ -237,7 +290,7 @@
 
 /* ── Výsledek revize ── */
 .report-result {
-  border: 2px solid #16a34a;
+  border: 2px solid #1e293b;
   border-radius: 6px;
   padding: 12px 16px;
   text-align: center;
@@ -287,7 +340,7 @@
 .report-signature-cert {
   font-size: 8pt;
   color: #64748b;
-  margin-bottom: 30px;
+  margin-bottom: 70px;
 }
 
 .report-signature-line {
@@ -341,11 +394,6 @@
    TISKOVÁ MÉDIA – @media print
    ======================================== */
 @media print {
-  .print-hide,
-  .print-hide * {
-    display: none !important;
-  }
-
   .report-source {
     display: none !important;
   }
@@ -374,7 +422,7 @@
   }
 
   .report-data-table th {
-    background: #1e40af !important;
+    background: #3e4a5b !important;
     color: white !important;
   }
 

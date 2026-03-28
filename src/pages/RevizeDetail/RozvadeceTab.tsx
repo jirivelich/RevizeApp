@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button, Card, Input, Select, Modal } from '../../components/ui';
+import { TW } from './tw';
 import { rozvadecService, okruhService } from '../../services/database';
 import { useCreateRozvadec, useDeleteRozvadec } from '../../hooks/useQueries';
 import type { Rozvadec, Okruh } from '../../types';
@@ -247,14 +248,14 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-slate-200">
-                      <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Č.</th>
-                      <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Jistič</th>
-                      <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Název</th>
-                      <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Vodič</th>
-                      <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Iz. odpor</th>
-                      <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Imp. smyčky</th>
-                      <th className="text-right py-2 px-3 font-medium text-slate-600 text-sm">Akce</th>
+                    <tr>
+                      <th className={TW.th}>Č.</th>
+                      <th className={TW.th}>Jistič</th>
+                      <th className={TW.th}>Název</th>
+                      <th className={TW.th}>Vodič</th>
+                      <th className={TW.th}>Iz. odpor</th>
+                      <th className={TW.th}>Imp. smyčky</th>
+                      <th className={TW.th + ' text-right'}>Akce</th>
                     </tr>
                   </thead>
                   <tbody>

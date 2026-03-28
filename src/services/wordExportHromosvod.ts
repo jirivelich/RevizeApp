@@ -107,8 +107,7 @@ export async function exportHromosvodToWord(data: HromosvodWordData): Promise<vo
     `Mimořádná revize${revize.duvodMimoradne ? ` – ${revize.duvodMimoradne}` : ''}`;
 
   const vysledekLabel = revize.vysledek === 'schopno' ? 'SCHOPNO BEZPEČNÉHO PROVOZU' :
-    revize.vysledek === 'neschopno' ? 'NESCHOPNO BEZPEČNÉHO PROVOZU' :
-    revize.vysledek === 'podmíněně schopno' ? 'PODMÍNĚNĚ SCHOPNO BEZPEČNÉHO PROVOZU' : '—';
+    revize.vysledek === 'neschopno' ? 'NESCHOPNO BEZPEČNÉHO PROVOZU' : '—';
 
   const vysledekColor = revize.vysledek === 'schopno' ? GREEN :
     revize.vysledek === 'neschopno' ? RED : AMBER;

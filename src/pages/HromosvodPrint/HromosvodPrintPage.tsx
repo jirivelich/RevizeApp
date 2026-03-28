@@ -27,7 +27,7 @@ const PAGED_CSS = `
   @top-left {
     content: string(report-number, first);
     font-size: 8pt;
-    color: #1e40af;
+    color: #1e293b;
     font-weight: 700;
     font-family: 'Segoe UI', Arial, sans-serif;
     vertical-align: bottom;
@@ -37,7 +37,7 @@ const PAGED_CSS = `
   @top-right {
     content: string(report-title, first);
     font-size: 8pt;
-    color: #64748b;
+    color: #475569;
     font-family: 'Segoe UI', Arial, sans-serif;
     vertical-align: bottom;
     padding-bottom: 4px;
@@ -46,7 +46,7 @@ const PAGED_CSS = `
   @bottom-center {
     content: "Strana " counter(page) " / " counter(pages);
     font-size: 8pt;
-    color: #94a3b8;
+    color: #64748b;
     font-family: 'Segoe UI', Arial, sans-serif;
     vertical-align: top;
     padding-top: 4px;
@@ -55,7 +55,7 @@ const PAGED_CSS = `
   @bottom-left {
     content: string(firma-name, first);
     font-size: 7.5pt;
-    color: #94a3b8;
+    color: #64748b;
     font-family: 'Segoe UI', Arial, sans-serif;
     vertical-align: top;
     padding-top: 4px;
@@ -64,7 +64,7 @@ const PAGED_CSS = `
   @bottom-right {
     content: "Revizní zpráva – Hromosvod";
     font-size: 7.5pt;
-    color: #94a3b8;
+    color: #64748b;
     font-family: 'Segoe UI', Arial, sans-serif;
     vertical-align: top;
     padding-top: 4px;
@@ -162,13 +162,25 @@ export function HromosvodPrintPage() {
       }
 
       const combinedCss = reportCssRules.join('\n') + '\n' + PAGED_CSS;
+      const cssBlob = new Blob([combinedCss], { type: 'text/css' });
+      const cssUrl = URL.createObjectURL(cssBlob);
       const previewer = new Previewer();
-      const flow = await previewer.preview(content, [combinedCss], previewRef.current);
-      setPageCount(flow.total);
+      const flow = await previewer.preview(content, [cssUrl], previewRef.current);
+      URL.revokeObjectURL(cssUrl);
+      setPageCount(flow?.total || 1);
+      // Odpojit ResizeObserver ze všech pagedjs stránek (zabrání crashům v checkUnderflowAfterResize)
+      try { flow?.pages?.forEach((p: any) => p.removeListeners?.()); } catch { /* ok */ }
     } catch (err) {
       console.error('Pagedjs error:', err);
       if (sourceRef.current && previewRef.current) {
         previewRef.current.innerHTML = sourceRef.current.innerHTML;
+        // Odhad počtu stránek z výšky obsahu (A4 = 297mm − 38mm margin ≈ 980px)
+        requestAnimationFrame(() => {
+          if (previewRef.current) {
+            const h = previewRef.current.scrollHeight;
+            setPageCount(Math.max(1, Math.ceil(h / 980)));
+          }
+        });
       }
     } finally {
       setPaging(false);
@@ -234,11 +246,10 @@ export function HromosvodPrintPage() {
     `Mimořádná revize${revize.duvodMimoradne ? ` – ${revize.duvodMimoradne}` : ''}`;
 
   const vysledekLabel = revize.vysledek === 'schopno' ? 'SCHOPNO BEZPEČNÉHO PROVOZU' :
-    revize.vysledek === 'neschopno' ? 'NESCHOPNO BEZPEČNÉHO PROVOZU' :
-    revize.vysledek === 'podmíněně schopno' ? 'PODMÍNĚNĚ SCHOPNO BEZPEČNÉHO PROVOZU' : '—';
+    revize.vysledek === 'neschopno' ? 'NESCHOPNO BEZPEČNÉHO PROVOZU' : '—';
 
-  const vysledekColor = revize.vysledek === 'schopno' ? '#16a34a' :
-    revize.vysledek === 'neschopno' ? '#dc2626' : '#d97706';
+  const vysledekColor = revize.vysledek === 'schopno' ? '#1e293b' :
+    revize.vysledek === 'neschopno' ? '#dc2626' : '#1e293b';
 
   const stavLabel = (stav?: string) => {
     switch (stav) {
@@ -298,7 +309,7 @@ export function HromosvodPrintPage() {
       )}
 
       {/* a) PROVOZOVATEL */}
-      <ReportSection title="a) Provozovatel (objednatel)">
+      <ReportSection title="1. Provozovatel (objednatel)">
         <table className="report-info-table"><tbody>
           <tr><td className="label-cell">Název / Jméno:</td><td>{zakaznik?.nazev || revize.objednatel || '—'}</td></tr>
           <tr><td className="label-cell">Adresa / Sídlo:</td><td>{zakaznik?.adresa || '—'}</td></tr>
@@ -310,7 +321,7 @@ export function HromosvodPrintPage() {
       </ReportSection>
 
       {/* b) IDENTIFIKACE */}
-      <ReportSection title="b) Identifikace revidovaného objektu a místo umístění">
+      <ReportSection title="2. Identifikace revidovaného objektu a místo umístění">
         <table className="report-info-table"><tbody>
           <tr><td className="label-cell">Název objektu:</td><td>{revize.nazev}</td></tr>
           <tr><td className="label-cell">Adresa objektu:</td><td>{revize.adresa}</td></tr>
@@ -318,7 +329,7 @@ export function HromosvodPrintPage() {
       </ReportSection>
 
       {/* c) CHARAKTERISTIKA LPS */}
-      <ReportSection title="c) Charakteristika systému ochrany před bleskem (LPS)">
+      <ReportSection title="3. Charakteristika systému ochrany před bleskem (LPS)">
         <table className="report-info-table"><tbody>
           <tr><td className="label-cell">Třída LPS:</td><td>{tridaLpsLabel(revize.hromosvodTridaLps)}</td></tr>
           <tr><td className="label-cell">Typ ochrany:</td><td>{typOchranyLabel(revize.hromosvodTypOchrany)}</td></tr>
@@ -329,7 +340,7 @@ export function HromosvodPrintPage() {
 
       {/* d) ROZSAH REVIZE */}
       {isSekceVisible('rozsahRevize') && (
-      <ReportSection title="d) Vymezení rozsahu revize">
+      <ReportSection title="4. Vymezení rozsahu revize">
         {revize.rozsahRevize && (
           <div className="report-text">
             <strong>Předmět revize je:</strong>
@@ -347,7 +358,7 @@ export function HromosvodPrintPage() {
       )}
 
       {/* e) REVIZNÍ TECHNIK */}
-      <ReportSection title="e) Údaje o revizním technikovi">
+      <ReportSection title="5. Údaje o revizním technikovi">
         <table className="report-info-table"><tbody>
           <tr><td className="label-cell">Jméno:</td><td>{nastaveni?.reviznniTechnikJmeno || '—'}</td></tr>
           <tr><td className="label-cell">Ev. číslo osvědčení:</td><td>{nastaveni?.reviznniTechnikCisloOpravneni || '—'}</td></tr>
@@ -358,12 +369,12 @@ export function HromosvodPrintPage() {
       </ReportSection>
 
       {/* f) DRUH REVIZE */}
-      <ReportSection title="f) Druh revize">
+      <ReportSection title="6. Druh revize">
         <p className="report-text"><strong>{typRevizeLabel}</strong></p>
       </ReportSection>
 
       {/* g) DŮLEŽITÁ DATA */}
-      <ReportSection title="g) Důležitá data">
+      <ReportSection title="7. Důležitá data">
         <table className="report-info-table"><tbody>
           <tr><td className="label-cell">Datum provedení revize:</td><td>{revize.datum ? new Date(revize.datum).toLocaleDateString('cs-CZ') : '—'}</td></tr>
           {revize.datumDokonceni && <tr><td className="label-cell">Datum dokončení:</td><td>{new Date(revize.datumDokonceni).toLocaleDateString('cs-CZ')}</td></tr>}
@@ -375,7 +386,7 @@ export function HromosvodPrintPage() {
 
       {/* h) JÍMACÍ SOUSTAVA */}
       {isSekceVisible('jimaciSoustava') && (
-      <ReportSection title="h) Jímací soustava">
+      <ReportSection title="8. Jímací soustava">
         <table className="report-info-table"><tbody>
           <tr><td className="label-cell">Typ jímače:</td><td>{revize.hromosvodJimaciTyp || '—'}</td></tr>
           <tr><td className="label-cell">Materiál:</td><td>{revize.hromosvodJimaciMaterial || '—'}</td></tr>
@@ -392,7 +403,7 @@ export function HromosvodPrintPage() {
 
       {/* i) SVODOVÉ VEDENÍ */}
       {isSekceVisible('svodoveVedeni') && (
-      <ReportSection title="i) Svodové vedení">
+      <ReportSection title="9. Svodové vedení">
         <table className="report-info-table"><tbody>
           <tr><td className="label-cell">Počet svodů:</td><td>{revize.hromosvodSvodyPocet ?? '—'}</td></tr>
           <tr><td className="label-cell">Materiál:</td><td>{revize.hromosvodSvodyMaterial || '—'}</td></tr>
@@ -409,9 +420,9 @@ export function HromosvodPrintPage() {
       </ReportSection>
       )}
 
-      {/* j) UZEMŇOVACÍ SOUSTAVA */}
+      {/* 10. UZEMŇOVACÍ SOUSTAVA */}
       {isSekceVisible('uzemnovaciSoustava') && (
-      <ReportSection title="j) Uzemňovací soustava">
+      <ReportSection title="10. Uzemňovací soustava">
         <table className="report-info-table"><tbody>
           <tr><td className="label-cell">Typ uzemnění:</td><td>{revize.hromosvodUzemneniTyp || '—'}</td></tr>
           <tr><td className="label-cell">Materiál:</td><td>{revize.hromosvodUzemneniMaterial || '—'}</td></tr>
@@ -428,7 +439,7 @@ export function HromosvodPrintPage() {
 
       {/* k) OCHRANNÉ POSPOJOVÁNÍ / SPD */}
       {isSekceVisible('spd') && (
-      <ReportSection title="k) Ochranné pospojování a přepěťové ochrany (SPD)">
+      <ReportSection title="11. Ochranné pospojování a přepěťové ochrany (SPD)">
         <table className="report-info-table"><tbody>
           {revize.hromosvodSpdTyp && <tr><td className="label-cell">Typ SPD:</td><td>{revize.hromosvodSpdTyp}</td></tr>}
           <tr>
@@ -443,9 +454,9 @@ export function HromosvodPrintPage() {
       </ReportSection>
       )}
 
-      {/* l) MĚŘENÍ ODPORŮ UZEMNĚNÍ */}
+      {/* 12. MĚŘENÍ ODPORŮ UZEMNĚNÍ */}
       {isSekceVisible('mereniOdporu') && (
-      <ReportSection title="l) Měření odporů uzemnění">
+      <ReportSection title="12. Měření odporů uzemnění">
         {mereni.length > 0 ? (
           <>
             <ReportTable
@@ -475,7 +486,7 @@ export function HromosvodPrintPage() {
 
       {/* m) MĚŘICÍ PŘÍSTROJE */}
       {isSekceVisible('pristroje') && (
-      <ReportSection title="m) Soupis použitých měřicích přístrojů">
+      <ReportSection title="13. Soupis použitých měřicích přístrojů">
         {pristroje.length > 0 ? (
           <ReportTable
             columns={['Název', 'Výrobce / Model', 'Výrobní číslo', 'Kalibrace', 'Platnost']}
@@ -496,7 +507,7 @@ export function HromosvodPrintPage() {
 
       {/* n) PODKLADY */}
       {isSekceVisible('podklady') && (
-      <ReportSection title="n) Seznam podkladů použitých k provedení revize">
+      <ReportSection title="14. Seznam podkladů použitých k provedení revize">
         {revize.podklady ? (
           <p className="report-text">{revize.podklady}</p>
         ) : (
@@ -507,7 +518,7 @@ export function HromosvodPrintPage() {
 
       {/* o) VYHODNOCENÍ PŘEDCHOZÍCH */}
       {isSekceVisible('vyhodnoceniPredchozich') && (
-      <ReportSection title="o) Vyhodnocení předchozích revizí">
+      <ReportSection title="15. Vyhodnocení předchozích revizí">
         {revize.vyhodnoceniPredchozich ? (
           <p className="report-text">{revize.vyhodnoceniPredchozich}</p>
         ) : (
@@ -517,7 +528,7 @@ export function HromosvodPrintPage() {
       )}
 
       {/* p) ZÁVADY */}
-      <ReportSection title="p) Přehled zjištěných závad">
+      <ReportSection title="16. Přehled zjištěných závad">
         {zavady.length > 0 ? (
           <ReportTable
             columns={['#', 'Popis závady', 'Závažnost', 'Stav', 'Zjištěna']}
@@ -536,7 +547,7 @@ export function HromosvodPrintPage() {
       </ReportSection>
 
       {/* q) ZÁVĚREČNÉ ZHODNOCENÍ */}
-      <ReportSection title="q) Závěrečné zhodnocení">
+      <ReportSection title="17. Závěrečné zhodnocení">
         <div className="report-result" style={{ borderColor: vysledekColor }}>
           <div className="report-result-label">Systém ochrany před bleskem (LPS) je:</div>
           <div className="report-result-value" style={{ color: vysledekColor }}>
@@ -552,14 +563,14 @@ export function HromosvodPrintPage() {
       </ReportSection>
 
       {/* r) LHŮTA PŘÍŠTÍ REVIZE */}
-      <ReportSection title="r) Doporučená lhůta provedení příští revize">
+      <ReportSection title="18. Doporučená lhůta provedení příští revize">
         <p className="report-text">
           Příští revize by měla být provedena nejpozději do <strong>{revize.datumPlatnosti ? new Date(revize.datumPlatnosti).toLocaleDateString('cs-CZ') : `${revize.termin} měsíců od data provedení`}</strong>.
         </p>
       </ReportSection>
 
       {/* s) PODPISY */}
-      <ReportSection title="s) Potvrzení o předání zprávy">
+      <ReportSection title="19. Potvrzení o předání zprávy">
         <div className="report-signatures">
           <div className="report-signature-box">
             <div className="report-signature-label">Revizní technik:</div>

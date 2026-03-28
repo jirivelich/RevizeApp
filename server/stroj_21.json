@@ -1,0 +1,273 @@
+{
+  "strojNazev": "",
+  "strojSn": "125071-1025-02",
+  "strojVyrobce": "",
+  "strojRok": "",
+  "strojNapajeni": "",
+  "strojPrikon": "",
+  "strojProud": "",
+  "strojIp": "",
+  "strojTrida": "",
+  "strojCe": "",
+  "mistoHala": "",
+  "jisteni": [
+    {
+      "nazev": "Hlavní jistič",
+      "typ": "",
+      "hodnota": "",
+      "charakteristika": "",
+      "stav": "",
+      "poznamka": ""
+    },
+    {
+      "nazev": "Motorový spouštěč",
+      "typ": "",
+      "hodnota": "",
+      "charakteristika": "",
+      "stav": "",
+      "poznamka": ""
+    },
+    {
+      "nazev": "Proudový chránič (RCD)",
+      "typ": "",
+      "hodnota": "",
+      "charakteristika": "",
+      "stav": "",
+      "poznamka": ""
+    },
+    {
+      "nazev": "Přepěťová ochrana (SPD)",
+      "typ": "",
+      "hodnota": "",
+      "charakteristika": "",
+      "stav": "",
+      "poznamka": ""
+    },
+    {
+      "nazev": "",
+      "typ": "",
+      "hodnota": "",
+      "charakteristika": "",
+      "stav": "",
+      "poznamka": ""
+    }
+  ],
+  "izolace": [
+    {
+      "misto": "L1, L2, L3 → PE (napájení)",
+      "napeti": "500 V DC",
+      "hodnota": "",
+      "pozadavek": "≥ 1 MΩ",
+      "vysledek": "",
+      "poznamka": ""
+    },
+    {
+      "misto": "Řídicí obvody → PE",
+      "napeti": "250 V DC",
+      "hodnota": "",
+      "pozadavek": "≥ 1 MΩ",
+      "vysledek": "",
+      "poznamka": ""
+    },
+    {
+      "misto": "Bezpečnostní obvody → PE",
+      "napeti": "250 V DC",
+      "hodnota": "",
+      "pozadavek": "≥ 1 MΩ",
+      "vysledek": "",
+      "poznamka": ""
+    },
+    {
+      "misto": "Topné obvody → PE",
+      "napeti": "500 V DC",
+      "hodnota": "",
+      "pozadavek": "≥ 1 MΩ",
+      "vysledek": "",
+      "poznamka": ""
+    },
+    {
+      "misto": "",
+      "napeti": "",
+      "hodnota": "",
+      "pozadavek": "",
+      "vysledek": "",
+      "poznamka": ""
+    }
+  ],
+  "spojitost": [
+    {
+      "misto": "Rozvaděč → kostra stroje",
+      "proud": "≥ 200 mA",
+      "hodnota": "",
+      "pozadavek": "≤ 0,1 Ω",
+      "vysledek": "",
+      "poznamka": ""
+    },
+    {
+      "misto": "Kostra → pohyblivé části",
+      "proud": "≥ 200 mA",
+      "hodnota": "",
+      "pozadavek": "≤ 0,1 Ω",
+      "vysledek": "",
+      "poznamka": ""
+    },
+    {
+      "misto": "Kostra → kryt motoru",
+      "proud": "≥ 200 mA",
+      "hodnota": "",
+      "pozadavek": "≤ 0,1 Ω",
+      "vysledek": "",
+      "poznamka": ""
+    },
+    {
+      "misto": "",
+      "proud": "",
+      "hodnota": "",
+      "pozadavek": "",
+      "vysledek": "",
+      "poznamka": ""
+    }
+  ],
+  "rcd": [
+    {
+      "nazev": "RCD 1",
+      "idn": "30",
+      "typ": "",
+      "cas": "",
+      "limit": "≤ 300",
+      "vysledek": "",
+      "poznamka": ""
+    },
+    {
+      "nazev": "RCD 2",
+      "idn": "30",
+      "typ": "",
+      "cas": "",
+      "limit": "≤ 300",
+      "vysledek": "",
+      "poznamka": ""
+    },
+    {
+      "nazev": "RCD 3",
+      "idn": "30",
+      "typ": "",
+      "cas": "",
+      "limit": "≤ 300",
+      "vysledek": "",
+      "poznamka": ""
+    }
+  ],
+  "kontroly": [
+    {
+      "nazev": "STOP tlačítko – nouzové zastavení (Emergency Stop)",
+      "vysledek": "",
+      "poznamka": "",
+      "editable": false
+    },
+    {
+      "nazev": "STOP tlačítko – provozní zastavení",
+      "vysledek": "",
+      "poznamka": "",
+      "editable": false
+    },
+    {
+      "nazev": "START tlačítko – funkce a označení",
+      "vysledek": "",
+      "poznamka": "",
+      "editable": false
+    },
+    {
+      "nazev": "Bezpečnostní relé / modul",
+      "vysledek": "",
+      "poznamka": "",
+      "editable": false
+    },
+    {
+      "nazev": "Bezpečnostní kryt / dveřní spínač (interlocking)",
+      "vysledek": "",
+      "poznamka": "",
+      "editable": false
+    },
+    {
+      "nazev": "Světelná závora / bezpečnostní mat",
+      "vysledek": "",
+      "poznamka": "",
+      "editable": false
+    },
+    {
+      "nazev": "Ovládací panel – označení a čitelnost prvků",
+      "vysledek": "",
+      "poznamka": "",
+      "editable": false
+    },
+    {
+      "nazev": "Signalizace provozních stavů (indikátory)",
+      "vysledek": "",
+      "poznamka": "",
+      "editable": false
+    },
+    {
+      "nazev": "Nouzové osvětlení (pokud je součástí stroje)",
+      "vysledek": "",
+      "poznamka": "",
+      "editable": false
+    },
+    {
+      "nazev": "Uzemňovací svorka stroje – přítomnost a stav",
+      "vysledek": "",
+      "poznamka": "",
+      "editable": false
+    },
+    {
+      "nazev": "Označení vodičů a svorek",
+      "vysledek": "",
+      "poznamka": "",
+      "editable": false
+    },
+    {
+      "nazev": "Stav kabelových průchodek a vývodnic",
+      "vysledek": "",
+      "poznamka": "",
+      "editable": false
+    },
+    {
+      "nazev": "Krytí rozvaděče / el. zařízení (IP)",
+      "vysledek": "",
+      "poznamka": "",
+      "editable": false
+    },
+    {
+      "nazev": "Jiné:",
+      "vysledek": "",
+      "poznamka": "",
+      "editable": true
+    }
+  ],
+  "pristroje": [
+    {
+      "typ": "",
+      "sn": "",
+      "kalibrace": "",
+      "trida": "",
+      "poznamka": ""
+    },
+    {
+      "typ": "",
+      "sn": "",
+      "kalibrace": "",
+      "trida": "",
+      "poznamka": ""
+    },
+    {
+      "typ": "",
+      "sn": "",
+      "kalibrace": "",
+      "trida": "",
+      "poznamka": ""
+    }
+  ],
+  "verdikt": "",
+  "posudekZavady": "",
+  "posudekDoporuceni": "",
+  "posudekNormy": "ČSN EN 60204-1, zákon č. 250/2021 Sb."
+}

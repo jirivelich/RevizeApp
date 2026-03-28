@@ -1,3 +1,6 @@
+// Výchozí text norem / souladu (zobrazuje se nad nadpisem zprávy)
+export const DEFAULT_NORMY_SOULAD = 'Revize je provedená v souladu s ČSN 33 2000-6 ed. 2:2017, ČSN 33 1500:1991 + Z1 až Z4 nařízení vlády č. 190/2022 Sb.';
+
 // Předvolené texty pro textová pole v záložce Dokumentace
 export const PREDVOLENE_TEXTY: Record<string, { label: string; text: string }[]> = {
   popisZarizeni: [
@@ -34,7 +37,6 @@ export const PREDVOLENE_TEXTY: Record<string, { label: string; text: string }[]>
   vysledekOduvodneni: [
     { label: 'Schopno – bez závad', text: 'Při revizi nebyly zjištěny závady bránící bezpečnému provozu elektrického zařízení. Zařízení splňuje požadavky platných norem a předpisů.' },
     { label: 'Neschopno – závady', text: 'Elektrické zařízení vykazuje závady, které brání jeho bezpečnému provozu. Závady jsou uvedeny v soupisu zjištěných závad.' },
-    { label: 'Podmíněně schopno', text: 'Elektrické zařízení je podmíněně schopno provozu za předpokladu odstranění zjištěných závad ve stanoveném termínu.' },
   ],
   zaver: [
     { label: 'Schopno provozu', text: 'Na základě provedené revize konstatuji, že revidované elektrické zařízení je z hlediska bezpečnosti schopno provozu.' },

@@ -156,6 +156,12 @@ async function startServer() {
         'hromosvodSpdTyp', 'hromosvodSpdStav', 'hromosvodEkvipotencialni',
         'hromosvodSpdPoznamka',
         'hromosvodMereniOdporu',
+        // Strojní zařízení (JSON)
+        'strojniData',
+        // Normy soulad + vlastní text lhůty
+        'normySoulad', 'lhutaText',
+        // Historie / návaznost revizí
+        'predchoziRevizeId', 'skupinaRevizi',
       ];
       
       const updates: Record<string, any> = { updatedAt: now };
@@ -164,6 +170,9 @@ async function startServer() {
           updates[key] = req.body[key];
         }
       }
+      
+      // DEBUG – logovat lhutaText
+      console.log('[PUT revize] lhutaText in body:', JSON.stringify(req.body.lhutaText), '| in updates:', JSON.stringify(updates.lhutaText));
       
       const keys = Object.keys(updates);
       const values = Object.values(updates);
@@ -199,6 +208,187 @@ async function startServer() {
     try {
       await pool.query('DELETE FROM revize WHERE id = $1', [req.params.id]);
       res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== DUPLIKOVAT REVIZI (pro následnou revizi) ====================
+  app.post('/api/revize/:id/duplikovat', authMiddleware, async (req, res) => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const sourceId = parseInt(req.params.id);
+      const { cisloRevize: noveCislo, typ = 'navazujici' } = req.body;
+      // typ: 'navazujici' = navazující revize s historií, 'duplikat' = nezávislá kopie
+
+      // 1. Načíst zdrojovou revizi
+      const srcResult = await client.query('SELECT * FROM revize WHERE id = $1', [sourceId]);
+      if (srcResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Zdrojová revize nebyla nalezena' });
+      }
+      const src = srcResult.rows[0];
+
+      // 2. Skupina revizí – pouze pro navazující revize
+      let skupinaRevizi: string | null = null;
+      let predchoziId: number | null = null;
+
+      if (typ === 'navazujici') {
+        skupinaRevizi = src.skupinaRevizi || `grp-${sourceId}-${Date.now()}`;
+        predchoziId = sourceId;
+
+        // Pokud zdrojová neměla skupinu, přiřadit ji zpětně
+        if (!src.skupinaRevizi) {
+          await client.query('UPDATE revize SET "skupinaRevizi" = $1 WHERE id = $2', [skupinaRevizi, sourceId]);
+        }
+      }
+
+      const now = new Date().toISOString();
+      const datum = new Date().toISOString().split('T')[0];
+
+      // 3. Vytvořit novou revizi
+      const newRevize = await client.query(`
+        INSERT INTO revize (
+          "cisloRevize", nazev, adresa, objednatel, "zakaznikId",
+          datum, termin, "typRevize", stav, "kategorieRevize",
+          "rozsahRevize", "predmetNeni", "napetovaSoustava", "ochranaOpatreni",
+          "popisZarizeni", podklady, "provedeneUkony",
+          "tiskSekce", "firmaJmeno", "firmaAdresa", "firmaIco", "firmaDic",
+          "normySoulad", "lhutaText",
+          "hromosvodTridaLps", "hromosvodTypOchrany", "hromosvodRokInstalace",
+          "hromosvodNorma", "hromosvodPopisLps",
+          "hromosvodJimaciTyp", "hromosvodJimaciMaterial", "hromosvodJimaciStav", "hromosvodJimaciPoznamka",
+          "hromosvodSvodyPocet", "hromosvodSvodyMaterial", "hromosvodSvodyPrurez",
+          "hromosvodSvodyZkusebniSvorky", "hromosvodSvodyStav", "hromosvodSvodyPoznamka",
+          "hromosvodUzemneniTyp", "hromosvodUzemneniMaterial", "hromosvodUzemneniStav", "hromosvodUzemneniPoznamka",
+          "hromosvodSpdTyp", "hromosvodSpdStav", "hromosvodEkvipotencialni", "hromosvodSpdPoznamka",
+          "hromosvodMereniOdporu",
+          "strojniData",
+          "predchoziRevizeId", "skupinaRevizi",
+          "createdAt", "updatedAt"
+        ) VALUES (
+          $1, $2, $3, $4, $5,
+          $6, $7, $8, 'rozpracováno', $9,
+          $10, $11, $12, $13,
+          $14, $15, $16,
+          $17, $18, $19, $20, $21,
+          $22, $23,
+          $24, $25, $26,
+          $27, $28,
+          $29, $30, $31, $32,
+          $33, $34, $35,
+          $36, $37, $38,
+          $39, $40, $41, $42,
+          $43, $44, $45, $46,
+          $47,
+          $48,
+          $49, $50,
+          $51, $52
+        ) RETURNING id
+      `, [
+        noveCislo, src.nazev, src.adresa, src.objednatel, src.zakaznikId,
+        datum, src.termin, 'pravidelná', src.kategorieRevize,
+        src.rozsahRevize, src.predmetNeni, src.napetovaSoustava, src.ochranaOpatreni,
+        src.popisZarizeni, src.podklady, src.provedeneUkony,
+        src.tiskSekce, src.firmaJmeno, src.firmaAdresa, src.firmaIco, src.firmaDic,
+        src.normySoulad, src.lhutaText,
+        src.hromosvodTridaLps, src.hromosvodTypOchrany, src.hromosvodRokInstalace,
+        src.hromosvodNorma, src.hromosvodPopisLps,
+        src.hromosvodJimaciTyp, src.hromosvodJimaciMaterial, src.hromosvodJimaciStav, src.hromosvodJimaciPoznamka,
+        src.hromosvodSvodyPocet, src.hromosvodSvodyMaterial, src.hromosvodSvodyPrurez,
+        src.hromosvodSvodyZkusebniSvorky, src.hromosvodSvodyStav, src.hromosvodSvodyPoznamka,
+        src.hromosvodUzemneniTyp, src.hromosvodUzemneniMaterial, src.hromosvodUzemneniStav, src.hromosvodUzemneniPoznamka,
+        src.hromosvodSpdTyp, src.hromosvodSpdStav, src.hromosvodEkvipotencialni, src.hromosvodSpdPoznamka,
+        src.hromosvodMereniOdporu,
+        src.strojniData,
+        predchoziId, skupinaRevizi,
+        now, now
+      ]);
+      const newRevizeId = newRevize.rows[0].id;
+
+      // 4. Zkopírovat rozvaděče + okruhy
+      const rozvadece = await client.query('SELECT * FROM rozvadec WHERE "revizeId" = $1', [sourceId]);
+      for (const rozv of rozvadece.rows) {
+        const newRozv = await client.query(`
+          INSERT INTO rozvadec ("revizeId", nazev, oznaceni, umisteni, "typRozvadece", "stupenKryti", poznamka, "createdAt", "updatedAt")
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id
+        `, [newRevizeId, rozv.nazev, rozv.oznaceni, rozv.umisteni, rozv.typRozvadece, rozv.stupenKryti, rozv.poznamka, now, now]);
+        const newRozvId = newRozv.rows[0].id;
+
+        // Okruhy
+        const okruhy = await client.query('SELECT * FROM okruh WHERE "rozvadecId" = $1', [rozv.id]);
+        for (const okr of okruhy.rows) {
+          await client.query(`
+            INSERT INTO okruh ("rozvadecId", cislo, nazev, "jisticTyp", "jisticProud", "pocetFazi", vodic, "izolacniOdpor", "impedanceSmycky", "proudovyChranicMa", "casOdpojeni", poznamka)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          `, [newRozvId, okr.cislo, okr.nazev, okr.jisticTyp, okr.jisticProud, okr.pocetFazi, okr.vodic, okr.izolacniOdpor, okr.impedanceSmycky, okr.proudovyChranicMa, okr.casOdpojeni, okr.poznamka]);
+        }
+      }
+
+      // 5. Zkopírovat místnosti + zařízení
+      const mistnosti = await client.query('SELECT * FROM mistnost WHERE "revizeId" = $1', [sourceId]);
+      for (const mist of mistnosti.rows) {
+        const newMist = await client.query(`
+          INSERT INTO mistnost ("revizeId", nazev, patro, plocha, typ, prostredi, poznamka)
+          VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id
+        `, [newRevizeId, mist.nazev, mist.patro, mist.plocha, mist.typ, mist.prostredi, mist.poznamka]);
+        const newMistId = newMist.rows[0].id;
+
+        // Zařízení v místnosti
+        const zarizeni = await client.query('SELECT * FROM zarizeni WHERE "mistnostId" = $1', [mist.id]);
+        for (const zar of zarizeni.rows) {
+          await client.query(`
+            INSERT INTO zarizeni ("mistnostId", nazev, oznaceni, "pocetKs", trida, "prikonW", "ochranaPredDotykem", stav, poznamka)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          `, [newMistId, zar.nazev, zar.oznaceni, zar.pocetKs, zar.trida, zar.prikonW, zar.ochranaPredDotykem, zar.stav, zar.poznamka]);
+        }
+      }
+
+      // 6. Zkopírovat vazby přístrojů
+      const pristroje = await client.query('SELECT * FROM "revizePristroj" WHERE "revizeId" = $1', [sourceId]);
+      for (const rp of pristroje.rows) {
+        await client.query(`
+          INSERT INTO "revizePristroj" ("revizeId", "pristrojId", "datumKalibrace", "platnostKalibrace")
+          VALUES ($1, $2, $3, $4)
+        `, [newRevizeId, rp.pristrojId, rp.datumKalibrace, rp.platnostKalibrace]);
+      }
+
+      // 7. Závady se NE kopírují – nová revize začíná s čistým štítem
+      // (předchozí závady jsou vidět přes historii)
+
+      await client.query('COMMIT');
+      res.json({ id: newRevizeId, skupinaRevizi });
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Chyba při duplikaci revize:', error);
+      res.status(500).json({ error: (error as Error).message });
+    } finally {
+      client.release();
+    }
+  });
+
+  // ==================== HISTORIE REVIZÍ ====================
+  app.get('/api/revize/:id/historie', authMiddleware, async (req, res) => {
+    try {
+      const revizeId = parseInt(req.params.id);
+      // Zjistit skupinu
+      const revResult = await pool.query('SELECT "skupinaRevizi" FROM revize WHERE id = $1', [revizeId]);
+      if (revResult.rows.length === 0) return res.status(404).json({ error: 'Revize nenalezena' });
+
+      const skupina = revResult.rows[0].skupinaRevizi;
+      if (!skupina) {
+        // Nemá skupinu – vrátit jen sebe
+        const self = await pool.query('SELECT id, "cisloRevize", nazev, datum, stav, "typRevize", vysledek, "createdAt" FROM revize WHERE id = $1', [revizeId]);
+        return res.json(self.rows);
+      }
+
+      // Všechny revize se stejnou skupinou, seřazené od nejstarší
+      const result = await pool.query(
+        'SELECT id, "cisloRevize", nazev, datum, stav, "typRevize", vysledek, "predchoziRevizeId", "createdAt" FROM revize WHERE "skupinaRevizi" = $1 ORDER BY datum ASC, id ASC',
+        [skupina]
+      );
+      res.json(result.rows);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
@@ -660,11 +850,59 @@ async function startServer() {
     }
   });
 
+  // ==================== KALIBRACE (historie) ====================
+  app.get('/api/kalibrace/:pristrojId', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query(
+        'SELECT * FROM kalibrace WHERE "pristrojId" = $1 ORDER BY "datumKalibrace" DESC',
+        [req.params.pristrojId]
+      );
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/kalibrace', authMiddleware, async (req, res) => {
+    try {
+      const { pristrojId, datumKalibrace, platnostKalibrace, kalibracniList, provedl, certifikat, poznamka } = req.body;
+      const now = new Date().toISOString();
+
+      const result = await pool.query(`
+        INSERT INTO kalibrace ("pristrojId", "datumKalibrace", "platnostKalibrace", "kalibracniList", provedl, certifikat, poznamka, "createdAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id
+      `, [pristrojId, datumKalibrace, platnostKalibrace, kalibracniList || null, provedl || null, certifikat || null, poznamka || null, now]);
+
+      // Aktualizovat aktuální kalibraci na přístroji
+      await pool.query(`
+        UPDATE "mericiPristroj" SET "datumKalibrace" = $1, "platnostKalibrace" = $2, "updatedAt" = $3 WHERE id = $4
+      `, [datumKalibrace, platnostKalibrace, now, pristrojId]);
+
+      res.json({ id: result.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/kalibrace/:id', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM kalibrace WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
   // ==================== REVIZE-PŘÍSTROJ (vazby) ====================
   app.get('/api/revize-pristroje/:revizeId', authMiddleware, async (req, res) => {
     try {
+      // Vrací přístroje se snapshot kalibrací (původní kalibrace z doby přidání k revizi)
       const result = await pool.query(`
-        SELECT mp.* FROM "mericiPristroj" mp
+        SELECT mp.*,
+          COALESCE(rp."datumKalibrace", mp."datumKalibrace") AS "datumKalibrace",
+          COALESCE(rp."platnostKalibrace", mp."platnostKalibrace") AS "platnostKalibrace"
+        FROM "mericiPristroj" mp
         JOIN "revizePristroj" rp ON mp.id = rp."pristrojId"
         WHERE rp."revizeId" = $1
       `, [req.params.revizeId]);
@@ -678,11 +916,18 @@ async function startServer() {
     try {
       const { revizeId, pristrojId } = req.body;
       
+      // Načíst aktuální kalibraci přístroje a uložit jako snapshot
+      const pristrojResult = await pool.query(
+        'SELECT "datumKalibrace", "platnostKalibrace" FROM "mericiPristroj" WHERE id = $1',
+        [pristrojId]
+      );
+      const pristroj = pristrojResult.rows[0];
+      
       const result = await pool.query(`
-        INSERT INTO "revizePristroj" ("revizeId", "pristrojId")
-        VALUES ($1, $2)
+        INSERT INTO "revizePristroj" ("revizeId", "pristrojId", "datumKalibrace", "platnostKalibrace")
+        VALUES ($1, $2, $3, $4)
         RETURNING id
-      `, [revizeId, pristrojId]);
+      `, [revizeId, pristrojId, pristroj?.datumKalibrace || null, pristroj?.platnostKalibrace || null]);
       
       res.json({ id: result.rows[0].id });
     } catch (error) {
@@ -965,7 +1210,7 @@ async function startServer() {
   // Kompletní tabulky pro backup
   const ALL_BACKUP_TABLES = [
     'revize', 'rozvadec', 'okruh', 'zavada', 'mistnost', 'zarizeni',
-    'zakazka', 'mericiPristroj', 'revizePristroj', 'firma', 'nastaveni',
+    'zakazka', 'mericiPristroj', 'revizePristroj', 'kalibrace', 'firma', 'nastaveni',
     'zavadaKatalog', 'zakaznik', 'predvolenyText'
   ];
 
@@ -1015,7 +1260,7 @@ async function startServer() {
       
       // Pořadí mazání – závislé tabulky napřed
       const deleteOrder = [
-        'revizePristroj', 'zarizeni', 'zavada', 'okruh', 'zakazka',
+        'kalibrace', 'revizePristroj', 'zarizeni', 'zavada', 'okruh', 'zakazka',
         'rozvadec', 'mistnost', 'revize', 'sablona', 'pdfSablona', 'firma',
         'mericiPristroj', 'nastaveni', 'zavadaKatalog', 'zakaznik'
       ];
@@ -1035,7 +1280,7 @@ async function startServer() {
         'nastaveni', 'firma', 'zakaznik', 'mericiPristroj', 'sablona',
         'pdfSablona', 'zavadaKatalog',
         'revize', 'mistnost', 'rozvadec', 'zakazka',
-        'okruh', 'zavada', 'zarizeni', 'revizePristroj'
+        'okruh', 'zavada', 'zarizeni', 'revizePristroj', 'kalibrace'
       ];
       
       const skipKeys = ['version', 'timestamp', 'appName'];
@@ -1213,9 +1458,12 @@ async function startServer() {
         zarizeni = zarizeniRes.rows;
       }
 
-      // Měřicí přístroje
+      // Měřicí přístroje (se snapshot kalibrací)
       const pristrojeRes = await pool.query(
-        `SELECT mp.* FROM "mericiPristroj" mp 
+        `SELECT mp.*,
+          COALESCE(rp."datumKalibrace", mp."datumKalibrace") AS "datumKalibrace",
+          COALESCE(rp."platnostKalibrace", mp."platnostKalibrace") AS "platnostKalibrace"
+         FROM "mericiPristroj" mp 
          JOIN "revizePristroj" rp ON mp.id = rp."pristrojId" 
          WHERE rp."revizeId" = $1`, [revizeId]
       );

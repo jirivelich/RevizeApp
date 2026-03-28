@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
 import { revizeService } from '../services/database';
 import { useRevize, useDeleteRevize } from '../hooks/useQueries';
-import type { KategorieRevize } from '../types';
+import type { KategorieRevize, Revize } from '../types';
 
 // Definice kategorií revizí - centrální místo pro budoucí rozšíření
 const KATEGORIE_REVIZE: { value: KategorieRevize; label: string; popis: string; icon: JSX.Element }[] = [
@@ -52,6 +52,36 @@ export function RevizePage() {
   const [filterStav, setFilterStav] = useState('');
   const [filterKategorie, setFilterKategorie] = useState('');
   const navigate = useNavigate();
+
+  // Duplikace revize
+  const [isDuplikatModalOpen, setIsDuplikatModalOpen] = useState(false);
+  const [duplikatSourceId, setDuplikatSourceId] = useState<number | null>(null);
+  const [duplikatSourceCislo, setDuplikatSourceCislo] = useState('');
+  const [duplikatCislo, setDuplikatCislo] = useState('');
+  const [duplikatTyp, setDuplikatTyp] = useState<'navazujici' | 'duplikat'>('navazujici');
+  const [isDuplikating, setIsDuplikating] = useState(false);
+
+  // Historie revizí
+  const [historieData, setHistorieData] = useState<Partial<Revize>[]>([]);
+  const [historieSourceId, setHistorieSourceId] = useState<number | null>(null);
+  const [historieSourceCislo, setHistorieSourceCislo] = useState('');
+  const [isHistorieModalOpen, setIsHistorieModalOpen] = useState(false);
+  const [isLoadingHistorie, setIsLoadingHistorie] = useState(false);
+
+  const openHistorieModal = async (revizeId: number, cisloRevize: string) => {
+    setHistorieSourceId(revizeId);
+    setHistorieSourceCislo(cisloRevize);
+    setIsLoadingHistorie(true);
+    setIsHistorieModalOpen(true);
+    try {
+      const data = await revizeService.getHistorie(revizeId);
+      setHistorieData(data);
+    } catch {
+      setHistorieData([]);
+    } finally {
+      setIsLoadingHistorie(false);
+    }
+  };
 
   // Generování čísla revize ve formátu rrrrmmddhhmm
   const generateCisloRevize = () => {
@@ -118,6 +148,28 @@ export function RevizePage() {
   const handleDelete = async (id: number) => {
     if (window.confirm('Opravdu chcete smazat tuto revizi? Budou smazány i všechny související záznamy.')) {
       deleteRevize.mutate(id);
+    }
+  };
+
+  const openDuplikatModal = (revizeId: number, cisloRevize: string) => {
+    setDuplikatSourceId(revizeId);
+    setDuplikatSourceCislo(cisloRevize);
+    setDuplikatCislo(generateCisloRevize());
+    setDuplikatTyp('navazujici');
+    setIsDuplikatModalOpen(true);
+  };
+
+  const handleDuplikovat = async () => {
+    if (!duplikatSourceId || !duplikatCislo.trim()) return;
+    setIsDuplikating(true);
+    try {
+      const result = await revizeService.duplikovat(duplikatSourceId, duplikatCislo.trim(), duplikatTyp);
+      setIsDuplikatModalOpen(false);
+      navigate(`/revize/${result.id}`);
+    } catch (err) {
+      alert('Chyba při duplikaci: ' + (err instanceof Error ? err.message : 'Neznámá chyba'));
+    } finally {
+      setIsDuplikating(false);
     }
   };
 
@@ -255,6 +307,22 @@ export function RevizePage() {
                           onClick={() => navigate(`/revize/${r.id}`)}
                         >
                           Upravit
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => openDuplikatModal(r.id!, r.cisloRevize)}
+                          title="Vytvořit kopii revize"
+                        >
+                          📋
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => openHistorieModal(r.id!, r.cisloRevize)}
+                          title="Historie navazujících revizí"
+                        >
+                          🕐
                         </Button>
                         <Button
                           variant="danger"
@@ -423,6 +491,134 @@ export function RevizePage() {
             </div>
           </form>
         )}
+      </Modal>
+
+      {/* Modal pro historii revizí */}
+      <Modal
+        isOpen={isHistorieModalOpen}
+        onClose={() => setIsHistorieModalOpen(false)}
+        title={`🕐 Historie revizí — ${historieSourceCislo}`}
+        footer={
+          <Button variant="secondary" onClick={() => setIsHistorieModalOpen(false)}>Zavřít</Button>
+        }
+      >
+        {isLoadingHistorie ? (
+          <div className="text-center py-8 text-slate-500">
+            <div className="animate-spin inline-block w-6 h-6 border-2 border-slate-300 border-t-blue-500 rounded-full mb-2"></div>
+            <p className="text-sm">Načítám historii…</p>
+          </div>
+        ) : historieData.length === 0 ? (
+          <div className="text-center py-8 text-slate-500">
+            <div className="text-3xl mb-2">📭</div>
+            <p className="text-sm">Tato revize nemá žádné navazující ani předchozí revize.</p>
+            <p className="text-xs mt-1 text-slate-400">Použijte tlačítko 📋 s typem „Navazující" pro vytvoření propojené revize.</p>
+          </div>
+        ) : (
+          <div className="relative">
+            <div className="absolute left-3 top-2 bottom-2 w-0.5 bg-slate-200"></div>
+            <div className="space-y-3">
+              {historieData.map((h, idx) => {
+                const isCurrent = h.id === historieSourceId;
+                return (
+                  <div key={h.id} className={`flex items-start gap-3 pl-1 ${isCurrent ? 'opacity-100' : 'opacity-70'}`}>
+                    <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center text-[10px] z-10 ${
+                      isCurrent
+                        ? 'bg-blue-500 border-blue-600 text-white'
+                        : h.stav === 'dokončeno' || h.stav === 'schváleno'
+                          ? 'bg-emerald-100 border-emerald-400 text-emerald-600'
+                          : 'bg-white border-slate-300 text-slate-500'
+                    }`}>
+                      {idx + 1}
+                    </div>
+                    <div className={`flex-1 rounded border px-3 py-2 text-sm ${isCurrent ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-200'}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-slate-800">
+                          {h.cisloRevize}
+                          {isCurrent && <span className="ml-2 text-xs text-blue-600">(aktuální)</span>}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                          h.stav === 'dokončeno' ? 'bg-emerald-50 text-emerald-600' :
+                          h.stav === 'rozpracováno' ? 'bg-amber-50 text-amber-600' :
+                          'bg-slate-100 text-slate-600'
+                        }`}>{h.stav}</span>
+                      </div>
+                      <div className="text-xs text-slate-500 mt-0.5">
+                        {h.datum} · {h.typRevize || '–'} · {h.vysledek || 'nevyplněno'}
+                      </div>
+                      {!isCurrent && h.id && (
+                        <button
+                          onClick={() => { setIsHistorieModalOpen(false); navigate(`/revize/${h.id}`); }}
+                          className="text-xs text-blue-500 hover:underline mt-1"
+                        >
+                          Otevřít →
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Modal pro duplikaci revize */}
+      <Modal
+        isOpen={isDuplikatModalOpen}
+        onClose={() => setIsDuplikatModalOpen(false)}
+        title="Kopie revize"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setIsDuplikatModalOpen(false)}>Zrušit</Button>
+            <Button onClick={handleDuplikovat} disabled={isDuplikating || !duplikatCislo.trim()}>
+              {isDuplikating ? 'Vytvářím...' : duplikatTyp === 'navazujici' ? '🔗 Vytvořit navazující' : '📋 Vytvořit duplikát'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            Kopie revize <strong>{duplikatSourceCislo}</strong>. Budou zkopírovány všechny údaje (rozvaděče, okruhy, místnosti, přístroje), ale ne závady.
+          </p>
+
+          {/* Výběr typu */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Typ kopie</label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setDuplikatTyp('navazujici')}
+                className={`p-3 rounded-lg border-2 text-left transition-all ${
+                  duplikatTyp === 'navazujici'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-slate-200 hover:border-slate-400'
+                }`}
+              >
+                <p className="font-semibold text-sm">🔗 Navazující revize</p>
+                <p className="text-xs text-slate-500 mt-1">Propojena s historií původní revize. Pro periodické (následné) revize stejného objektu.</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDuplikatTyp('duplikat')}
+                className={`p-3 rounded-lg border-2 text-left transition-all ${
+                  duplikatTyp === 'duplikat'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-slate-200 hover:border-slate-400'
+                }`}
+              >
+                <p className="font-semibold text-sm">📋 Nezávislý duplikát</p>
+                <p className="text-xs text-slate-500 mt-1">Samostatná kopie bez vazby. Pro jiný objekt se stejným vybavením.</p>
+              </button>
+            </div>
+          </div>
+
+          <Input
+            label="Číslo nové revizní zprávy"
+            value={duplikatCislo}
+            onChange={(e) => setDuplikatCislo(e.target.value)}
+            placeholder="např. 202603281200"
+          />
+        </div>
       </Modal>
     </div>
   );

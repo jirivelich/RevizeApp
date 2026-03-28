@@ -219,6 +219,20 @@ export async function initializeDatabase() {
     `);
 
     await client.query(`
+      CREATE TABLE IF NOT EXISTS kalibrace (
+        id SERIAL PRIMARY KEY,
+        "pristrojId" INTEGER NOT NULL REFERENCES "mericiPristroj"(id) ON DELETE CASCADE,
+        "datumKalibrace" TEXT NOT NULL,
+        "platnostKalibrace" TEXT NOT NULL,
+        "kalibracniList" TEXT,
+        provedl TEXT,
+        certifikat TEXT,
+        poznamka TEXT,
+        "createdAt" TEXT NOT NULL
+      )
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS firma (
         id SERIAL PRIMARY KEY,
         nazev TEXT NOT NULL,
@@ -355,6 +369,18 @@ export async function initializeDatabase() {
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodSpdPoznamka" TEXT',
       // Měření odporů uzemnění (JSON pole)
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodMereniOdporu" TEXT',
+      // === Strojní zařízení ===
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "strojniData" TEXT',
+      // Normy soulad – text nad nadpisem zprávy
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "normySoulad" TEXT',
+      // Lhůta – vlastní text místo počtu měsíců
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "lhutaText" TEXT',
+      // Snapshot kalibrací v revizePristroj – při změně kalibrace na přístroji zůstane v revizi původní
+      'ALTER TABLE "revizePristroj" ADD COLUMN IF NOT EXISTS "datumKalibrace" TEXT',
+      'ALTER TABLE "revizePristroj" ADD COLUMN IF NOT EXISTS "platnostKalibrace" TEXT',
+      // === Historie / návaznost revizí ===
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "predchoziRevizeId" INTEGER REFERENCES revize(id) ON DELETE SET NULL',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "skupinaRevizi" TEXT',
     ];
     
     for (const migration of migrations) {
@@ -367,6 +393,22 @@ export async function initializeDatabase() {
           console.log('⚠️ Migrace přeskočena:', e.message);
         }
       }
+    }
+
+    // Jednorázová migrace: doplnit snapshot kalibrace pro existující vazby, které ještě nemají snapshot
+    try {
+      await client.query(`
+        UPDATE "revizePristroj" rp
+        SET "datumKalibrace" = mp."datumKalibrace",
+            "platnostKalibrace" = mp."platnostKalibrace"
+        FROM "mericiPristroj" mp
+        WHERE rp."pristrojId" = mp.id
+          AND rp."datumKalibrace" IS NULL
+          AND rp."platnostKalibrace" IS NULL
+      `);
+      console.log('✅ Snapshot kalibrací doplněn pro existující vazby');
+    } catch (e: any) {
+      console.log('⚠️ Snapshot kalibrací nelze doplnit:', e.message);
     }
 
     // Vytvořit demo uživatele pokud neexistuje

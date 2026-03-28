@@ -6,6 +6,7 @@ import type { Revize, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, MericiPristro
 import { ReportHeader } from './ReportHeader';
 import { ReportSection } from './ReportSection';
 import { ReportTable } from './ReportTable';
+import { DEFAULT_NORMY_SOULAD } from '../RevizeDetail/constants';
 import { exportElektroToWord } from '../../services/wordExport';
 import './print.css';
 
@@ -22,7 +23,7 @@ const PAGED_CSS = `
   @top-left {
     content: string(report-number, first);
     font-size: 8pt;
-    color: #1e40af;
+    color: #1e293b;
     font-weight: 700;
     font-family: 'Segoe UI', Arial, sans-serif;
     vertical-align: bottom;
@@ -32,7 +33,7 @@ const PAGED_CSS = `
   @top-right {
     content: string(report-title, first);
     font-size: 8pt;
-    color: #64748b;
+    color: #475569;
     font-family: 'Segoe UI', Arial, sans-serif;
     vertical-align: bottom;
     padding-bottom: 4px;
@@ -41,7 +42,7 @@ const PAGED_CSS = `
   @bottom-center {
     content: "Strana " counter(page) " / " counter(pages);
     font-size: 8pt;
-    color: #94a3b8;
+    color: #64748b;
     font-family: 'Segoe UI', Arial, sans-serif;
     vertical-align: top;
     padding-top: 4px;
@@ -50,7 +51,7 @@ const PAGED_CSS = `
   @bottom-left {
     content: string(firma-name, first);
     font-size: 7.5pt;
-    color: #94a3b8;
+    color: #64748b;
     font-family: 'Segoe UI', Arial, sans-serif;
     vertical-align: top;
     padding-top: 4px;
@@ -59,7 +60,7 @@ const PAGED_CSS = `
   @bottom-right {
     content: "Revizní zpráva";
     font-size: 7.5pt;
-    color: #94a3b8;
+    color: #64748b;
     font-family: 'Segoe UI', Arial, sans-serif;
     vertical-align: top;
     padding-top: 4px;
@@ -195,19 +196,31 @@ export function ReportPrintPage() {
       // Spojit: report styly z Vite + @page pravidla z JS
       const combinedCss = reportCssRules.join('\n') + '\n' + PAGED_CSS;
 
+      const cssBlob = new Blob([combinedCss], { type: 'text/css' });
+      const cssUrl = URL.createObjectURL(cssBlob);
       const previewer = new Previewer();
       const flow = await previewer.preview(
         content,
-        [combinedCss],
+        [cssUrl],
         previewRef.current
       );
+      URL.revokeObjectURL(cssUrl);
 
-      setPageCount(flow.total);
+      setPageCount(flow?.total || 1);
+      // Odpojit ResizeObserver ze všech pagedjs stránek (zabrání crashům v checkUnderflowAfterResize)
+      try { flow?.pages?.forEach((p: any) => p.removeListeners?.()); } catch { /* ok */ }
     } catch (err) {
       console.error('Pagedjs error:', err);
       // Fallback: zobrazit obsah přímo
       if (sourceRef.current && previewRef.current) {
         previewRef.current.innerHTML = sourceRef.current.innerHTML;
+        // Odhad počtu stránek z výšky obsahu (A4 = 297mm − 38mm margin ≈ 980px)
+        requestAnimationFrame(() => {
+          if (previewRef.current) {
+            const h = previewRef.current.scrollHeight;
+            setPageCount(Math.max(1, Math.ceil(h / 980)));
+          }
+        });
       }
     } finally {
       setPaging(false);
@@ -263,21 +276,40 @@ export function ReportPrintPage() {
   }
   const isSekceVisible = (key: string) => tiskSekce[key] !== false; // default true
 
+  const ochranaLabels: Record<string, string> = {
+    'zakladni-izolace': 'Základní izolace živých částí',
+    'kryty-pricka': 'Přepážky nebo kryty',
+    'zamezeni-dotyk': 'Zábrany nebo ochrana polohou',
+    'selv': 'Ochrana malým napětím SELV',
+    'pelv': 'Ochrana malým napětím PELV',
+    'ochrane-pospojovani': 'Ochranné pospojování',
+    'samocine-odpojeni': 'Automatické odpojeni od zdroje',
+    'proudovy-chranic': 'Doplňková ochrana proudovým chráničem',
+    'ochranne-oddeleni': 'Ochranné oddělení obvodů',
+    'dvojita-izolace': 'Dvojitá nebo zesílená izolace',
+    'nevodive-prostredi': 'Nevodivé prostředí',
+    'neuzemene-pospojeni': 'Neuzemeného místního pospojování',
+  };
+
   let ochranaList: string[] = [];
   if (revize.ochranaOpatreni) {
-    try { ochranaList = JSON.parse(revize.ochranaOpatreni); } catch { ochranaList = [revize.ochranaOpatreni]; }
+    try {
+      const parsed = JSON.parse(revize.ochranaOpatreni);
+      ochranaList = parsed.map((key: string) => ochranaLabels[key] || key);
+    } catch {
+      ochranaList = [revize.ochranaOpatreni];
+    }
   }
 
   const typRevizeLabel = revize.typRevize === 'výchozí' ? 'Výchozí revize' :
     revize.typRevize === 'pravidelná' ? 'Pravidelná (periodická) revize' :
     `Mimořádná revize${revize.duvodMimoradne ? ` – ${revize.duvodMimoradne}` : ''}`;
 
-  const vysledekLabel = revize.vysledek === 'schopno' ? 'SCHOPNO BEZPEČNÉHO PROVOZU' :
-    revize.vysledek === 'neschopno' ? 'NESCHOPNO BEZPEČNÉHO PROVOZU' :
-    revize.vysledek === 'podmíněně schopno' ? 'PODMÍNĚNĚ SCHOPNO BEZPEČNÉHO PROVOZU' : '—';
+  const vysledekLabel = revize.vysledek === 'schopno' ? 'ELEKTRICKÁ INSTALACE JE Z HLEDISKA BEZPEČNOSTI SCHOPNA PROVOZU' :
+    revize.vysledek === 'neschopno' ? 'ELEKTRICKÁ INSTALACE NENÍ Z HLEDISKA BEZPEČNOSTI SCHOPNA PROVOZU' : '—';
 
-  const vysledekColor = revize.vysledek === 'schopno' ? '#16a34a' :
-    revize.vysledek === 'neschopno' ? '#dc2626' : '#d97706';
+  const vysledekColor = revize.vysledek === 'schopno' ? '#1e293b' :
+    revize.vysledek === 'neschopno' ? '#dc2626' : '#1e293b';
 
   /* ── Společný obsah zprávy (použijeme 2×: zdrojový hidden + fallback) ── */
   const reportContent = (
@@ -297,13 +329,18 @@ export function ReportPrintPage() {
 
       <ReportHeader nastaveni={nastaveni} revize={revize} />
 
+      <div className="report-normy-text">{revize.normySoulad || DEFAULT_NORMY_SOULAD}</div>
+
       <div className="report-title">
-        ZPRÁVA O REVIZI VYHRAZENÉHO ELEKTRICKÉHO ZAŘÍZENÍ
+        ZPRÁVA O REVIZI ELEKTRICKÉ INSTALACE
       </div>
       <div className="report-subtitle">{typRevizeLabel}</div>
 
-      {/* a) PROVOZOVATEL */}
-      <ReportSection title="a) Provozovatel (objednatel) revidovaného zařízení">
+      {/* ══════ STRANA 1 ══════ */}
+      <div className="report-page-1">
+
+      {/* 1. PROVOZOVATEL */}
+      <ReportSection title="1. Provozovatel (objednatel) revidovaného zařízení">
         <table className="report-info-table"><tbody>
           <tr><td className="label-cell">Název / Jméno:</td><td>{zakaznik?.nazev || revize.objednatel || '—'}</td></tr>
           <tr><td className="label-cell">Adresa / Sídlo:</td><td>{zakaznik?.adresa || '—'}</td></tr>
@@ -314,17 +351,91 @@ export function ReportPrintPage() {
         </tbody></table>
       </ReportSection>
 
-      {/* b) IDENTIFIKACE ZAŘÍZENÍ */}
-      <ReportSection title="b) Identifikace revidovaného zařízení a místo umístění">
+      {/* 2. IDENTIFIKACE ZAŘÍZENÍ */}
+      <ReportSection title="2. Identifikace objektu">
         <table className="report-info-table"><tbody>
           <tr><td className="label-cell">Název objektu:</td><td>{revize.nazev}</td></tr>
           <tr><td className="label-cell">Adresa objektu:</td><td>{revize.adresa}</td></tr>
         </tbody></table>
       </ReportSection>
 
-      {/* c) ROZSAH REVIZE */}
+      {/* 3. REVIZNÍ TECHNIK */}
+      <ReportSection title="3. Revizní technik">
+        <table className="report-info-table"><tbody>
+          <tr><td className="label-cell">Jméno:</td><td>{nastaveni?.reviznniTechnikJmeno || '—'}</td></tr>
+          <tr><td className="label-cell">Oprávnění:</td><td>{nastaveni?.reviznniTechnikCisloOpravneni || '—'}</td></tr>
+          {nastaveni?.reviznniTechnikOsvedceni && <tr><td className="label-cell">Osvědčení:</td><td>{nastaveni.reviznniTechnikOsvedceni}</td></tr>}
+          {nastaveni?.reviznniTechnikAdresa && <tr><td className="label-cell">Adresa:</td><td>{nastaveni.reviznniTechnikAdresa}</td></tr>}
+          {nastaveni?.reviznniTechnikIco && <tr><td className="label-cell">IČO:</td><td>{nastaveni.reviznniTechnikIco}</td></tr>}
+        </tbody></table>
+      </ReportSection>
+
+      {/* 4. DATA A TERMÍNY */}
+      <ReportSection title="4. Data a termíny">
+        <table className="report-info-table"><tbody>
+          <tr>
+            <td className="label-cell">Datum revize:</td>
+            <td>{revize.datum ? new Date(revize.datum).toLocaleDateString('cs-CZ') : '—'}</td>
+            <td className="label-cell">Vypracování zprávy:</td>
+            <td>{revize.datumVypracovani ? new Date(revize.datumVypracovani).toLocaleDateString('cs-CZ') : '—'}</td>
+          </tr>
+          <tr>
+            <td className="label-cell">Platnost do:</td>
+            <td>{revize.datumPlatnosti ? new Date(revize.datumPlatnosti).toLocaleDateString('cs-CZ') : '—'}</td>
+            <td className="label-cell">Lhůta příští revize:</td>
+            <td>{revize.termin} měsíců</td>
+          </tr>
+        </tbody></table>
+      </ReportSection>
+
+      {/* 5. VYHODNOCENÍ */}
+      <ReportSection title="5. Vyhodnocení">
+        <div className="report-result" style={{ borderColor: vysledekColor }}>
+          <div className="report-result-label">Revidované elektrické zařízení je:</div>
+          <div className="report-result-value" style={{ color: vysledekColor }}>
+            {vysledekLabel}
+          </div>
+        </div>
+      </ReportSection>
+
+      {/* 6. PODPISY */}
+      <ReportSection title="6. Potvrzení o předání zprávy">
+        <div className="report-signatures">
+          <div className="report-signature-box">
+            <div className="report-signature-label">Revizní technik:</div>
+            <div className="report-signature-name">{nastaveni?.reviznniTechnikJmeno || '—'}</div>
+            <div className="report-signature-cert">Oprávnění: {nastaveni?.reviznniTechnikCisloOpravneni || '—'}</div>
+            <div className="report-signature-line"></div>
+            <div className="report-signature-hint">Podpis</div>
+          </div>
+          <div className="report-signature-box">
+            <div className="report-signature-label">Objednatel / Provozovatel:</div>
+            <div className="report-signature-name">{zakaznik?.kontaktOsoba || zakaznik?.nazev || revize.objednatel || '—'}</div>
+            <div className="report-signature-cert">&nbsp;</div>
+            <div className="report-signature-line"></div>
+            <div className="report-signature-hint">Podpis</div>
+          </div>
+        </div>
+        <div className="report-date-line">
+          V ...................... dne {revize.datumVypracovani ? new Date(revize.datumVypracovani).toLocaleDateString('cs-CZ') : new Date().toLocaleDateString('cs-CZ')}
+        </div>
+      </ReportSection>
+
+      </div>{/* /report-page-1 */}
+
+      {/* ══════ STRANA 2+ ══════ */}
+      <div className="report-page-break" />
+
+      {/* 7. POPIS REVIDOVANÉHO ZAŘÍZENÍ */}
+      {isSekceVisible('popisZarizeni') && revize.popisZarizeni && (
+      <ReportSection title="7. Popis revidovaného zařízení">
+        <p className="report-text">{revize.popisZarizeni}</p>
+      </ReportSection>
+      )}
+
+      {/* 8. ROZSAH REVIZE */}
       {isSekceVisible('rozsahRevize') && (
-      <ReportSection title="c) Vymezení rozsahu revize">
+      <ReportSection title="8. Vymezení rozsahu revize">
         {revize.rozsahRevize && (
           <div className="report-text">
             <strong>Předmět revize je:</strong>
@@ -340,33 +451,6 @@ export function ReportPrintPage() {
         {!revize.rozsahRevize && !revize.predmetNeni && <p className="report-empty">Nebylo vyplněno</p>}
       </ReportSection>
       )}
-
-      {/* d) REVIZNÍ TECHNIK */}
-      <ReportSection title="d) Údaje o revizním technikovi">
-        <table className="report-info-table"><tbody>
-          <tr><td className="label-cell">Jméno:</td><td>{nastaveni?.reviznniTechnikJmeno || '—'}</td></tr>
-          <tr><td className="label-cell">Ev. číslo osvědčení:</td><td>{nastaveni?.reviznniTechnikCisloOpravneni || '—'}</td></tr>
-          {nastaveni?.reviznniTechnikOsvedceni && <tr><td className="label-cell">Osvědčení:</td><td>{nastaveni.reviznniTechnikOsvedceni}</td></tr>}
-          {nastaveni?.reviznniTechnikAdresa && <tr><td className="label-cell">Adresa:</td><td>{nastaveni.reviznniTechnikAdresa}</td></tr>}
-          {nastaveni?.reviznniTechnikIco && <tr><td className="label-cell">IČO:</td><td>{nastaveni.reviznniTechnikIco}</td></tr>}
-        </tbody></table>
-      </ReportSection>
-
-      {/* e) DRUH REVIZE */}
-      <ReportSection title="e) Druh revize">
-        <p className="report-text"><strong>{typRevizeLabel}</strong></p>
-      </ReportSection>
-
-      {/* f) DŮLEŽITÁ DATA */}
-      <ReportSection title="f) Důležitá data">
-        <table className="report-info-table"><tbody>
-          <tr><td className="label-cell">Datum provedení revize:</td><td>{revize.datum ? new Date(revize.datum).toLocaleDateString('cs-CZ') : '—'}</td></tr>
-          {revize.datumDokonceni && <tr><td className="label-cell">Datum dokončení:</td><td>{new Date(revize.datumDokonceni).toLocaleDateString('cs-CZ')}</td></tr>}
-          {revize.datumVypracovani && <tr><td className="label-cell">Datum vypracování zprávy:</td><td>{new Date(revize.datumVypracovani).toLocaleDateString('cs-CZ')}</td></tr>}
-          {revize.datumPlatnosti && <tr><td className="label-cell">Platnost do:</td><td>{new Date(revize.datumPlatnosti).toLocaleDateString('cs-CZ')}</td></tr>}
-          <tr><td className="label-cell">Lhůta příští revize:</td><td>{revize.termin} měsíců</td></tr>
-        </tbody></table>
-      </ReportSection>
 
       {/* CHARAKTERISTIKA ZAŘÍZENÍ */}
       {isSekceVisible('charakteristika') && (revize.napetovaSoustava || ochranaList.length > 0) && (
@@ -389,9 +473,9 @@ export function ReportPrintPage() {
         </ReportSection>
       )}
 
-      {/* g) MĚŘICÍ PŘÍSTROJE */}
+      {/* 9. MĚŘICÍ PŘÍSTROJE */}
       {isSekceVisible('pristroje') && (
-      <ReportSection title="g) Soupis použitých měřicích přístrojů">
+      <ReportSection title="9. Soupis použitých měřicích přístrojů">
         {pristroje.length > 0 ? (
           <ReportTable
             columns={['Název', 'Výrobce / Model', 'Výrobní číslo', 'Kalibrace', 'Platnost']}
@@ -410,9 +494,9 @@ export function ReportPrintPage() {
       </ReportSection>
       )}
 
-      {/* h) PODKLADY */}
+      {/* 10. PODKLADY */}
       {isSekceVisible('podklady') && (
-      <ReportSection title="h) Seznam podkladů použitých k provedení revize">
+      <ReportSection title="10. Seznam podkladů použitých k provedení revize">
         {revize.podklady ? (
           <p className="report-text">{revize.podklady}</p>
         ) : (
@@ -421,9 +505,9 @@ export function ReportPrintPage() {
       </ReportSection>
       )}
 
-      {/* i) PROVEDENÉ ÚKONY */}
+      {/* 11. PROVEDENÉ ÚKONY */}
       {isSekceVisible('provedeneUkony') && (
-      <ReportSection title="i) Soupis provedených úkonů">
+      <ReportSection title="11. Soupis provedených úkonů">
         {revize.provedeneUkony ? (
           <p className="report-text">{revize.provedeneUkony}</p>
         ) : (
@@ -432,8 +516,8 @@ export function ReportPrintPage() {
       </ReportSection>
       )}
 
-      {/* j) ROZVADĚČE A OKRUHY */}
-      <ReportSection title="j) Naměřené hodnoty – Rozvaděče a okruhy">
+      {/* 12. ROZVADĚČE A OKRUHY */}
+      <ReportSection title="12. Naměřené hodnoty – Rozvaděče a okruhy">
         {rozvadece.length > 0 ? rozvadece.map((roz) => (
           <div key={roz.id} className="report-subsection">
             <div className="report-subsection-title">
@@ -498,8 +582,8 @@ export function ReportPrintPage() {
         </ReportSection>
       )}
 
-      {/* k) ZÁVADY */}
-      <ReportSection title="k) Přehled zjištěných závad">
+      {/* 13. ZÁVADY */}
+      <ReportSection title="13. Přehled zjištěných závad">
         {zavady.length > 0 ? (
           <ReportTable
             columns={['#', 'Popis závady', 'Závažnost', 'Stav', 'Zjištěna']}
@@ -517,9 +601,9 @@ export function ReportPrintPage() {
         )}
       </ReportSection>
 
-      {/* m) VYHODNOCENÍ PŘEDCHOZÍCH REVIZÍ */}
+      {/* 14. VYHODNOCENÍ PŘEDCHOZÍCH REVIZÍ */}
       {isSekceVisible('vyhodnoceniPredchozich') && (
-      <ReportSection title="m) Vyhodnocení předchozích revizí">
+      <ReportSection title="14. Vyhodnocení předchozích revizí">
         {revize.vyhodnoceniPredchozich ? (
           <p className="report-text">{revize.vyhodnoceniPredchozich}</p>
         ) : (
@@ -528,88 +612,32 @@ export function ReportPrintPage() {
       </ReportSection>
       )}
 
-      {/* l) ZÁVĚREČNÉ ZHODNOCENÍ */}
-      <ReportSection title="l) Závěrečné zhodnocení">
-        <div className="report-result" style={{ borderColor: vysledekColor }}>
-          <div className="report-result-label">Revidované elektrické zařízení je:</div>
-          <div className="report-result-value" style={{ color: vysledekColor }}>
-            {vysledekLabel}
-          </div>
-        </div>
-        {isSekceVisible('vysledekOduvodneni') && revize.vysledekOduvodneni && (
-          <div className="report-text" style={{ marginTop: '8px' }}>
-            <strong>Odůvodnění:</strong>
-            <p>{revize.vysledekOduvodneni}</p>
-          </div>
-        )}
-        {isSekceVisible('zaver') && revize.zaver && (
-          <div className="report-text" style={{ marginTop: '8px' }}>
-            <strong>Závěr:</strong>
-            <p>{revize.zaver}</p>
-          </div>
-        )}
-      </ReportSection>
-
-      {/* n) LHŮTA PŘÍŠTÍ REVIZE */}
-      <ReportSection title="n) Doporučená lhůta provedení příští revize">
+      {/* 15. LHŮTA PŘÍŠTÍ REVIZE */}
+      <ReportSection title="15. Doporučená lhůta provedení příští revize">
         <p className="report-text">
           Příští revize by měla být provedena nejpozději do <strong>{revize.datumPlatnosti ? new Date(revize.datumPlatnosti).toLocaleDateString('cs-CZ') : `${revize.termin} měsíců od data provedení`}</strong>.
         </p>
       </ReportSection>
 
-      {/* o) PODPISY */}
-      <ReportSection title="o) Potvrzení o předání zprávy">
-        <div className="report-signatures">
-          <div className="report-signature-box">
-            <div className="report-signature-label">Revizní technik:</div>
-            <div className="report-signature-name">{nastaveni?.reviznniTechnikJmeno || '—'}</div>
-            <div className="report-signature-cert">Ev. č.: {nastaveni?.reviznniTechnikCisloOpravneni || '—'}</div>
-            <div className="report-signature-line"></div>
-            <div className="report-signature-hint">Podpis</div>
-          </div>
-          <div className="report-signature-box">
-            <div className="report-signature-label">Objednatel / Provozovatel:</div>
-            <div className="report-signature-name">{zakaznik?.kontaktOsoba || zakaznik?.nazev || revize.objednatel || '—'}</div>
-            <div className="report-signature-cert">&nbsp;</div>
-            <div className="report-signature-line"></div>
-            <div className="report-signature-hint">Podpis</div>
-          </div>
-        </div>
-        <div className="report-date-line">
-          V ...................... dne {revize.datumVypracovani ? new Date(revize.datumVypracovani).toLocaleDateString('cs-CZ') : new Date().toLocaleDateString('cs-CZ')}
-        </div>
+      {/* 16. ODŮVODNĚNÍ */}
+      {isSekceVisible('vysledekOduvodneni') && revize.vysledekOduvodneni && (
+      <ReportSection title="16. Odůvodnění">
+        <p className="report-text">{revize.vysledekOduvodneni}</p>
       </ReportSection>
+      )}
+
+      {/* 17. ZÁVĚR */}
+      {isSekceVisible('zaver') && revize.zaver && (
+      <ReportSection title="17. Závěr">
+        <p className="report-text">{revize.zaver}</p>
+      </ReportSection>
+      )}
 
     </div>
   );
 
   return (
     <>
-      {/* Toolbar – skryje se při tisku */}
-      <div className="print-hide bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-[210mm] mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate(-1)} className="px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 rounded-lg transition">
-              ← Zpět na revizi
-            </button>
-            <span className="text-slate-400">|</span>
-            <span className="text-sm text-slate-600 font-medium">{revize.cisloRevize} – {revize.nazev}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            {pageCount > 0 && (
-              <span className="text-xs text-slate-400">{pageCount} {pageCount === 1 ? 'strana' : pageCount < 5 ? 'strany' : 'stran'}</span>
-            )}
-            <button onClick={handleWordExport} className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 text-sm font-medium flex items-center gap-2 transition">
-              <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M3 3.5A1.5 1.5 0 0 1 4.5 2h6.879a1.5 1.5 0 0 1 1.06.44l4.122 4.12A1.5 1.5 0 0 1 17 7.622V16.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 3 16.5v-13ZM13.25 9a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5a.75.75 0 0 1 .75-.75Zm-6.5 0a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 6.75 9Zm4 0a.75.75 0 0 1 .624.334l1.25 1.876a.75.75 0 0 1-1.248.832L10.75 11.1l-.626.938a.75.75 0 1 1-1.248-.832l1.25-1.876A.75.75 0 0 1 10.75 9Z" /></svg>
-              Word
-            </button>
-            <button onClick={handlePrint} className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 text-sm font-medium flex items-center gap-2 transition">
-              🖨️ Tisk / PDF
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Skrytý zdrojový obsah – React renderuje sem, pagedjs ho přebere */}
       <div ref={sourceRef} className="report-source">
         {reportContent}

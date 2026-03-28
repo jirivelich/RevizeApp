@@ -30,6 +30,9 @@ export const queryKeys = {
     all: ['pristroje'] as const,
     byRevize: (revizeId: number) => ['pristroje', 'byRevize', revizeId] as const,
   },
+  kalibrace: {
+    byPristroj: (pristrojId: number) => ['kalibrace', 'byPristroj', pristrojId] as const,
+  },
   firmy: {
     all: ['firmy'] as const,
   },

@@ -4,13 +4,15 @@ import { Button } from '../../components/ui';
 import {
   revizeService, okruhService, zarizeniService,
 } from '../../services/database';
-import type { Revize } from '../../types';
+import type { Revize, MericiPristroj, Firma, Zakaznik } from '../../types';
 import {
   useRevizeDetail, useUpdateRevize,
   useRozvadeceByRevize, useZavadyByRevize, useMistnostiByRevize,
   usePristrojeByRevize, usePristroje, useFirmy, useZakaznici,
   useNastaveni, usePredvoleneTexty, useZavadyKatalog,
 } from '../../hooks/useQueries';
+
+const EMPTY_ARR: never[] = [];
 
 import { InfoTab } from './InfoTab';
 import { DokumentaceTab } from './DokumentaceTab';
@@ -19,6 +21,7 @@ import { ZavadyTab } from './ZavadyTab';
 import { MistnostiTab } from './MistnostiTab';
 import { HromosvodInfoTab } from './HromosvodInfoTab';
 import { HromosvodZarizeniTab } from './HromosvodZarizeniTab';
+import { StrojniZarizeniTab } from './StrojniZarizeniTab';
 
 export function RevizeDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -27,22 +30,22 @@ export function RevizeDetailPage() {
 
   // Core state (local)
   const [formData, setFormData] = useState<Partial<Revize>>({});
-  const [activeTab, setActiveTab] = useState<'info' | 'dokumentace' | 'rozvadece' | 'zavady' | 'mistnosti' | 'hromosvod_zarizeni'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'dokumentace' | 'rozvadece' | 'zavady' | 'mistnosti' | 'hromosvod_zarizeni' | 'strojni_zarizeni'>('info');
   const [selectedFirmaId, setSelectedFirmaId] = useState<string>('');
   const [selectedZakaznikId, setSelectedZakaznikId] = useState<string>('');
 
   // ---- React Query hooks (parallel fetch, cached) ----
   const { data: revize = null, isLoading: loadingRevize, error: revizeError } = useRevizeDetail(numericId);
-  const { data: rozvadece = [] } = useRozvadeceByRevize(numericId);
-  const { data: zavady = [] } = useZavadyByRevize(numericId);
-  const { data: mistnosti = [] } = useMistnostiByRevize(numericId);
-  const { data: pouzitePristroje = [] } = usePristrojeByRevize(numericId);
-  const { data: vsechnyPristroje = [] } = usePristroje();
-  const { data: firmy = [] } = useFirmy();
-  const { data: zakaznici = [] } = useZakaznici();
+  const { data: rozvadece = EMPTY_ARR } = useRozvadeceByRevize(numericId);
+  const { data: zavady = EMPTY_ARR } = useZavadyByRevize(numericId);
+  const { data: mistnosti = EMPTY_ARR } = useMistnostiByRevize(numericId);
+  const { data: pouzitePristroje = EMPTY_ARR as unknown as MericiPristroj[] } = usePristrojeByRevize(numericId);
+  const { data: vsechnyPristroje = EMPTY_ARR as unknown as MericiPristroj[] } = usePristroje();
+  const { data: firmy = EMPTY_ARR as unknown as Firma[] } = useFirmy();
+  const { data: zakaznici = EMPTY_ARR as unknown as Zakaznik[] } = useZakaznici();
   const { data: nastaveni = null } = useNastaveni();
-  const { data: vlastniTexty = [] } = usePredvoleneTexty();
-  const { data: katalogZavad = [] } = useZavadyKatalog();
+  const { data: vlastniTexty = EMPTY_ARR } = usePredvoleneTexty();
+  const { data: katalogZavad = EMPTY_ARR } = useZavadyKatalog();
 
   const updateRevize = useUpdateRevize();
 
@@ -57,6 +60,7 @@ export function RevizeDetailPage() {
   // Okruhy counts — N+1 but computed only when rozvadece change
   const [okruhyCounts, setOkruhyCounts] = useState<Record<number, number>>({});
   useEffect(() => {
+    if (rozvadece.length === 0) return;
     let cancelled = false;
     (async () => {
       const counts: Record<number, number> = {};
@@ -74,6 +78,7 @@ export function RevizeDetailPage() {
   // Zarizeni counts — N+1 but computed only when mistnosti change
   const [zarizeniCounts, setZarizeniCounts] = useState<Record<number, number>>({});
   useEffect(() => {
+    if (mistnosti.length === 0) return;
     let cancelled = false;
     (async () => {
       const counts: Record<number, number> = {};
@@ -135,11 +140,18 @@ export function RevizeDetailPage() {
   }
 
   const isHromosvod = revize.kategorieRevize === 'hromosvod';
+  const isStroje = revize.kategorieRevize === 'stroje';
 
   const tabs = isHromosvod
     ? [
         { id: 'info', label: 'Základní údaje', icon: '' },
         { id: 'hromosvod_zarizeni', label: 'Revidované zařízení', icon: '' },
+        { id: 'zavady', label: `Závady (${zavady.length})`, icon: '' },
+      ]
+    : isStroje
+    ? [
+        { id: 'info', label: 'Základní údaje', icon: '' },
+        { id: 'strojni_zarizeni', label: 'Protokol strojního zařízení', icon: '' },
         { id: 'zavady', label: `Závady (${zavady.length})`, icon: '' },
       ]
     : [
@@ -219,6 +231,19 @@ export function RevizeDetailPage() {
         />
       )}
 
+      {activeTab === 'strojni_zarizeni' && (
+        <StrojniZarizeniTab
+          revize={revize}
+          nastaveni={nastaveni}
+          zakaznici={zakaznici}
+          pouzitePristroje={pouzitePristroje}
+          vsechnyPristroje={vsechnyPristroje}
+          revizeId={revize.id!}
+          formData={formData}
+          setFormData={setFormData}
+        />
+      )}
+
       {activeTab === 'dokumentace' && (
         <DokumentaceTab
           revize={revize} formData={formData} setFormData={setFormData}
@@ -250,7 +275,7 @@ export function RevizeDetailPage() {
       )}
 
       {/* Fixed save bar */}
-      {(activeTab === 'info' || activeTab === 'dokumentace' || activeTab === 'hromosvod_zarizeni') && (
+      {(activeTab === 'info' || activeTab === 'dokumentace' || activeTab === 'hromosvod_zarizeni' || activeTab === 'strojni_zarizeni') && (
         <div className="fixed bottom-0 left-0 lg:left-64 right-0 z-50 bg-slate-800/90 backdrop-blur border-t border-slate-600 shadow-[0_-2px_8px_rgba(0,0,0,0.15)]">
           <div className="max-w-4xl mx-auto px-4 py-1 flex justify-center">
             <button onClick={handleSave} className="px-6 py-1 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded transition-colors cursor-pointer">Uložit změny</button>
