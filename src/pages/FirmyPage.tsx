@@ -83,7 +83,7 @@ export function FirmyPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-lg font-bold text-slate-800">Firmy</h1>
+          <h1 className="text-sm font-bold text-slate-800">Firmy</h1>
           <p className="text-xs text-slate-400 mt-1">
             Seznam firem, pro které provádíte revize. Tyto firmy můžete vybírat při vytváření revize.
           </p>
@@ -94,7 +94,7 @@ export function FirmyPage() {
       {firmy.length === 0 ? (
         <Card>
           <div className="text-center py-12">
-            <h3 className="text-sm font-medium text-slate-700 mb-2">
+            <h3 className="text-xs font-medium text-slate-700 mb-2">
               Zatím nemáte žádné firmy
             </h3>
             <p className="text-xs text-slate-400 mb-4">
@@ -111,27 +111,27 @@ export function FirmyPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-200">
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Název</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">IČO</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Adresa</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Kontakt</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Telefon / Email</th>
-                  <th className="text-right py-3 px-4 font-medium text-slate-600">Akce</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Název</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">IČO</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Adresa</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Kontakt</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Telefon / Email</th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Akce</th>
                 </tr>
               </thead>
               <tbody>
                 {firmy.map((firma) => (
                   <tr key={firma.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="py-3 px-4 font-medium">{firma.nazev}</td>
-                    <td className="py-3 px-4 font-mono text-sm">{firma.ico || '-'}</td>
-                    <td className="py-3 px-4 text-sm text-slate-600 max-w-xs truncate">{firma.adresa || '-'}</td>
-                    <td className="py-3 px-4 text-sm">{firma.kontaktOsoba || '-'}</td>
-                    <td className="py-3 px-4 text-sm text-slate-600">
+                    <td className="py-2 px-3 text-xs font-medium">{firma.nazev}</td>
+                    <td className="py-2 px-3 font-mono text-xs">{firma.ico || '-'}</td>
+                    <td className="py-2 px-3 text-xs text-slate-600 max-w-xs truncate">{firma.adresa || '-'}</td>
+                    <td className="py-2 px-3 text-xs">{firma.kontaktOsoba || '-'}</td>
+                    <td className="py-2 px-3 text-xs text-slate-600">
                       {firma.telefon && <div>{firma.telefon}</div>}
                       {firma.email && <div className="text-slate-600">{firma.email}</div>}
                       {!firma.telefon && !firma.email && '-'}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2 px-3">
                       <div className="flex justify-end gap-2">
                         <Button
                           variant="secondary"

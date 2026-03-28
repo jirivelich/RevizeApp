@@ -109,7 +109,7 @@ export function ZavadyPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-slate-800">Katalog závad</h1>
+          <h1 className="text-sm font-bold text-slate-800">Katalog závad</h1>
           <p className="text-xs text-slate-400">Databáze typických závad s odkazy na normy a zákony</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
@@ -121,7 +121,7 @@ export function ZavadyPage() {
       <div className="lg:hidden">
         <button
           onClick={() => setShowStats(!showStats)}
-          className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-800"
+          className="flex items-center gap-2 text-xs text-slate-600 hover:text-slate-800"
         >
           <span>{showStats ? '▼' : '▶'}</span>
           <span>{showStats ? 'Skrýt statistiky' : 'Zobrazit statistiky'}</span>
@@ -129,20 +129,20 @@ export function ZavadyPage() {
       </div>
       <div className={`grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 ${showStats ? '' : 'hidden lg:grid'}`}>
         <div className="bg-white rounded-lg p-3 sm:p-4 border border-slate-200">
-          <p className="text-xs sm:text-sm text-slate-500">Celkem v katalogu</p>
-          <p className="text-xl sm:text-2xl font-bold">{stats.celkem}</p>
+          <p className="text-xs text-slate-500">Celkem v katalogu</p>
+          <p className="text-lg sm:text-xl font-bold">{stats.celkem}</p>
         </div>
         <div className="bg-white rounded-lg p-3 sm:p-4 border border-slate-200">
-          <p className="text-xs sm:text-sm text-slate-500">C1 - Kritické</p>
-          <p className="text-xl sm:text-2xl font-bold">{stats.kriticke}</p>
+          <p className="text-xs text-slate-500">C1 - Kritické</p>
+          <p className="text-lg sm:text-xl font-bold">{stats.kriticke}</p>
         </div>
         <div className="bg-white rounded-lg p-3 sm:p-4 border border-slate-200">
-          <p className="text-xs sm:text-sm text-slate-500">C2 - Vážné</p>
-          <p className="text-xl sm:text-2xl font-bold">{stats.vazne}</p>
+          <p className="text-xs text-slate-500">C2 - Vážné</p>
+          <p className="text-lg sm:text-xl font-bold">{stats.vazne}</p>
         </div>
         <div className="bg-white rounded-lg p-3 sm:p-4 border border-slate-200">
-          <p className="text-xs sm:text-sm text-slate-500">C3 - Drobné</p>
-          <p className="text-xl sm:text-2xl font-bold">{stats.drobne}</p>
+          <p className="text-xs text-slate-500">C3 - Drobné</p>
+          <p className="text-lg sm:text-xl font-bold">{stats.drobne}</p>
         </div>
       </div>
 
@@ -181,18 +181,18 @@ export function ZavadyPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-200">
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Závažnost</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Kategorie</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Popis</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Norma</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Článek</th>
-                  <th className="text-right py-3 px-4 font-medium text-slate-600">Akce</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Závažnost</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Kategorie</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Popis</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Norma</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Článek</th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Akce</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredZavady.map((z) => (
                   <tr key={z.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="py-3 px-4">
+                    <td className="py-2 px-3">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         z.zavaznost === 'C1' ? 'bg-red-50 text-red-600' :
                         z.zavaznost === 'C2' ? 'bg-amber-50 text-amber-600' :
@@ -201,10 +201,10 @@ export function ZavadyPage() {
                         {z.zavaznost}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-sm">{z.kategorie || '-'}</td>
-                    <td className="py-3 px-4">
+                    <td className="py-2 px-3 text-xs">{z.kategorie || '-'}</td>
+                    <td className="py-2 px-3">
                       <div className="max-w-md">
-                        <p className="font-medium text-sm">{z.popis}</p>
+                        <p className="font-medium text-xs">{z.popis}</p>
                         {z.zneniClanku && (
                           <button
                             onClick={() => setExpandedId(expandedId === z.id ? null : z.id!)}
@@ -220,15 +220,15 @@ export function ZavadyPage() {
                         )}
                       </div>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2 px-3">
                       {z.norma && (
                         <span className="px-2 py-1 rounded text-xs font-medium bg-slate-100 text-slate-600">
                           {z.norma}
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-sm text-slate-600">{z.clanek || '-'}</td>
-                    <td className="py-3 px-4">
+                    <td className="py-2 px-3 text-xs text-slate-600">{z.clanek || '-'}</td>
+                    <td className="py-2 px-3">
                       <div className="flex justify-end gap-2">
                         <Button
                           variant="secondary"

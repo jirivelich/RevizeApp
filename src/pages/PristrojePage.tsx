@@ -117,7 +117,7 @@ export function PristrojePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-slate-800">Přístroje a kalibrace</h1>
+          <h1 className="text-sm font-bold text-slate-800">Přístroje a kalibrace</h1>
           <p className="text-xs text-slate-400">Správa měřících přístrojů a jejich kalibračních termínů</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
@@ -129,7 +129,7 @@ export function PristrojePage() {
       <div className="lg:hidden">
         <button
           onClick={() => setShowStats(!showStats)}
-          className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-800"
+          className="flex items-center gap-2 text-xs text-slate-600 hover:text-slate-800"
         >
           <span>{showStats ? '▼' : '▶'}</span>
           <span>{showStats ? 'Skrýt statistiky' : 'Zobrazit statistiky'}</span>
@@ -138,32 +138,32 @@ export function PristrojePage() {
       <div className={`grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 ${showStats ? '' : 'hidden lg:grid'}`}>
         <Card>
           <div className="text-center p-1">
-            <p className="text-2xl sm:text-3xl font-bold text-slate-800">{pristroje.length}</p>
-            <p className="text-xs sm:text-sm text-slate-500">Celkem přístrojů</p>
+            <p className="text-lg sm:text-xl font-bold text-slate-800">{pristroje.length}</p>
+            <p className="text-xs text-slate-500">Celkem přístrojů</p>
           </div>
         </Card>
         <Card>
           <div className="text-center p-1">
-            <p className="text-2xl sm:text-3xl font-bold text-slate-800">
+            <p className="text-lg sm:text-xl font-bold text-slate-800">
               {pristroje.filter(p => !isExpiring(p.platnostKalibrace)).length}
             </p>
-            <p className="text-xs sm:text-sm text-slate-500">Platná kalibrace</p>
+            <p className="text-xs text-slate-500">Platná kalibrace</p>
           </div>
         </Card>
         <Card>
           <div className="text-center p-1">
-            <p className="text-2xl sm:text-3xl font-bold text-slate-800">
+            <p className="text-lg sm:text-xl font-bold text-slate-800">
               {pristroje.filter(p => isExpiring(p.platnostKalibrace) && !isExpired(p.platnostKalibrace)).length}
             </p>
-            <p className="text-xs sm:text-sm text-slate-500">Brzy expiruje</p>
+            <p className="text-xs text-slate-500">Brzy expiruje</p>
           </div>
         </Card>
         <Card>
           <div className="text-center p-1">
-            <p className="text-2xl sm:text-3xl font-bold text-slate-800">
+            <p className="text-lg sm:text-xl font-bold text-slate-800">
               {pristroje.filter(p => isExpired(p.platnostKalibrace)).length}
             </p>
-            <p className="text-xs sm:text-sm text-slate-500">Prošlá kalibrace</p>
+            <p className="text-xs text-slate-500">Prošlá kalibrace</p>
           </div>
         </Card>
       </div>
@@ -201,32 +201,32 @@ export function PristrojePage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-200">
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Název</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Typ</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Výrobce / Model</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Výr. číslo</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Kalibrace</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-600">Platnost</th>
-                  <th className="text-right py-3 px-4 font-medium text-slate-600">Akce</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Název</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Typ</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Výrobce / Model</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Výr. číslo</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Kalibrace</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Platnost</th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Akce</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredPristroje.map((p) => (
                   <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="py-3 px-4 font-medium">{p.nazev}</td>
-                    <td className="py-3 px-4">
+                    <td className="py-2 px-3 text-xs font-medium">{p.nazev}</td>
+                    <td className="py-2 px-3">
                       <span className="px-2 py-1 bg-slate-100 rounded text-xs">
                         {getTypLabel(p.typPristroje)}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-sm text-slate-600">
+                    <td className="py-2 px-3 text-xs text-slate-600">
                       {p.vyrobce} {p.model}
                     </td>
-                    <td className="py-3 px-4 font-mono text-sm">{p.vyrobniCislo}</td>
-                    <td className="py-3 px-4 text-sm">
+                    <td className="py-2 px-3 font-mono text-xs">{p.vyrobniCislo}</td>
+                    <td className="py-2 px-3 text-xs">
                       {new Date(p.datumKalibrace).toLocaleDateString('cs-CZ')}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2 px-3">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         isExpired(p.platnostKalibrace) 
                           ? 'bg-red-50 text-red-600'
@@ -237,7 +237,7 @@ export function PristrojePage() {
                         {new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}
                       </span>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2 px-3">
                       <div className="flex justify-end gap-2">
                         <Button
                           variant="secondary"
