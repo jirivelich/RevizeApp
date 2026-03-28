@@ -222,13 +222,16 @@ async function startServer() {
       const { cisloRevize: noveCislo, typ = 'navazujici' } = req.body;
       // typ: 'navazujici' = navazující revize s historií, 'duplikat' = nezávislá kopie
 
-      // 1. Načíst zdrojovou revizi
-      const srcResult = await client.query('SELECT * FROM revize WHERE id = $1', [sourceId]);
+      console.log(`📋 Duplikace revize ID=${sourceId}, nové číslo=${noveCislo}, typ=${typ}`);
+
+      // 1. Načíst zdrojovou revizi - ověřit existenci a kategorii
+      const srcResult = await client.query('SELECT id, "kategorieRevize", "skupinaRevizi" FROM revize WHERE id = $1', [sourceId]);
       if (srcResult.rows.length === 0) {
         await client.query('ROLLBACK');
         return res.status(404).json({ error: 'Zdrojová revize nebyla nalezena' });
       }
       const src = srcResult.rows[0];
+      console.log(`📋 Zdrojová revize: ID=${src.id}, kategorie=${src.kategorieRevize}`);
 
       // 2. Skupina revizí – pouze pro navazující revize
       let skupinaRevizi: string | null = null;
@@ -247,65 +250,65 @@ async function startServer() {
       const now = new Date().toISOString();
       const datum = new Date().toISOString().split('T')[0];
 
-      // 3. Vytvořit novou revizi
-      const newRevize = await client.query(`
-        INSERT INTO revize (
-          "cisloRevize", nazev, adresa, objednatel, "zakaznikId",
-          datum, termin, "typRevize", stav, "kategorieRevize",
-          "rozsahRevize", "predmetNeni", "napetovaSoustava", "ochranaOpatreni",
-          "popisZarizeni", podklady, "provedeneUkony",
-          "tiskSekce", "firmaJmeno", "firmaAdresa", "firmaIco", "firmaDic",
-          "normySoulad", "lhutaText",
-          "hromosvodTridaLps", "hromosvodTypOchrany", "hromosvodRokInstalace",
-          "hromosvodNorma", "hromosvodPopisLps",
-          "hromosvodJimaciTyp", "hromosvodJimaciMaterial", "hromosvodJimaciStav", "hromosvodJimaciPoznamka",
-          "hromosvodSvodyPocet", "hromosvodSvodyMaterial", "hromosvodSvodyPrurez",
-          "hromosvodSvodyZkusebniSvorky", "hromosvodSvodyStav", "hromosvodSvodyPoznamka",
-          "hromosvodUzemneniTyp", "hromosvodUzemneniMaterial", "hromosvodUzemneniStav", "hromosvodUzemneniPoznamka",
-          "hromosvodSpdTyp", "hromosvodSpdStav", "hromosvodEkvipotencialni", "hromosvodSpdPoznamka",
-          "hromosvodMereniOdporu",
-          "strojniData",
-          "predchoziRevizeId", "skupinaRevizi",
-          "createdAt", "updatedAt"
-        ) VALUES (
-          $1, $2, $3, $4, $5,
-          $6, $7, $8, 'rozpracováno', $9,
-          $10, $11, $12, $13,
-          $14, $15, $16,
-          $17, $18, $19, $20, $21,
-          $22, $23,
-          $24, $25, $26,
-          $27, $28,
-          $29, $30, $31, $32,
-          $33, $34, $35,
-          $36, $37, $38,
-          $39, $40, $41, $42,
-          $43, $44, $45, $46,
-          $47,
-          $48,
-          $49, $50,
-          $51, $52
-        ) RETURNING id
-      `, [
-        noveCislo, src.nazev, src.adresa, src.objednatel, src.zakaznikId,
-        datum, src.termin, 'pravidelná', src.kategorieRevize,
-        src.rozsahRevize, src.predmetNeni, src.napetovaSoustava, src.ochranaOpatreni,
-        src.popisZarizeni, src.podklady, src.provedeneUkony,
-        src.tiskSekce, src.firmaJmeno, src.firmaAdresa, src.firmaIco, src.firmaDic,
-        src.normySoulad, src.lhutaText,
-        src.hromosvodTridaLps, src.hromosvodTypOchrany, src.hromosvodRokInstalace,
-        src.hromosvodNorma, src.hromosvodPopisLps,
-        src.hromosvodJimaciTyp, src.hromosvodJimaciMaterial, src.hromosvodJimaciStav, src.hromosvodJimaciPoznamka,
-        src.hromosvodSvodyPocet, src.hromosvodSvodyMaterial, src.hromosvodSvodyPrurez,
-        src.hromosvodSvodyZkusebniSvorky, src.hromosvodSvodyStav, src.hromosvodSvodyPoznamka,
-        src.hromosvodUzemneniTyp, src.hromosvodUzemneniMaterial, src.hromosvodUzemneniStav, src.hromosvodUzemneniPoznamka,
-        src.hromosvodSpdTyp, src.hromosvodSpdStav, src.hromosvodEkvipotencialni, src.hromosvodSpdPoznamka,
-        src.hromosvodMereniOdporu,
-        src.strojniData,
-        predchoziId, skupinaRevizi,
-        now, now
-      ]);
+      // 3. Dynamicky zjistit všechny sloupce tabulky revize
+      const colResult = await client.query(`
+        SELECT column_name FROM information_schema.columns 
+        WHERE table_name = 'revize' 
+        ORDER BY ordinal_position
+      `);
+      const allColumns = colResult.rows.map((r: any) => r.column_name as string);
+
+      // Sloupce, které se NEPŘEPISUJÍ ze zdroje (mají vlastní hodnoty)
+      const overrides: Record<string, any> = {
+        'id': undefined,                  // auto-generováno
+        'cisloRevize': noveCislo,
+        'datum': datum,
+        'datumDokonceni': null,           // nová revize není dokončená
+        'datumPlatnosti': null,           // nová revize nemá platnost
+        'datumVypracovani': null,         // bude vyplněno později
+        'typRevize': 'pravidelná',
+        'stav': 'rozpracováno',
+        'vysledek': null,                 // nová revize nemá výsledek
+        'vysledekOduvodneni': null,
+        'zaver': null,                    // nová revize nemá závěr
+        'predchoziRevizeId': predchoziId,
+        'skupinaRevizi': skupinaRevizi,
+        'createdAt': now,
+        'updatedAt': now,
+      };
+
+      // Sestavit INSERT dynamicky - kopíruje VŠECHNY sloupce z DB
+      const insertColumns: string[] = [];
+      const selectParts: string[] = [];
+      const params: any[] = [sourceId]; // $1 = sourceId pro WHERE klauzuli v SELECT
+      let paramIdx = 2;
+
+      for (const col of allColumns) {
+        if (col === 'id') continue; // id je auto-generováno
+
+        insertColumns.push(`"${col}"`);
+
+        if (col in overrides) {
+          params.push(overrides[col]);
+          selectParts.push(`$${paramIdx}::${col === 'predchoziRevizeId' ? 'integer' : 'text'}`);
+          paramIdx++;
+        } else {
+          // Zkopírovat hodnotu přímo ze zdrojové revize
+          selectParts.push(`"${col}"`);
+        }
+      }
+
+      const insertSQL = `
+        INSERT INTO revize (${insertColumns.join(', ')})
+        SELECT ${selectParts.join(', ')}
+        FROM revize WHERE id = $1
+        RETURNING id, "kategorieRevize"
+      `;
+
+      const newRevize = await client.query(insertSQL, params);
       const newRevizeId = newRevize.rows[0].id;
+      const newKategorie = newRevize.rows[0].kategorieRevize;
+      console.log(`✅ Nová revize ID=${newRevizeId}, kategorie=${newKategorie}`);
 
       // 4. Zkopírovat rozvaděče + okruhy
       const rozvadece = await client.query('SELECT * FROM rozvadec WHERE "revizeId" = $1', [sourceId]);
@@ -325,6 +328,7 @@ async function startServer() {
           `, [newRozvId, okr.cislo, okr.nazev, okr.jisticTyp, okr.jisticProud, okr.pocetFazi, okr.vodic, okr.izolacniOdpor, okr.impedanceSmycky, okr.proudovyChranicMa, okr.casOdpojeni, okr.poznamka]);
         }
       }
+      console.log(`  ✅ Zkopírováno ${rozvadece.rows.length} rozvaděčů`);
 
       // 5. Zkopírovat místnosti + zařízení
       const mistnosti = await client.query('SELECT * FROM mistnost WHERE "revizeId" = $1', [sourceId]);
@@ -344,6 +348,7 @@ async function startServer() {
           `, [newMistId, zar.nazev, zar.oznaceni, zar.pocetKs, zar.trida, zar.prikonW, zar.ochranaPredDotykem, zar.stav, zar.poznamka]);
         }
       }
+      console.log(`  ✅ Zkopírováno ${mistnosti.rows.length} místností`);
 
       // 6. Zkopírovat vazby přístrojů
       const pristroje = await client.query('SELECT * FROM "revizePristroj" WHERE "revizeId" = $1', [sourceId]);
@@ -353,11 +358,13 @@ async function startServer() {
           VALUES ($1, $2, $3, $4)
         `, [newRevizeId, rp.pristrojId, rp.datumKalibrace, rp.platnostKalibrace]);
       }
+      console.log(`  ✅ Zkopírováno ${pristroje.rows.length} přístrojů`);
 
       // 7. Závady se NE kopírují – nová revize začíná s čistým štítem
       // (předchozí závady jsou vidět přes historii)
 
       await client.query('COMMIT');
+      console.log(`✅ Duplikace dokončena: revize ${sourceId} (${src.kategorieRevize}) → ${newRevizeId} (${newKategorie})`);
       res.json({ id: newRevizeId, skupinaRevizi });
     } catch (error) {
       await client.query('ROLLBACK');
