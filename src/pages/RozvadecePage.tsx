@@ -228,28 +228,19 @@ export function RozvadecDetailPage() {
             />
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <Select
+            <Input
               label="Typ jističe"
               value={okruhFormData.jisticTyp}
               onChange={(e) => setOkruhFormData({ ...okruhFormData, jisticTyp: e.target.value })}
-              options={[
-                { value: 'B', label: 'B' },
-                { value: 'C', label: 'C' },
-                { value: 'D', label: 'D' },
-              ]}
+              placeholder="B, C, D, ..."
+              list="jistic-typ-list"
             />
-            <Select
+            <Input
               label="Proud jističe"
               value={okruhFormData.jisticProud}
               onChange={(e) => setOkruhFormData({ ...okruhFormData, jisticProud: e.target.value })}
-              options={[
-                { value: '6A', label: '6A' },
-                { value: '10A', label: '10A' },
-                { value: '16A', label: '16A' },
-                { value: '20A', label: '20A' },
-                { value: '25A', label: '25A' },
-                { value: '32A', label: '32A' },
-              ]}
+              placeholder="16A, 25A, ..."
+              list="jistic-proud-list"
             />
             <Input
               label="Vodič"
@@ -303,6 +294,17 @@ export function RozvadecDetailPage() {
             onChange={(e) => setOkruhFormData({ ...okruhFormData, poznamka: e.target.value })}
           />
         </form>
+        <datalist id="jistic-typ-list">
+          <option value="B" /><option value="C" /><option value="D" />
+          <option value="gG" /><option value="aM" />
+          <option value="IT" /><option value="IJ" /><option value="IJV" /><option value="ITM" />
+        </datalist>
+        <datalist id="jistic-proud-list">
+          <option value="2A" /><option value="4A" /><option value="6A" /><option value="10A" />
+          <option value="13A" /><option value="16A" /><option value="20A" /><option value="25A" />
+          <option value="32A" /><option value="40A" /><option value="50A" /><option value="63A" />
+          <option value="80A" /><option value="100A" /><option value="125A" /><option value="160A" />
+        </datalist>
       </Modal>
     </div>
   );
