@@ -186,18 +186,18 @@ export function RevizeDetailPage() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-2 border-b border-slate-200 overflow-x-auto scrollbar-thin">
+      <div className="flex gap-1 border-b border-slate-200 overflow-x-auto scrollbar-thin">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`px-4 py-3 font-medium transition-colors border-b-2 whitespace-nowrap flex-shrink-0 ${
+            className={`px-3 py-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap flex-shrink-0 ${
               activeTab === tab.id
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-slate-600 hover:text-slate-800'
             }`}
           >
-            <span className="mr-2">{tab.icon}</span>
+            <span className="mr-1.5">{tab.icon}</span>
             {tab.label}
           </button>
         ))}

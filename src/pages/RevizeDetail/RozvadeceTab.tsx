@@ -5,6 +5,59 @@ import { okruhService } from '../../services/database';
 import { useCreateRozvadec, useDeleteRozvadec } from '../../hooks/useQueries';
 import type { Rozvadec, Okruh } from '../../types';
 
+// EditableSelect – select s možností zadat vlastní hodnotu
+export function EditableSelect({ label, value, onChange, options }: {
+  label: string; value: string; onChange: (val: string) => void; options: string[];
+}) {
+  const isCustom = value !== '' && !options.includes(value);
+  const [showCustom, setShowCustom] = useState(isCustom);
+
+  // Sync showCustom when value changes externally (e.g. form reset)
+  useEffect(() => {
+    if (options.includes(value)) {
+      setShowCustom(false);
+    }
+  }, [value, options]);
+
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-xs font-medium text-slate-700">{label}</label>
+      {showCustom ? (
+        <div className="relative">
+          <input
+            className="w-full px-3 py-2 pr-8 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 text-xs"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            autoFocus
+          />
+          <button
+            type="button"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+            onClick={() => { setShowCustom(false); }}
+            title="Zpět na seznam"
+          >↩</button>
+        </div>
+      ) : (
+        <select
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 text-xs"
+          value={options.includes(value) ? value : '__custom__'}
+          onChange={(e) => {
+            if (e.target.value === '__custom__') {
+              setShowCustom(true);
+              onChange('');
+            } else {
+              onChange(e.target.value);
+            }
+          }}
+        >
+          {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+          <option value="__custom__">✏️ Vlastní hodnota...</option>
+        </select>
+      )}
+    </div>
+  );
+}
+
 interface RozvadeceTabProps {
   rozvadece: Rozvadec[];
   okruhyCounts: Record<number, number>;
@@ -207,7 +260,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                 >
                   <div className="p-3">
                     <div className="flex items-center justify-between mb-1">
-                      <p className="font-medium text-sm">{r.nazev}</p>
+                      <p className="font-medium text-xs">{r.nazev}</p>
                       <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600">
                         {okruhyCounts[r.id!] || 0}
                       </span>
@@ -219,7 +272,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
               ))}
             </div>
           ) : (
-            <p className="text-center text-slate-500 py-6 text-sm">Zatím žádné rozvaděče.</p>
+            <p className="text-center text-slate-500 py-6 text-xs">Zatím žádné rozvaděče.</p>
           )}
         </Card>
       </div>
@@ -236,14 +289,14 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
               </div>
             }
           >
-            <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-3 bg-slate-50 rounded-lg"><p className="text-xs text-slate-500">Označení</p><p className="font-medium">{selectedRozvadec.oznaceni}</p></div>
-              <div className="p-3 bg-slate-50 rounded-lg"><p className="text-xs text-slate-500">Umístění</p><p className="font-medium">{selectedRozvadec.umisteni}</p></div>
-              <div className="p-3 bg-slate-50 rounded-lg"><p className="text-xs text-slate-500">Typ</p><p className="font-medium">{selectedRozvadec.typRozvadece || '—'}</p></div>
-              <div className="p-3 bg-slate-50 rounded-lg"><p className="text-xs text-slate-500">Krytí</p><p className="font-medium">{selectedRozvadec.stupenKryti}</p></div>
+            <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="p-2 bg-slate-50 rounded-lg"><p className="text-[10px] text-slate-500">Označení</p><p className="font-medium text-xs">{selectedRozvadec.oznaceni}</p></div>
+              <div className="p-2 bg-slate-50 rounded-lg"><p className="text-[10px] text-slate-500">Umístění</p><p className="font-medium text-xs">{selectedRozvadec.umisteni}</p></div>
+              <div className="p-2 bg-slate-50 rounded-lg"><p className="text-[10px] text-slate-500">Typ</p><p className="font-medium text-xs">{selectedRozvadec.typRozvadece || '—'}</p></div>
+              <div className="p-2 bg-slate-50 rounded-lg"><p className="text-[10px] text-slate-500">Krytí</p><p className="font-medium text-xs">{selectedRozvadec.stupenKryti}</p></div>
             </div>
 
-            <h4 className="font-medium text-slate-700 mb-3">Okruhy ({okruhy.length})</h4>
+            <h4 className="font-medium text-sm text-slate-700 mb-2">Okruhy ({okruhy.length})</h4>
             {okruhy.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -271,22 +324,22 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                           draggedOkruh?.id === o.id ? 'opacity-50 bg-blue-50' : ''
                         }`}
                       >
-                        <td className="py-2 px-3 font-medium">
-                          <span className="flex items-center gap-2">
+                        <td className="py-1 px-2 text-xs font-medium">
+                          <span className="flex items-center gap-1">
                             <span className="text-slate-400">⋮⋮</span>
                             {o.cislo}
                           </span>
                         </td>
-                        <td className="py-2 px-3">
-                          <span className="px-2 py-1 rounded text-xs font-medium bg-slate-100">
+                        <td className="py-1 px-2 text-xs">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100">
                             {o.pocetFazi || 1}/{o.jisticTyp}{o.jisticProud.replace('A', '')}
                           </span>
                         </td>
-                        <td className="py-2 px-3">{o.nazev}</td>
-                        <td className="py-2 px-3 text-slate-600">{o.vodic}</td>
-                        <td className="py-2 px-3 text-slate-600">{o.izolacniOdpor ? `${o.izolacniOdpor} MΩ` : '—'}</td>
-                        <td className="py-2 px-3 text-slate-600">{o.impedanceSmycky ? `${o.impedanceSmycky} Ω` : '—'}</td>
-                        <td className="py-2 px-3 text-right">
+                        <td className="py-1 px-2 text-xs">{o.nazev}</td>
+                        <td className="py-1 px-2 text-xs text-slate-600">{o.vodic}</td>
+                        <td className="py-1 px-2 text-xs text-slate-600">{o.izolacniOdpor ? `${o.izolacniOdpor} MΩ` : '—'}</td>
+                        <td className="py-1 px-2 text-xs text-slate-600">{o.impedanceSmycky ? `${o.impedanceSmycky} Ω` : '—'}</td>
+                        <td className="py-1 px-2 text-xs text-right">
                           <div className="flex justify-end gap-1">
                             <Button variant="secondary" size="sm" onClick={() => handleDuplicateOkruh(o)} title="Duplikovat">D</Button>
                             <Button variant="secondary" size="sm" onClick={() => handleEditOkruh(o)} title="Upravit">U</Button>
@@ -307,9 +360,9 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
         ) : (
           <Card>
             <div className="text-center py-12 text-slate-500">
-              <p className="text-sm text-slate-400 mb-4">Zatím žádné rozvaděče</p>
-              <p>Vyberte rozvaděč ze seznamu vlevo</p>
-              <p className="text-sm mt-1">pro zobrazení detailu a okruhů</p>
+              <p className="text-xs text-slate-400 mb-4">Zatím žádné rozvaděče</p>
+              <p className="text-sm">Vyberte rozvaděč ze seznamu vlevo</p>
+              <p className="text-xs mt-1">pro zobrazení detailu a okruhů</p>
             </div>
           </Card>
         )}
@@ -355,8 +408,8 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
           <Input label="Název" value={okruhFormData.nazev} onChange={(e) => setOkruhFormData({ ...okruhFormData, nazev: e.target.value })} required />
         </div>
         <div className="grid grid-cols-4 gap-4">
-          <Select label="Typ jističe" value={okruhFormData.jisticTyp} onChange={(e) => setOkruhFormData({ ...okruhFormData, jisticTyp: e.target.value })} options={[{ value: 'B', label: 'B' }, { value: 'C', label: 'C' }, { value: 'D', label: 'D' }]} />
-          <Select label="Proud jističe" value={okruhFormData.jisticProud} onChange={(e) => setOkruhFormData({ ...okruhFormData, jisticProud: e.target.value })} options={[{ value: '6A', label: '6A' }, { value: '10A', label: '10A' }, { value: '16A', label: '16A' }, { value: '20A', label: '20A' }, { value: '25A', label: '25A' }, { value: '32A', label: '32A' }]} />
+          <EditableSelect label="Typ jištění" value={okruhFormData.jisticTyp} onChange={(val) => setOkruhFormData({ ...okruhFormData, jisticTyp: val })} options={['B', 'C', 'D', 'gG', 'aM', 'IT', 'IJ', 'IJV', 'ITM']} />
+          <EditableSelect label="Proud jističe" value={okruhFormData.jisticProud} onChange={(val) => setOkruhFormData({ ...okruhFormData, jisticProud: val })} options={['2A','4A','6A','10A','13A','16A','20A','25A','32A','40A','50A','63A','80A','100A','125A','160A']} />
           <Select label="Počet fází" value={okruhFormData.pocetFazi.toString()} onChange={(e) => setOkruhFormData({ ...okruhFormData, pocetFazi: parseInt(e.target.value) })} options={[{ value: '1', label: '1P' }, { value: '2', label: '2P' }, { value: '3', label: '3P' }]} />
           <Input label="Vodič" value={okruhFormData.vodic} onChange={(e) => setOkruhFormData({ ...okruhFormData, vodic: e.target.value })} />
         </div>

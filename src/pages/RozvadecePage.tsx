@@ -1,10 +1,63 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
 import { useOkruhyByRozvadec, useCreateOkruh, useUpdateOkruh, useDeleteOkruh } from '../hooks/useQueries';
 import { rozvadecService } from '../services/database';
 import type { Okruh } from '../types';
+
+// EditableSelect – select s možností zadat vlastní hodnotu
+function EditableSelect({ label, value, onChange, options }: {
+  label: string; value: string; onChange: (val: string) => void; options: string[];
+}) {
+  const isCustom = value !== '' && !options.includes(value);
+  const [showCustom, setShowCustom] = useState(isCustom);
+
+  // Sync showCustom when value changes externally (e.g. form reset)
+  useEffect(() => {
+    if (options.includes(value)) {
+      setShowCustom(false);
+    }
+  }, [value, options]);
+
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-sm font-medium text-slate-700">{label}</label>
+      {showCustom ? (
+        <div className="relative">
+          <input
+            className="w-full px-3 py-2 pr-8 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 text-xs"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            autoFocus
+          />
+          <button
+            type="button"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+            onClick={() => { setShowCustom(false); }}
+            title="Zpět na seznam"
+          >↩</button>
+        </div>
+      ) : (
+        <select
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 text-xs"
+          value={options.includes(value) ? value : '__custom__'}
+          onChange={(e) => {
+            if (e.target.value === '__custom__') {
+              setShowCustom(true);
+              onChange('');
+            } else {
+              onChange(e.target.value);
+            }
+          }}
+        >
+          {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+          <option value="__custom__">✏️ Vlastní hodnota...</option>
+        </select>
+      )}
+    </div>
+  );
+}
 
 export function RozvadecDetailPage() {
   const { id, revizeId } = useParams<{ id: string; revizeId: string }>();
@@ -228,19 +281,17 @@ export function RozvadecDetailPage() {
             />
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <Input
+            <EditableSelect
               label="Typ jističe"
               value={okruhFormData.jisticTyp}
-              onChange={(e) => setOkruhFormData({ ...okruhFormData, jisticTyp: e.target.value })}
-              placeholder="B, C, D, ..."
-              list="jistic-typ-list"
+              onChange={(val) => setOkruhFormData({ ...okruhFormData, jisticTyp: val })}
+              options={['B', 'C', 'D', 'gG', 'aM', 'IT', 'IJ', 'IJV', 'ITM']}
             />
-            <Input
+            <EditableSelect
               label="Proud jističe"
               value={okruhFormData.jisticProud}
-              onChange={(e) => setOkruhFormData({ ...okruhFormData, jisticProud: e.target.value })}
-              placeholder="16A, 25A, ..."
-              list="jistic-proud-list"
+              onChange={(val) => setOkruhFormData({ ...okruhFormData, jisticProud: val })}
+              options={['2A','4A','6A','10A','13A','16A','20A','25A','32A','40A','50A','63A','80A','100A','125A','160A']}
             />
             <Input
               label="Vodič"
@@ -294,17 +345,6 @@ export function RozvadecDetailPage() {
             onChange={(e) => setOkruhFormData({ ...okruhFormData, poznamka: e.target.value })}
           />
         </form>
-        <datalist id="jistic-typ-list">
-          <option value="B" /><option value="C" /><option value="D" />
-          <option value="gG" /><option value="aM" />
-          <option value="IT" /><option value="IJ" /><option value="IJV" /><option value="ITM" />
-        </datalist>
-        <datalist id="jistic-proud-list">
-          <option value="2A" /><option value="4A" /><option value="6A" /><option value="10A" />
-          <option value="13A" /><option value="16A" /><option value="20A" /><option value="25A" />
-          <option value="32A" /><option value="40A" /><option value="50A" /><option value="63A" />
-          <option value="80A" /><option value="100A" /><option value="125A" /><option value="160A" />
-        </datalist>
       </Modal>
     </div>
   );

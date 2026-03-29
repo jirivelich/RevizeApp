@@ -112,24 +112,24 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
       {zavady.length > 0 ? (
         <div className="space-y-4">
           {zavady.map((z) => (
-            <div key={z.id} className="flex items-center justify-between p-4 rounded-lg bg-slate-50 border border-slate-200">
+            <div key={z.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="font-medium">{z.popis}</p>
+                  <p className="font-medium text-sm">{z.popis}</p>
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                     z.stav === 'vyřešená' ? 'bg-green-100 text-green-700' :
                     z.stav === 'v řešení' ? 'bg-blue-100 text-blue-700' :
                     'bg-slate-100 text-slate-700'
                   }`}>{z.stav}</span>
                 </div>
-                <p className="text-sm text-slate-500">
+                <p className="text-xs text-slate-500">
                   Zjištěno: {new Date(z.datumZjisteni).toLocaleDateString('cs-CZ')}
                   {z.datumVyreseni && ` • Vyřešeno: ${new Date(z.datumVyreseni).toLocaleDateString('cs-CZ')}`}
                 </p>
                 {z.rozvadecId && (
-                  <p className="text-xs text-slate-400">Rozvaděč: {rozvadece.find(r => r.id === z.rozvadecId)?.nazev || 'Neznámý'}</p>
+                  <p className="text-[10px] text-slate-400">Rozvaděč: {rozvadece.find(r => r.id === z.rozvadecId)?.nazev || 'Neznámý'}</p>
                 )}
-                {z.poznamka && <p className="text-sm text-slate-500 mt-1 italic">{z.poznamka}</p>}
+                {z.poznamka && <p className="text-xs text-slate-500 mt-1 italic">{z.poznamka}</p>}
                 {Array.isArray(z.fotky) && z.fotky.length > 0 && (
                   <div className="flex gap-2 mt-2">
                     {z.fotky.slice(0, 4).map((foto, index) => (
@@ -158,7 +158,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
           ))}
         </div>
       ) : (
-        <p className="text-center text-slate-500 py-8">Žádné závady nebyly zaznamenány. Přidejte první kliknutím na tlačítko výše.</p>
+        <p className="text-center text-slate-500 py-8 text-sm">Žádné závady nebyly zaznamenány. Přidejte první kliknutím na tlačítko výše.</p>
       )}
     </Card>
 
@@ -175,10 +175,10 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
         </>
       }
     >
-      <form onSubmit={handleAddZavada} className="space-y-4">
+      <form onSubmit={handleAddZavada} className="space-y-3">
         {!editingZavada && katalogZavad.length > 0 && (
-          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <label className="block text-sm font-medium text-slate-700 mb-2">Vybrat z katalogu závad</label>
+          <div className="p-2 bg-blue-50 rounded-lg border border-blue-200">
+            <label className="block text-xs font-medium text-slate-700 mb-1">Vybrat z katalogu závad</label>
             <Select
               value={selectedKatalogZavada}
               onChange={(e) => handleSelectFromKatalog(e.target.value)}
@@ -191,17 +191,17 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
           </div>
         )}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Popis závady *</label>
+          <label className="block text-xs font-medium text-slate-700 mb-1">Popis závady *</label>
           <textarea value={zavadaFormData.popis} onChange={(e) => setZavadaFormData({ ...zavadaFormData, popis: e.target.value })}
-            className="w-full px-3 py-2 border rounded-lg border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500" rows={2} placeholder="Popište zjištěnou závadu..." required />
+            className="w-full px-2 py-1.5 border rounded-lg border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" rows={2} placeholder="Popište zjištěnou závadu..." required />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <Select label="Závažnost" value={zavadaFormData.zavaznost} onChange={(e) => setZavadaFormData({ ...zavadaFormData, zavaznost: e.target.value as any })}
             options={[{ value: 'C1', label: 'C1 - Kritická' }, { value: 'C2', label: 'C2 - Vážná' }, { value: 'C3', label: 'C3 - Drobná' }]} />
           <Select label="Stav" value={zavadaFormData.stav} onChange={(e) => setZavadaFormData({ ...zavadaFormData, stav: e.target.value as any })}
             options={[{ value: 'otevřená', label: 'Otevřená' }, { value: 'v řešení', label: 'V řešení' }, { value: 'vyřešená', label: 'Vyřešená' }]} />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <Select label="Rozvaděč (volitelné)" value={zavadaFormData.rozvadecId?.toString() || ''}
             onChange={(e) => setZavadaFormData({ ...zavadaFormData, rozvadecId: e.target.value ? parseInt(e.target.value) : undefined })}
             options={[{ value: '', label: '-- Nevybráno --' }, ...rozvadece.map(r => ({ value: r.id!.toString(), label: r.nazev }))]} />
@@ -210,12 +210,12 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
             options={[{ value: '', label: '-- Nevybráno --' }, ...mistnosti.map(m => ({ value: m.id!.toString(), label: m.nazev }))]} />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Poznámka / Odkaz na normu</label>
+          <label className="block text-xs font-medium text-slate-700 mb-1">Poznámka / Odkaz na normu</label>
           <textarea value={zavadaFormData.poznamka} onChange={(e) => setZavadaFormData({ ...zavadaFormData, poznamka: e.target.value })}
-            className="w-full px-3 py-2 border rounded-lg border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" rows={3} placeholder="Volitelná poznámka nebo odkaz na normu/zákon..." />
+            className="w-full px-2 py-1.5 border rounded-lg border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs" rows={3} placeholder="Volitelná poznámka nebo odkaz na normu/zákon..." />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Fotky</label>
+          <label className="block text-xs font-medium text-slate-700 mb-1">Fotky</label>
           <input type="file" accept="image/*" multiple
             onChange={(e) => {
               const files = e.target.files;

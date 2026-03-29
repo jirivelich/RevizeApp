@@ -177,7 +177,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
                 >
                   <div className="p-3">
                     <div className="flex items-center justify-between mb-1">
-                      <p className="font-medium text-sm">{m.nazev}</p>
+                      <p className="font-medium text-xs">{m.nazev}</p>
                       <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600">
                         {zarizeniCounts[m.id!] || 0}
                       </span>
@@ -192,7 +192,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
               ))}
             </div>
           ) : (
-            <p className="text-center text-slate-500 py-6 text-sm">Zatím žádné místnosti.</p>
+            <p className="text-center text-slate-500 py-6 text-xs">Zatím žádné místnosti.</p>
           )}
         </Card>
       </div>
@@ -210,14 +210,14 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
               </div>
             }
           >
-            <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-3 bg-slate-50 rounded-lg"><p className="text-xs text-slate-500">Typ</p><p className="font-medium">{selectedMistnost.typ}</p></div>
-              <div className="p-3 bg-slate-50 rounded-lg"><p className="text-xs text-slate-500">Prostředí</p><p className="font-medium">{selectedMistnost.prostredi}</p></div>
-              <div className="p-3 bg-slate-50 rounded-lg"><p className="text-xs text-slate-500">Patro</p><p className="font-medium">{selectedMistnost.patro || '—'}</p></div>
-              <div className="p-3 bg-slate-50 rounded-lg"><p className="text-xs text-slate-500">Plocha</p><p className="font-medium">{selectedMistnost.plocha ? `${selectedMistnost.plocha} m²` : '—'}</p></div>
+            <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="p-2 bg-slate-50 rounded-lg"><p className="text-[10px] text-slate-500">Typ</p><p className="font-medium text-xs">{selectedMistnost.typ}</p></div>
+              <div className="p-2 bg-slate-50 rounded-lg"><p className="text-[10px] text-slate-500">Prostředí</p><p className="font-medium text-xs">{selectedMistnost.prostredi}</p></div>
+              <div className="p-2 bg-slate-50 rounded-lg"><p className="text-[10px] text-slate-500">Patro</p><p className="font-medium text-xs">{selectedMistnost.patro || '—'}</p></div>
+              <div className="p-2 bg-slate-50 rounded-lg"><p className="text-[10px] text-slate-500">Plocha</p><p className="font-medium text-xs">{selectedMistnost.plocha ? `${selectedMistnost.plocha} m²` : '—'}</p></div>
             </div>
 
-            <h4 className="font-medium text-slate-700 mb-3">Zařízení ({zarizeni.length})</h4>
+            <h4 className="font-medium text-sm text-slate-700 mb-2">Zařízení ({zarizeni.length})</h4>
             {zarizeni.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -235,22 +235,22 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
                   <tbody>
                     {zarizeni.map((z) => (
                       <tr key={z.id} className="border-b border-slate-100 hover:bg-slate-50">
-                        <td className="py-2 px-3">
+                        <td className="py-1 px-2 text-xs">
                           <p className="font-medium">{z.nazev}</p>
-                          {z.oznaceni && <p className="text-xs text-slate-400">{z.oznaceni}</p>}
+                          {z.oznaceni && <p className="text-[10px] text-slate-400">{z.oznaceni}</p>}
                         </td>
-                        <td className="py-2 px-3 text-slate-600">{z.pocetKs || 1}</td>
-                        <td className="py-2 px-3"><span className="px-2 py-1 rounded text-xs font-medium bg-slate-100">{z.trida || 'I'}</span></td>
-                        <td className="py-2 px-3 text-slate-600">{z.prikonW ? `${z.prikonW} W` : '—'}</td>
-                        <td className="py-2 px-3 text-slate-600">{z.ochranaPredDotykem || '—'}</td>
-                        <td className="py-2 px-3">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        <td className="py-1 px-2 text-xs text-slate-600">{z.pocetKs || 1}</td>
+                        <td className="py-1 px-2 text-xs"><span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100">{z.trida || 'I'}</span></td>
+                        <td className="py-1 px-2 text-xs text-slate-600">{z.prikonW ? `${z.prikonW} W` : '—'}</td>
+                        <td className="py-1 px-2 text-xs text-slate-600">{z.ochranaPredDotykem || '—'}</td>
+                        <td className="py-1 px-2 text-xs">
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
                             z.stav === 'OK' ? 'bg-green-100 text-green-700' :
                             z.stav === 'závada' ? 'bg-red-100 text-red-700' :
                             'bg-slate-100 text-slate-600'
                           }`}>{z.stav}</span>
                         </td>
-                        <td className="py-2 px-3 text-right">
+                        <td className="py-1 px-2 text-xs text-right">
                           <div className="flex justify-end gap-1">
                             <Button variant="secondary" size="sm" onClick={() => handleEditZarizeni(z)}>✏️</Button>
                             <Button variant="danger" size="sm" onClick={() => handleDeleteZarizeni(z.id!)}>🗑️</Button>
@@ -262,12 +262,12 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
                 </table>
               </div>
             ) : (
-              <p className="text-center text-slate-500 py-6 text-sm">Zatím žádná zařízení. Přidejte první kliknutím na tlačítko výše.</p>
+              <p className="text-center text-slate-500 py-6 text-xs">Zatím žádná zařízení. Přidejte první kliknutím na tlačítko výše.</p>
             )}
           </Card>
         ) : (
           <Card title="Detail místnosti">
-            <p className="text-center text-slate-500 py-12">Vyberte místnost ze seznamu vlevo pro zobrazení detailu a správu zařízení.</p>
+            <p className="text-center text-slate-500 py-12 text-sm">Vyberte místnost ze seznamu vlevo pro zobrazení detailu a správu zařízení.</p>
           </Card>
         )}
       </div>
@@ -285,13 +285,13 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
         </>
       }
     >
-      <form onSubmit={handleAddMistnost} className="space-y-4">
+      <form onSubmit={handleAddMistnost} className="space-y-3">
         <Input label="Název místnosti" value={mistnostFormData.nazev} onChange={(e) => setMistnostFormData({ ...mistnostFormData, nazev: e.target.value })} placeholder="např. Obývací pokoj, Kuchyň..." required />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <Input label="Patro" value={mistnostFormData.patro} onChange={(e) => setMistnostFormData({ ...mistnostFormData, patro: e.target.value })} placeholder="např. 1.NP, přízemí..." />
           <Input label="Plocha (m²)" type="number" value={mistnostFormData.plocha?.toString() || ''} onChange={(e) => setMistnostFormData({ ...mistnostFormData, plocha: e.target.value ? parseFloat(e.target.value) : undefined })} placeholder="např. 25" />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <Select label="Typ místnosti" value={mistnostFormData.typ} onChange={(e) => setMistnostFormData({ ...mistnostFormData, typ: e.target.value })}
             options={[
               { value: 'obytný prostor', label: 'Obytný prostor' }, { value: 'kuchyň', label: 'Kuchyň' },
@@ -325,9 +325,9 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
         </>
       }
     >
-      <form onSubmit={handleAddZarizeni} className="space-y-4">
+      <form onSubmit={handleAddZarizeni} className="space-y-3">
         <Input label="Název zařízení" value={zarizeniFormData.nazev} onChange={(e) => setZarizeniFormData({ ...zarizeniFormData, nazev: e.target.value })} placeholder="např. Zásuvka u okna, Hlavní svítidlo..." required />
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-3">
           <Input label="Označení" value={zarizeniFormData.oznaceni} onChange={(e) => setZarizeniFormData({ ...zarizeniFormData, oznaceni: e.target.value })} placeholder="např. Z1, L2..." />
           <Input label="Počet kusů" type="number" min="1" value={zarizeniFormData.pocetKs.toString()}
             onChange={(e) => {
@@ -350,7 +350,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
             }}
             options={[{ value: 'I', label: 'I' }, { value: 'II', label: 'II' }, { value: 'III', label: 'III' }]} />
         </div>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-3">
           <Input label="Příkon (W)" type="number" value={zarizeniFormData.prikonW?.toString() || ''}
             onChange={(e) => setZarizeniFormData({ ...zarizeniFormData, prikonW: e.target.value ? parseFloat(e.target.value) : undefined })} placeholder="např. 60" />
           <Input label="Ochrana před dotykem" value={zarizeniFormData.ochranaPredDotykem}
