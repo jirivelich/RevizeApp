@@ -12,6 +12,7 @@ import '../ReportPrint/print.css';
 interface JisteniRow { nazev: string; typ: string; hodnota: string; charakteristika: string; stav: '' | 'V' | 'N' | 'NA'; poznamka: string; }
 interface IzolaceRow { misto: string; napeti: string; hodnota: string; pozadavek: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; }
 interface SpojitostRow { misto: string; proud: string; hodnota: string; pozadavek: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; }
+interface ImpedanceRow { misto: string; hodnota: string; pozadavek: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; }
 interface RcdRow { nazev: string; idn: string; typ: string; cas: string; limit: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; }
 interface KontrolaRow { nazev: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; editable: boolean; }
 interface PristrojRow { typ: string; sn: string; kalibrace: string; trida: string; poznamka: string; }
@@ -20,8 +21,9 @@ interface StrojniFormData {
   strojNazev: string; strojSn: string; strojVyrobce: string; strojRok: string;
   strojNapajeni: string; strojPrikon: string; strojProud: string; strojIp: string;
   strojTrida: string; strojCe: string; mistoHala: string;
+  strojPrivod: '' | 'pevny' | 'pohyblivy';
   jisteni: JisteniRow[]; izolace: IzolaceRow[]; spojitost: SpojitostRow[];
-  rcd: RcdRow[]; kontroly: KontrolaRow[]; pristroje: PristrojRow[];
+  impedance: ImpedanceRow[]; rcd: RcdRow[]; kontroly: KontrolaRow[]; pristroje: PristrojRow[];
   verdikt: '' | 'pass' | 'fail';
   posudekZavady: string; posudekDoporuceni: string; posudekNormy: string;
 }
@@ -266,6 +268,7 @@ export function StrojniZarizeniPrintPage() {
   const izolaceRows = (sd?.izolace || []).filter(r => (r.misto.trim() || r.hodnota.trim() || r.vysledek) && r.vysledek !== 'NA');
   const spojitostRows = (sd?.spojitost || []).filter(r => (r.misto.trim() || r.hodnota.trim() || r.vysledek) && r.vysledek !== 'NA');
   const rcdRows = (sd?.rcd || []).filter(r => (r.nazev.trim() || r.cas.trim() || r.vysledek) && r.vysledek !== 'NA');
+  const impedanceRows = (sd?.impedance || []).filter(r => (r.misto.trim() || r.hodnota.trim() || r.vysledek) && r.vysledek !== 'NA');
   const kontrolyRows = (sd?.kontroly || []).filter(r => r.nazev.trim() && r.vysledek && r.vysledek !== 'NA');
   const pristrojRows = (sd?.pristroje || []).filter(r => r.typ.trim());
 
@@ -330,6 +333,10 @@ export function StrojniZarizeniPrintPage() {
           <tr>
             <td className="label-cell">Třída ochrany:</td><td>{sd.strojTrida || '—'}</td>
             <td className="label-cell">CE / Prohlášení o shodě:</td><td>{sd.strojCe || '—'}</td>
+          </tr>
+          <tr>
+            <td className="label-cell">Připojení stroje:</td><td>{sd.strojPrivod === 'pevny' ? 'Pevný přívod' : sd.strojPrivod === 'pohyblivy' ? 'Pohyblivý přívod' : '—'}</td>
+            <td className="label-cell">&nbsp;</td><td>&nbsp;</td>
           </tr>
         </tbody></table>
       </ReportSection>
@@ -411,9 +418,26 @@ export function StrojniZarizeniPrintPage() {
       </ReportSection>
       )}
 
+      {/* h2) MĚŘENÍ IMPEDANCE PORUCHOVÉ SMYČKY */}
+      {impedanceRows.length > 0 && (
+      <ReportSection title="9. Měření impedance poruchové smyčky">
+        <ReportTable
+          columns={['Měřené místo', 'Naměřeno (Ω)', 'Požadavek (max.)', 'Výsledek', 'Pozn.']}
+          widths={['30%', '20%', '20%', '14%', '16%']}
+          rows={impedanceRows.map(r => [
+            r.misto,
+            r.hodnota || '—',
+            r.pozadavek || '—',
+            stavLabel(r.vysledek),
+            r.poznamka || '',
+          ])}
+        />
+      </ReportSection>
+      )}
+
       {/* i) MĚŘENÍ PROUDOVÝCH CHRÁNIČŮ (RCD) */}
       {rcdRows.length > 0 && (
-      <ReportSection title="9. Měření proudových chráničů (RCD)">
+      <ReportSection title="10. Měření proudových chráničů (RCD)">
         <ReportTable
           columns={['Označení RCD', 'IΔn (mA)', 'Typ', 'Čas (ms)', 'Limit (ms)', 'Výsledek', 'Pozn.']}
           widths={['18%', '10%', '12%', '14%', '12%', '14%', '20%']}
@@ -432,7 +456,7 @@ export function StrojniZarizeniPrintPage() {
 
       {/* j) FUNKČNÍ KONTROLY */}
       {kontrolyRows.length > 0 && (
-      <ReportSection title="10. Funkční kontroly">
+      <ReportSection title="11. Funkční kontroly">
         <ReportTable
           columns={['Kontrolovaný prvek', 'Výsledek', 'Poznámka']}
           widths={['50%', '20%', '30%']}
@@ -446,7 +470,7 @@ export function StrojniZarizeniPrintPage() {
       )}
 
       {/* k) MĚŘICÍ PŘÍSTROJE */}
-      <ReportSection title="11. Soupis použitých měřicích přístrojů">
+      <ReportSection title="12. Soupis použitých měřicích přístrojů">
         {pristroje.length > 0 ? (
           <ReportTable
             columns={['Název', 'Výrobce / Model', 'Výrobní číslo', 'Kalibrace', 'Platnost']}
@@ -477,7 +501,7 @@ export function StrojniZarizeniPrintPage() {
       </ReportSection>
 
       {/* l) ZÁVADY */}
-      <ReportSection title="12. Přehled zjištěných závad">
+      <ReportSection title="13. Přehled zjištěných závad">
         {zavady.length > 0 ? (
           <ReportTable
             columns={['#', 'Popis závady', 'Závažnost', 'Stav', 'Zjištěna']}
@@ -507,7 +531,7 @@ export function StrojniZarizeniPrintPage() {
       </ReportSection>
 
       {/* m) VYHODNOCENÍ */}
-      <ReportSection title="13. Vyhodnocení">
+      <ReportSection title="14. Vyhodnocení">
         <div className="report-result" style={{ borderColor: vysledekColor }}>
           <div className="report-result-value" style={{ color: vysledekColor }}>
             {vysledekLabel}
@@ -519,14 +543,14 @@ export function StrojniZarizeniPrintPage() {
       </ReportSection>
 
       {/* n) LHŮTA PŘÍŠTÍHO OVĚŘENÍ */}
-      <ReportSection title="14. Doporučená lhůta provedení příštího ověření">
+      <ReportSection title="15. Doporučená lhůta provedení příštího ověření">
         <p className="report-text">
           Příští ověření by mělo být provedeno nejpozději do <strong>{revize.lhutaText?.trim() || (revize.datumPlatnosti ? new Date(revize.datumPlatnosti).toLocaleDateString('cs-CZ') : `${revize.termin} měsíců od data provedení`)}</strong>.
         </p>
       </ReportSection>
 
       {/* o) PODPISY */}
-      <ReportSection title="15. Potvrzení o předání protokolu">
+      <ReportSection title="16. Potvrzení o předání protokolu">
         <div className="report-signatures">
           <div className="report-signature-box">
             <div className="report-signature-label">Revizní technik:</div>

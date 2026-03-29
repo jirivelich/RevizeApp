@@ -16,6 +16,7 @@ import { TW } from './tw';
 interface JisteniRow { nazev: string; typ: string; hodnota: string; charakteristika: string; stav: '' | 'V' | 'N' | 'NA'; poznamka: string; }
 interface IzolaceRow { misto: string; napeti: string; hodnota: string; pozadavek: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; }
 interface SpojitostRow { misto: string; proud: string; hodnota: string; pozadavek: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; }
+interface ImpedanceRow { misto: string; hodnota: string; pozadavek: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; }
 interface RcdRow { nazev: string; idn: string; typ: string; cas: string; limit: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; }
 interface KontrolaRow { nazev: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; editable: boolean; }
 interface PristrojRow { typ: string; sn: string; kalibrace: string; trida: string; poznamka: string; }
@@ -24,8 +25,9 @@ interface StrojniFormData {
   strojNazev: string; strojSn: string; strojVyrobce: string; strojRok: string;
   strojNapajeni: string; strojPrikon: string; strojProud: string; strojIp: string;
   strojTrida: string; strojCe: string; mistoHala: string;
+  strojPrivod: '' | 'pevny' | 'pohyblivy';
   jisteni: JisteniRow[]; izolace: IzolaceRow[]; spojitost: SpojitostRow[];
-  rcd: RcdRow[]; kontroly: KontrolaRow[]; pristroje: PristrojRow[];
+  impedance: ImpedanceRow[]; rcd: RcdRow[]; kontroly: KontrolaRow[]; pristroje: PristrojRow[];
   verdikt: '' | 'pass' | 'fail';
   posudekZavady: string; posudekDoporuceni: string; posudekNormy: string;
 }
@@ -50,6 +52,12 @@ const DEFAULT_SPOJITOST: SpojitostRow[] = [
   { misto: 'Kostra → pohyblivé části', proud: '≥ 200 mA', hodnota: '', pozadavek: '≤ 0,1 Ω', vysledek: '', poznamka: '' },
   { misto: 'Kostra → kryt motoru', proud: '≥ 200 mA', hodnota: '', pozadavek: '≤ 0,1 Ω', vysledek: '', poznamka: '' },
   { misto: '', proud: '', hodnota: '', pozadavek: '', vysledek: '', poznamka: '' },
+];
+const DEFAULT_IMPEDANCE: ImpedanceRow[] = [
+  { misto: 'Napájecí přívod L1-PE', hodnota: '', pozadavek: '', vysledek: '', poznamka: '' },
+  { misto: 'Napájecí přívod L2-PE', hodnota: '', pozadavek: '', vysledek: '', poznamka: '' },
+  { misto: 'Napájecí přívod L3-PE', hodnota: '', pozadavek: '', vysledek: '', poznamka: '' },
+  { misto: '', hodnota: '', pozadavek: '', vysledek: '', poznamka: '' },
 ];
 const DEFAULT_RCD: RcdRow[] = [
   { nazev: 'RCD 1', idn: '30', typ: '', cas: '', limit: '≤ 300', vysledek: '', poznamka: '' },
@@ -85,10 +93,11 @@ function createDefault(): StrojniFormData {
   return {
     strojNazev: '', strojSn: '', strojVyrobce: '', strojRok: '',
     strojNapajeni: '', strojPrikon: '', strojProud: '', strojIp: '',
-    strojTrida: '', strojCe: '', mistoHala: '',
+    strojTrida: '', strojCe: '', mistoHala: '', strojPrivod: '',
     jisteni: DEFAULT_JISTENI.map(r => ({ ...r })),
     izolace: DEFAULT_IZOLACE.map(r => ({ ...r })),
     spojitost: DEFAULT_SPOJITOST.map(r => ({ ...r })),
+    impedance: DEFAULT_IMPEDANCE.map(r => ({ ...r })),
     rcd: DEFAULT_RCD.map(r => ({ ...r })),
     kontroly: DEFAULT_KONTROLY.map(r => ({ ...r })),
     pristroje: DEFAULT_PRISTROJE.map(r => ({ ...r })),
@@ -277,6 +286,12 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
               </select></div>
             <div className="flex flex-col gap-1"><label className={TW.label}>Hala / pracoviště</label>
               <input type="text" className={TW.input} value={fd.mistoHala} onChange={e => upd('mistoHala', e.target.value)} /></div>
+            <div className="flex flex-col gap-1"><label className={TW.label}>Připojení stroje</label>
+              <select className={TW.input} value={fd.strojPrivod} onChange={e => upd('strojPrivod', e.target.value as '' | 'pevny' | 'pohyblivy')}>
+                <option value="">— vyberte —</option>
+                <option value="pevny">Pevný přívod</option>
+                <option value="pohyblivy">Pohyblivý přívod</option>
+              </select></div>
           </div>
         </div>
       </div>
@@ -388,10 +403,44 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
         </div>
       </div>
 
-      {/* ═══ 05 – RCD ═══ */}
+      {/* ═══ 05 – IMPEDANCE PORUCHOVÉ SMYČKY ═══ */}
       <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
         <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-          <span className="text-blue-400">05</span> Měření proudových chráničů (RCD)
+          <span className="text-blue-400">05</span> Měření impedance poruchové smyčky
+        </div>
+        <div className="p-4">
+          <table className="w-full text-sm border-collapse mt-1">
+            <thead><tr>
+              <th className={TW.th} style={{ width: '32%' }}>Měřené místo</th>
+              <th className={TW.th} style={{ width: '18%' }}>Naměřeno (Ω)</th>
+              <th className={TW.th} style={{ width: '18%' }}>Požadavek (max.)</th>
+              <th className={TW.th} style={{ width: '12%' }}>Výsledek</th>
+              <th className={TW.th} style={{ width: '20%' }}>Pozn.</th>
+            </tr></thead>
+            <tbody>
+              {fd.impedance.map((r, i) => (
+                <tr key={i} className="even:bg-slate-50/50">
+                  <td className={TW.td}><input className={TW.tblInput} value={r.misto} onChange={e => updRow('impedance', i, 'misto', e.target.value)} /></td>
+                  <td className={TW.td}><input className={TW.tblInput} value={r.hodnota} onChange={e => updRow('impedance', i, 'hodnota', e.target.value)} /></td>
+                  <td className={TW.td}><input className={TW.tblInput} value={r.pozadavek} onChange={e => updRow('impedance', i, 'pozadavek', e.target.value)} /></td>
+                  <td className={TW.td}><div className="flex gap-1.5">
+                    <CB val="V" label="V" active={r.vysledek==='V'} onClick={() => toggleCheck('impedance',i,'vysledek','V')} />
+                    <CB val="N" label="N" active={r.vysledek==='N'} onClick={() => toggleCheck('impedance',i,'vysledek','N')} />
+                    <CB val="NA" label="NA" active={r.vysledek==='NA'} onClick={() => toggleCheck('impedance',i,'vysledek','NA')} />
+                  </div></td>
+                  <td className={TW.td}><input className={TW.tblInput} value={r.poznamka} onChange={e => updRow('impedance', i, 'poznamka', e.target.value)} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="text-xs text-slate-400 italic mt-1.5">V = Vyhovuje &nbsp;|&nbsp; N = Nevyhovuje &nbsp;|&nbsp; NA = Neaplikováno</p>
+        </div>
+      </div>
+
+      {/* ═══ 06 – RCD ═══ */}
+      <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+          <span className="text-blue-400">06</span> Měření proudových chráničů (RCD)
         </div>
         <div className="p-4">
           <table className="w-full text-sm border-collapse mt-1">
@@ -421,10 +470,10 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
         </div>
       </div>
 
-      {/* ═══ 06 – FUNKČNÍ KONTROLY ═══ */}
+      {/* ═══ 07 – FUNKČNÍ KONTROLY ═══ */}
       <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
         <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-          <span className="text-blue-400">06</span> Funkční kontroly
+          <span className="text-blue-400">07</span> Funkční kontroly
         </div>
         <div className="p-4">
           <table className="w-full text-sm border-collapse mt-1">
@@ -453,10 +502,10 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
         </div>
       </div>
 
-      {/* ═══ 07 – MĚŘICÍ PŘÍSTROJE ═══ */}
+      {/* ═══ 08 – MĚŘICÍ PŘÍSTROJE ═══ */}
       <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
         <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-          <span className="text-blue-400">07</span> Použité měřicí přístroje
+          <span className="text-blue-400">08</span> Použité měřicí přístroje
           <button
             type="button"
             onClick={() => setIsPristrojModalOpen(true)}
@@ -577,10 +626,10 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
         </div>
       </Modal>
 
-      {/* ═══ 08 – POSUDEK ═══ */}
+      {/* ═══ 09 – POSUDEK ═══ */}
       <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
         <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-          <span className="text-blue-400">08</span> Posudek
+          <span className="text-blue-400">09</span> Posudek
         </div>
         <div className="p-4">
           <div className="mb-3.5">
