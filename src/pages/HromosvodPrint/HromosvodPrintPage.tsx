@@ -127,6 +127,15 @@ export function HromosvodPrintPage() {
       }
 
       setData({ revize, nastaveni: nastaveniData || null, zakaznik, zavady, pristroje });
+
+      // Nastavit document.title pro výchozí název PDF souboru
+      const titleParts = [
+        revize.cisloRevize,
+        zakaznik?.nazev || revize.objednatel,
+        revize.adresa,
+        'LPS',
+      ].filter(Boolean);
+      document.title = titleParts.join(' - ');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Chyba při načítání dat');
     } finally {

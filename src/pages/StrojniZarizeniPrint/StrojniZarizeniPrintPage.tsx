@@ -152,6 +152,15 @@ export function StrojniZarizeniPrintPage() {
       }
 
       setData({ revize, nastaveni: nastaveniData || null, zakaznik, zavady, pristroje, strojniData });
+
+      // Nastavit document.title pro výchozí název PDF souboru
+      const titleParts = [
+        revize.cisloRevize,
+        zakaznik?.nazev || revize.objednatel,
+        revize.adresa,
+        'stroj',
+      ].filter(Boolean);
+      document.title = titleParts.join(' - ');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Chyba při načítání dat');
     } finally {
