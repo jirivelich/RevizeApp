@@ -244,7 +244,56 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
 
   const handleRozvadecDragStart = (r: Rozvadec) => { setDraggedRozvadec(r); };
   const handleRozvadecDragEnd = () => { setDraggedRozvadec(null); };
+  // Drag & drop okruhů (v rámci rozvaděče)
+  const handleDrop = async (targetOkruh: Okruh) => {
+    if (!draggedOkruh || draggedOkruh.id === targetOkruh.id) {
+      setDraggedOkruh(null);
+      return;
+    }
+    // Seřadit okruhy podle čísla
+    const sorted = [...okruhy].sort((a, b) => a.cislo - b.cislo);
+    const draggedIndex = sorted.findIndex(o => o.id === draggedOkruh.id);
+    const targetIndex = sorted.findIndex(o => o.id === targetOkruh.id);
+    const [removed] = sorted.splice(draggedIndex, 1);
+    sorted.splice(targetIndex, 0, removed);
+    // Aktualizovat čísla okruhů podle nového pořadí
+    for (let i = 0; i < sorted.length; i++) {
+      if (sorted[i].id) {
+        await okruhService.update(sorted[i].id!, { cislo: i + 1 });
+      }
+    }
+    if (selectedRozvadec?.id) {
+      const okruhyData = await okruhService.getByRozvadec(selectedRozvadec.id);
+      setOkruhy(okruhyData);
+    }
+    setDraggedOkruh(null);
+  };
+
   const handleRozvadecDrop = async (targetRozvadec: Rozvadec) => {
+      // Drag & drop okruhů (v rámci rozvaděče)
+      const handleDrop = async (targetOkruh: Okruh) => {
+        if (!draggedOkruh || draggedOkruh.id === targetOkruh.id) {
+          setDraggedOkruh(null);
+          return;
+        }
+        // Seřadit okruhy podle čísla
+        const sorted = [...okruhy].sort((a, b) => a.cislo - b.cislo);
+        const draggedIndex = sorted.findIndex(o => o.id === draggedOkruh.id);
+        const targetIndex = sorted.findIndex(o => o.id === targetOkruh.id);
+        const [removed] = sorted.splice(draggedIndex, 1);
+        sorted.splice(targetIndex, 0, removed);
+        // Aktualizovat čísla okruhů podle nového pořadí
+        for (let i = 0; i < sorted.length; i++) {
+          if (sorted[i].id) {
+            await okruhService.update(sorted[i].id!, { cislo: i + 1 });
+          }
+        }
+        if (selectedRozvadec?.id) {
+          const okruhyData = await okruhService.getByRozvadec(selectedRozvadec.id);
+          setOkruhy(okruhyData);
+        }
+        setDraggedOkruh(null);
+      };
     if (!draggedRozvadec || draggedRozvadec.id === targetRozvadec.id) {
       setDraggedRozvadec(null);
       return;
