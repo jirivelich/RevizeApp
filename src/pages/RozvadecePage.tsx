@@ -85,8 +85,9 @@ export function RozvadecDetailPage() {
     jisticProud: '16A',
     vodic: '3x2,5',
     pocetFazi: 1,
-    izolacniOdpor: undefined as number | undefined,
-    impedanceSmycky: undefined as number | undefined,
+    izolacniOdpor: '',
+    impedanceSmycky: '',
+    impedanceSmyckyMax: false,
     proudovyChranicMa: undefined as number | undefined,
     casOdpojeni: undefined as number | undefined,
     poznamka: '',
@@ -95,11 +96,13 @@ export function RozvadecDetailPage() {
   const handleAddOkruh = (e: React.FormEvent) => {
     e.preventDefault();
     if (rozvadec?.id) {
+      const { impedanceSmyckyMax, ...okruhData } = okruhFormData;
+      const saveData = { ...okruhData, impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky };
       const onDone = () => { setIsOkruhModalOpen(false); setEditingOkruh(null); resetOkruhForm(); };
       if (editingOkruh?.id) {
-        updateOkruh.mutate({ id: editingOkruh.id, data: { ...okruhFormData, rozvadecId: rozvadec.id } }, { onSuccess: onDone });
+        updateOkruh.mutate({ id: editingOkruh.id, data: { ...saveData, rozvadecId: rozvadec.id } }, { onSuccess: onDone });
       } else {
-        createOkruh.mutate({ ...okruhFormData, rozvadecId: rozvadec.id }, { onSuccess: onDone });
+        createOkruh.mutate({ ...saveData, rozvadecId: rozvadec.id }, { onSuccess: onDone });
       }
     }
   };
@@ -113,8 +116,9 @@ export function RozvadecDetailPage() {
       jisticProud: '16A',
       pocetFazi: 1,
       vodic: '3x2,5',
-      izolacniOdpor: undefined,
-      impedanceSmycky: undefined,
+      izolacniOdpor: '',
+      impedanceSmycky: '',
+      impedanceSmyckyMax: false,
       proudovyChranicMa: undefined,
       casOdpojeni: undefined,
       poznamka: '',
@@ -130,8 +134,9 @@ export function RozvadecDetailPage() {
       jisticProud: okruh.jisticProud,
       pocetFazi: okruh.pocetFazi || 1,
       vodic: okruh.vodic,
-      izolacniOdpor: okruh.izolacniOdpor,
-      impedanceSmycky: okruh.impedanceSmycky,
+      izolacniOdpor: okruh.izolacniOdpor || '',
+      impedanceSmycky: okruh.impedanceSmycky?.replace(/^max\.\s*/, '') || '',
+      impedanceSmyckyMax: okruh.impedanceSmycky?.startsWith('max.') || false,
       proudovyChranicMa: okruh.proudovyChranicMa,
       casOdpojeni: okruh.casOdpojeni,
       poznamka: okruh.poznamka || '',
@@ -214,10 +219,10 @@ export function RozvadecDetailPage() {
                     </td>
                     <td className="py-2 px-3 text-slate-600">{o.vodic}</td>
                     <td className="py-2 px-3 text-slate-600">
-                      {o.izolacniOdpor ? `${o.izolacniOdpor} MΩ` : '—'}
+                      {o.izolacniOdpor || '—'}
                     </td>
                     <td className="py-2 px-3 text-slate-600">
-                      {o.impedanceSmycky ? `${o.impedanceSmycky} Ω` : '—'}
+                      {o.impedanceSmycky || '—'}
                     </td>
                     <td className="py-2 px-3 text-right">
                       <div className="flex justify-end gap-1">
@@ -310,19 +315,23 @@ export function RozvadecDetailPage() {
               ]}
             />
             <Input
-              type="number"
-              step="0.1"
               label="Izolační odpor (MΩ)"
-              value={okruhFormData.izolacniOdpor || ''}
-              onChange={(e) => setOkruhFormData({ ...okruhFormData, izolacniOdpor: e.target.value ? parseFloat(e.target.value) : undefined })}
+              value={okruhFormData.izolacniOdpor}
+              onChange={(e) => setOkruhFormData({ ...okruhFormData, izolacniOdpor: e.target.value })}
             />
-            <Input
-              type="number"
-              step="0.01"
-              label="Impedance smyčky (Ω)"
-              value={okruhFormData.impedanceSmycky || ''}
-              onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmycky: e.target.value ? parseFloat(e.target.value) : undefined })}
-            />
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <Input
+                  label="Impedance smyčky (Ω)"
+                  value={okruhFormData.impedanceSmycky}
+                  onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmycky: e.target.value })}
+                />
+              </div>
+              <label className="flex items-center gap-1.5 pb-2 cursor-pointer select-none">
+                <input type="checkbox" checked={okruhFormData.impedanceSmyckyMax} onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmyckyMax: e.target.checked })} className="rounded border-slate-300" />
+                <span className="text-xs text-slate-600 whitespace-nowrap">max.</span>
+              </label>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Input
