@@ -545,7 +545,11 @@ export function ReportPrintPage() {
                 widths={['5%', '8%', '25%', '12%', '12%', '12%', '13%', '13%']}
                 rows={roz.okruhy.map(o => [
                   String(o.cislo),
-                  `${o.jisticTyp}/${o.jisticProud}/${o.pocetFazi || 1}`,
+                  [
+                    o.jisticTyp,
+                    o.jisticProud ? `/${o.jisticProud}` : '',
+                    o.pocetFazi ? `/${o.pocetFazi}` : ''
+                  ].join('').replace(/\/\//g, '/').replace(/\/$/, ''),
                   o.nazev,
                   o.vodic,
                   o.izolacniOdpor != null ? String(o.izolacniOdpor) : '—',

@@ -401,7 +401,11 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                         </td>
                         <td className="py-1 px-2 text-xs">
                           <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100">
-                            {`${o.jisticTyp}/${o.jisticProud}/${o.pocetFazi || 1}`}
+                            {[
+                              o.jisticTyp,
+                              o.jisticProud ? `/${o.jisticProud}` : '',
+                              o.pocetFazi ? `/${o.pocetFazi}` : ''
+                            ].join('').replace(/\/\//g, '/').replace(/\/$/, '')}
                           </span>
                         </td>
                         <td className="py-1 px-2 text-xs">{o.nazev}</td>
