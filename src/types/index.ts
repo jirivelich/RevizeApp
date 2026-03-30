@@ -146,8 +146,8 @@ export interface Okruh {
   jisticProud: string;
   pocetFazi: number;
   vodic: string;
-  izolacniOdpor?: number;
-  impedanceSmycky?: number;
+  izolacniOdpor?: string;
+  impedanceSmycky?: string;
   proudovyChranicMa?: number;
   casOdpojeni?: number;
   poznamka?: string;

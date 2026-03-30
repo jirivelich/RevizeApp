@@ -92,8 +92,9 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     jisticProud: '16A',
     pocetFazi: 1,
     vodic: '3x2,5',
-    izolacniOdpor: undefined as number | undefined,
-    impedanceSmycky: undefined as number | undefined,
+    izolacniOdpor: '',
+    impedanceSmycky: '',
+    impedanceSmyckyMax: false,
     proudovyChranicMa: undefined as number | undefined,
     casOdpojeni: undefined as number | undefined,
     poznamka: '',
@@ -157,7 +158,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     const nextCislo = okruhy.length > 0 ? Math.max(...okruhy.map(o => o.cislo)) + 1 : 1;
     setOkruhFormData({
       cislo: nextCislo, nazev: '', jisticTyp: 'B', jisticProud: '16A', pocetFazi: 1, vodic: '3x2,5',
-      izolacniOdpor: undefined, impedanceSmycky: undefined, proudovyChranicMa: undefined, casOdpojeni: undefined, poznamka: '',
+      izolacniOdpor: '', impedanceSmycky: '', impedanceSmyckyMax: false, proudovyChranicMa: undefined, casOdpojeni: undefined, poznamka: '',
     });
   };
 
@@ -165,9 +166,13 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     e.preventDefault();
     if (selectedRozvadec?.id) {
       if (editingOkruh?.id) {
-        await okruhService.update(editingOkruh.id, okruhFormData);
+          const { impedanceSmyckyMax, ...okruhData } = okruhFormData;
+        const saveData = { ...okruhData, impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky };
+        await okruhService.update(editingOkruh.id, saveData);
       } else {
-        await okruhService.create({ ...okruhFormData, rozvadecId: selectedRozvadec.id });
+        const { impedanceSmyckyMax, ...okruhData } = okruhFormData;
+        const saveData = { ...okruhData, impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky };
+        await okruhService.create({ ...saveData, rozvadecId: selectedRozvadec.id });
       }
       setIsOkruhModalOpen(false);
       setEditingOkruh(null);
@@ -182,8 +187,9 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     setEditingOkruh(okruh);
     setOkruhFormData({
       cislo: okruh.cislo, nazev: okruh.nazev, jisticTyp: okruh.jisticTyp, jisticProud: okruh.jisticProud,
-      pocetFazi: okruh.pocetFazi || 1, vodic: okruh.vodic, izolacniOdpor: okruh.izolacniOdpor,
-      impedanceSmycky: okruh.impedanceSmycky, proudovyChranicMa: okruh.proudovyChranicMa,
+      pocetFazi: okruh.pocetFazi || 1, vodic: okruh.vodic, izolacniOdpor: okruh.izolacniOdpor || '',
+      impedanceSmycky: okruh.impedanceSmycky?.replace(/^max\.\s*/, '') || '', impedanceSmyckyMax: okruh.impedanceSmycky?.startsWith('max.') || false,
+      proudovyChranicMa: okruh.proudovyChranicMa,
       casOdpojeni: okruh.casOdpojeni, poznamka: okruh.poznamka || '',
     });
     setIsOkruhModalOpen(true);
@@ -337,8 +343,8 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                         </td>
                         <td className="py-1 px-2 text-xs">{o.nazev}</td>
                         <td className="py-1 px-2 text-xs text-slate-600">{o.vodic}</td>
-                        <td className="py-1 px-2 text-xs text-slate-600">{o.izolacniOdpor ? `${o.izolacniOdpor} MΩ` : '—'}</td>
-                        <td className="py-1 px-2 text-xs text-slate-600">{o.impedanceSmycky ? `${o.impedanceSmycky} Ω` : '—'}</td>
+                        <td className="py-1 px-2 text-xs text-slate-600">{o.izolacniOdpor || '—'}</td>
+                        <td className="py-1 px-2 text-xs text-slate-600">{o.impedanceSmycky || '—'}</td>
                         <td className="py-1 px-2 text-xs text-right">
                           <div className="flex justify-end gap-1">
                             <Button variant="secondary" size="sm" onClick={() => handleDuplicateOkruh(o)} title="Duplikovat">D</Button>
@@ -414,8 +420,16 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
           <Input label="Vodič" value={okruhFormData.vodic} onChange={(e) => setOkruhFormData({ ...okruhFormData, vodic: e.target.value })} />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <Input type="number" step="0.1" label="Izolační odpor (MΩ)" value={okruhFormData.izolacniOdpor || ''} onChange={(e) => setOkruhFormData({ ...okruhFormData, izolacniOdpor: e.target.value ? parseFloat(e.target.value) : undefined })} />
-          <Input type="number" step="0.01" label="Impedance smyčky (Ω)" value={okruhFormData.impedanceSmycky || ''} onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmycky: e.target.value ? parseFloat(e.target.value) : undefined })} />
+          <Input label="Izolační odpor (MΩ)" value={okruhFormData.izolacniOdpor} onChange={(e) => setOkruhFormData({ ...okruhFormData, izolacniOdpor: e.target.value })} />
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <Input label="Impedance smyčky (Ω)" value={okruhFormData.impedanceSmycky} onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmycky: e.target.value })} />
+            </div>
+            <label className="flex items-center gap-1.5 pb-2 cursor-pointer select-none">
+              <input type="checkbox" checked={okruhFormData.impedanceSmyckyMax} onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmyckyMax: e.target.checked })} className="rounded border-slate-300" />
+              <span className="text-xs text-slate-600 whitespace-nowrap">max.</span>
+            </label>
+          </div>
         </div>
       </form>
     </Modal>
