@@ -97,7 +97,7 @@ export function RozvadecDetailPage() {
     e.preventDefault();
     if (rozvadec?.id) {
       const { impedanceSmyckyMax, ...okruhData } = okruhFormData;
-      const saveData = { ...okruhData, impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky };
+      const saveData = { ...okruhData, izolacniOdpor: okruhData.izolacniOdpor || undefined, impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky || undefined };
       const onDone = () => { setIsOkruhModalOpen(false); setEditingOkruh(null); resetOkruhForm(); };
       if (editingOkruh?.id) {
         updateOkruh.mutate({ id: editingOkruh.id, data: { ...saveData, rozvadecId: rozvadec.id } }, { onSuccess: onDone });

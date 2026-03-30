@@ -167,11 +167,11 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     if (selectedRozvadec?.id) {
       if (editingOkruh?.id) {
           const { impedanceSmyckyMax, ...okruhData } = okruhFormData;
-        const saveData = { ...okruhData, impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky };
+        const saveData = { ...okruhData, izolacniOdpor: okruhData.izolacniOdpor || undefined, impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky || undefined };
         await okruhService.update(editingOkruh.id, saveData);
       } else {
         const { impedanceSmyckyMax, ...okruhData } = okruhFormData;
-        const saveData = { ...okruhData, impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky };
+        const saveData = { ...okruhData, izolacniOdpor: okruhData.izolacniOdpor || undefined, impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky || undefined };
         await okruhService.create({ ...saveData, rozvadecId: selectedRozvadec.id });
       }
       setIsOkruhModalOpen(false);

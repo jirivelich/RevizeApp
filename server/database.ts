@@ -123,8 +123,8 @@ export async function initializeDatabase() {
         "jisticProud" TEXT,
         "pocetFazi" INTEGER,
         vodic TEXT,
-        "izolacniOdpor" REAL,
-        "impedanceSmycky" REAL,
+        "izolacniOdpor" TEXT,
+        "impedanceSmycky" TEXT,
         "proudovyChranicMa" REAL,
         "casOdpojeni" REAL,
         poznamka TEXT
@@ -388,6 +388,9 @@ export async function initializeDatabase() {
           ALTER TABLE zakazka ADD CONSTRAINT "zakazka_revizeId_fkey" FOREIGN KEY ("revizeId") REFERENCES revize(id) ON DELETE SET NULL;
         END IF;
       END $$`,
+      // Okruh: izolacniOdpor a impedanceSmycky z REAL na TEXT
+      'ALTER TABLE okruh ALTER COLUMN "izolacniOdpor" TYPE TEXT USING "izolacniOdpor"::TEXT',
+      'ALTER TABLE okruh ALTER COLUMN "impedanceSmycky" TYPE TEXT USING "impedanceSmycky"::TEXT',
     ];
     
     for (const migration of migrations) {

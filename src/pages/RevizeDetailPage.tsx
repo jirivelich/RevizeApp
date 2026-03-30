@@ -310,7 +310,7 @@ export function RevizeDetailPage() {
     e.preventDefault();
     if (selectedRozvadec?.id) {
       const { impedanceSmyckyMax, ...okruhData } = okruhFormData;
-      const saveData = { ...okruhData, impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky };
+      const saveData = { ...okruhData, izolacniOdpor: okruhData.izolacniOdpor || undefined, impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky || undefined };
       if (editingOkruh?.id) {
         await okruhService.update(editingOkruh.id, saveData);
       } else {
