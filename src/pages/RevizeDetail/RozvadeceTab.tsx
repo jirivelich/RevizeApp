@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button, Card, Input, Select, Modal } from '../../components/ui';
 import { TW } from './tw';
 import { okruhService } from '../../services/database';
-import { useCreateRozvadec, useDeleteRozvadec } from '../../hooks/useQueries';
+import { useCreateRozvadec, useDeleteRozvadec, useUpdateRozvadec } from '../../hooks/useQueries';
 import type { Rozvadec, Okruh } from '../../types';
 
 // EditableSelect – select s možností zadat vlastní hodnotu
@@ -68,9 +68,11 @@ interface RozvadeceTabProps {
 export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, onReload: _onReload }: RozvadeceTabProps) {
   const createRozvadec = useCreateRozvadec();
   const deleteRozvadec = useDeleteRozvadec();
+  const updateRozvadec = useUpdateRozvadec();
   const [selectedRozvadec, setSelectedRozvadec] = useState<Rozvadec | null>(null);
   const [okruhy, setOkruhy] = useState<Okruh[]>([]);
   const [isRozvadecModalOpen, setIsRozvadecModalOpen] = useState(false);
+  const [editingRozvadec, setEditingRozvadec] = useState<Rozvadec | null>(null);
   const [isOkruhModalOpen, setIsOkruhModalOpen] = useState(false);
   const [editingOkruh, setEditingOkruh] = useState<Okruh | null>(null);
   const [draggedOkruh, setDraggedOkruh] = useState<Okruh | null>(null);
@@ -118,6 +120,19 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
 
   const handleAddRozvadec = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (editingRozvadec?.id) {
+      updateRozvadec.mutate(
+        { id: editingRozvadec.id, data: { ...rozvadecFormData, revizeId } },
+        {
+          onSuccess: () => {
+            setIsRozvadecModalOpen(false);
+            setEditingRozvadec(null);
+            setSelectedRozvadec({ ...editingRozvadec, ...rozvadecFormData });
+            setRozvadecFormData({ nazev: '', oznaceni: '', umisteni: '', typRozvadece: '', stupenKryti: 'IP20', poznamka: '' });
+          },
+        }
+      );
+    } else {
     createRozvadec.mutate(
       { ...rozvadecFormData, revizeId } as any,
       {
@@ -136,6 +151,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
         },
       }
     );
+    }
   };
 
   const handleDeleteRozvadec = (rozvadecId: number) => {
@@ -291,6 +307,18 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
             actions={
               <div className="flex gap-2">
                 <Button size="sm" onClick={() => { resetOkruhForm(); setIsOkruhModalOpen(true); }}>+ Přidat okruh</Button>
+                <Button variant="secondary" size="sm" onClick={() => {
+                  setEditingRozvadec(selectedRozvadec);
+                  setRozvadecFormData({
+                    nazev: selectedRozvadec.nazev,
+                    oznaceni: selectedRozvadec.oznaceni || '',
+                    umisteni: selectedRozvadec.umisteni || '',
+                    typRozvadece: selectedRozvadec.typRozvadece || '',
+                    stupenKryti: selectedRozvadec.stupenKryti || 'IP20',
+                    poznamka: selectedRozvadec.poznamka || '',
+                  });
+                  setIsRozvadecModalOpen(true);
+                }}>Upravit</Button>
                 <Button variant="danger" size="sm" onClick={() => handleDeleteRozvadec(selectedRozvadec.id!)}>Smazat</Button>
               </div>
             }
@@ -378,12 +406,12 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     {/* Modal pro přidání rozvaděče */}
     <Modal
       isOpen={isRozvadecModalOpen}
-      onClose={() => setIsRozvadecModalOpen(false)}
-      title="Přidat rozvaděč"
+      onClose={() => { setIsRozvadecModalOpen(false); setEditingRozvadec(null); }}
+      title={editingRozvadec ? 'Upravit rozvaděč' : 'Přidat rozvaděč'}
       footer={
         <>
-          <Button variant="secondary" onClick={() => setIsRozvadecModalOpen(false)}>Zrušit</Button>
-          <Button onClick={handleAddRozvadec}>Přidat</Button>
+          <Button variant="secondary" onClick={() => { setIsRozvadecModalOpen(false); setEditingRozvadec(null); }}>Zrušit</Button>
+          <Button onClick={handleAddRozvadec}>{editingRozvadec ? 'Uložit' : 'Přidat'}</Button>
         </>
       }
     >
