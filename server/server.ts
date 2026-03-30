@@ -411,7 +411,7 @@ async function startServer() {
   // ==================== ROZVADĚČE ====================
   app.get('/api/rozvadece/:revizeId', authMiddleware, async (req, res) => {
     try {
-      const result = await pool.query('SELECT * FROM rozvadec WHERE "revizeId" = $1', [req.params.revizeId]);
+      const result = await pool.query('SELECT * FROM rozvadec WHERE "revizeId" = $1 ORDER BY poradi NULLS LAST, id', [req.params.revizeId]);
       res.json(result.rows);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -1093,7 +1093,7 @@ async function startServer() {
         const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
         
         await pool.query(`
-          INSERT INTO nastaveni (${keys.map(k => `"${k}"`).join(', ')}, "createdAt", "updatedAt")
+          INSERT INTO nastaveni (${keys.map(k => `"${k}"`).join(', ')}}, "createdAt", "updatedAt")
           VALUES (${placeholders}, $${keys.length + 1}, $${keys.length + 2})
         `, [...values, now, now]);
       } else {

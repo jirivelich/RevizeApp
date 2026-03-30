@@ -108,6 +108,7 @@ export async function initializeDatabase() {
         "stupenKryti" TEXT,
         "proudovyChranicTyp" TEXT,
         poznamka TEXT,
+        poradi INTEGER,
         "createdAt" TEXT NOT NULL,
         "updatedAt" TEXT NOT NULL
       )
@@ -391,6 +392,8 @@ export async function initializeDatabase() {
       // Okruh: izolacniOdpor a impedanceSmycky z REAL na TEXT
       'ALTER TABLE okruh ALTER COLUMN "izolacniOdpor" TYPE TEXT USING "izolacniOdpor"::TEXT',
       'ALTER TABLE okruh ALTER COLUMN "impedanceSmycky" TYPE TEXT USING "impedanceSmycky"::TEXT',
+      // Rozvadec: přidání sloupce poradi
+      'ALTER TABLE rozvadec ADD COLUMN IF NOT EXISTS poradi INTEGER',
     ];
     
     for (const migration of migrations) {

@@ -133,6 +133,7 @@ export interface Rozvadec {
   stupenKryti: string;
   proudovyChranicTyp?: string;
   poznamka?: string;
+  poradi?: number;
   createdAt: Date;
   updatedAt: Date;
 }

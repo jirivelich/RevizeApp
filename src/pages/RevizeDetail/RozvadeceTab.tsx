@@ -76,6 +76,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
   const [isOkruhModalOpen, setIsOkruhModalOpen] = useState(false);
   const [editingOkruh, setEditingOkruh] = useState<Okruh | null>(null);
   const [draggedOkruh, setDraggedOkruh] = useState<Okruh | null>(null);
+  const [draggedRozvadec, setDraggedRozvadec] = useState<Rozvadec | null>(null);
   const [okruhyCounts, setOkruhyCounts] = useState<Record<number, number>>(propCounts);
 
   const [rozvadecFormData, setRozvadecFormData] = useState({
@@ -241,22 +242,24 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
   const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); };
   const handleDragEnd = () => { setDraggedOkruh(null); };
 
-  const handleDrop = async (targetOkruh: Okruh) => {
-    if (!draggedOkruh || draggedOkruh.id === targetOkruh.id) {
-      setDraggedOkruh(null);
+  const handleRozvadecDragStart = (r: Rozvadec) => { setDraggedRozvadec(r); };
+  const handleRozvadecDragEnd = () => { setDraggedRozvadec(null); };
+  const handleRozvadecDrop = async (targetRozvadec: Rozvadec) => {
+    if (!draggedRozvadec || draggedRozvadec.id === targetRozvadec.id) {
+      setDraggedRozvadec(null);
       return;
     }
-    const sortedOkruhy = [...okruhy].sort((a, b) => a.cislo - b.cislo);
-    const draggedIndex = sortedOkruhy.findIndex(o => o.id === draggedOkruh.id);
-    const targetIndex = sortedOkruhy.findIndex(o => o.id === targetOkruh.id);
-    const [removed] = sortedOkruhy.splice(draggedIndex, 1);
-    sortedOkruhy.splice(targetIndex, 0, removed);
-    const updates = sortedOkruhy.map((o, index) => ({ ...o, cislo: index + 1 }));
-    for (const okruh of updates) {
-      if (okruh.id) await okruhService.update(okruh.id, { cislo: okruh.cislo });
+    const sorted = [...rozvadece].sort((a, b) => (a.poradi ?? a.id ?? 0) - (b.poradi ?? b.id ?? 0));
+    const draggedIndex = sorted.findIndex(r => r.id === draggedRozvadec.id);
+    const targetIndex = sorted.findIndex(r => r.id === targetRozvadec.id);
+    const [removed] = sorted.splice(draggedIndex, 1);
+    sorted.splice(targetIndex, 0, removed);
+    for (let i = 0; i < sorted.length; i++) {
+      if (sorted[i].id) {
+        updateRozvadec.mutate({ id: sorted[i].id!, data: { poradi: i + 1, revizeId } });
+      }
     }
-    setOkruhy(updates);
-    setDraggedOkruh(null);
+    setDraggedRozvadec(null);
   };
 
   return (
@@ -270,13 +273,20 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
         >
           {rozvadece.length > 0 ? (
             <div className="space-y-2">
-              {rozvadece.map((r) => (
+              {[...rozvadece].sort((a, b) => (a.poradi ?? a.id ?? 0) - (b.poradi ?? b.id ?? 0)).map((r) => (
                 <div
                   key={r.id}
-                  className={`rounded-lg border transition-colors cursor-pointer ${
+                  draggable
+                  onDragStart={() => handleRozvadecDragStart(r)}
+                  onDragOver={handleDragOver}
+                  onDrop={() => handleRozvadecDrop(r)}
+                  onDragEnd={handleRozvadecDragEnd}
+                  className={`rounded-lg border transition-colors cursor-grab active:cursor-grabbing ${
                     selectedRozvadec?.id === r.id
                       ? 'border-blue-500 bg-blue-50'
-                      : 'border-slate-200 bg-slate-50 hover:border-slate-300'
+                      : draggedRozvadec?.id === r.id
+                        ? 'opacity-50 bg-blue-50 border-slate-200'
+                        : 'border-slate-200 bg-slate-50 hover:border-slate-300'
                   }`}
                   onClick={() => handleSelectRozvadec(r)}
                 >
