@@ -2,6 +2,7 @@
 // Všechna data jsou uložena na serveru a synchronizována mezi zařízeními
 
 import type { Revize, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, MericiPristroj, Firma, ZavadaKatalog, Zakaznik, PredvolenyText, Kalibrace } from '../types';
+import { safeApiRequest } from './safeApiRequest';
 
 // V produkci používáme relativní URL (frontend i backend na stejném serveru)
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -52,28 +53,24 @@ export const revizeService = {
   },
 
   async create(data: Omit<Revize, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
-    const response = await fetch(`${API_BASE_URL}/revize`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }).then(res => handleResponse<{ id: number }>(res));
-    return response.id;
+    const url = `${API_BASE_URL}/revize`;
+    const headers = getAuthHeaders();
+    const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
+      ?.then(res => res ? res.json() : { id: undefined });
+    return response?.id;
   },
 
   async update(id: number, data: Partial<Revize>): Promise<number> {
-    await fetch(`${API_BASE_URL}/revize/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }).then(res => handleResponse<unknown>(res));
+    const url = `${API_BASE_URL}/revize/${id}`;
+    const headers = getAuthHeaders();
+    await safeApiRequest({ url, method: 'PUT', body: data, headers });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
-    await fetch(`${API_BASE_URL}/revize/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    }).then(res => handleResponse<unknown>(res));
+    const url = `${API_BASE_URL}/revize/${id}`;
+    const headers = getAuthHeaders();
+    await safeApiRequest({ url, method: 'DELETE', headers });
   },
 
   async duplikovat(id: number, cisloRevize: string, typ: 'navazujici' | 'duplikat' = 'navazujici'): Promise<{ id: number; skupinaRevizi: string }> {
@@ -104,28 +101,24 @@ export const rozvadecService = {
   },
 
   async create(data: Omit<Rozvadec, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
-    const response = await fetch(`${API_BASE_URL}/rozvadece`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }).then(res => handleResponse<{ id: number }>(res));
-    return response.id;
+    const url = `${API_BASE_URL}/rozvadece`;
+    const headers = getAuthHeaders();
+    const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
+      ?.then(res => res ? res.json() : { id: undefined });
+    return response?.id;
   },
 
   async update(id: number, data: Partial<Rozvadec>): Promise<number> {
-    await fetch(`${API_BASE_URL}/rozvadece/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }).then(res => handleResponse<unknown>(res));
+    const url = `${API_BASE_URL}/rozvadece/${id}`;
+    const headers = getAuthHeaders();
+    await safeApiRequest({ url, method: 'PUT', body: data, headers });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
-    await fetch(`${API_BASE_URL}/rozvadece/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    }).then(res => handleResponse<unknown>(res));
+    const url = `${API_BASE_URL}/rozvadece/${id}`;
+    const headers = getAuthHeaders();
+    await safeApiRequest({ url, method: 'DELETE', headers });
   },
 };
 
@@ -138,28 +131,24 @@ export const okruhService = {
   },
 
   async create(data: Omit<Okruh, 'id'>): Promise<number> {
-    const response = await fetch(`${API_BASE_URL}/okruhy`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }).then(res => handleResponse<{ id: number }>(res));
-    return response.id;
+    const url = `${API_BASE_URL}/okruhy`;
+    const headers = getAuthHeaders();
+    const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
+      ?.then(res => res ? res.json() : { id: undefined });
+    return response?.id;
   },
 
   async update(id: number, data: Partial<Okruh>): Promise<number> {
-    await fetch(`${API_BASE_URL}/okruhy/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }).then(res => handleResponse<unknown>(res));
+    const url = `${API_BASE_URL}/okruhy/${id}`;
+    const headers = getAuthHeaders();
+    await safeApiRequest({ url, method: 'PUT', body: data, headers });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
-    await fetch(`${API_BASE_URL}/okruhy/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    }).then(res => handleResponse<unknown>(res));
+    const url = `${API_BASE_URL}/okruhy/${id}`;
+    const headers = getAuthHeaders();
+    await safeApiRequest({ url, method: 'DELETE', headers });
   },
 };
 
@@ -183,28 +172,24 @@ export const mistnostService = {
   },
 
   async create(data: Omit<Mistnost, 'id'>): Promise<number> {
-    const response = await fetch(`${API_BASE_URL}/mistnosti`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }).then(res => handleResponse<{ id: number }>(res));
-    return response.id;
+    const url = `${API_BASE_URL}/mistnosti`;
+    const headers = getAuthHeaders();
+    const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
+      ?.then(res => res ? res.json() : { id: undefined });
+    return response?.id;
   },
 
   async update(id: number, data: Partial<Mistnost>): Promise<number> {
-    await fetch(`${API_BASE_URL}/mistnosti/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }).then(res => handleResponse<unknown>(res));
+    const url = `${API_BASE_URL}/mistnosti/${id}`;
+    const headers = getAuthHeaders();
+    await safeApiRequest({ url, method: 'PUT', body: data, headers });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
-    await fetch(`${API_BASE_URL}/mistnosti/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    }).then(res => handleResponse<unknown>(res));
+    const url = `${API_BASE_URL}/mistnosti/${id}`;
+    const headers = getAuthHeaders();
+    await safeApiRequest({ url, method: 'DELETE', headers });
   },
 };
 
@@ -225,28 +210,24 @@ export const zarizeniService = {
   },
 
   async create(data: Omit<Zarizeni, 'id'>): Promise<number> {
-    const response = await fetch(`${API_BASE_URL}/zarizeni`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }).then(res => handleResponse<{ id: number }>(res));
-    return response.id;
+    const url = `${API_BASE_URL}/zarizeni`;
+    const headers = getAuthHeaders();
+    const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
+      ?.then(res => res ? res.json() : { id: undefined });
+    return response?.id;
   },
 
   async update(id: number, data: Partial<Zarizeni>): Promise<number> {
-    await fetch(`${API_BASE_URL}/zarizeni/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }).then(res => handleResponse<unknown>(res));
+    const url = `${API_BASE_URL}/zarizeni/${id}`;
+    const headers = getAuthHeaders();
+    await safeApiRequest({ url, method: 'PUT', body: data, headers });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
-    await fetch(`${API_BASE_URL}/zarizeni/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    }).then(res => handleResponse<unknown>(res));
+    const url = `${API_BASE_URL}/zarizeni/${id}`;
+    const headers = getAuthHeaders();
+    await safeApiRequest({ url, method: 'DELETE', headers });
   },
 
   async deleteByMistnost(_mistnostId: number): Promise<void> {
@@ -269,28 +250,24 @@ export const zavadaService = {
   },
 
   async create(data: Omit<Zavada, 'id'>): Promise<number> {
-    const response = await fetch(`${API_BASE_URL}/zavady`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }).then(res => handleResponse<{ id: number }>(res));
-    return response.id;
+    const url = `${API_BASE_URL}/zavady`;
+    const headers = getAuthHeaders();
+    const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
+      ?.then(res => res ? res.json() : { id: undefined });
+    return response?.id;
   },
 
   async update(id: number, data: Partial<Zavada>): Promise<number> {
-    await fetch(`${API_BASE_URL}/zavady/${id}`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }).then(res => handleResponse<unknown>(res));
+    const url = `${API_BASE_URL}/zavady/${id}`;
+    const headers = getAuthHeaders();
+    await safeApiRequest({ url, method: 'PUT', body: data, headers });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
-    await fetch(`${API_BASE_URL}/zavady/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    }).then(res => handleResponse<unknown>(res));
+    const url = `${API_BASE_URL}/zavady/${id}`;
+    const headers = getAuthHeaders();
+    await safeApiRequest({ url, method: 'DELETE', headers });
   },
 };
 
