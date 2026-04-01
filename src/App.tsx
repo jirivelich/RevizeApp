@@ -5,17 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30 * 1000,        // 30s – data se považují za čerstvá
-      gcTime: 5 * 60 * 1000,       // 5 min – garbage collection
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+import OfflineBanner from './components/OfflineBanner';
 import {
   Dashboard,
   RevizePage,
@@ -27,22 +17,27 @@ import {
   PristrojePage,
   FirmyPage,
   ZakazniciPage,
+  NahledRouter,
 } from './pages';
-import { NahledRouter } from './pages/NahledRouter';
 
-// Error Boundary pro zachycení JavaScript chyb
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
-}
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30 * 1000,        // 30s – data se považují za čerstvá
+      gcTime: 5 * 60 * 1000,       // 5 min – garbage collection
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
-class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
   }
 
@@ -83,35 +78,36 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
         <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/revize/:id/nahled" element={
-            <ProtectedRoute>
-              <NahledRouter />
-            </ProtectedRoute>
-          } />
-          <Route
-            path="/"
-            element={
+          <OfflineBanner />
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/revize/:id/nahled" element={
               <ProtectedRoute>
-                <Layout />
+                <NahledRouter />
               </ProtectedRoute>
-            }
-          >
-            <Route index element={<Dashboard />} />
-            <Route path="revize" element={<RevizePage />} />
-            <Route path="revize/:id" element={<RevizeDetailPage />} />
-            <Route path="revize/:revizeId/rozvadec/:id" element={<RozvadecDetailPage />} />
-            <Route path="zavady" element={<ZavadyPage />} />
-            <Route path="pristroje" element={<PristrojePage />} />
-            <Route path="firmy" element={<FirmyPage />} />
-            <Route path="zakaznici" element={<ZakazniciPage />} />
-            <Route path="planovani" element={<PlanovaniPage />} />
-            <Route path="nastaveni" element={<NastaveniPage />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </ErrorBoundary>
+            } />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Dashboard />} />
+              <Route path="revize" element={<RevizePage />} />
+              <Route path="revize/:id" element={<RevizeDetailPage />} />
+              <Route path="revize/:revizeId/rozvadec/:id" element={<RozvadecDetailPage />} />
+              <Route path="zavady" element={<ZavadyPage />} />
+              <Route path="pristroje" element={<PristrojePage />} />
+              <Route path="firmy" element={<FirmyPage />} />
+              <Route path="zakaznici" element={<ZakazniciPage />} />
+              <Route path="planovani" element={<PlanovaniPage />} />
+              <Route path="nastaveni" element={<NastaveniPage />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </ErrorBoundary>
     </QueryClientProvider>
   );
 }

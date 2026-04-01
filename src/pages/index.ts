@@ -10,3 +10,4 @@ export { PristrojePage } from './PristrojePage';
 export { FirmyPage } from './FirmyPage';
 export { default as LoginPage } from './LoginPage';
 export { default as ZakazniciPage } from './ZakazniciPage';
+export { NahledRouter } from './NahledRouter';
