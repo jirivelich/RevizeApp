@@ -48,8 +48,10 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         console.log('ProtectedRoute: Verification successful');
         setIsAuthorized(true);
       } catch (err) {
-        // Offline + token existuje → důvěřujeme lokálnímu tokenu
-        if (!navigator.onLine) {
+        // Síť nedostupná (offline, DNS error, timeout) + token existuje → důvěřujeme
+        const token = localStorage.getItem('token');
+        if (token) {
+          console.log('ProtectedRoute: Network unavailable, trusting cached token');
           setIsAuthorized(true);
           return;
         }
