@@ -67,9 +67,20 @@ export const revizeService = {
   async create(data: Omit<Revize, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
     const url = `${API_BASE_URL}/revize`;
     const headers = getAuthHeaders();
-    const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
-      ?.then(res => res ? res.json() : { id: undefined });
-    return response?.id;
+    if (navigator.onLine) {
+      const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
+        ?.then(res => res ? res.json() : { id: undefined });
+      return response?.id;
+    } else {
+      // Optimistic create: ihned uložit do IndexedDB s dočasným záporným ID
+      const tempId = Date.now() * -1;
+      // Pokud existuje zarizeniCache, použij ji, jinak fallback (zatím není v db.ts)
+      if (db.revizeCache) {
+        await db.revizeCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
+      }
+      await safeApiRequest({ url, method: 'POST', body: data, headers });
+      return tempId;
+    }
   },
 
   async update(id: number, data: Partial<Revize>): Promise<number> {
@@ -143,9 +154,17 @@ export const rozvadecService = {
   async create(data: Omit<Rozvadec, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
     const url = `${API_BASE_URL}/rozvadece`;
     const headers = getAuthHeaders();
-    const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
-      ?.then(res => res ? res.json() : { id: undefined });
-    return response?.id;
+    if (navigator.onLine) {
+      const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
+        ?.then(res => res ? res.json() : { id: undefined });
+      return response?.id;
+    } else {
+      // Optimistic create: ihned uložit do IndexedDB s dočasným záporným ID
+      const tempId = Date.now() * -1;
+      await db.rozvadecCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
+      await safeApiRequest({ url, method: 'POST', body: data, headers });
+      return tempId;
+    }
   },
 
   async update(id: number, data: Partial<Rozvadec>): Promise<number> {
@@ -266,9 +285,17 @@ export const mistnostService = {
   async create(data: Omit<Mistnost, 'id'>): Promise<number> {
     const url = `${API_BASE_URL}/mistnosti`;
     const headers = getAuthHeaders();
-    const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
-      ?.then(res => res ? res.json() : { id: undefined });
-    return response?.id;
+    if (navigator.onLine) {
+      const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
+        ?.then(res => res ? res.json() : { id: undefined });
+      return response?.id;
+    } else {
+      // Optimistic create: ihned uložit do IndexedDB s dočasným záporným ID
+      const tempId = Date.now() * -1;
+      await db.mistnostCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
+      await safeApiRequest({ url, method: 'POST', body: data, headers });
+      return tempId;
+    }
   },
 
   async update(id: number, data: Partial<Mistnost>): Promise<number> {
@@ -317,9 +344,20 @@ export const zarizeniService = {
   async create(data: Omit<Zarizeni, 'id'>): Promise<number> {
     const url = `${API_BASE_URL}/zarizeni`;
     const headers = getAuthHeaders();
-    const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
-      ?.then(res => res ? res.json() : { id: undefined });
-    return response?.id;
+    if (navigator.onLine) {
+      const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
+        ?.then(res => res ? res.json() : { id: undefined });
+      return response?.id;
+    } else {
+      // Optimistic create: ihned uložit do IndexedDB s dočasným záporným ID
+      const tempId = Date.now() * -1;
+      // Pokud existuje zarizeniCache, použij ji, jinak fallback (zatím není v db.ts)
+      if (db.zarizeniCache) {
+        await db.zarizeniCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
+      }
+      await safeApiRequest({ url, method: 'POST', body: data, headers });
+      return tempId;
+    }
   },
 
   async update(id: number, data: Partial<Zarizeni>): Promise<number> {
@@ -370,9 +408,17 @@ export const zavadaService = {
   async create(data: Omit<Zavada, 'id'>): Promise<number> {
     const url = `${API_BASE_URL}/zavady`;
     const headers = getAuthHeaders();
-    const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
-      ?.then(res => res ? res.json() : { id: undefined });
-    return response?.id;
+    if (navigator.onLine) {
+      const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
+        ?.then(res => res ? res.json() : { id: undefined });
+      return response?.id;
+    } else {
+      // Optimistic create: ihned uložit do IndexedDB s dočasným záporným ID
+      const tempId = Date.now() * -1;
+      await db.zavadaCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
+      await safeApiRequest({ url, method: 'POST', body: data, headers });
+      return tempId;
+    }
   },
 
   async update(id: number, data: Partial<Zavada>): Promise<number> {
