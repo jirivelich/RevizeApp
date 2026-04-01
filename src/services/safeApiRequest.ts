@@ -12,14 +12,19 @@ export async function safeApiRequest({ url, method, body, headers }: {
   headers?: HeadersInit;
 }): Promise<Response | undefined> {
   if (navigator.onLine) {
-    return fetch(url, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    try {
+      return await fetch(url, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+    } catch {
+      // Síť nedostupná (DNS, timeout, …) — zařadit do offline fronty
+      await addPendingRequest({ url, method, body, headers: headers as Record<string, string> });
+      return undefined;
+    }
   } else {
     await addPendingRequest({ url, method, body, headers: headers as Record<string, string> });
-    // Vrací undefined, protože zápis proběhne až po návratu online
     return undefined;
   }
 }
