@@ -178,9 +178,22 @@ export const rozvadecService = {
 // ==================== OKRUHY ====================
 export const okruhService = {
   async getByRozvadec(rozvadecId: number): Promise<Okruh[]> {
-    return fetch(`${API_BASE_URL}/okruhy/${rozvadecId}`, {
-      headers: getAuthHeaders(),
-    }).then(res => handleResponse<Okruh[]>(res));
+    if (navigator.onLine) {
+      const okruhy = await fetch(`${API_BASE_URL}/okruhy/${rozvadecId}`, {
+        headers: getAuthHeaders(),
+      }).then(res => handleResponse<Okruh[]>(res));
+      // Uložit do IndexedDB
+      if (okruhy) {
+        for (const o of okruhy) {
+          await db.okruhCache.put({ id: o.id ?? -1, data: o, updatedAt: Date.now() });
+        }
+      }
+      return okruhy;
+    } else {
+      // Offline: načíst z IndexedDB všechny okruhy pro daný rozvaděč
+      const all = await db.okruhCache.toArray();
+      return all.filter(o => o.data.rozvadecId === rozvadecId).map(o => o.data);
+    }
   },
 
   async create(data: Omit<Okruh, 'id'>): Promise<number> {
@@ -194,7 +207,20 @@ export const okruhService = {
   async update(id: number, data: Partial<Okruh>): Promise<number> {
     const url = `${API_BASE_URL}/okruhy/${id}`;
     const headers = getAuthHeaders();
-    await safeApiRequest({ url, method: 'PUT', body: data, headers });
+    if (navigator.onLine) {
+      await safeApiRequest({ url, method: 'PUT', body: data, headers });
+    } else {
+      // Optimistic update: ihned uložit změnu do IndexedDB
+      const cached = await db.okruhCache.get(id);
+      if (cached) {
+        await db.okruhCache.put({
+          id,
+          data: { ...cached.data, ...data },
+          updatedAt: Date.now(),
+        });
+      }
+      await safeApiRequest({ url, method: 'PUT', body: data, headers });
+    }
     return 1;
   },
 
