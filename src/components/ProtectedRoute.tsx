@@ -7,7 +7,6 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const verifyToken = async () => {
