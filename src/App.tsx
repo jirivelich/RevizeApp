@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Component } from 'react';
+import { Component, useEffect } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/Layout';
@@ -19,6 +19,7 @@ import {
   ZakazniciPage,
   NahledRouter,
 } from './pages';
+import { useOfflineQueueSync } from './hooks/useOfflineQueue';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -74,6 +75,20 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 }
 
 function App() {
+  const { sync } = useOfflineQueueSync();
+  const online = typeof window !== 'undefined' ? window.navigator.onLine : true;
+
+  useEffect(() => {
+    if (!online) return;
+    const handleOnline = () => {
+      sync();
+    };
+    window.addEventListener('online', handleOnline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [sync, online]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>

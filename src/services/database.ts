@@ -75,7 +75,20 @@ export const revizeService = {
   async update(id: number, data: Partial<Revize>): Promise<number> {
     const url = `${API_BASE_URL}/revize/${id}`;
     const headers = getAuthHeaders();
-    await safeApiRequest({ url, method: 'PUT', body: data, headers });
+    if (navigator.onLine) {
+      await safeApiRequest({ url, method: 'PUT', body: data, headers });
+    } else {
+      // Optimistic update: ihned uložit změnu do IndexedDB
+      const cached = await db.revizeCache.get(id);
+      if (cached) {
+        await db.revizeCache.put({
+          id,
+          data: { ...cached.data, ...data },
+          updatedAt: Date.now(),
+        });
+      }
+      await safeApiRequest({ url, method: 'PUT', body: data, headers });
+    }
     return 1;
   },
 
@@ -138,7 +151,20 @@ export const rozvadecService = {
   async update(id: number, data: Partial<Rozvadec>): Promise<number> {
     const url = `${API_BASE_URL}/rozvadece/${id}`;
     const headers = getAuthHeaders();
-    await safeApiRequest({ url, method: 'PUT', body: data, headers });
+    if (navigator.onLine) {
+      await safeApiRequest({ url, method: 'PUT', body: data, headers });
+    } else {
+      // Optimistic update: ihned uložit změnu do IndexedDB
+      const cached = await db.rozvadecCache.get(id);
+      if (cached) {
+        await db.rozvadecCache.put({
+          id,
+          data: { ...cached.data, ...data },
+          updatedAt: Date.now(),
+        });
+      }
+      await safeApiRequest({ url, method: 'PUT', body: data, headers });
+    }
     return 1;
   },
 
@@ -222,7 +248,20 @@ export const mistnostService = {
   async update(id: number, data: Partial<Mistnost>): Promise<number> {
     const url = `${API_BASE_URL}/mistnosti/${id}`;
     const headers = getAuthHeaders();
-    await safeApiRequest({ url, method: 'PUT', body: data, headers });
+    if (navigator.onLine) {
+      await safeApiRequest({ url, method: 'PUT', body: data, headers });
+    } else {
+      // Optimistic update: ihned uložit změnu do IndexedDB
+      const cached = await db.mistnostCache.get(id);
+      if (cached) {
+        await db.mistnostCache.put({
+          id,
+          data: { ...cached.data, ...data },
+          updatedAt: Date.now(),
+        });
+      }
+      await safeApiRequest({ url, method: 'PUT', body: data, headers });
+    }
     return 1;
   },
 
@@ -313,7 +352,20 @@ export const zavadaService = {
   async update(id: number, data: Partial<Zavada>): Promise<number> {
     const url = `${API_BASE_URL}/zavady/${id}`;
     const headers = getAuthHeaders();
-    await safeApiRequest({ url, method: 'PUT', body: data, headers });
+    if (navigator.onLine) {
+      await safeApiRequest({ url, method: 'PUT', body: data, headers });
+    } else {
+      // Optimistic update: ihned uložit změnu do IndexedDB
+      const cached = await db.zavadaCache.get(id);
+      if (cached) {
+        await db.zavadaCache.put({
+          id,
+          data: { ...cached.data, ...data },
+          updatedAt: Date.now(),
+        });
+      }
+      await safeApiRequest({ url, method: 'PUT', body: data, headers });
+    }
     return 1;
   },
 
