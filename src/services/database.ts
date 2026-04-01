@@ -3,6 +3,7 @@
 
 import type { Revize, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, MericiPristroj, Firma, ZavadaKatalog, Zakaznik, PredvolenyText, Kalibrace } from '../types';
 import { safeApiRequest } from './safeApiRequest';
+import { db } from '../db';
 
 // V produkci používáme relativní URL (frontend i backend na stejném serveru)
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -47,9 +48,20 @@ export const revizeService = {
   },
 
   async getById(id: number): Promise<Revize | undefined> {
-    return fetch(`${API_BASE_URL}/revize/${id}`, {
-      headers: getAuthHeaders(),
-    }).then(res => handleResponse<Revize | undefined>(res));
+    if (navigator.onLine) {
+      const revize = await fetch(`${API_BASE_URL}/revize/${id}`, {
+        headers: getAuthHeaders(),
+      }).then(res => handleResponse<Revize | undefined>(res));
+      // Uložit do IndexedDB pro offline použití
+      if (revize) {
+        await db.revizeCache.put({ id, data: revize, updatedAt: Date.now() });
+      }
+      return revize;
+    } else {
+      // Offline: načíst z IndexedDB
+      const cached = await db.revizeCache.get(id);
+      return cached?.data;
+    }
   },
 
   async create(data: Omit<Revize, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
@@ -669,5 +681,3 @@ export const exportService = {
   },
 };
 
-// Pro zpětnou kompatibilitu - prázdná db konstanta
-export const db = null;
