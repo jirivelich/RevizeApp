@@ -102,14 +102,29 @@ export const revizeService = {
 
 // ==================== ROZVADĚČE ====================
 export const rozvadecService = {
-  async getByRevize(revizeId: number): Promise<Rozvadec[]> {
-    return fetch(`${API_BASE_URL}/rozvadece/${revizeId}`, {
-      headers: getAuthHeaders(),
-    }).then(res => handleResponse<Rozvadec[]>(res));
+  async getById(_id: number): Promise<Rozvadec | undefined> {
+    // Příklad: pokud by byl implementován detail rozvaděče
+    return undefined;
   },
 
-  async getById(_id: number): Promise<Rozvadec | undefined> {
-    return undefined;
+  async getByRevize(revizeId: number): Promise<Rozvadec[]> {
+    if (navigator.onLine) {
+      const rozvadece = await fetch(`${API_BASE_URL}/rozvadece/${revizeId}`, {
+        headers: getAuthHeaders(),
+      }).then(res => handleResponse<Rozvadec[]>(res));
+      // Uložit do IndexedDB
+      if (rozvadece) {
+        for (const r of rozvadece) {
+          await db.rozvadecCache.put({ id: r.id ?? -1, data: r, updatedAt: Date.now() });
+        }
+      }
+      return rozvadece;
+    } else {
+      // Offline: načíst z IndexedDB všechny rozvaděče pro danou revizi
+      // (předpokládá se, že rozvadec.data.revizeId je správně uložen)
+      const all = await db.rozvadecCache.toArray();
+      return all.filter(r => r.data.revizeId === revizeId).map(r => r.data);
+    }
   },
 
   async create(data: Omit<Rozvadec, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
@@ -173,9 +188,22 @@ export const mistnostService = {
   },
 
   async getByRevize(revizeId: number): Promise<Mistnost[]> {
-    return fetch(`${API_BASE_URL}/mistnosti/revize/${revizeId}`, {
-      headers: getAuthHeaders(),
-    }).then(res => handleResponse<Mistnost[]>(res));
+    if (navigator.onLine) {
+      const mistnosti = await fetch(`${API_BASE_URL}/mistnosti/revize/${revizeId}`, {
+        headers: getAuthHeaders(),
+      }).then(res => handleResponse<Mistnost[]>(res));
+      // Uložit do IndexedDB
+      if (mistnosti) {
+        for (const m of mistnosti) {
+          await db.mistnostCache.put({ id: m.id ?? -1, data: m, updatedAt: Date.now() });
+        }
+      }
+      return mistnosti;
+    } else {
+      // Offline: načíst z IndexedDB všechny místnosti pro danou revizi
+      const all = await db.mistnostCache.toArray();
+      return all.filter(m => m.data.revizeId === revizeId).map(m => m.data);
+    }
   },
 
   async getById(id: number): Promise<Mistnost | undefined> {
@@ -256,9 +284,22 @@ export const zavadaService = {
   },
 
   async getByRevize(revizeId: number): Promise<Zavada[]> {
-    return fetch(`${API_BASE_URL}/zavady/revize/${revizeId}`, {
-      headers: getAuthHeaders(),
-    }).then(res => handleResponse<Zavada[]>(res));
+    if (navigator.onLine) {
+      const zavady = await fetch(`${API_BASE_URL}/zavady/revize/${revizeId}`, {
+        headers: getAuthHeaders(),
+      }).then(res => handleResponse<Zavada[]>(res));
+      // Uložit do IndexedDB
+      if (zavady) {
+        for (const z of zavady) {
+          await db.zavadaCache.put({ id: z.id ?? -1, data: z, updatedAt: Date.now() });
+        }
+      }
+      return zavady;
+    } else {
+      // Offline: načíst z IndexedDB všechny závady pro danou revizi
+      const all = await db.zavadaCache.toArray();
+      return all.filter(z => z.data.revizeId === revizeId).map(z => z.data);
+    }
   },
 
   async create(data: Omit<Zavada, 'id'>): Promise<number> {

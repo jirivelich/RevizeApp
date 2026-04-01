@@ -18,16 +18,39 @@ export type RevizeCache = {
   updatedAt: number;
 };
 
+// Typy pro cache dalších entit
+export type RozvadecCache = {
+  id: number;
+  data: any; // nebo konkrétní typ Rozvadec
+  updatedAt: number;
+};
+export type MistnostCache = {
+  id: number;
+  data: any; // nebo konkrétní typ Mistnost
+  updatedAt: number;
+};
+export type ZavadaCache = {
+  id: number;
+  data: any; // nebo konkrétní typ Zavada
+  updatedAt: number;
+};
+
 export class RevizeAppDB extends Dexie {
   pendingRequests!: Table<PendingRequest, number>;
   revizeCache!: Table<RevizeCache, number>;
+  rozvadecCache!: Table<RozvadecCache, number>;
+  mistnostCache!: Table<MistnostCache, number>;
+  zavadaCache!: Table<ZavadaCache, number>;
   // ...další tabulky
 
   constructor() {
     super('RevizeAppDB');
-    this.version(2).stores({
+    this.version(3).stores({
       pendingRequests: '++id, url, method, createdAt',
       revizeCache: 'id, updatedAt',
+      rozvadecCache: 'id, updatedAt',
+      mistnostCache: 'id, updatedAt',
+      zavadaCache: 'id, updatedAt',
       // ...další tabulky
     });
   }
