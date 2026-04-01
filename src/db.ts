@@ -57,7 +57,7 @@ export class RevizeAppDB extends Dexie {
 
   constructor() {
     super('RevizeAppDB');
-    this.version(3).stores({
+    this.version(4).stores({
       pendingRequests: '++id, url, method, createdAt',
       revizeCache: 'id, updatedAt',
       rozvadecCache: 'id, updatedAt',
