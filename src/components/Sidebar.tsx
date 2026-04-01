@@ -31,9 +31,13 @@ interface SidebarProps {
   onClose?: () => void;
 }
 
+import styles from './SidebarLight.module.css';
+import { useState } from 'react';
+
 export function Sidebar({ onClose }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [light, setLight] = useState(true);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -44,21 +48,28 @@ export function Sidebar({ onClose }: SidebarProps) {
   const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null;
 
   return (
-    <aside className="w-56 bg-slate-900 text-white min-h-screen flex flex-col">
-      <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+    <aside className={light ? `${styles['sidebar-light']} w-56 min-h-screen flex flex-col` : 'w-56 bg-slate-900 text-white min-h-screen flex flex-col'}>
+      <div className={light ? `${styles['sidebar-header']} px-4 py-3 flex items-center justify-between` : 'px-4 py-3 border-b border-slate-800 flex items-center justify-between'}>
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 bg-slate-700 rounded flex items-center justify-center">
-            <svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+          <div className={light ? 'w-7 h-7 bg-white rounded flex items-center justify-center' : 'w-7 h-7 bg-slate-700 rounded flex items-center justify-center'}>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
           </div>
           <div>
-            <h1 className="text-base font-bold tracking-tight">RevizeApp</h1>
-            <p className="text-slate-500 text-[11px] mt-0.5">Správa elektro revizí</p>
+            <h1 className={light ? 'text-base font-bold tracking-tight text-[#1e293b]' : 'text-base font-bold tracking-tight'}>RevizeApp</h1>
+            <p className={light ? 'text-[11px] mt-0.5 text-[#1e293b]' : 'text-slate-500 text-[11px] mt-0.5'}>Správa elektro revizí</p>
           </div>
         </div>
+        <button
+          onClick={() => setLight((v) => !v)}
+          className="mr-2 p-1 rounded border border-slate-200 bg-white text-xs text-slate-600 hover:bg-slate-100"
+          aria-label="Přepnout světlé/tmavé menu"
+        >
+          {light ? 'Tmavé' : 'Světlé'}
+        </button>
         {/* Tlačítko pro zavření menu na mobilu */}
         <button
           onClick={onClose}
-          className="lg:hidden p-2 hover:bg-slate-700 rounded"
+          className={light ? 'lg:hidden p-2 hover:bg-slate-200 rounded' : 'lg:hidden p-2 hover:bg-slate-700 rounded'}
           aria-label="Zavřít menu"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,25 +77,25 @@ export function Sidebar({ onClose }: SidebarProps) {
           </svg>
         </button>
       </div>
-      
       <nav className="flex-1 px-2 py-3">
         <ul className="space-y-0.5">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path || 
               (item.path !== '/' && location.pathname.startsWith(item.path));
-            
             return (
               <li key={item.path}>
                 <Link
                   to={item.path}
                   onClick={onClose}
-                  className={`flex items-center gap-2.5 px-3 py-2 rounded text-[13px] font-medium transition-colors ${
-                    isActive
-                      ? 'bg-slate-800 text-white'
-                      : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
-                  }`}
+                  className={light
+                    ? `${styles['sidebar-link']} flex items-center gap-2.5 px-3 py-2 rounded text-[13px] font-medium transition-colors ${isActive ? 'active ' + styles['active'] : ''}`
+                    : `flex items-center gap-2.5 px-3 py-2 rounded text-[13px] font-medium transition-colors ${
+                        isActive
+                          ? 'bg-slate-800 text-white'
+                          : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                      }`}
                 >
-                  <span className={isActive ? 'text-slate-300' : 'text-slate-500'}>{item.icon}</span>
+                  <span className={isActive ? (light ? styles['active'] : 'text-slate-300') : (light ? '' : 'text-slate-500')}>{item.icon}</span>
                   {item.label}
                 </Link>
               </li>
@@ -92,21 +103,20 @@ export function Sidebar({ onClose }: SidebarProps) {
           })}
         </ul>
       </nav>
-      
-      <div className="border-t border-slate-800 px-3 py-3 space-y-2">
+      <div className={light ? `${styles['sidebar-footer']} px-3 py-3 space-y-2` : 'border-t border-slate-800 px-3 py-3 space-y-2'}>
         {user && (
-          <div className="text-slate-400 text-xs">
-            <p className="font-medium text-slate-300">{user.username}</p>
-            <p className="text-slate-500 text-[11px]">{user.email}</p>
+          <div className={light ? 'text-xs' : 'text-slate-400 text-xs'}>
+            <p className={light ? 'font-medium' : 'font-medium text-slate-300'}>{user.username}</p>
+            <p className={light ? 'text-[11px]' : 'text-slate-500 text-[11px]'}>{user.email}</p>
           </div>
         )}
         <button
           onClick={handleLogout}
-          className="w-full border border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600 text-xs font-medium py-1.5 px-3 rounded transition-colors"
+          className={light ? 'w-full border border-slate-200 text-slate-600 hover:text-blue-700 hover:border-blue-300 text-xs font-medium py-1.5 px-3 rounded transition-colors' : 'w-full border border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600 text-xs font-medium py-1.5 px-3 rounded transition-colors'}
         >
           Odhlásit se
         </button>
-        <p className="text-slate-600 text-[10px] text-center">© 2026 RevizeApp v1.0.0</p>
+        <p className={light ? 'text-[10px] text-center' : 'text-slate-600 text-[10px] text-center'}>© 2026 RevizeApp v1.0.0</p>
       </div>
     </aside>
   );

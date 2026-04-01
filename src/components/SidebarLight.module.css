@@ -1,0 +1,24 @@
+.sidebar-light {
+  background: #f4f6fb;
+  color: #222;
+  border-right: 1px solid #e2e8f0;
+}
+.sidebar-light .active {
+  background: #e8eef7;
+  color: #2563eb;
+}
+.sidebar-light .sidebar-header {
+  background: #e8eef7;
+  color: #2563eb;
+}
+.sidebar-light .sidebar-link {
+  color: #444;
+}
+.sidebar-light .sidebar-link:hover {
+  background: #e8eef7;
+  color: #2563eb;
+}
+.sidebar-light .sidebar-footer {
+  border-top: 1px solid #e2e8f0;
+  color: #888;
+}
