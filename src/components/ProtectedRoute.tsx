@@ -20,6 +20,13 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         return;
       }
 
+      // Offline → rovnou důvěřujeme lokálnímu tokenu, nečekáme na fetch
+      if (!navigator.onLine) {
+        console.log('ProtectedRoute: Offline, trusting cached token');
+        setIsAuthorized(true);
+        return;
+      }
+
       try {
         // V produkci používáme relativní URL
         const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -36,11 +43,20 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
         console.log('ProtectedRoute: Verify response status:', response.status);
         
-        if (!response.ok) {
+        if (response.status === 401) {
+          // Token je skutečně neplatný — server potvrdil
           const errorData = await response.json().catch(() => null);
-          console.error('ProtectedRoute: Verification failed:', response.status, errorData);
-          setError(`Ověření selhalo: ${response.status}`);
+          console.error('ProtectedRoute: Token invalid (401)', errorData);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
           setIsAuthorized(false);
+          return;
+        }
+
+        if (!response.ok) {
+          // Server error (500, 503, …) nebo cachovaná chyba ze SW — důvěřujeme tokenu
+          console.log('ProtectedRoute: Server error, trusting cached token');
+          setIsAuthorized(true);
           return;
         }
 
@@ -48,17 +64,9 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         console.log('ProtectedRoute: Verification successful');
         setIsAuthorized(true);
       } catch (err) {
-        // Síť nedostupná (offline, DNS error, timeout) + token existuje → důvěřujeme
-        const token = localStorage.getItem('token');
-        if (token) {
-          console.log('ProtectedRoute: Network unavailable, trusting cached token');
-          setIsAuthorized(true);
-          return;
-        }
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        console.error('ProtectedRoute: Verification error:', errorMsg);
-        setError(`Chyba: ${errorMsg}`);
-        setIsAuthorized(false);
+        // Síť nedostupná (DNS error, timeout, …) — důvěřujeme tokenu
+        console.log('ProtectedRoute: Network unavailable, trusting cached token');
+        setIsAuthorized(true);
       }
     };
 
