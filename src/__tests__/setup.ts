@@ -3,7 +3,9 @@
  *
  * - Rozšíří expect o jest-dom matchery (toBeInTheDocument, toHaveTextContent, …)
  * - Nastaví globální mocky (localStorage, fetch, import.meta.env)
+ * - Polyfill IndexedDB pro Dexie (fake-indexeddb)
  */
+import 'fake-indexeddb/auto';
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';

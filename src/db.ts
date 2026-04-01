@@ -1,7 +1,6 @@
 import Dexie from 'dexie';
 import type { Table } from 'dexie';
 
-// Typ pro pending API požadavek
 export type PendingRequest = {
   id?: number;
   url: string;
@@ -11,53 +10,31 @@ export type PendingRequest = {
   createdAt: number;
 };
 
-// Typ pro revizi (zjednodušený příklad, upravte dle skutečných dat)
-export type RevizeCache = {
+export type CacheRecord = {
   id: number;
-  data: any; // nebo konkrétní typ Revize
-  updatedAt: number;
-};
-
-// Typy pro cache dalších entit
-export type RozvadecCache = {
-  id: number;
-  data: any; // nebo konkrétní typ Rozvadec
-  updatedAt: number;
-};
-export type MistnostCache = {
-  id: number;
-  data: any; // nebo konkrétní typ Mistnost
-  updatedAt: number;
-};
-export type ZavadaCache = {
-  id: number;
-  data: any; // nebo konkrétní typ Zavada
-  updatedAt: number;
-};
-export type OkruhCache = {
-  id: number;
-  data: any; // nebo konkrétní typ Okruh
-  updatedAt: number;
-};
-export type ZarizeniCache = {
-  id: number;
-  data: any; // nebo konkrétní typ Zarizeni
+  data: any;
   updatedAt: number;
 };
 
 export class RevizeAppDB extends Dexie {
   pendingRequests!: Table<PendingRequest, number>;
-  revizeCache!: Table<RevizeCache, number>;
-  rozvadecCache!: Table<RozvadecCache, number>;
-  mistnostCache!: Table<MistnostCache, number>;
-  zavadaCache!: Table<ZavadaCache, number>;
-  okruhCache!: Table<OkruhCache, number>;
-  zarizeniCache!: Table<ZarizeniCache, number>;
-  // ...další tabulky
+  revizeCache!: Table<CacheRecord, number>;
+  rozvadecCache!: Table<CacheRecord, number>;
+  mistnostCache!: Table<CacheRecord, number>;
+  zavadaCache!: Table<CacheRecord, number>;
+  okruhCache!: Table<CacheRecord, number>;
+  zarizeniCache!: Table<CacheRecord, number>;
+  firmaCache!: Table<CacheRecord, number>;
+  zakaznikCache!: Table<CacheRecord, number>;
+  pristrojCache!: Table<CacheRecord, number>;
+  zakazkaCache!: Table<CacheRecord, number>;
+  nastaveniCache!: Table<CacheRecord, number>;
+  zavadaKatalogCache!: Table<CacheRecord, number>;
+  predvolenyTextCache!: Table<CacheRecord, number>;
 
   constructor() {
     super('RevizeAppDB');
-    this.version(4).stores({
+    this.version(5).stores({
       pendingRequests: '++id, url, method, createdAt',
       revizeCache: 'id, updatedAt',
       rozvadecCache: 'id, updatedAt',
@@ -65,7 +42,13 @@ export class RevizeAppDB extends Dexie {
       zavadaCache: 'id, updatedAt',
       okruhCache: 'id, updatedAt',
       zarizeniCache: 'id, updatedAt',
-      // ...další tabulky
+      firmaCache: 'id, updatedAt',
+      zakaznikCache: 'id, updatedAt',
+      pristrojCache: 'id, updatedAt',
+      zakazkaCache: 'id, updatedAt',
+      nastaveniCache: 'id, updatedAt',
+      zavadaKatalogCache: 'id, updatedAt',
+      predvolenyTextCache: 'id, updatedAt',
     });
   }
 }

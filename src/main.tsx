@@ -9,16 +9,6 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 )
 
-// Registrace service workeru pro PWA/offline režim
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/sw.js')
-      .then(() => {
-        // Service worker úspěšně registrován
-      })
-      .catch(() => {
-        // Service worker registrace selhala
-      });
-  });
-}
+// Registrace service workeru – vite-plugin-pwa (autoUpdate)
+import { registerSW } from 'virtual:pwa-register'
+registerSW({ immediate: true })

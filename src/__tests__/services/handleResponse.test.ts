@@ -1,18 +1,22 @@
 /**
  * Test 8: handleResponse – přesměrování při 401 a správné parsování chyb
  * Testujeme interně přes database service volání.
+ * Po přidání offline podpory getAll() chytá chyby a fallbackuje na cache.
+ * Ověřujeme side-effecty (localStorage, redirect) místo rejects.
  */
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 
 vi.stubEnv('VITE_API_URL', '/api');
 
 import { revizeService } from '../../services/database';
+import { db } from '../../db';
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.restoreAllMocks();
   global.fetch = vi.fn();
   localStorage.clear();
   localStorage.setItem('token', 'test-token');
+  await Promise.all(db.tables.map(t => t.clear()));
 });
 
 describe('handleResponse', () => {
@@ -23,7 +27,8 @@ describe('handleResponse', () => {
       json: () => Promise.resolve({ error: 'Unauthorized' }),
     });
 
-    await expect(revizeService.getAll()).rejects.toThrow('Sezení vypršelo');
+    // getAll() nyní chytá chybu a vrací prázdný cache
+    await revizeService.getAll();
     expect(localStorage.getItem('token')).toBeNull();
   });
 
@@ -36,7 +41,7 @@ describe('handleResponse', () => {
       json: () => Promise.resolve({ error: 'Unauthorized' }),
     });
 
-    await expect(revizeService.getAll()).rejects.toThrow();
+    await revizeService.getAll();
     expect(localStorage.getItem('user')).toBeNull();
   });
 
@@ -47,28 +52,30 @@ describe('handleResponse', () => {
       json: () => Promise.resolve({}),
     });
 
-    await expect(revizeService.getAll()).rejects.toThrow();
+    await revizeService.getAll();
     expect(window.location.href).toBe('/login');
   });
 
-  it('should throw error message from API on non-401 error', async () => {
+  it('should fallback to cache on non-401 error', async () => {
     (global.fetch as Mock).mockResolvedValueOnce({
       ok: false,
       status: 500,
       json: () => Promise.resolve({ error: 'Databáze nedostupná' }),
     });
 
-    await expect(revizeService.getAll()).rejects.toThrow('Databáze nedostupná');
+    const result = await revizeService.getAll();
+    expect(result).toEqual([]);
   });
 
-  it('should throw default message when error body cannot be parsed', async () => {
+  it('should fallback to cache when error body cannot be parsed', async () => {
     (global.fetch as Mock).mockResolvedValueOnce({
       ok: false,
       status: 500,
       json: () => Promise.reject(new Error('not JSON')),
     });
 
-    await expect(revizeService.getAll()).rejects.toThrow('Neznámá chyba');
+    const result = await revizeService.getAll();
+    expect(result).toEqual([]);
   });
 
   it('should return parsed JSON on success', async () => {

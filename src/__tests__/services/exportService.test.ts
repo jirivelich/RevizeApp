@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 
 vi.stubEnv('VITE_API_URL', '/api');
 
-import { exportService, db } from '../../services/database';
+import { exportService } from '../../services/database';
 
 function mockFetchOk(data: unknown) {
   (global.fetch as Mock).mockResolvedValueOnce({
@@ -49,11 +49,5 @@ describe('exportService', () => {
 
     const body = JSON.parse((global.fetch as Mock).mock.calls[0][1].body);
     expect(body.mode).toBe('replace');
-  });
-});
-
-describe('db constant', () => {
-  it('should be null (for backward compatibility)', () => {
-    expect(db).toBeNull();
   });
 });

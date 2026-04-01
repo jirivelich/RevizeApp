@@ -48,6 +48,11 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         console.log('ProtectedRoute: Verification successful');
         setIsAuthorized(true);
       } catch (err) {
+        // Offline + token existuje → důvěřujeme lokálnímu tokenu
+        if (!navigator.onLine) {
+          setIsAuthorized(true);
+          return;
+        }
         const errorMsg = err instanceof Error ? err.message : String(err);
         console.error('ProtectedRoute: Verification error:', errorMsg);
         setError(`Chyba: ${errorMsg}`);

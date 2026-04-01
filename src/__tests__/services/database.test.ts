@@ -20,6 +20,7 @@ import {
   pristrojService,
   nastaveniService,
 } from '../../services/database';
+import { db } from '../../db';
 
 // ── Helpers ─────────────────────────────────────────
 
@@ -49,11 +50,13 @@ function mockFetchServerError(msg = 'Internal Server Error') {
 
 // ── Setup ───────────────────────────────────────────
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.restoreAllMocks();
   global.fetch = vi.fn();
   localStorage.clear();
   localStorage.setItem('token', 'db-test-token');
+  // Vyčistit všechny Dexie cache tabulky
+  await Promise.all(db.tables.map(t => t.clear()));
 });
 
 // ═══════════════════════════════════════════
@@ -119,14 +122,16 @@ describe('revizeService', () => {
     await expect(revizeService.delete(1)).resolves.toBeUndefined();
   });
 
-  it('should throw on 401', async () => {
+  it('should fallback to empty cache on 401', async () => {
     mockFetch401();
-    await expect(revizeService.getAll()).rejects.toThrow();
+    const result = await revizeService.getAll();
+    expect(result).toEqual([]);
   });
 
-  it('should throw on server error', async () => {
+  it('should fallback to empty cache on server error', async () => {
     mockFetchServerError('DB connection failed');
-    await expect(revizeService.getAll()).rejects.toThrow('DB connection failed');
+    const result = await revizeService.getAll();
+    expect(result).toEqual([]);
   });
 });
 
