@@ -138,9 +138,13 @@ export const revizeService = {
   },
 
   async getHistorie(id: number): Promise<Partial<Revize>[]> {
-    return fetch(`${API_BASE_URL}/revize/${id}/historie`, {
-      headers: getAuthHeaders(),
-    }).then(res => handleResponse<Partial<Revize>[]>(res));
+    try {
+      return await fetch(`${API_BASE_URL}/revize/${id}/historie`, {
+        headers: getAuthHeaders(),
+      }).then(res => handleResponse<Partial<Revize>[]>(res));
+    } catch {
+      return [];
+    }
   },
 };
 
@@ -555,13 +559,18 @@ export const firmaService = {
 
   async create(data: Omit<Firma, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
     if (navigator.onLine) {
-      const response = await fetch(`${API_BASE_URL}/firmy`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(data),
-      }).then(res => handleResponse<{ id: number }>(res));
-      return response.id;
-    } else {
+      try {
+        const response = await fetch(`${API_BASE_URL}/firmy`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<{ id: number }>(res));
+        return response.id;
+      } catch {
+        // Network error - queue offline
+      }
+    }
+    {
       const tempId = Date.now() * -1;
       await db.firmaCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
       await safeApiRequest({ url: `${API_BASE_URL}/firmy`, method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
@@ -571,31 +580,28 @@ export const firmaService = {
 
   async update(id: number, data: Partial<Firma>): Promise<number> {
     if (navigator.onLine) {
-      await fetch(`${API_BASE_URL}/firmy/${id}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(data),
-      }).then(res => handleResponse<unknown>(res));
-    } else {
-      const cached = await db.firmaCache.get(id);
-      if (cached) {
-        await db.firmaCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+      try {
+        await fetch(`${API_BASE_URL}/firmy/${id}`, {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<unknown>(res));
+        return 1;
+      } catch {
+        // Network error - fallback to offline
       }
-      await safeApiRequest({ url: `${API_BASE_URL}/firmy/${id}`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
     }
+    const cached = await db.firmaCache.get(id);
+    if (cached) {
+      await db.firmaCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+    }
+    await safeApiRequest({ url: `${API_BASE_URL}/firmy/${id}`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
     await db.firmaCache.delete(id);
-    if (navigator.onLine) {
-      await fetch(`${API_BASE_URL}/firmy/${id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      }).then(res => handleResponse<unknown>(res));
-    } else {
-      await safeApiRequest({ url: `${API_BASE_URL}/firmy/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
-    }
+    await safeApiRequest({ url: `${API_BASE_URL}/firmy/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -628,13 +634,18 @@ export const zakazkaService = {
 
   async create(data: Omit<Zakazka, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
     if (navigator.onLine) {
-      const response = await fetch(`${API_BASE_URL}/zakazky`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(data),
-      }).then(res => handleResponse<{ id: number }>(res));
-      return response.id;
-    } else {
+      try {
+        const response = await fetch(`${API_BASE_URL}/zakazky`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<{ id: number }>(res));
+        return response.id;
+      } catch {
+        // Network error - queue offline
+      }
+    }
+    {
       const tempId = Date.now() * -1;
       await db.zakazkaCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
       await safeApiRequest({ url: `${API_BASE_URL}/zakazky`, method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
@@ -644,31 +655,28 @@ export const zakazkaService = {
 
   async update(id: number, data: Partial<Zakazka>): Promise<number> {
     if (navigator.onLine) {
-      await fetch(`${API_BASE_URL}/zakazky/${id}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(data),
-      }).then(res => handleResponse<unknown>(res));
-    } else {
-      const cached = await db.zakazkaCache.get(id);
-      if (cached) {
-        await db.zakazkaCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+      try {
+        await fetch(`${API_BASE_URL}/zakazky/${id}`, {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<unknown>(res));
+        return 1;
+      } catch {
+        // Network error - fallback to offline
       }
-      await safeApiRequest({ url: `${API_BASE_URL}/zakazky/${id}`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
     }
+    const cached = await db.zakazkaCache.get(id);
+    if (cached) {
+      await db.zakazkaCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+    }
+    await safeApiRequest({ url: `${API_BASE_URL}/zakazky/${id}`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
     await db.zakazkaCache.delete(id);
-    if (navigator.onLine) {
-      await fetch(`${API_BASE_URL}/zakazky/${id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      }).then(res => handleResponse<unknown>(res));
-    } else {
-      await safeApiRequest({ url: `${API_BASE_URL}/zakazky/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
-    }
+    await safeApiRequest({ url: `${API_BASE_URL}/zakazky/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -719,13 +727,18 @@ export const pristrojService = {
 
   async create(data: Omit<MericiPristroj, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
     if (navigator.onLine) {
-      const response = await fetch(`${API_BASE_URL}/pristroje`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(data),
-      }).then(res => handleResponse<{ id: number }>(res));
-      return response.id;
-    } else {
+      try {
+        const response = await fetch(`${API_BASE_URL}/pristroje`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<{ id: number }>(res));
+        return response.id;
+      } catch {
+        // Network error - queue offline
+      }
+    }
+    {
       const tempId = Date.now() * -1;
       await db.pristrojCache.put({ id: tempId, data: { ...data, id: tempId } as MericiPristroj, updatedAt: Date.now() });
       await safeApiRequest({ url: `${API_BASE_URL}/pristroje`, method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
@@ -735,31 +748,28 @@ export const pristrojService = {
 
   async update(id: number, data: Partial<MericiPristroj>): Promise<number> {
     if (navigator.onLine) {
-      await fetch(`${API_BASE_URL}/pristroje/${id}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(data),
-      }).then(res => handleResponse<unknown>(res));
-    } else {
-      const cached = await db.pristrojCache.get(id);
-      if (cached) {
-        await db.pristrojCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+      try {
+        await fetch(`${API_BASE_URL}/pristroje/${id}`, {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<unknown>(res));
+        return 1;
+      } catch {
+        // Network error - fallback to offline
       }
-      await safeApiRequest({ url: `${API_BASE_URL}/pristroje/${id}`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
     }
+    const cached = await db.pristrojCache.get(id);
+    if (cached) {
+      await db.pristrojCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+    }
+    await safeApiRequest({ url: `${API_BASE_URL}/pristroje/${id}`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
     await db.pristrojCache.delete(id);
-    if (navigator.onLine) {
-      await fetch(`${API_BASE_URL}/pristroje/${id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      }).then(res => handleResponse<unknown>(res));
-    } else {
-      await safeApiRequest({ url: `${API_BASE_URL}/pristroje/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
-    }
+    await safeApiRequest({ url: `${API_BASE_URL}/pristroje/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -781,52 +791,57 @@ export const revizePristrojService = {
 
   async addToRevize(revizeId: number, pristrojId: number): Promise<number> {
     if (navigator.onLine) {
-      const response = await fetch(`${API_BASE_URL}/revize-pristroje`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ revizeId, pristrojId }),
-      }).then(res => handleResponse<{ id: number }>(res));
-      return response.id;
-    } else {
-      await safeApiRequest({ url: `${API_BASE_URL}/revize-pristroje`, method: 'POST', body: { revizeId, pristrojId }, headers: getAuthHeaders() as Record<string, string> });
-      return Date.now() * -1;
+      try {
+        const response = await fetch(`${API_BASE_URL}/revize-pristroje`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ revizeId, pristrojId }),
+        }).then(res => handleResponse<{ id: number }>(res));
+        return response.id;
+      } catch {
+        // Network error - queue offline
+      }
     }
+    await safeApiRequest({ url: `${API_BASE_URL}/revize-pristroje`, method: 'POST', body: { revizeId, pristrojId }, headers: getAuthHeaders() as Record<string, string> });
+    return Date.now() * -1;
   },
 
   async removeFromRevize(revizeId: number, pristrojId: number): Promise<void> {
-    if (navigator.onLine) {
-      await fetch(`${API_BASE_URL}/revize-pristroje/${revizeId}/${pristrojId}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      }).then(res => handleResponse<unknown>(res));
-    } else {
-      await safeApiRequest({ url: `${API_BASE_URL}/revize-pristroje/${revizeId}/${pristrojId}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
-    }
+    await safeApiRequest({ url: `${API_BASE_URL}/revize-pristroje/${revizeId}/${pristrojId}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
 // ==================== KALIBRACE (historie) ====================
 export const kalibraceService = {
   async getByPristroj(pristrojId: number): Promise<Kalibrace[]> {
-    return fetch(`${API_BASE_URL}/kalibrace/${pristrojId}`, {
-      headers: getAuthHeaders(),
-    }).then(res => handleResponse<Kalibrace[]>(res));
+    try {
+      return await fetch(`${API_BASE_URL}/kalibrace/${pristrojId}`, {
+        headers: getAuthHeaders(),
+      }).then(res => handleResponse<Kalibrace[]>(res));
+    } catch {
+      return [];
+    }
   },
 
   async create(data: Omit<Kalibrace, 'id' | 'createdAt'>): Promise<number> {
-    const response = await fetch(`${API_BASE_URL}/kalibrace`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }).then(res => handleResponse<{ id: number }>(res));
-    return response.id;
+    if (navigator.onLine) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/kalibrace`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<{ id: number }>(res));
+        return response.id;
+      } catch {
+        // Network error - queue offline
+      }
+    }
+    await safeApiRequest({ url: `${API_BASE_URL}/kalibrace`, method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
+    return Date.now() * -1;
   },
 
   async delete(id: number): Promise<void> {
-    await fetch(`${API_BASE_URL}/kalibrace/${id}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    }).then(res => handleResponse<unknown>(res));
+    await safeApiRequest({ url: `${API_BASE_URL}/kalibrace/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -852,20 +867,24 @@ export const nastaveniService = {
 
   async save(data: Partial<Nastaveni>): Promise<void> {
     if (navigator.onLine) {
-      await fetch(`${API_BASE_URL}/nastaveni`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(data),
-      }).then(res => handleResponse<unknown>(res));
-    } else {
-      const cached = await db.nastaveniCache.get(1);
-      if (cached) {
-        await db.nastaveniCache.put({ id: 1, data: { ...cached.data, ...data }, updatedAt: Date.now() });
-      } else {
-        await db.nastaveniCache.put({ id: 1, data: data as Nastaveni, updatedAt: Date.now() });
+      try {
+        await fetch(`${API_BASE_URL}/nastaveni`, {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<unknown>(res));
+        return;
+      } catch {
+        // Network error - fallback to offline
       }
-      await safeApiRequest({ url: `${API_BASE_URL}/nastaveni`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
     }
+    const cached = await db.nastaveniCache.get(1);
+    if (cached) {
+      await db.nastaveniCache.put({ id: 1, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+    } else {
+      await db.nastaveniCache.put({ id: 1, data: data as Nastaveni, updatedAt: Date.now() });
+    }
+    await safeApiRequest({ url: `${API_BASE_URL}/nastaveni`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -906,13 +925,18 @@ export const zavadaKatalogService = {
 
   async create(data: Omit<ZavadaKatalog, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
     if (navigator.onLine) {
-      const response = await fetch(`${API_BASE_URL}/zavady-katalog`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(data),
-      }).then(res => handleResponse<{ id: number }>(res));
-      return response.id;
-    } else {
+      try {
+        const response = await fetch(`${API_BASE_URL}/zavady-katalog`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<{ id: number }>(res));
+        return response.id;
+      } catch {
+        // Network error - queue offline
+      }
+    }
+    {
       const tempId = Date.now() * -1;
       await db.zavadaKatalogCache.put({ id: tempId, data: { ...data, id: tempId } as ZavadaKatalog, updatedAt: Date.now() });
       await safeApiRequest({ url: `${API_BASE_URL}/zavady-katalog`, method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
@@ -922,31 +946,28 @@ export const zavadaKatalogService = {
 
   async update(id: number, data: Partial<ZavadaKatalog>): Promise<number> {
     if (navigator.onLine) {
-      await fetch(`${API_BASE_URL}/zavady-katalog/${id}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(data),
-      }).then(res => handleResponse<unknown>(res));
-    } else {
-      const cached = await db.zavadaKatalogCache.get(id);
-      if (cached) {
-        await db.zavadaKatalogCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+      try {
+        await fetch(`${API_BASE_URL}/zavady-katalog/${id}`, {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<unknown>(res));
+        return 1;
+      } catch {
+        // Network error - fallback to offline
       }
-      await safeApiRequest({ url: `${API_BASE_URL}/zavady-katalog/${id}`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
     }
+    const cached = await db.zavadaKatalogCache.get(id);
+    if (cached) {
+      await db.zavadaKatalogCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+    }
+    await safeApiRequest({ url: `${API_BASE_URL}/zavady-katalog/${id}`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
     await db.zavadaKatalogCache.delete(id);
-    if (navigator.onLine) {
-      await fetch(`${API_BASE_URL}/zavady-katalog/${id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      }).then(res => handleResponse<unknown>(res));
-    } else {
-      await safeApiRequest({ url: `${API_BASE_URL}/zavady-katalog/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
-    }
+    await safeApiRequest({ url: `${API_BASE_URL}/zavady-katalog/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 
   async getKategorie(): Promise<string[]> {
@@ -1013,13 +1034,18 @@ export const predvolenyTextService = {
 
   async create(data: { pole: string; nazev: string; text: string; poradi?: number }): Promise<number> {
     if (navigator.onLine) {
-      const response = await fetch(`${API_BASE_URL}/predvolene-texty`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(data),
-      }).then(res => handleResponse<{ id: number }>(res));
-      return response.id;
-    } else {
+      try {
+        const response = await fetch(`${API_BASE_URL}/predvolene-texty`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<{ id: number }>(res));
+        return response.id;
+      } catch {
+        // Network error - queue offline
+      }
+    }
+    {
       const tempId = Date.now() * -1;
       await db.predvolenyTextCache.put({ id: tempId, data: { ...data, id: tempId } as PredvolenyText, updatedAt: Date.now() });
       await safeApiRequest({ url: `${API_BASE_URL}/predvolene-texty`, method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
@@ -1029,30 +1055,27 @@ export const predvolenyTextService = {
 
   async update(id: number, data: { nazev: string; text: string; poradi?: number }): Promise<void> {
     if (navigator.onLine) {
-      await fetch(`${API_BASE_URL}/predvolene-texty/${id}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(data),
-      }).then(res => handleResponse<unknown>(res));
-    } else {
-      const cached = await db.predvolenyTextCache.get(id);
-      if (cached) {
-        await db.predvolenyTextCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+      try {
+        await fetch(`${API_BASE_URL}/predvolene-texty/${id}`, {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<unknown>(res));
+        return;
+      } catch {
+        // Network error - fallback to offline
       }
-      await safeApiRequest({ url: `${API_BASE_URL}/predvolene-texty/${id}`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
     }
+    const cached = await db.predvolenyTextCache.get(id);
+    if (cached) {
+      await db.predvolenyTextCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+    }
+    await safeApiRequest({ url: `${API_BASE_URL}/predvolene-texty/${id}`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
   },
 
   async delete(id: number): Promise<void> {
     await db.predvolenyTextCache.delete(id);
-    if (navigator.onLine) {
-      await fetch(`${API_BASE_URL}/predvolene-texty/${id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      }).then(res => handleResponse<unknown>(res));
-    } else {
-      await safeApiRequest({ url: `${API_BASE_URL}/predvolene-texty/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
-    }
+    await safeApiRequest({ url: `${API_BASE_URL}/predvolene-texty/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -1110,13 +1133,18 @@ export const zakazniciService = {
 
   async create(data: Omit<Zakaznik, 'id' | 'pocetRevizi' | 'createdAt' | 'updatedAt'>): Promise<number> {
     if (navigator.onLine) {
-      const response = await fetch(`${API_BASE_URL}/zakaznici`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(data),
-      }).then(res => handleResponse<{ id: number }>(res));
-      return response.id;
-    } else {
+      try {
+        const response = await fetch(`${API_BASE_URL}/zakaznici`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<{ id: number }>(res));
+        return response.id;
+      } catch {
+        // Network error - queue offline
+      }
+    }
+    {
       const tempId = Date.now() * -1;
       await db.zakaznikCache.put({ id: tempId, data: { ...data, id: tempId, pocetRevizi: 0 } as Zakaznik, updatedAt: Date.now() });
       await safeApiRequest({ url: `${API_BASE_URL}/zakaznici`, method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
@@ -1126,31 +1154,28 @@ export const zakazniciService = {
 
   async update(id: number, data: Partial<Zakaznik>): Promise<number> {
     if (navigator.onLine) {
-      await fetch(`${API_BASE_URL}/zakaznici/${id}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(data),
-      }).then(res => handleResponse<unknown>(res));
-    } else {
-      const cached = await db.zakaznikCache.get(id);
-      if (cached) {
-        await db.zakaznikCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+      try {
+        await fetch(`${API_BASE_URL}/zakaznici/${id}`, {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<unknown>(res));
+        return 1;
+      } catch {
+        // Network error - fallback to offline
       }
-      await safeApiRequest({ url: `${API_BASE_URL}/zakaznici/${id}`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
     }
+    const cached = await db.zakaznikCache.get(id);
+    if (cached) {
+      await db.zakaznikCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+    }
+    await safeApiRequest({ url: `${API_BASE_URL}/zakaznici/${id}`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
     await db.zakaznikCache.delete(id);
-    if (navigator.onLine) {
-      await fetch(`${API_BASE_URL}/zakaznici/${id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      }).then(res => handleResponse<unknown>(res));
-    } else {
-      await safeApiRequest({ url: `${API_BASE_URL}/zakaznici/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
-    }
+    await safeApiRequest({ url: `${API_BASE_URL}/zakaznici/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
