@@ -39,6 +39,11 @@ export type OkruhCache = {
   data: any; // nebo konkrétní typ Okruh
   updatedAt: number;
 };
+export type ZarizeniCache = {
+  id: number;
+  data: any; // nebo konkrétní typ Zarizeni
+  updatedAt: number;
+};
 
 export class RevizeAppDB extends Dexie {
   pendingRequests!: Table<PendingRequest, number>;
@@ -47,6 +52,7 @@ export class RevizeAppDB extends Dexie {
   mistnostCache!: Table<MistnostCache, number>;
   zavadaCache!: Table<ZavadaCache, number>;
   okruhCache!: Table<OkruhCache, number>;
+  zarizeniCache!: Table<ZarizeniCache, number>;
   // ...další tabulky
 
   constructor() {
@@ -58,6 +64,7 @@ export class RevizeAppDB extends Dexie {
       mistnostCache: 'id, updatedAt',
       zavadaCache: 'id, updatedAt',
       okruhCache: 'id, updatedAt',
+      zarizeniCache: 'id, updatedAt',
       // ...další tabulky
     });
   }
