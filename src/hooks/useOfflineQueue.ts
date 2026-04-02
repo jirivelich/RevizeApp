@@ -29,7 +29,7 @@ export function useOfflineQueueSync() {
             'Content-Type': 'application/json',
             ...(req.headers || {}),
           },
-          body: JSON.stringify(req.body),
+          body: req.body ? JSON.stringify(req.body) : undefined,
         });
         if (response.ok) {
           await removePendingRequest(req.id!);
@@ -37,6 +37,20 @@ export function useOfflineQueueSync() {
         // Při chybě necháme v frontě pro další pokus
       } catch {
         // Síťová chyba – necháme v frontě
+      }
+    }
+
+    // Vyčistit temp záznamy (záporná ID) z cache po úspěšné synchronizaci
+    const tables = [
+      db.revizeCache, db.rozvadecCache, db.okruhCache,
+      db.mistnostCache, db.zarizeniCache, db.zavadaCache,
+      db.firmaCache, db.zakazkaCache, db.pristrojCache,
+      db.zakaznikCache, db.zavadaKatalogCache, db.predvolenyTextCache,
+    ];
+    for (const table of tables) {
+      const tempRecords = await table.where('id').below(0).primaryKeys();
+      if (tempRecords.length > 0) {
+        await table.bulkDelete(tempRecords);
       }
     }
   }, []);

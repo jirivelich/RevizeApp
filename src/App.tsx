@@ -76,18 +76,22 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 
 function App() {
   const { sync } = useOfflineQueueSync();
-  const online = typeof window !== 'undefined' ? window.navigator.onLine : true;
 
   useEffect(() => {
-    if (!online) return;
+    // Sync pending requests on mount (if any remain from previous session)
+    if (navigator.onLine) {
+      sync().then(() => queryClient.invalidateQueries());
+    }
+
+    // Sync pending requests whenever we come back online
     const handleOnline = () => {
-      sync();
+      sync().then(() => queryClient.invalidateQueries());
     };
     window.addEventListener('online', handleOnline);
     return () => {
       window.removeEventListener('online', handleOnline);
     };
-  }, [sync, online]);
+  }, [sync]);
 
   return (
     <QueryClientProvider client={queryClient}>
