@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '../../components/ui';
 import {
@@ -11,6 +11,8 @@ import {
   usePristrojeByRevize, usePristroje, useFirmy, useZakaznici,
   useNastaveni, usePredvoleneTexty, useZavadyKatalog,
 } from '../../hooks/useQueries';
+import { useAutosave } from '../../hooks/useAutosave';
+import type { AutosaveStatus } from '../../hooks/useAutosave';
 
 const EMPTY_ARR: never[] = [];
 
@@ -49,13 +51,44 @@ export function RevizeDetailPage() {
 
   const updateRevize = useUpdateRevize();
 
-  // Sync formData when revize loads/changes
+  // Sync formData only on first load of a revision (not on background refetches).
+  // This prevents autosave from being triggered by React Query cache invalidations.
+  const loadedForIdRef = useRef<number | undefined>(undefined);
   useEffect(() => {
-    if (revize) {
+    if (revize && revize.id !== loadedForIdRef.current) {
+      loadedForIdRef.current = revize.id;
       setFormData(revize);
       if (revize.zakaznikId) setSelectedZakaznikId(revize.zakaznikId.toString());
     }
   }, [revize]);
+
+  // Autosave handler — called by useAutosave hook (no special 'dokončeno' logic here;
+  // that logic lives in the stav select onChange and in the manual handleSave button).
+  const handleAutosave = useCallback(async (data: Partial<Revize>) => {
+    if (!revize?.id) return;
+    await updateRevize.mutateAsync({ id: revize.id, data });
+  }, [revize?.id, updateRevize]);
+
+  const { status: autoStatus, saveNow, flush } = useAutosave(formData, revize, handleAutosave);
+
+  // Display status: 'saved' fades out after 2s
+  const [displayStatus, setDisplayStatus] = useState<AutosaveStatus>('idle');
+  useEffect(() => {
+    setDisplayStatus(autoStatus);
+    if (autoStatus === 'saved') {
+      const t = setTimeout(() => setDisplayStatus('idle'), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [autoStatus]);
+
+  // Warn before browser close/refresh if there are unsaved changes
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (autoStatus === 'unsaved') e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [autoStatus]);
 
   // Okruhy counts — N+1 but computed only when rozvadece change
   const [okruhyCounts, setOkruhyCounts] = useState<Record<number, number>>({});
@@ -105,6 +138,7 @@ export function RevizeDetailPage() {
         platnostDo.setMonth(platnostDo.getMonth() + (formData.termin || 36));
         dataToSave.datumPlatnosti = platnostDo.toISOString().split('T')[0];
         dataToSave.datumVypracovani = today.toISOString().split('T')[0];
+        setFormData(dataToSave);
       }
       updateRevize.mutate({ id: revize.id, data: dataToSave });
     }
@@ -190,7 +224,7 @@ export function RevizeDetailPage() {
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
+            onClick={() => { flush(); setActiveTab(tab.id as any); }}
             className={`px-3 py-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap flex-shrink-0 ${
               activeTab === tab.id
                 ? 'border-blue-600 text-blue-600'
@@ -211,6 +245,7 @@ export function RevizeDetailPage() {
             firmy={firmy} selectedFirmaId={selectedFirmaId} setSelectedFirmaId={setSelectedFirmaId}
             nastaveni={nastaveni} zakaznici={zakaznici}
             selectedZakaznikId={selectedZakaznikId} setSelectedZakaznikId={setSelectedZakaznikId}
+            saveNow={saveNow}
           />
         ) : (
           <InfoTab
@@ -218,6 +253,7 @@ export function RevizeDetailPage() {
             firmy={firmy} selectedFirmaId={selectedFirmaId} setSelectedFirmaId={setSelectedFirmaId}
             nastaveni={nastaveni} zakaznici={zakaznici}
             selectedZakaznikId={selectedZakaznikId} setSelectedZakaznikId={setSelectedZakaznikId}
+            saveNow={saveNow}
           />
         )
       )}
@@ -228,6 +264,7 @@ export function RevizeDetailPage() {
           vlastniTexty={vlastniTexty}
           pouzitePristroje={pouzitePristroje} vsechnyPristroje={vsechnyPristroje}
           revizeId={revize.id!}
+          saveNow={saveNow}
         />
       )}
 
@@ -250,6 +287,7 @@ export function RevizeDetailPage() {
           vlastniTexty={vlastniTexty}
           pouzitePristroje={pouzitePristroje} vsechnyPristroje={vsechnyPristroje}
           revizeId={revize.id!}
+          saveNow={saveNow}
         />
       )}
 
@@ -277,8 +315,25 @@ export function RevizeDetailPage() {
       {/* Fixed save bar */}
       {(activeTab === 'info' || activeTab === 'dokumentace' || activeTab === 'hromosvod_zarizeni' || activeTab === 'strojni_zarizeni') && (
         <div className="fixed bottom-0 left-0 lg:left-64 right-0 z-50 bg-slate-800/90 backdrop-blur border-t border-slate-600 shadow-[0_-2px_8px_rgba(0,0,0,0.15)]">
-          <div className="max-w-4xl mx-auto px-4 py-1 flex justify-center">
-            <button onClick={handleSave} className="px-6 py-1 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded transition-colors cursor-pointer">Uložit změny</button>
+          <div className="max-w-4xl mx-auto px-4 py-1 flex items-center justify-between gap-4">
+            <div className="text-sm min-w-[140px]">
+              {displayStatus === 'saving' && (
+                <span className="flex items-center gap-1.5 text-slate-300">
+                  <span className="inline-block w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                  Ukládání...
+                </span>
+              )}
+              {displayStatus === 'saved' && (
+                <span className="text-emerald-400">✓ Uloženo</span>
+              )}
+              {displayStatus === 'unsaved' && (
+                <span className="text-amber-400">Neuložené změny</span>
+              )}
+              {displayStatus === 'error' && (
+                <span className="text-red-400">Chyba ukládání</span>
+              )}
+            </div>
+            <button onClick={handleSave} className="px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors cursor-pointer">Uložit</button>
           </div>
         </div>
       )}

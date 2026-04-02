@@ -20,6 +20,7 @@ interface HromosvodZarizeniTabProps {
   pouzitePristroje: MericiPristroj[];
   vsechnyPristroje: MericiPristroj[];
   revizeId: number;
+  saveNow?: () => void;
 }
 
 const STAV_OPTIONS = [
@@ -43,6 +44,7 @@ export function HromosvodZarizeniTab({
   vlastniTexty,
   pouzitePristroje, vsechnyPristroje,
   revizeId,
+  saveNow,
 }: HromosvodZarizeniTabProps) {
   const [isPristrojModalOpen, setIsPristrojModalOpen] = useState(false);
   const addPristroj = useAddPristrojToRevize();
@@ -133,7 +135,7 @@ export function HromosvodZarizeniTab({
           <div className={TW.grid2}>
             <div className="flex flex-col gap-1">
               <label className={TW.label}>Typ jímače</label>
-              <select className={TW.selectFull} value={formData.hromosvodJimaciTyp || ''} onChange={(e) => setFormData({ ...formData, hromosvodJimaciTyp: e.target.value })}>
+              <select className={TW.selectFull} value={formData.hromosvodJimaciTyp || ''} onChange={(e) => { setFormData({ ...formData, hromosvodJimaciTyp: e.target.value }); saveNow?.(); }}>
                 <option value="">-- Vyberte --</option>
                 <option value="tyčový">Tyčový</option>
                 <option value="mřížový">Mřížový (Faradayova klec)</option>
@@ -144,7 +146,7 @@ export function HromosvodZarizeniTab({
             </div>
             <div className="flex flex-col gap-1">
               <label className={TW.label}>Materiál</label>
-              <select className={TW.selectFull} value={formData.hromosvodJimaciMaterial || ''} onChange={(e) => setFormData({ ...formData, hromosvodJimaciMaterial: e.target.value })}>
+              <select className={TW.selectFull} value={formData.hromosvodJimaciMaterial || ''} onChange={(e) => { setFormData({ ...formData, hromosvodJimaciMaterial: e.target.value }); saveNow?.(); }}>
                 <option value="">-- Vyberte --</option>
                 <option value="ocel pozinkovaná">Ocel pozinkovaná (FeZn)</option>
                 <option value="nerezová ocel">Nerezová ocel</option>
@@ -154,7 +156,7 @@ export function HromosvodZarizeniTab({
             </div>
             <div className="flex flex-col gap-1">
               <label className={TW.label}>Stav</label>
-              <select className={`${TW.selectFull} ${stavColor(formData.hromosvodJimaciStav)}`} value={formData.hromosvodJimaciStav || ''} onChange={(e) => setFormData({ ...formData, hromosvodJimaciStav: e.target.value as any })}>
+              <select className={`${TW.selectFull} ${stavColor(formData.hromosvodJimaciStav)}`} value={formData.hromosvodJimaciStav || ''} onChange={(e) => { setFormData({ ...formData, hromosvodJimaciStav: e.target.value as any }); saveNow?.(); }}>
                 {STAV_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
@@ -179,7 +181,7 @@ export function HromosvodZarizeniTab({
             </div>
             <div className="flex flex-col gap-1">
               <label className={TW.label}>Materiál</label>
-              <select className={TW.selectFull} value={formData.hromosvodSvodyMaterial || ''} onChange={(e) => setFormData({ ...formData, hromosvodSvodyMaterial: e.target.value })}>
+              <select className={TW.selectFull} value={formData.hromosvodSvodyMaterial || ''} onChange={(e) => { setFormData({ ...formData, hromosvodSvodyMaterial: e.target.value }); saveNow?.(); }}>
                 <option value="">-- Vyberte --</option>
                 <option value="ocel pozinkovaná">Ocel pozinkovaná (FeZn)</option>
                 <option value="nerezová ocel">Nerezová ocel</option>
@@ -202,7 +204,7 @@ export function HromosvodZarizeniTab({
             </div>
             <div className="flex flex-col gap-1">
               <label className={TW.label}>Stav</label>
-              <select className={`${TW.selectFull} ${stavColor(formData.hromosvodSvodyStav)}`} value={formData.hromosvodSvodyStav || ''} onChange={(e) => setFormData({ ...formData, hromosvodSvodyStav: e.target.value as any })}>
+              <select className={`${TW.selectFull} ${stavColor(formData.hromosvodSvodyStav)}`} value={formData.hromosvodSvodyStav || ''} onChange={(e) => { setFormData({ ...formData, hromosvodSvodyStav: e.target.value as any }); saveNow?.(); }}>
                 {STAV_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
@@ -223,7 +225,7 @@ export function HromosvodZarizeniTab({
           <div className={TW.grid3}>
             <div className="flex flex-col gap-1">
               <label className={TW.label}>Typ uzemnění</label>
-              <select className={TW.selectFull} value={formData.hromosvodUzemneniTyp || ''} onChange={(e) => setFormData({ ...formData, hromosvodUzemneniTyp: e.target.value })}>
+              <select className={TW.selectFull} value={formData.hromosvodUzemneniTyp || ''} onChange={(e) => { setFormData({ ...formData, hromosvodUzemneniTyp: e.target.value }); saveNow?.(); }}>
                 <option value="">-- Vyberte --</option>
                 <option value="základový">Základový (v fundamentu)</option>
                 <option value="obvodový">Obvodový (pásek kolem budovy)</option>
@@ -233,7 +235,7 @@ export function HromosvodZarizeniTab({
             </div>
             <div className="flex flex-col gap-1">
               <label className={TW.label}>Materiál</label>
-              <select className={TW.selectFull} value={formData.hromosvodUzemneniMaterial || ''} onChange={(e) => setFormData({ ...formData, hromosvodUzemneniMaterial: e.target.value })}>
+              <select className={TW.selectFull} value={formData.hromosvodUzemneniMaterial || ''} onChange={(e) => { setFormData({ ...formData, hromosvodUzemneniMaterial: e.target.value }); saveNow?.(); }}>
                 <option value="">-- Vyberte --</option>
                 <option value="ocel pozinkovaná">Ocel pozinkovaná (FeZn)</option>
                 <option value="měděný pásek">Měděný pásek (Cu)</option>
@@ -243,7 +245,7 @@ export function HromosvodZarizeniTab({
             </div>
             <div className="flex flex-col gap-1">
               <label className={TW.label}>Stav</label>
-              <select className={`${TW.selectFull} ${stavColor(formData.hromosvodUzemneniStav)}`} value={formData.hromosvodUzemneniStav || ''} onChange={(e) => setFormData({ ...formData, hromosvodUzemneniStav: e.target.value as any })}>
+              <select className={`${TW.selectFull} ${stavColor(formData.hromosvodUzemneniStav)}`} value={formData.hromosvodUzemneniStav || ''} onChange={(e) => { setFormData({ ...formData, hromosvodUzemneniStav: e.target.value as any }); saveNow?.(); }}>
                 {STAV_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>

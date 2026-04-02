@@ -17,6 +17,7 @@ interface DokumentaceTabProps {
   pouzitePristroje: MericiPristroj[];
   vsechnyPristroje: MericiPristroj[];
   revizeId: number;
+  saveNow?: () => void;
 }
 
 export function DokumentaceTab({
@@ -24,6 +25,7 @@ export function DokumentaceTab({
   vlastniTexty,
   pouzitePristroje, vsechnyPristroje,
   revizeId,
+  saveNow,
 }: DokumentaceTabProps) {
   const [isPristrojModalOpen, setIsPristrojModalOpen] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
@@ -192,7 +194,7 @@ export function DokumentaceTab({
             <select
               className={TW.selectFull + ' mt-1'}
               value={formData.napetovaSoustava || ''}
-              onChange={(e) => setFormData({ ...formData, napetovaSoustava: e.target.value })}
+              onChange={(e) => { setFormData({ ...formData, napetovaSoustava: e.target.value }); saveNow?.(); }}
             >
               <option value="">-- Vyberte napěťovou soustavu --</option>
               <option value="3+N+PE AC 50Hz 400/230V TN-C-S">3+N+PE AC 50Hz 400/230V TN-C-S</option>
@@ -240,6 +242,7 @@ export function DokumentaceTab({
                           updated = updated.filter((id: string) => id !== opatreni.id);
                         }
                         setFormData({ ...formData, ochranaOpatreni: JSON.stringify(updated) });
+                        saveNow?.();
                       }}
                       className="w-4 h-4 text-blue-600 rounded"
                     />
@@ -398,7 +401,7 @@ export function DokumentaceTab({
               <select
                 className={TW.select}
                 value={formData.vysledek || ''}
-                onChange={(e) => setFormData({ ...formData, vysledek: e.target.value as any })}
+                onChange={(e) => { setFormData({ ...formData, vysledek: e.target.value as any }); saveNow?.(); }}
               >
                 <option value="">-- Nevyplněno --</option>
                 <option value="schopno">Schopno provozu</option>
