@@ -208,7 +208,7 @@ export function RozvadecDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {okruhy.sort((a, b) => a.cislo - b.cislo).map((o) => (
+                {[...okruhy].sort((a, b) => a.cislo - b.cislo).map((o) => (
                   <tr key={o.id} className="border-b border-slate-100 hover:bg-slate-50">
                     <td className="py-2 px-3 font-medium">{o.cislo}</td>
                     <td className="py-2 px-3">{o.nazev}</td>
@@ -263,19 +263,19 @@ export function RozvadecDetailPage() {
             <Button variant="secondary" onClick={() => { setIsOkruhModalOpen(false); setEditingOkruh(null); }}>
               Zrušit
             </Button>
-            <Button onClick={handleAddOkruh}>
+            <Button type="submit" form="okruh-form" disabled={createOkruh.isPending || updateOkruh.isPending}>
               {editingOkruh ? 'Uložit' : 'Přidat'}
             </Button>
           </>
         }
       >
-        <form onSubmit={handleAddOkruh} className="space-y-4">
+        <form id="okruh-form" onSubmit={handleAddOkruh} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Input
               type="number"
               label="Číslo okruhu"
               value={okruhFormData.cislo}
-              onChange={(e) => setOkruhFormData({ ...okruhFormData, cislo: parseInt(e.target.value) })}
+              onChange={(e) => setOkruhFormData({ ...okruhFormData, cislo: parseInt(e.target.value) || 1 })}
               required
             />
             <Input
