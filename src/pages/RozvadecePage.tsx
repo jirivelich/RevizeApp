@@ -204,6 +204,8 @@ export function RozvadecDetailPage() {
                   <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Vodič</th>
                   <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Iz. odpor</th>
                   <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Imp. smyčky</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">IΔn [mA]</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">tA [s]</th>
                   <th className="text-right py-2 px-3 font-medium text-slate-600 text-sm">Akce</th>
                 </tr>
               </thead>
@@ -223,6 +225,12 @@ export function RozvadecDetailPage() {
                     </td>
                     <td className="py-2 px-3 text-slate-600">
                       {o.impedanceSmycky || '—'}
+                    </td>
+                    <td className="py-2 px-3 text-slate-600">
+                      {o.proudovyChranicMa != null ? o.proudovyChranicMa : '—'}
+                    </td>
+                    <td className="py-2 px-3 text-slate-600">
+                      {o.casOdpojeni != null ? o.casOdpojeni : '—'}
                     </td>
                     <td className="py-2 px-3 text-right">
                       <div className="flex justify-end gap-1">
