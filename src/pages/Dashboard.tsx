@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useQuery as useRQQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useRevize, usePristroje, useZakazky } from '../hooks/useQueries';
 import type { MericiPristroj, Revize, Zakazka } from '../types';
@@ -119,6 +120,100 @@ function SectionCard({ title, icon: _icon, count, viewAllLink, viewAllLabel, emp
             </Link>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+/* ═══ Weather ═══ */
+
+const WEATHER_URL =
+  'https://api.open-meteo.com/v1/forecast' +
+  '?latitude=49.7973&longitude=12.6352' +
+  '&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
+  '&timezone=Europe%2FPrague&forecast_days=5';
+
+function wmoToEmoji(code: number): string {
+  if (code === 0) return '☀️';
+  if (code <= 3) return '🌤️';
+  if (code <= 48) return '🌫️';
+  if (code <= 67) return '🌧️';
+  if (code <= 77) return '❄️';
+  if (code <= 82) return '🌦️';
+  return '⛈️';
+}
+
+interface WeatherDay {
+  date: string;
+  code: number;
+  max: number;
+  min: number;
+  precip: number;
+}
+
+function useWeather() {
+  return useRQQuery<WeatherDay[]>({
+    queryKey: ['weather'],
+    queryFn: async () => {
+      const res = await fetch(WEATHER_URL);
+      if (!res.ok) throw new Error('weather fetch failed');
+      const json = await res.json();
+      const d = json.daily;
+      return (d.time as string[]).map((date: string, i: number) => ({
+        date,
+        code: d.weathercode[i] as number,
+        max: Math.round(d.temperature_2m_max[i] as number),
+        min: Math.round(d.temperature_2m_min[i] as number),
+        precip: d.precipitation_probability_max[i] as number,
+      }));
+    },
+    staleTime: 30 * 60 * 1000,
+    retry: 1,
+  });
+}
+
+const CZ_DAYS = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
+
+function WeatherWidget() {
+  const { data, isError, isLoading } = useWeather();
+
+  if (isError || (!isLoading && !data)) return null;
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100">
+        <h2 className="text-[13px] font-semibold text-slate-700">Počasí — Tachov</h2>
+        <span className="text-[10px] text-slate-400">Open-Meteo</span>
+      </div>
+      <div className="grid grid-cols-5 divide-x divide-slate-100">
+        {isLoading
+          ? Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex flex-col items-center gap-1 py-3 px-2">
+                <div className="h-3 w-6 rounded bg-slate-100 animate-pulse" />
+                <div className="h-6 w-6 rounded bg-slate-100 animate-pulse" />
+                <div className="h-3 w-10 rounded bg-slate-100 animate-pulse" />
+                <div className="h-3 w-8 rounded bg-slate-100 animate-pulse" />
+              </div>
+            ))
+          : data!.map((day) => {
+              const d = new Date(day.date);
+              const dayName = CZ_DAYS[d.getDay()];
+              const isToday = day.date === new Date().toISOString().slice(0, 10);
+              return (
+                <div key={day.date} className={`flex flex-col items-center gap-0.5 py-3 px-2 ${isToday ? 'bg-slate-50' : ''}`}>
+                  <p className={`text-[11px] font-semibold ${isToday ? 'text-slate-800' : 'text-slate-500'}`}>
+                    {isToday ? 'Dnes' : dayName}
+                  </p>
+                  <span className="text-xl leading-none">{wmoToEmoji(day.code)}</span>
+                  <p className="text-[12px] font-medium text-slate-700">
+                    {day.max}° <span className="text-slate-400 font-normal">{day.min}°</span>
+                  </p>
+                  {day.precip > 0 && (
+                    <p className="text-[10px] text-blue-500">💧 {day.precip}%</p>
+                  )}
+                </div>
+              );
+            })}
       </div>
     </div>
   );
@@ -338,6 +433,9 @@ export function Dashboard() {
         {/* Měsíční kalendář */}
         <MonthCalendar zakazky={zakazky} />
       </div>
+
+      {/* ═══ Počasí ═══ */}
+      <WeatherWidget />
 
       {/* ═══ Sekce: revize + zakázky ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
