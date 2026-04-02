@@ -564,20 +564,58 @@ export function ReportPrintPage() {
             {roz.chranice.length > 0 && (
               <>
                 <div className="report-subsection-subtitle">Proudové chraniče</div>
-                <ReportTable
-                  columns={['Č.', 'Název', 'Typ', 'Proud', 'IΔn [mA]', 'Pólů', 'IΔ [mA]', 'tA 1× [ms]']}
-                  widths={['5%', '22%', '8%', '8%', '12%', '8%', '12%', '12%']}
-                  rows={roz.chranice.map(c => [
-                    String(c.cislo),
-                    c.nazev,
-                    c.typ,
-                    c.proud,
-                    String(c.citlivostMa),
-                    String(c.pocetPolu),
-                    c.vybavovacProud != null ? String(c.vybavovacProud) : '—',
-                    c.casOdpojeni1x != null ? String(c.casOdpojeni1x) : '—',
-                  ])}
-                />
+                <table className="report-data-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '5%' }}>Č.</th>
+                      <th style={{ width: '22%' }}>Název</th>
+                      <th style={{ width: '8%' }}>Typ</th>
+                      <th style={{ width: '8%' }}>Proud</th>
+                      <th style={{ width: '12%' }}>IΔn [mA]</th>
+                      <th style={{ width: '8%' }}>Pólů</th>
+                      <th style={{ width: '12%' }}>IΔ [mA]</th>
+                      <th style={{ width: '12%' }}>tA 1× [ms]</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {roz.chranice.map(c => {
+                      const hasMeasurement = c.testovacitlacitko != null || c.nevybavovaci != null ||
+                        c.dotykoveNapeti != null || c.casOdpojeni5x != null ||
+                        c.casOdpojeni1_4x != null || c.casOdpojeni2x != null ||
+                        c.zkouskaVypnuti2x != null || c.selektivita != null;
+                      const details: string[] = [];
+                      if (c.testovacitlacitko != null) details.push(`T: ${c.testovacitlacitko ? '✓' : '✗'}`);
+                      if (c.nevybavovaci != null) details.push(`NV 0,5×IΔn: ${c.nevybavovaci ? '✓' : '✗'}`);
+                      if (c.dotykoveNapeti != null) details.push(`Uc: ${c.dotykoveNapeti} V`);
+                      if (c.casOdpojeni5x != null) details.push(`tA 5×IΔn: ${c.casOdpojeni5x} ms`);
+                      if (c.casOdpojeni1_4x != null) details.push(`tA 1,4×IΔn: ${c.casOdpojeni1_4x} ms`);
+                      if (c.casOdpojeni2x != null) details.push(`tA 2×IΔn: ${c.casOdpojeni2x} ms`);
+                      if (c.zkouskaVypnuti2x != null) details.push(`Zkouška 2×IΔn: ${c.zkouskaVypnuti2x ? '✓' : '✗'}`);
+                      if (c.selektivita != null) details.push(`Selektivita: ${c.selektivita ? '✓' : '✗'}`);
+                      return (
+                        <>
+                          <tr key={c.id}>
+                            <td>{c.cislo}</td>
+                            <td>{c.nazev}</td>
+                            <td>{c.typ}</td>
+                            <td>{c.proud}</td>
+                            <td>{c.citlivostMa}</td>
+                            <td>{c.pocetPolu}</td>
+                            <td>{c.vybavovacProud != null ? c.vybavovacProud : '—'}</td>
+                            <td>{c.casOdpojeni1x != null ? c.casOdpojeni1x : '—'}</td>
+                          </tr>
+                          {hasMeasurement && (
+                            <tr key={`${c.id}-detail`} style={{ backgroundColor: '#f8fafc' }}>
+                              <td colSpan={8} style={{ fontSize: '0.72em', color: '#475569', paddingTop: '2px', paddingBottom: '4px' }}>
+                                {details.join('  •  ')}
+                              </td>
+                            </tr>
+                          )}
+                        </>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </>
             )}
           </div>
