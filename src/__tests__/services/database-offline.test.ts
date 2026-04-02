@@ -1178,3 +1178,165 @@ describe('zakazniciService – offline', () => {
     expect(result).toHaveLength(1);
   });
 });
+
+// ═══════════════════════════════════════════
+// NETWORK ERROR WHILE ONLINE (DNS fail apod.)
+// Ověří, že create/update fungují i s navigator.onLine=true
+// ale fetch vyhodí Error (ERR_NAME_NOT_RESOLVED apod.)
+// ═══════════════════════════════════════════
+
+describe('revizeService – online network error fallback', () => {
+  it('create – fetch selže → vrátí záporný tempId a uloží do cache', async () => {
+    setOnline();
+    mockFetchReject();
+
+    const id = await revizeService.create({ cisloRevize: 'R-NET', nazev: 'Net', datum: '2026-01-01', kategorieRevize: 'elektro', adresa: 'A', objednatel: 'O', termin: 36, typRevize: 'pravidelná', stav: 'rozpracováno' } as any);
+
+    expect(id).toBeLessThan(0);
+    const cached = await db.revizeCache.get(id);
+    expect(cached).toBeDefined();
+    expect(cached!.data.cisloRevize).toBe('R-NET');
+  });
+
+  it('update – fetch selže → aktualizuje cache a vrátí 1', async () => {
+    await db.revizeCache.put({ id: 5, data: { id: 5, cisloRevize: 'R-005' } as any, updatedAt: Date.now() });
+    setOnline();
+    mockFetchReject();
+
+    const result = await revizeService.update(5, { nazev: 'Updated' });
+
+    expect(result).toBe(1);
+    const cached = await db.revizeCache.get(5);
+    expect(cached!.data.nazev).toBe('Updated');
+  });
+});
+
+describe('rozvadecService – online network error fallback', () => {
+  it('create – fetch selže → vrátí záporný tempId a uloží do cache', async () => {
+    setOnline();
+    mockFetchReject();
+
+    const id = await rozvadecService.create({ revizeId: 1, nazev: 'R-Net', oznaceni: 'RX' } as any);
+
+    expect(id).toBeLessThan(0);
+    const cached = await db.rozvadecCache.get(id);
+    expect(cached).toBeDefined();
+    expect(cached!.data.nazev).toBe('R-Net');
+  });
+
+  it('update – fetch selže → aktualizuje cache a vrátí 1', async () => {
+    await db.rozvadecCache.put({ id: 10, data: { id: 10, revizeId: 1, nazev: 'Old' } as any, updatedAt: Date.now() });
+    setOnline();
+    mockFetchReject();
+
+    const result = await rozvadecService.update(10, { nazev: 'New' });
+
+    expect(result).toBe(1);
+    const cached = await db.rozvadecCache.get(10);
+    expect(cached!.data.nazev).toBe('New');
+  });
+});
+
+describe('okruhService – online network error fallback', () => {
+  it('create – fetch selže → vrátí záporný tempId a uloží do cache', async () => {
+    setOnline();
+    mockFetchReject();
+
+    const id = await okruhService.create({ rozvadecId: 1, nazev: 'O-Net', cislo: '1' } as any);
+
+    expect(id).toBeLessThan(0);
+    const cached = await db.okruhCache.get(id);
+    expect(cached).toBeDefined();
+    expect(cached!.data.nazev).toBe('O-Net');
+  });
+
+  it('update – fetch selže → aktualizuje cache a vrátí 1', async () => {
+    await db.okruhCache.put({ id: 20, data: { id: 20, rozvadecId: 1, nazev: 'Old' } as any, updatedAt: Date.now() });
+    setOnline();
+    mockFetchReject();
+
+    const result = await okruhService.update(20, { nazev: 'New' });
+
+    expect(result).toBe(1);
+    const cached = await db.okruhCache.get(20);
+    expect(cached!.data.nazev).toBe('New');
+  });
+});
+
+describe('mistnostService – online network error fallback', () => {
+  it('create – fetch selže → vrátí záporný tempId a uloží do cache', async () => {
+    setOnline();
+    mockFetchReject();
+
+    const id = await mistnostService.create({ revizeId: 1, nazev: 'M-Net' } as any);
+
+    expect(id).toBeLessThan(0);
+    const cached = await db.mistnostCache.get(id);
+    expect(cached).toBeDefined();
+    expect(cached!.data.nazev).toBe('M-Net');
+  });
+
+  it('update – fetch selže → aktualizuje cache a vrátí 1', async () => {
+    await db.mistnostCache.put({ id: 30, data: { id: 30, revizeId: 1, nazev: 'Old' } as any, updatedAt: Date.now() });
+    setOnline();
+    mockFetchReject();
+
+    const result = await mistnostService.update(30, { nazev: 'New' });
+
+    expect(result).toBe(1);
+    const cached = await db.mistnostCache.get(30);
+    expect(cached!.data.nazev).toBe('New');
+  });
+});
+
+describe('zarizeniService – online network error fallback', () => {
+  it('create – fetch selže → vrátí záporný tempId a uloží do cache', async () => {
+    setOnline();
+    mockFetchReject();
+
+    const id = await zarizeniService.create({ mistnostId: 1, nazev: 'Z-Net' } as any);
+
+    expect(id).toBeLessThan(0);
+    const cached = await db.zarizeniCache.get(id);
+    expect(cached).toBeDefined();
+    expect(cached!.data.nazev).toBe('Z-Net');
+  });
+
+  it('update – fetch selže → aktualizuje cache a vrátí 1', async () => {
+    await db.zarizeniCache.put({ id: 40, data: { id: 40, mistnostId: 1, nazev: 'Old' } as any, updatedAt: Date.now() });
+    setOnline();
+    mockFetchReject();
+
+    const result = await zarizeniService.update(40, { nazev: 'New' });
+
+    expect(result).toBe(1);
+    const cached = await db.zarizeniCache.get(40);
+    expect(cached!.data.nazev).toBe('New');
+  });
+});
+
+describe('zavadaService – online network error fallback', () => {
+  it('create – fetch selže → vrátí záporný tempId a uloží do cache', async () => {
+    setOnline();
+    mockFetchReject();
+
+    const id = await zavadaService.create({ revizeId: 1, popis: 'Závada-Net' } as any);
+
+    expect(id).toBeLessThan(0);
+    const cached = await db.zavadaCache.get(id);
+    expect(cached).toBeDefined();
+    expect(cached!.data.popis).toBe('Závada-Net');
+  });
+
+  it('update – fetch selže → aktualizuje cache a vrátí 1', async () => {
+    await db.zavadaCache.put({ id: 50, data: { id: 50, revizeId: 1, popis: 'Old' } as any, updatedAt: Date.now() });
+    setOnline();
+    mockFetchReject();
+
+    const result = await zavadaService.update(50, { popis: 'New' });
+
+    expect(result).toBe(1);
+    const cached = await db.zavadaCache.get(50);
+    expect(cached!.data.popis).toBe('New');
+  });
+});

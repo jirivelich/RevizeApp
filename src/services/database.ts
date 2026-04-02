@@ -87,46 +87,49 @@ export const revizeService = {
     const url = `${API_BASE_URL}/revize`;
     const headers = getAuthHeaders();
     if (navigator.onLine) {
-      const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
-        ?.then(res => res ? res.json() : { id: undefined });
-      return response?.id;
-    } else {
-      // Optimistic create: ihned uložit do IndexedDB s dočasným záporným ID
-      const tempId = Date.now() * -1;
-      // Pokud existuje zarizeniCache, použij ji, jinak fallback (zatím není v db.ts)
-      if (db.revizeCache) {
-        await db.revizeCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<{ id: number }>(res));
+        return response.id;
+      } catch {
+        // Network error - queue offline
       }
-      await safeApiRequest({ url, method: 'POST', body: data, headers });
-      return tempId;
     }
+    const tempId = Date.now() * -1;
+    await db.revizeCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
+    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string> });
+    return tempId;
   },
 
   async update(id: number, data: Partial<Revize>): Promise<number> {
     const url = `${API_BASE_URL}/revize/${id}`;
     const headers = getAuthHeaders();
     if (navigator.onLine) {
-      await safeApiRequest({ url, method: 'PUT', body: data, headers });
-    } else {
-      // Optimistic update: ihned uložit změnu do IndexedDB
-      const cached = await db.revizeCache.get(id);
-      if (cached) {
-        await db.revizeCache.put({
-          id,
-          data: { ...cached.data, ...data },
-          updatedAt: Date.now(),
-        });
+      try {
+        await fetch(url, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<unknown>(res));
+        return 1;
+      } catch {
+        // Network error - fallback to offline
       }
-      await safeApiRequest({ url, method: 'PUT', body: data, headers });
     }
+    const cached = await db.revizeCache.get(id);
+    if (cached) {
+      await db.revizeCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+    }
+    await safeApiRequest({ url, method: 'PUT', body: data, headers: headers as Record<string, string> });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
-    const url = `${API_BASE_URL}/revize/${id}`;
-    const headers = getAuthHeaders();
     await db.revizeCache.delete(id);
-    await safeApiRequest({ url, method: 'DELETE', headers });
+    await safeApiRequest({ url: `${API_BASE_URL}/revize/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 
   async duplikovat(id: number, cisloRevize: string, typ: 'navazujici' | 'duplikat' = 'navazujici'): Promise<{ id: number; skupinaRevizi: string }> {
@@ -181,43 +184,49 @@ export const rozvadecService = {
     const url = `${API_BASE_URL}/rozvadece`;
     const headers = getAuthHeaders();
     if (navigator.onLine) {
-      const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
-        ?.then(res => res ? res.json() : { id: undefined });
-      return response?.id;
-    } else {
-      // Optimistic create: ihned uložit do IndexedDB s dočasným záporným ID
-      const tempId = Date.now() * -1;
-      await db.rozvadecCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
-      await safeApiRequest({ url, method: 'POST', body: data, headers });
-      return tempId;
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<{ id: number }>(res));
+        return response.id;
+      } catch {
+        // Network error - queue offline
+      }
     }
+    const tempId = Date.now() * -1;
+    await db.rozvadecCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
+    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string> });
+    return tempId;
   },
 
   async update(id: number, data: Partial<Rozvadec>): Promise<number> {
     const url = `${API_BASE_URL}/rozvadece/${id}`;
     const headers = getAuthHeaders();
     if (navigator.onLine) {
-      await safeApiRequest({ url, method: 'PUT', body: data, headers });
-    } else {
-      // Optimistic update: ihned uložit změnu do IndexedDB
-      const cached = await db.rozvadecCache.get(id);
-      if (cached) {
-        await db.rozvadecCache.put({
-          id,
-          data: { ...cached.data, ...data },
-          updatedAt: Date.now(),
-        });
+      try {
+        await fetch(url, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<unknown>(res));
+        return 1;
+      } catch {
+        // Network error - fallback to offline
       }
-      await safeApiRequest({ url, method: 'PUT', body: data, headers });
     }
+    const cached = await db.rozvadecCache.get(id);
+    if (cached) {
+      await db.rozvadecCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+    }
+    await safeApiRequest({ url, method: 'PUT', body: data, headers: headers as Record<string, string> });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
-    const url = `${API_BASE_URL}/rozvadece/${id}`;
-    const headers = getAuthHeaders();
     await db.rozvadecCache.delete(id);
-    await safeApiRequest({ url, method: 'DELETE', headers });
+    await safeApiRequest({ url: `${API_BASE_URL}/rozvadece/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -249,42 +258,49 @@ export const okruhService = {
     const url = `${API_BASE_URL}/okruhy`;
     const headers = getAuthHeaders();
     if (navigator.onLine) {
-      const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
-        ?.then(res => res ? res.json() : { id: undefined });
-      return response?.id;
-    } else {
-      const tempId = Date.now() * -1;
-      await db.okruhCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
-      await safeApiRequest({ url, method: 'POST', body: data, headers });
-      return tempId;
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<{ id: number }>(res));
+        return response.id;
+      } catch {
+        // Network error - queue offline
+      }
     }
+    const tempId = Date.now() * -1;
+    await db.okruhCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
+    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string> });
+    return tempId;
   },
 
   async update(id: number, data: Partial<Okruh>): Promise<number> {
     const url = `${API_BASE_URL}/okruhy/${id}`;
     const headers = getAuthHeaders();
     if (navigator.onLine) {
-      await safeApiRequest({ url, method: 'PUT', body: data, headers });
-    } else {
-      // Optimistic update: ihned uložit změnu do IndexedDB
-      const cached = await db.okruhCache.get(id);
-      if (cached) {
-        await db.okruhCache.put({
-          id,
-          data: { ...cached.data, ...data },
-          updatedAt: Date.now(),
-        });
+      try {
+        await fetch(url, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<unknown>(res));
+        return 1;
+      } catch {
+        // Network error - fallback to offline
       }
-      await safeApiRequest({ url, method: 'PUT', body: data, headers });
     }
+    const cached = await db.okruhCache.get(id);
+    if (cached) {
+      await db.okruhCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+    }
+    await safeApiRequest({ url, method: 'PUT', body: data, headers: headers as Record<string, string> });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
-    const url = `${API_BASE_URL}/okruhy/${id}`;
-    const headers = getAuthHeaders();
     await db.okruhCache.delete(id);
-    await safeApiRequest({ url, method: 'DELETE', headers });
+    await safeApiRequest({ url: `${API_BASE_URL}/okruhy/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -327,43 +343,49 @@ export const mistnostService = {
     const url = `${API_BASE_URL}/mistnosti`;
     const headers = getAuthHeaders();
     if (navigator.onLine) {
-      const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
-        ?.then(res => res ? res.json() : { id: undefined });
-      return response?.id;
-    } else {
-      // Optimistic create: ihned uložit do IndexedDB s dočasným záporným ID
-      const tempId = Date.now() * -1;
-      await db.mistnostCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
-      await safeApiRequest({ url, method: 'POST', body: data, headers });
-      return tempId;
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<{ id: number }>(res));
+        return response.id;
+      } catch {
+        // Network error - queue offline
+      }
     }
+    const tempId = Date.now() * -1;
+    await db.mistnostCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
+    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string> });
+    return tempId;
   },
 
   async update(id: number, data: Partial<Mistnost>): Promise<number> {
     const url = `${API_BASE_URL}/mistnosti/${id}`;
     const headers = getAuthHeaders();
     if (navigator.onLine) {
-      await safeApiRequest({ url, method: 'PUT', body: data, headers });
-    } else {
-      // Optimistic update: ihned uložit změnu do IndexedDB
-      const cached = await db.mistnostCache.get(id);
-      if (cached) {
-        await db.mistnostCache.put({
-          id,
-          data: { ...cached.data, ...data },
-          updatedAt: Date.now(),
-        });
+      try {
+        await fetch(url, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<unknown>(res));
+        return 1;
+      } catch {
+        // Network error - fallback to offline
       }
-      await safeApiRequest({ url, method: 'PUT', body: data, headers });
     }
+    const cached = await db.mistnostCache.get(id);
+    if (cached) {
+      await db.mistnostCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+    }
+    await safeApiRequest({ url, method: 'PUT', body: data, headers: headers as Record<string, string> });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
-    const url = `${API_BASE_URL}/mistnosti/${id}`;
-    const headers = getAuthHeaders();
     await db.mistnostCache.delete(id);
-    await safeApiRequest({ url, method: 'DELETE', headers });
+    await safeApiRequest({ url: `${API_BASE_URL}/mistnosti/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -401,41 +423,49 @@ export const zarizeniService = {
     const url = `${API_BASE_URL}/zarizeni`;
     const headers = getAuthHeaders();
     if (navigator.onLine) {
-      const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
-        ?.then(res => res ? res.json() : { id: undefined });
-      return response?.id;
-    } else {
-      // Optimistic create: ihned uložit do IndexedDB s dočasným záporným ID
-      const tempId = Date.now() * -1;
-      // Pokud existuje zarizeniCache, použij ji, jinak fallback (zatím není v db.ts)
-      if (db.zarizeniCache) {
-        await db.zarizeniCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<{ id: number }>(res));
+        return response.id;
+      } catch {
+        // Network error - queue offline
       }
-      await safeApiRequest({ url, method: 'POST', body: data, headers });
-      return tempId;
     }
+    const tempId = Date.now() * -1;
+    await db.zarizeniCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
+    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string> });
+    return tempId;
   },
 
   async update(id: number, data: Partial<Zarizeni>): Promise<number> {
     const url = `${API_BASE_URL}/zarizeni/${id}`;
     const headers = getAuthHeaders();
     if (navigator.onLine) {
-      await safeApiRequest({ url, method: 'PUT', body: data, headers });
-    } else {
-      const cached = await db.zarizeniCache.get(id);
-      if (cached) {
-        await db.zarizeniCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+      try {
+        await fetch(url, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<unknown>(res));
+        return 1;
+      } catch {
+        // Network error - fallback to offline
       }
-      await safeApiRequest({ url, method: 'PUT', body: data, headers });
     }
+    const cached = await db.zarizeniCache.get(id);
+    if (cached) {
+      await db.zarizeniCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+    }
+    await safeApiRequest({ url, method: 'PUT', body: data, headers: headers as Record<string, string> });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
-    const url = `${API_BASE_URL}/zarizeni/${id}`;
-    const headers = getAuthHeaders();
     await db.zarizeniCache.delete(id);
-    await safeApiRequest({ url, method: 'DELETE', headers });
+    await safeApiRequest({ url: `${API_BASE_URL}/zarizeni/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 
   async deleteByMistnost(_mistnostId: number): Promise<void> {
@@ -477,43 +507,49 @@ export const zavadaService = {
     const url = `${API_BASE_URL}/zavady`;
     const headers = getAuthHeaders();
     if (navigator.onLine) {
-      const response = await safeApiRequest({ url, method: 'POST', body: data, headers })
-        ?.then(res => res ? res.json() : { id: undefined });
-      return response?.id;
-    } else {
-      // Optimistic create: ihned uložit do IndexedDB s dočasným záporným ID
-      const tempId = Date.now() * -1;
-      await db.zavadaCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
-      await safeApiRequest({ url, method: 'POST', body: data, headers });
-      return tempId;
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<{ id: number }>(res));
+        return response.id;
+      } catch {
+        // Network error - queue offline
+      }
     }
+    const tempId = Date.now() * -1;
+    await db.zavadaCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
+    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string> });
+    return tempId;
   },
 
   async update(id: number, data: Partial<Zavada>): Promise<number> {
     const url = `${API_BASE_URL}/zavady/${id}`;
     const headers = getAuthHeaders();
     if (navigator.onLine) {
-      await safeApiRequest({ url, method: 'PUT', body: data, headers });
-    } else {
-      // Optimistic update: ihned uložit změnu do IndexedDB
-      const cached = await db.zavadaCache.get(id);
-      if (cached) {
-        await db.zavadaCache.put({
-          id,
-          data: { ...cached.data, ...data },
-          updatedAt: Date.now(),
-        });
+      try {
+        await fetch(url, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<unknown>(res));
+        return 1;
+      } catch {
+        // Network error - fallback to offline
       }
-      await safeApiRequest({ url, method: 'PUT', body: data, headers });
     }
+    const cached = await db.zavadaCache.get(id);
+    if (cached) {
+      await db.zavadaCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+    }
+    await safeApiRequest({ url, method: 'PUT', body: data, headers: headers as Record<string, string> });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
-    const url = `${API_BASE_URL}/zavady/${id}`;
-    const headers = getAuthHeaders();
     await db.zavadaCache.delete(id);
-    await safeApiRequest({ url, method: 'DELETE', headers });
+    await safeApiRequest({ url: `${API_BASE_URL}/zavady/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 

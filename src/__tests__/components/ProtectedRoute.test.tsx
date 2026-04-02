@@ -79,14 +79,14 @@ describe('ProtectedRoute', () => {
     });
   });
 
-  it('should redirect on network error', async () => {
+  it('should trust cached token on network error (offline-friendly)', async () => {
     localStorage.setItem('token', 'valid-token');
     (global.fetch as Mock).mockRejectedValueOnce(new Error('Network error'));
 
     renderWithRouter(<div>Secret Content</div>);
 
     await waitFor(() => {
-      expect(screen.getByText('Login Page')).toBeInTheDocument();
+      expect(screen.getByText('Secret Content')).toBeInTheDocument();
     });
   });
 
