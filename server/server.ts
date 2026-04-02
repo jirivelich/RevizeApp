@@ -472,13 +472,13 @@ async function startServer() {
 
   app.post('/api/okruhy', authMiddleware, async (req, res) => {
     try {
-      const { rozvadecId, cislo, nazev, jisticTyp, jisticProud, pocetFazi, vodic, izolacniOdpor, impedanceSmycky, proudovyChranicMa, casOdpojeni, poznamka } = req.body;
+      const { rozvadecId, cislo, nazev, jisticTyp, jisticProud, pocetFazi, vodic, izolacniOdpor, impedanceSmycky, poznamka } = req.body;
       
       const result = await pool.query(`
-        INSERT INTO okruh ("rozvadecId", cislo, nazev, "jisticTyp", "jisticProud", "pocetFazi", vodic, "izolacniOdpor", "impedanceSmycky", "proudovyChranicMa", "casOdpojeni", poznamka)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        INSERT INTO okruh ("rozvadecId", cislo, nazev, "jisticTyp", "jisticProud", "pocetFazi", vodic, "izolacniOdpor", "impedanceSmycky", poznamka)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id
-      `, [rozvadecId, cislo, nazev, jisticTyp, jisticProud, pocetFazi, vodic, izolacniOdpor, impedanceSmycky, proudovyChranicMa, casOdpojeni, poznamka]);
+      `, [rozvadecId, cislo, nazev, jisticTyp, jisticProud, pocetFazi, vodic, izolacniOdpor, impedanceSmycky, poznamka]);
       
       res.json({ id: result.rows[0].id });
     } catch (error) {
@@ -509,7 +509,50 @@ async function startServer() {
     }
   });
 
-  // ==================== MÍSTNOSTI ====================
+  // ==================== CHRANIČE ====================
+  app.get('/api/chranice/:rozvadecId', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM chranic WHERE "rozvadecId" = $1 ORDER BY cislo', [req.params.rozvadecId]);
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/chranice', authMiddleware, async (req, res) => {
+    try {
+      const { rozvadecId, cislo, nazev, typ, proud, citlivostMa, pocetPolu, casOdpojeni, poznamka } = req.body;
+      const result = await pool.query(`
+        INSERT INTO chranic ("rozvadecId", cislo, nazev, typ, proud, "citlivostMa", "pocetPolu", "casOdpojeni", poznamka)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id
+      `, [rozvadecId, cislo, nazev, typ, proud, citlivostMa, pocetPolu, casOdpojeni, poznamka]);
+      res.json({ id: result.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/chranice/:id', authMiddleware, async (req, res) => {
+    try {
+      const keys = Object.keys(req.body);
+      const values = Object.values(req.body);
+      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      await pool.query(`UPDATE chranic SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/chranice/:id', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM chranic WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
   app.get('/api/mistnosti', authMiddleware, async (req, res) => {
     try {
       const result = await pool.query('SELECT * FROM mistnost');

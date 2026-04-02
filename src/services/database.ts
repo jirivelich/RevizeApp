@@ -1,7 +1,7 @@
 // Database service - komunikuje s backend API
 // Všechna data jsou uložena na serveru a synchronizována mezi zařízeními
 
-import type { Revize, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, MericiPristroj, Firma, ZavadaKatalog, Zakaznik, PredvolenyText, Kalibrace } from '../types';
+import type { Revize, Rozvadec, Okruh, Chranic, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, MericiPristroj, Firma, ZavadaKatalog, Zakaznik, PredvolenyText, Kalibrace } from '../types';
 import { safeApiRequest } from './safeApiRequest';
 import { db } from '../db';
 
@@ -316,6 +316,85 @@ export const okruhService = {
   async delete(id: number): Promise<void> {
     await db.okruhCache.delete(id);
     await safeApiRequest({ url: `${API_BASE_URL}/okruhy/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
+  },
+};
+
+// ==================== CHRANIČE ====================
+export const cranicService = {
+  async getByRozvadec(rozvadecId: number): Promise<Chranic[]> {
+    if (navigator.onLine) {
+      try {
+        const chranice = await fetch(`${API_BASE_URL}/chranice/${rozvadecId}`, {
+          headers: getAuthHeaders(),
+        }).then(res => handleResponse<Chranic[]>(res));
+        if (chranice) {
+          for (const c of chranice) {
+            await db.cranicCache.put({ id: c.id ?? -1, data: c, updatedAt: Date.now() });
+          }
+        }
+        return chranice;
+      } catch {
+        const all = await db.cranicCache.toArray();
+        return all.filter(c => c.data.rozvadecId === rozvadecId).map(c => c.data);
+      }
+    } else {
+      const all = await db.cranicCache.toArray();
+      return all.filter(c => c.data.rozvadecId === rozvadecId).map(c => c.data);
+    }
+  },
+
+  async create(data: Omit<Chranic, 'id'>): Promise<number> {
+    const url = `${API_BASE_URL}/chranice`;
+    const headers = getAuthHeaders();
+    if (navigator.onLine) {
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<{ id: number }>(res));
+        await db.cranicCache.put({ id: response.id, data: { ...data, id: response.id } as Chranic, updatedAt: Date.now() });
+        return response.id;
+      } catch {
+        // Network error - queue offline
+      }
+    }
+    const tempId = Date.now() * -1;
+    await db.cranicCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
+    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string> });
+    return tempId;
+  },
+
+  async update(id: number, data: Partial<Chranic>): Promise<number> {
+    const url = `${API_BASE_URL}/chranice/${id}`;
+    const headers = getAuthHeaders();
+    if (navigator.onLine) {
+      try {
+        await fetch(url, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<unknown>(res));
+        const cached = await db.cranicCache.get(id);
+        if (cached) {
+          await db.cranicCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+        }
+        return 1;
+      } catch {
+        // Network error - fallback to offline
+      }
+    }
+    const cached = await db.cranicCache.get(id);
+    if (cached) {
+      await db.cranicCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+    }
+    await safeApiRequest({ url, method: 'PUT', body: data, headers: headers as Record<string, string> });
+    return 1;
+  },
+
+  async delete(id: number): Promise<void> {
+    await db.cranicCache.delete(id);
+    await safeApiRequest({ url: `${API_BASE_URL}/chranice/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 

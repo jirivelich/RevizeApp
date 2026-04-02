@@ -12,6 +12,7 @@ import {
   revizeService,
   rozvadecService,
   okruhService,
+  cranicService,
   mistnostService,
   zarizeniService,
   zavadaService,
@@ -28,7 +29,7 @@ import {
 } from '../services/database';
 import { queryKeys } from './queryKeys';
 import type {
-  Revize, Rozvadec, Okruh, Mistnost, Zavada,
+  Revize, Rozvadec, Okruh, Chranic, Mistnost, Zavada,
   MericiPristroj, Firma, Zakazka, Nastaveni,
   ZavadaKatalog, PredvolenyText, Zakaznik, Kalibrace,
 } from '../types';
@@ -176,6 +177,54 @@ export function useDeleteOkruh() {
       okruhService.delete(id),
     onSuccess: (_res, vars) => {
       qc.invalidateQueries({ queryKey: queryKeys.okruhy.byRozvadec(vars.rozvadecId) });
+    },
+  });
+}
+
+/* ═══════════════════════════════════════════
+   CHRANIČE
+   ═══════════════════════════════════════════ */
+
+export function useCranicByRozvadec(rozvadecId: number | undefined) {
+  return useQuery({
+    queryKey: queryKeys.chranic.byRozvadec(rozvadecId!),
+    queryFn: () => cranicService.getByRozvadec(rozvadecId!),
+    enabled: !!rozvadecId,
+  });
+}
+
+export function useCreateChranic() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<Chranic>) => cranicService.create(data as any),
+    onSuccess: (_res, vars) => {
+      if (vars.rozvadecId) {
+        qc.invalidateQueries({ queryKey: queryKeys.chranic.byRozvadec(vars.rozvadecId) });
+      }
+    },
+  });
+}
+
+export function useUpdateChranic() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<Chranic> }) =>
+      cranicService.update(id, data),
+    onSuccess: (_res, vars) => {
+      if (vars.data.rozvadecId) {
+        qc.invalidateQueries({ queryKey: queryKeys.chranic.byRozvadec(vars.data.rozvadecId) });
+      }
+    },
+  });
+}
+
+export function useDeleteChranic() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, rozvadecId: _rozvadecId }: { id: number; rozvadecId: number }) =>
+      cranicService.delete(id),
+    onSuccess: (_res, vars) => {
+      qc.invalidateQueries({ queryKey: queryKeys.chranic.byRozvadec(vars.rozvadecId) });
     },
   });
 }

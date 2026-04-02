@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
-import { useOkruhyByRozvadec, useCreateOkruh, useUpdateOkruh, useDeleteOkruh } from '../hooks/useQueries';
+import { useOkruhyByRozvadec, useCreateOkruh, useUpdateOkruh, useDeleteOkruh, useCranicByRozvadec, useCreateChranic, useUpdateChranic, useDeleteChranic } from '../hooks/useQueries';
 import { rozvadecService } from '../services/database';
-import type { Okruh } from '../types';
+import type { Okruh, Chranic } from '../types';
 
 // EditableSelect – select s možností zadat vlastní hodnotu
 function EditableSelect({ label, value, onChange, options }: {
@@ -75,6 +75,11 @@ export function RozvadecDetailPage() {
   const updateOkruh = useUpdateOkruh();
   const deleteOkruh = useDeleteOkruh();
 
+  const { data: chranice = [] } = useCranicByRozvadec(numericId);
+  const createChranic = useCreateChranic();
+  const updateChranic = useUpdateChranic();
+  const deleteChranic = useDeleteChranic();
+
   const [isOkruhModalOpen, setIsOkruhModalOpen] = useState(false);
   const [editingOkruh, setEditingOkruh] = useState<Okruh | null>(null);
 
@@ -88,8 +93,6 @@ export function RozvadecDetailPage() {
     izolacniOdpor: '',
     impedanceSmycky: '',
     impedanceSmyckyMax: false,
-    proudovyChranicMa: undefined as number | undefined,
-    casOdpojeni: undefined as number | undefined,
     poznamka: '',
   });
 
@@ -119,8 +122,6 @@ export function RozvadecDetailPage() {
       izolacniOdpor: '',
       impedanceSmycky: '',
       impedanceSmyckyMax: false,
-      proudovyChranicMa: undefined,
-      casOdpojeni: undefined,
       poznamka: '',
     });
   };
@@ -137,8 +138,6 @@ export function RozvadecDetailPage() {
       izolacniOdpor: okruh.izolacniOdpor || '',
       impedanceSmycky: okruh.impedanceSmycky?.replace(/^max\.\s*/, '') || '',
       impedanceSmyckyMax: okruh.impedanceSmycky?.startsWith('max.') || false,
-      proudovyChranicMa: okruh.proudovyChranicMa,
-      casOdpojeni: okruh.casOdpojeni,
       poznamka: okruh.poznamka || '',
     });
     setIsOkruhModalOpen(true);
@@ -147,6 +146,57 @@ export function RozvadecDetailPage() {
   const handleDeleteOkruh = (okruhId: number) => {
     if (window.confirm('Opravdu chcete smazat tento okruh?')) {
       deleteOkruh.mutate({ id: okruhId, rozvadecId: numericId! });
+    }
+  };
+
+  const [isCranicModalOpen, setIsCranicModalOpen] = useState(false);
+  const [editingChranic, setEditingChranic] = useState<Chranic | null>(null);
+  const [cranicFormData, setCranicFormData] = useState({
+    cislo: 1,
+    nazev: '',
+    typ: 'A',
+    proud: '25A',
+    citlivostMa: 30,
+    pocetPolu: 2,
+    casOdpojeni: undefined as number | undefined,
+    poznamka: '',
+  });
+
+  const resetCranicForm = () => {
+    const nextCislo = chranice.length > 0 ? Math.max(...chranice.map(c => c.cislo)) + 1 : 1;
+    setCranicFormData({ cislo: nextCislo, nazev: '', typ: 'A', proud: '25A', citlivostMa: 30, pocetPolu: 2, casOdpojeni: undefined, poznamka: '' });
+  };
+
+  const handleAddChranic = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (rozvadec?.id) {
+      const onDone = () => { setIsCranicModalOpen(false); setEditingChranic(null); resetCranicForm(); };
+      if (editingChranic?.id) {
+        updateChranic.mutate({ id: editingChranic.id, data: { ...cranicFormData, rozvadecId: rozvadec.id } }, { onSuccess: onDone });
+      } else {
+        createChranic.mutate({ ...cranicFormData, rozvadecId: rozvadec.id }, { onSuccess: onDone });
+      }
+    }
+  };
+
+  const handleEditChranic = (c: Chranic) => {
+    setEditingChranic(c);
+    setCranicFormData({
+      cislo: c.cislo,
+      nazev: c.nazev,
+      typ: c.typ,
+      proud: c.proud,
+      citlivostMa: c.citlivostMa,
+      pocetPolu: c.pocetPolu,
+      casOdpojeni: c.casOdpojeni,
+      poznamka: c.poznamka || '',
+    });
+    setIsCranicModalOpen(true);
+  };
+
+  const handleDeleteChranic = (cranicId: number) => {
+    if (window.confirm('Opravdu chcete smazat tento chránič?')) {
+      deleteChranic.mutate({ id: cranicId, rozvadecId: numericId! });
     }
   };
 
@@ -204,8 +254,6 @@ export function RozvadecDetailPage() {
                   <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Vodič</th>
                   <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Iz. odpor</th>
                   <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Imp. smyčky</th>
-                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">IΔn [mA]</th>
-                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">tA [s]</th>
                   <th className="text-right py-2 px-3 font-medium text-slate-600 text-sm">Akce</th>
                 </tr>
               </thead>
@@ -225,12 +273,6 @@ export function RozvadecDetailPage() {
                     </td>
                     <td className="py-2 px-3 text-slate-600">
                       {o.impedanceSmycky || '—'}
-                    </td>
-                    <td className="py-2 px-3 text-slate-600">
-                      {o.proudovyChranicMa != null ? o.proudovyChranicMa : '—'}
-                    </td>
-                    <td className="py-2 px-3 text-slate-600">
-                      {o.casOdpojeni != null ? o.casOdpojeni : '—'}
                     </td>
                     <td className="py-2 px-3 text-right">
                       <div className="flex justify-end gap-1">
@@ -342,25 +384,150 @@ export function RozvadecDetailPage() {
               </label>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              type="number"
-              label="Proudový chránič (mA)"
-              value={okruhFormData.proudovyChranicMa || ''}
-              onChange={(e) => setOkruhFormData({ ...okruhFormData, proudovyChranicMa: e.target.value ? parseFloat(e.target.value) : undefined })}
-            />
-            <Input
-              type="number"
-              step="0.01"
-              label="Čas odpojení (s)"
-              value={okruhFormData.casOdpojeni || ''}
-              onChange={(e) => setOkruhFormData({ ...okruhFormData, casOdpojeni: e.target.value ? parseFloat(e.target.value) : undefined })}
-            />
-          </div>
           <Input
             label="Poznámka"
             value={okruhFormData.poznamka}
             onChange={(e) => setOkruhFormData({ ...okruhFormData, poznamka: e.target.value })}
+          />
+        </form>
+      </Modal>
+
+      {/* ===== CHRANIČE ===== */}
+      <Card
+        title="Proudové chraniče"
+        actions={
+          <Button size="sm" onClick={() => { resetCranicForm(); setIsCranicModalOpen(true); }}>
+            + Přidat chránič
+          </Button>
+        }
+      >
+        {chranice.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Č.</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Název</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Typ</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Proud</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">IΔn [mA]</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Pólů</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">tA [s]</th>
+                  <th className="text-right py-2 px-3 font-medium text-slate-600 text-sm">Akce</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...chranice].sort((a, b) => a.cislo - b.cislo).map((c) => (
+                  <tr key={c.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="py-2 px-3 font-medium">{c.cislo}</td>
+                    <td className="py-2 px-3">{c.nazev}</td>
+                    <td className="py-2 px-3">
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                        {c.typ}
+                      </span>
+                    </td>
+                    <td className="py-2 px-3 text-slate-600">{c.proud}</td>
+                    <td className="py-2 px-3 text-slate-600">{c.citlivostMa}</td>
+                    <td className="py-2 px-3 text-slate-600">{c.pocetPolu}</td>
+                    <td className="py-2 px-3 text-slate-600">{c.casOdpojeni != null ? c.casOdpojeni : '—'}</td>
+                    <td className="py-2 px-3 text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button variant="secondary" size="sm" onClick={() => handleEditChranic(c)}>Upravit</Button>
+                        <Button variant="danger" size="sm" onClick={() => handleDeleteChranic(c.id!)}>×</Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-center text-slate-500 py-8">
+            Zatím žádné chraniče. Přidejte první kliknutím na tlačítko výše.
+          </p>
+        )}
+      </Card>
+
+      <Modal
+        isOpen={isCranicModalOpen}
+        onClose={() => { setIsCranicModalOpen(false); setEditingChranic(null); }}
+        title={editingChranic ? 'Upravit chránič' : 'Přidat chránič'}
+        size="lg"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => { setIsCranicModalOpen(false); setEditingChranic(null); }}>
+              Zrušit
+            </Button>
+            <Button type="submit" form="chranic-form" disabled={createChranic.isPending || updateChranic.isPending}>
+              {editingChranic ? 'Uložit' : 'Přidat'}
+            </Button>
+          </>
+        }
+      >
+        <form id="chranic-form" onSubmit={handleAddChranic} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              type="number"
+              label="Číslo"
+              value={cranicFormData.cislo}
+              onChange={(e) => setCranicFormData({ ...cranicFormData, cislo: parseInt(e.target.value) || 1 })}
+              required
+            />
+            <Input
+              label="Název"
+              value={cranicFormData.nazev}
+              onChange={(e) => setCranicFormData({ ...cranicFormData, nazev: e.target.value })}
+              required
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <EditableSelect
+              label="Typ chrániče"
+              value={cranicFormData.typ}
+              onChange={(val) => setCranicFormData({ ...cranicFormData, typ: val })}
+              options={['A', 'AC', 'B', 'F', 'G']}
+            />
+            <EditableSelect
+              label="Jmenovitý proud"
+              value={cranicFormData.proud}
+              onChange={(val) => setCranicFormData({ ...cranicFormData, proud: val })}
+              options={['10A', '16A', '20A', '25A', '32A', '40A', '63A']}
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <Select
+              label="Citlivost IΔn (mA)"
+              value={String(cranicFormData.citlivostMa)}
+              onChange={(e) => setCranicFormData({ ...cranicFormData, citlivostMa: parseFloat(e.target.value) })}
+              options={[
+                { value: '10', label: '10 mA' },
+                { value: '30', label: '30 mA' },
+                { value: '100', label: '100 mA' },
+                { value: '300', label: '300 mA' },
+                { value: '500', label: '500 mA' },
+              ]}
+            />
+            <Select
+              label="Počet pólů"
+              value={String(cranicFormData.pocetPolu)}
+              onChange={(e) => setCranicFormData({ ...cranicFormData, pocetPolu: parseInt(e.target.value) })}
+              options={[
+                { value: '2', label: '2' },
+                { value: '4', label: '4' },
+              ]}
+            />
+            <Input
+              type="number"
+              step="0.01"
+              label="Čas odpojení tA (s)"
+              value={cranicFormData.casOdpojeni ?? ''}
+              onChange={(e) => setCranicFormData({ ...cranicFormData, casOdpojeni: e.target.value ? parseFloat(e.target.value) : undefined })}
+            />
+          </div>
+          <Input
+            label="Poznámka"
+            value={cranicFormData.poznamka}
+            onChange={(e) => setCranicFormData({ ...cranicFormData, poznamka: e.target.value })}
           />
         </form>
       </Modal>

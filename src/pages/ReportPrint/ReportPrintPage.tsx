@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Previewer } from 'pagedjs';
-import { revizeService, rozvadecService, okruhService, zavadaService, mistnostService, zarizeniService, revizePristrojService, nastaveniService, zakazniciService } from '../../services/database';
-import type { Revize, Rozvadec, Okruh, Zavada, Mistnost, Zarizeni, MericiPristroj, Nastaveni, Zakaznik } from '../../types';
+import { revizeService, rozvadecService, okruhService, cranicService, zavadaService, mistnostService, zarizeniService, revizePristrojService, nastaveniService, zakazniciService } from '../../services/database';
+import type { Revize, Rozvadec, Okruh, Chranic, Zavada, Mistnost, Zarizeni, MericiPristroj, Nastaveni, Zakaznik } from '../../types';
 import { ReportHeader } from './ReportHeader';
 import { ReportSection } from './ReportSection';
 import { ReportTable } from './ReportTable';
@@ -89,6 +89,7 @@ export interface ReportData {
 
 export interface RozvadecWithOkruhy extends Rozvadec {
   okruhy: Okruh[];
+  chranice: Chranic[];
 }
 
 export interface MistnostWithZarizeni extends Mistnost {
@@ -131,6 +132,7 @@ export function ReportPrintPage() {
         rozvadeceRaw.map(async (r) => ({
           ...r,
           okruhy: r.id ? await okruhService.getByRozvadec(r.id) : [],
+          chranice: r.id ? await cranicService.getByRozvadec(r.id) : [],
         }))
       );
 
@@ -541,8 +543,8 @@ export function ReportPrintPage() {
             </div>
             {roz.okruhy.length > 0 ? (
               <ReportTable
-                columns={['Č.', 'Jistič', 'Název okruhu', 'Vodič', 'Iz. odpor [MΩ]', 'Zs [Ω]', 'IΔn [mA]', 'tA [ms]']}
-                widths={['5%', '8%', '25%', '12%', '12%', '12%', '13%', '13%']}
+                columns={['Č.', 'Jistič', 'Název okruhu', 'Vodič', 'Iz. odpor [MΩ]', 'Zs [Ω]']}
+                widths={['5%', '10%', '30%', '15%', '20%', '20%']}
                 rows={roz.okruhy.map(o => [
                   String(o.cislo),
                   [
@@ -554,12 +556,28 @@ export function ReportPrintPage() {
                   o.vodic,
                   o.izolacniOdpor != null ? String(o.izolacniOdpor) : '—',
                   o.impedanceSmycky != null ? String(o.impedanceSmycky) : '—',
-                  o.proudovyChranicMa != null ? String(o.proudovyChranicMa) : '—',
-                  o.casOdpojeni != null ? String(o.casOdpojeni) : '—',
                 ])}
               />
             ) : (
               <p className="report-empty">Žádné okruhy</p>
+            )}
+            {roz.chranice.length > 0 && (
+              <>
+                <div className="report-subsection-subtitle">Proudové chraniče</div>
+                <ReportTable
+                  columns={['Č.', 'Název', 'Typ', 'Proud', 'IΔn [mA]', 'Pólů', 'tA [s]']}
+                  widths={['5%', '25%', '10%', '10%', '15%', '10%', '10%']}
+                  rows={roz.chranice.map(c => [
+                    String(c.cislo),
+                    c.nazev,
+                    c.typ,
+                    c.proud,
+                    String(c.citlivostMa),
+                    String(c.pocetPolu),
+                    c.casOdpojeni != null ? String(c.casOdpojeni) : '—',
+                  ])}
+                />
+              </>
             )}
           </div>
         )) : (

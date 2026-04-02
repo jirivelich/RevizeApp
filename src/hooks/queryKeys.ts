@@ -17,6 +17,9 @@ export const queryKeys = {
   okruhy: {
     byRozvadec: (rozvadecId: number) => ['okruhy', 'byRozvadec', rozvadecId] as const,
   },
+  chranic: {
+    byRozvadec: (rozvadecId: number) => ['chranic', 'byRozvadec', rozvadecId] as const,
+  },
   zavady: {
     byRevize: (revizeId: number) => ['zavady', 'byRevize', revizeId] as const,
   },

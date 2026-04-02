@@ -149,7 +149,18 @@ export interface Okruh {
   vodic: string;
   izolacniOdpor?: string;
   impedanceSmycky?: string;
-  proudovyChranicMa?: number;
+  poznamka?: string;
+}
+
+export interface Chranic {
+  id?: number;
+  rozvadecId: number;
+  cislo: number;
+  nazev: string;
+  typ: string;
+  proud: string;
+  citlivostMa: number;
+  pocetPolu: number;
   casOdpojeni?: number;
   poznamka?: string;
 }

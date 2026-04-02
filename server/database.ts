@@ -126,7 +126,20 @@ export async function initializeDatabase() {
         vodic TEXT,
         "izolacniOdpor" TEXT,
         "impedanceSmycky" TEXT,
-        "proudovyChranicMa" REAL,
+        poznamka TEXT
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS chranic (
+        id SERIAL PRIMARY KEY,
+        "rozvadecId" INTEGER NOT NULL REFERENCES rozvadec(id) ON DELETE CASCADE,
+        cislo INTEGER,
+        nazev TEXT NOT NULL,
+        typ TEXT,
+        proud TEXT,
+        "citlivostMa" REAL,
+        "pocetPolu" INTEGER,
         "casOdpojeni" REAL,
         poznamka TEXT
       )
@@ -394,6 +407,9 @@ export async function initializeDatabase() {
       'ALTER TABLE okruh ALTER COLUMN "impedanceSmycky" TYPE TEXT USING "impedanceSmycky"::TEXT',
       // Rozvadec: přidání sloupce poradi
       'ALTER TABLE rozvadec ADD COLUMN IF NOT EXISTS poradi INTEGER',
+      // Chranic: odstrání sloupce chranice z okruhu (přesun do samostatné entity)
+      'ALTER TABLE okruh DROP COLUMN IF EXISTS "proudovyChranicMa"',
+      'ALTER TABLE okruh DROP COLUMN IF EXISTS "casOdpojeni"',
     ];
     
     for (const migration of migrations) {
