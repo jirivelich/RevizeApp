@@ -438,8 +438,8 @@ export async function exportElektroToWord(data: ReportData): Promise<void> {
 
       if (roz.okruhy.length > 0) {
         children.push(dataTable(
-          ['Č.', 'Jistič', 'Název okruhu', 'Vodič', 'Iz [MΩ]', 'Zs [Ω]', 'IΔn [mA]', 'tA [ms]'],
-          [5, 8, 25, 12, 12, 12, 13, 13],
+          ['Č.', 'Jistič', 'Název okruhu', 'Vodič', 'Iz [MΩ]', 'Zs [Ω]'],
+          [5, 10, 30, 15, 20, 20],
           roz.okruhy.map(o => [
             String(o.cislo),
             `${o.jisticTyp}${o.jisticProud}`,
@@ -447,8 +447,6 @@ export async function exportElektroToWord(data: ReportData): Promise<void> {
             o.vodic,
             o.izolacniOdpor != null ? String(o.izolacniOdpor) : '—',
             o.impedanceSmycky != null ? String(o.impedanceSmycky) : '—',
-            o.proudovyChranicMa != null ? String(o.proudovyChranicMa) : '—',
-            o.casOdpojeni != null ? String(o.casOdpojeni) : '—',
           ]),
         ));
       } else {

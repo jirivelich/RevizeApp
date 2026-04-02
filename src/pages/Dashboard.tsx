@@ -252,7 +252,7 @@ function DayPopup({ day, zakazky, onClose }: { day: Date; zakazky: Zakazka[]; on
         <div className="p-3 space-y-1.5 max-h-72 overflow-y-auto">
           {zakazky.map((z) => {
             const priorityBorder = z.priorita === 'vysoká' ? 'border-l-red-500' : z.priorita === 'střední' ? 'border-l-amber-400' : 'border-l-blue-400';
-            const stavColor = z.stav === 'dokončeno' ? 'text-slate-400' : z.stav === 'probíhá' ? 'text-amber-600' : 'text-blue-600';
+            const stavColor = z.stav === 'dokončeno' ? 'text-slate-400' : z.stav === 'v realizaci' ? 'text-amber-600' : 'text-blue-600';
             return (
               <Link
                 key={z.id}

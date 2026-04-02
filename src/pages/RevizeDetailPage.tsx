@@ -113,8 +113,6 @@ export function RevizeDetailPage() {
     izolacniOdpor: '',
     impedanceSmycky: '',
     impedanceSmyckyMax: false,
-    proudovyChranicMa: undefined as number | undefined,
-    casOdpojeni: undefined as number | undefined,
     poznamka: '',
   });
 
@@ -340,8 +338,6 @@ export function RevizeDetailPage() {
       izolacniOdpor: '',
       impedanceSmycky: '',
       impedanceSmyckyMax: false,
-      proudovyChranicMa: undefined,
-      casOdpojeni: undefined,
       poznamka: '',
     });
   };
@@ -583,8 +579,6 @@ export function RevizeDetailPage() {
       izolacniOdpor: okruh.izolacniOdpor || '',
       impedanceSmycky: okruh.impedanceSmycky?.replace(/^max\.\s*/, '') || '',
       impedanceSmyckyMax: okruh.impedanceSmycky?.startsWith('max.') || false,
-      proudovyChranicMa: okruh.proudovyChranicMa,
-      casOdpojeni: okruh.casOdpojeni,
       poznamka: okruh.poznamka || '',
     });
     setIsOkruhModalOpen(true);
@@ -614,8 +608,6 @@ export function RevizeDetailPage() {
         vodic: okruh.vodic,
         izolacniOdpor: okruh.izolacniOdpor,
         impedanceSmycky: okruh.impedanceSmycky,
-        proudovyChranicMa: okruh.proudovyChranicMa,
-        casOdpojeni: okruh.casOdpojeni,
         poznamka: okruh.poznamka,
       });
       const okruhyData = await okruhService.getByRozvadec(selectedRozvadec.id);

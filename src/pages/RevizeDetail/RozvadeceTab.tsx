@@ -98,8 +98,6 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     izolacniOdpor: '',
     impedanceSmycky: '',
     impedanceSmyckyMax: false,
-    proudovyChranicMa: undefined as number | undefined,
-    casOdpojeni: undefined as number | undefined,
     poznamka: '',
   });
 
@@ -175,7 +173,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     const nextCislo = okruhy.length > 0 ? Math.max(...okruhy.map(o => o.cislo)) + 1 : 1;
     setOkruhFormData({
       cislo: nextCislo, nazev: '', jisticTyp: 'B', jisticProud: '16A', pocetFazi: 1, vodic: '3x2,5',
-      izolacniOdpor: '', impedanceSmycky: '', impedanceSmyckyMax: false, proudovyChranicMa: undefined, casOdpojeni: undefined, poznamka: '',
+      izolacniOdpor: '', impedanceSmycky: '', impedanceSmyckyMax: false, poznamka: '',
     });
   };
 
@@ -206,8 +204,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
       cislo: okruh.cislo, nazev: okruh.nazev, jisticTyp: okruh.jisticTyp, jisticProud: okruh.jisticProud,
       pocetFazi: okruh.pocetFazi || 1, vodic: okruh.vodic, izolacniOdpor: okruh.izolacniOdpor || '',
       impedanceSmycky: okruh.impedanceSmycky?.replace(/^max\.\s*/, '') || '', impedanceSmyckyMax: okruh.impedanceSmycky?.startsWith('max.') || false,
-      proudovyChranicMa: okruh.proudovyChranicMa,
-      casOdpojeni: okruh.casOdpojeni, poznamka: okruh.poznamka || '',
+      poznamka: okruh.poznamka || '',
     });
     setIsOkruhModalOpen(true);
   };
@@ -230,7 +227,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
         rozvadecId: selectedRozvadec.id, cislo: nextCislo, nazev: okruh.nazev,
         jisticTyp: okruh.jisticTyp, jisticProud: okruh.jisticProud, pocetFazi: okruh.pocetFazi || 1,
         vodic: okruh.vodic, izolacniOdpor: okruh.izolacniOdpor, impedanceSmycky: okruh.impedanceSmycky,
-        proudovyChranicMa: okruh.proudovyChranicMa, casOdpojeni: okruh.casOdpojeni, poznamka: okruh.poznamka,
+        poznamka: okruh.poznamka,
       });
       const okruhyData = await okruhService.getByRozvadec(selectedRozvadec.id);
       setOkruhy(okruhyData);
@@ -377,8 +374,6 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                       <th className={TW.th}>Vodič</th>
                       <th className={TW.th}>Iz. odpor</th>
                       <th className={TW.th}>Imp. smyčky</th>
-                      <th className={TW.th}>IΔn [mA]</th>
-                      <th className={TW.th}>tA [s]</th>
                       <th className={TW.th + ' text-right'}>Akce</th>
                     </tr>
                   </thead>
@@ -414,8 +409,6 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                         <td className="py-1 px-2 text-xs text-slate-600">{o.vodic}</td>
                         <td className="py-1 px-2 text-xs text-slate-600">{o.izolacniOdpor || '—'}</td>
                         <td className="py-1 px-2 text-xs text-slate-600">{o.impedanceSmycky || '—'}</td>
-                        <td className="py-1 px-2 text-xs text-slate-600">{o.proudovyChranicMa != null ? o.proudovyChranicMa : '—'}</td>
-                        <td className="py-1 px-2 text-xs text-slate-600">{o.casOdpojeni != null ? o.casOdpojeni : '—'}</td>
                         <td className="py-1 px-2 text-xs text-right">
                           <div className="flex justify-end gap-1">
                             <Button variant="secondary" size="sm" onClick={() => handleDuplicateOkruh(o)} title="Duplikovat">
@@ -509,10 +502,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
             </label>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Input type="number" label="Proudový chránič IΔn (mA)" value={okruhFormData.proudovyChranicMa || ''} onChange={(e) => setOkruhFormData({ ...okruhFormData, proudovyChranicMa: e.target.value ? parseFloat(e.target.value) : undefined })} />
-          <Input type="number" step="0.01" label="Čas odpojení tA (s)" value={okruhFormData.casOdpojeni || ''} onChange={(e) => setOkruhFormData({ ...okruhFormData, casOdpojeni: e.target.value ? parseFloat(e.target.value) : undefined })} />
-        </div>
+
       </form>
     </Modal>
     </>
