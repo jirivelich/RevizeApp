@@ -93,6 +93,7 @@ export const revizeService = {
           headers,
           body: JSON.stringify(data),
         }).then(res => handleResponse<{ id: number }>(res));
+        await db.revizeCache.put({ id: response.id, data: { ...data, id: response.id } as Revize, updatedAt: Date.now() });
         return response.id;
       } catch {
         // Network error - queue offline
@@ -114,6 +115,10 @@ export const revizeService = {
           headers,
           body: JSON.stringify(data),
         }).then(res => handleResponse<unknown>(res));
+        const cached = await db.revizeCache.get(id);
+        if (cached) {
+          await db.revizeCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+        }
         return 1;
       } catch {
         // Network error - fallback to offline
@@ -190,6 +195,7 @@ export const rozvadecService = {
           headers,
           body: JSON.stringify(data),
         }).then(res => handleResponse<{ id: number }>(res));
+        await db.rozvadecCache.put({ id: response.id, data: { ...data, id: response.id } as Rozvadec, updatedAt: Date.now() });
         return response.id;
       } catch {
         // Network error - queue offline
@@ -211,6 +217,10 @@ export const rozvadecService = {
           headers,
           body: JSON.stringify(data),
         }).then(res => handleResponse<unknown>(res));
+        const cached = await db.rozvadecCache.get(id);
+        if (cached) {
+          await db.rozvadecCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+        }
         return 1;
       } catch {
         // Network error - fallback to offline
@@ -264,6 +274,7 @@ export const okruhService = {
           headers,
           body: JSON.stringify(data),
         }).then(res => handleResponse<{ id: number }>(res));
+        await db.okruhCache.put({ id: response.id, data: { ...data, id: response.id } as Okruh, updatedAt: Date.now() });
         return response.id;
       } catch {
         // Network error - queue offline
@@ -285,6 +296,10 @@ export const okruhService = {
           headers,
           body: JSON.stringify(data),
         }).then(res => handleResponse<unknown>(res));
+        const cached = await db.okruhCache.get(id);
+        if (cached) {
+          await db.okruhCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+        }
         return 1;
       } catch {
         // Network error - fallback to offline
@@ -349,6 +364,7 @@ export const mistnostService = {
           headers,
           body: JSON.stringify(data),
         }).then(res => handleResponse<{ id: number }>(res));
+        await db.mistnostCache.put({ id: response.id, data: { ...data, id: response.id } as Mistnost, updatedAt: Date.now() });
         return response.id;
       } catch {
         // Network error - queue offline
@@ -370,6 +386,10 @@ export const mistnostService = {
           headers,
           body: JSON.stringify(data),
         }).then(res => handleResponse<unknown>(res));
+        const cached = await db.mistnostCache.get(id);
+        if (cached) {
+          await db.mistnostCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+        }
         return 1;
       } catch {
         // Network error - fallback to offline
@@ -429,6 +449,7 @@ export const zarizeniService = {
           headers,
           body: JSON.stringify(data),
         }).then(res => handleResponse<{ id: number }>(res));
+        await db.zarizeniCache.put({ id: response.id, data: { ...data, id: response.id } as Zarizeni, updatedAt: Date.now() });
         return response.id;
       } catch {
         // Network error - queue offline
@@ -450,6 +471,10 @@ export const zarizeniService = {
           headers,
           body: JSON.stringify(data),
         }).then(res => handleResponse<unknown>(res));
+        const cached = await db.zarizeniCache.get(id);
+        if (cached) {
+          await db.zarizeniCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+        }
         return 1;
       } catch {
         // Network error - fallback to offline
@@ -513,6 +538,7 @@ export const zavadaService = {
           headers,
           body: JSON.stringify(data),
         }).then(res => handleResponse<{ id: number }>(res));
+        await db.zavadaCache.put({ id: response.id, data: { ...data, id: response.id } as Zavada, updatedAt: Date.now() });
         return response.id;
       } catch {
         // Network error - queue offline
@@ -534,6 +560,10 @@ export const zavadaService = {
           headers,
           body: JSON.stringify(data),
         }).then(res => handleResponse<unknown>(res));
+        const cached = await db.zavadaCache.get(id);
+        if (cached) {
+          await db.zavadaCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+        }
         return 1;
       } catch {
         // Network error - fallback to offline
@@ -601,6 +631,7 @@ export const firmaService = {
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
         }).then(res => handleResponse<{ id: number }>(res));
+        await db.firmaCache.put({ id: response.id, data: { ...data, id: response.id } as Firma, updatedAt: Date.now() });
         return response.id;
       } catch {
         // Network error - queue offline
@@ -622,6 +653,10 @@ export const firmaService = {
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
         }).then(res => handleResponse<unknown>(res));
+        const cached = await db.firmaCache.get(id);
+        if (cached) {
+          await db.firmaCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+        }
         return 1;
       } catch {
         // Network error - fallback to offline
@@ -676,6 +711,7 @@ export const zakazkaService = {
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
         }).then(res => handleResponse<{ id: number }>(res));
+        await db.zakazkaCache.put({ id: response.id, data: { ...data, id: response.id } as Zakazka, updatedAt: Date.now() });
         return response.id;
       } catch {
         // Network error - queue offline
@@ -697,6 +733,10 @@ export const zakazkaService = {
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
         }).then(res => handleResponse<unknown>(res));
+        const cached = await db.zakazkaCache.get(id);
+        if (cached) {
+          await db.zakazkaCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+        }
         return 1;
       } catch {
         // Network error - fallback to offline
@@ -769,6 +809,7 @@ export const pristrojService = {
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
         }).then(res => handleResponse<{ id: number }>(res));
+        await db.pristrojCache.put({ id: response.id, data: { ...data, id: response.id } as MericiPristroj, updatedAt: Date.now() });
         return response.id;
       } catch {
         // Network error - queue offline
@@ -790,6 +831,10 @@ export const pristrojService = {
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
         }).then(res => handleResponse<unknown>(res));
+        const cached = await db.pristrojCache.get(id);
+        if (cached) {
+          await db.pristrojCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+        }
         return 1;
       } catch {
         // Network error - fallback to offline
@@ -909,6 +954,12 @@ export const nastaveniService = {
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
         }).then(res => handleResponse<unknown>(res));
+        const cached = await db.nastaveniCache.get(1);
+        if (cached) {
+          await db.nastaveniCache.put({ id: 1, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+        } else {
+          await db.nastaveniCache.put({ id: 1, data: data as Nastaveni, updatedAt: Date.now() });
+        }
         return;
       } catch {
         // Network error - fallback to offline
@@ -967,6 +1018,7 @@ export const zavadaKatalogService = {
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
         }).then(res => handleResponse<{ id: number }>(res));
+        await db.zavadaKatalogCache.put({ id: response.id, data: { ...data, id: response.id } as ZavadaKatalog, updatedAt: Date.now() });
         return response.id;
       } catch {
         // Network error - queue offline
@@ -988,6 +1040,10 @@ export const zavadaKatalogService = {
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
         }).then(res => handleResponse<unknown>(res));
+        const cached = await db.zavadaKatalogCache.get(id);
+        if (cached) {
+          await db.zavadaKatalogCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+        }
         return 1;
       } catch {
         // Network error - fallback to offline
@@ -1076,6 +1132,7 @@ export const predvolenyTextService = {
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
         }).then(res => handleResponse<{ id: number }>(res));
+        await db.predvolenyTextCache.put({ id: response.id, data: { ...data, id: response.id } as PredvolenyText, updatedAt: Date.now() });
         return response.id;
       } catch {
         // Network error - queue offline
@@ -1097,6 +1154,10 @@ export const predvolenyTextService = {
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
         }).then(res => handleResponse<unknown>(res));
+        const cached = await db.predvolenyTextCache.get(id);
+        if (cached) {
+          await db.predvolenyTextCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+        }
         return;
       } catch {
         // Network error - fallback to offline
@@ -1175,6 +1236,7 @@ export const zakazniciService = {
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
         }).then(res => handleResponse<{ id: number }>(res));
+        await db.zakaznikCache.put({ id: response.id, data: { ...data, id: response.id, pocetRevizi: 0 } as Zakaznik, updatedAt: Date.now() });
         return response.id;
       } catch {
         // Network error - queue offline
@@ -1196,6 +1258,10 @@ export const zakazniciService = {
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
         }).then(res => handleResponse<unknown>(res));
+        const cached = await db.zakaznikCache.get(id);
+        if (cached) {
+          await db.zakaznikCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+        }
         return 1;
       } catch {
         // Network error - fallback to offline
