@@ -565,8 +565,8 @@ export function ReportPrintPage() {
               <>
                 <div className="report-subsection-subtitle">Proudové chraniče</div>
                 <ReportTable
-                  columns={['Č.', 'Název', 'Typ', 'Proud', 'IΔn [mA]', 'Pólů', 'tA [s]']}
-                  widths={['5%', '25%', '10%', '10%', '15%', '10%', '10%']}
+                  columns={['Č.', 'Název', 'Typ', 'Proud', 'IΔn [mA]', 'Pólů', 'IΔ [mA]', 'tA 1× [ms]']}
+                  widths={['5%', '22%', '8%', '8%', '12%', '8%', '12%', '12%']}
                   rows={roz.chranice.map(c => [
                     String(c.cislo),
                     c.nazev,
@@ -574,7 +574,8 @@ export function ReportPrintPage() {
                     c.proud,
                     String(c.citlivostMa),
                     String(c.pocetPolu),
-                    c.casOdpojeni != null ? String(c.casOdpojeni) : '—',
+                    c.vybavovacProud != null ? String(c.vybavovacProud) : '—',
+                    c.casOdpojeni1x != null ? String(c.casOdpojeni1x) : '—',
                   ])}
                 />
               </>

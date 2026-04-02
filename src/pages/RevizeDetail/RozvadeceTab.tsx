@@ -82,7 +82,17 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
   const [cranicFormData, setCranicFormData] = useState({
     cislo: 1, nazev: '', typ: 'A', proud: '25A',
     citlivostMa: 30, pocetPolu: 2,
-    casOdpojeni: undefined as number | undefined, poznamka: '',
+    testovacitlacitko: undefined as boolean | undefined,
+    nevybavovaci: undefined as boolean | undefined,
+    dotykoveNapeti: undefined as number | undefined,
+    vybavovacProud: undefined as number | undefined,
+    casOdpojeni1x: undefined as number | undefined,
+    casOdpojeni5x: undefined as number | undefined,
+    casOdpojeni1_4x: undefined as number | undefined,
+    casOdpojeni2x: undefined as number | undefined,
+    zkouskaVypnuti2x: undefined as boolean | undefined,
+    selektivita: undefined as boolean | undefined,
+    poznamka: '',
   });
   const [draggedRozvadec, setDraggedRozvadec] = useState<Rozvadec | null>(null);
   const [okruhyCounts, setOkruhyCounts] = useState<Record<number, number>>(propCounts);
@@ -248,7 +258,13 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
 
   const resetCranicForm = () => {
     const nextCislo = chranice.length > 0 ? Math.max(...chranice.map(c => c.cislo)) + 1 : 1;
-    setCranicFormData({ cislo: nextCislo, nazev: '', typ: 'A', proud: '25A', citlivostMa: 30, pocetPolu: 2, casOdpojeni: undefined, poznamka: '' });
+    setCranicFormData({
+      cislo: nextCislo, nazev: '', typ: 'A', proud: '25A', citlivostMa: 30, pocetPolu: 2,
+      testovacitlacitko: undefined, nevybavovaci: undefined, dotykoveNapeti: undefined,
+      vybavovacProud: undefined, casOdpojeni1x: undefined, casOdpojeni5x: undefined,
+      casOdpojeni1_4x: undefined, casOdpojeni2x: undefined, zkouskaVypnuti2x: undefined,
+      selektivita: undefined, poznamka: '',
+    });
   };
 
   const handleAddChranic = async (e: React.FormEvent) => {
@@ -271,7 +287,17 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     setCranicFormData({
       cislo: c.cislo, nazev: c.nazev, typ: c.typ, proud: c.proud,
       citlivostMa: c.citlivostMa, pocetPolu: c.pocetPolu,
-      casOdpojeni: c.casOdpojeni, poznamka: c.poznamka || '',
+      testovacitlacitko: c.testovacitlacitko,
+      nevybavovaci: c.nevybavovaci,
+      dotykoveNapeti: c.dotykoveNapeti,
+      vybavovacProud: c.vybavovacProud,
+      casOdpojeni1x: c.casOdpojeni1x,
+      casOdpojeni5x: c.casOdpojeni5x,
+      casOdpojeni1_4x: c.casOdpojeni1_4x,
+      casOdpojeni2x: c.casOdpojeni2x,
+      zkouskaVypnuti2x: c.zkouskaVypnuti2x,
+      selektivita: c.selektivita,
+      poznamka: c.poznamka || '',
     });
     setIsCranicModalOpen(true);
   };
@@ -496,7 +522,8 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                       <th className={TW.th}>Proud</th>
                       <th className={TW.th}>IΔn [mA]</th>
                       <th className={TW.th}>Pólů</th>
-                      <th className={TW.th}>tA [s]</th>
+                      <th className={TW.th}>IΔ [mA]</th>
+                      <th className={TW.th}>tA 1× [ms]</th>
                       <th className={TW.th + ' text-right'}>Akce</th>
                     </tr>
                   </thead>
@@ -511,7 +538,8 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                         <td className="py-1 px-2 text-xs text-slate-600">{c.proud}</td>
                         <td className="py-1 px-2 text-xs text-slate-600">{c.citlivostMa}</td>
                         <td className="py-1 px-2 text-xs text-slate-600">{c.pocetPolu}</td>
-                        <td className="py-1 px-2 text-xs text-slate-600">{c.casOdpojeni != null ? c.casOdpojeni : '—'}</td>
+                        <td className="py-1 px-2 text-xs text-slate-600">{c.vybavovacProud != null ? c.vybavovacProud : '—'}</td>
+                        <td className="py-1 px-2 text-xs text-slate-600">{c.casOdpojeni1x != null ? c.casOdpojeni1x : '—'}</td>
                         <td className="py-1 px-2 text-xs text-right">
                           <div className="flex justify-end gap-1">
                             <Button variant="secondary" size="sm" onClick={() => handleEditChranic(c)} title="Upravit">
@@ -627,10 +655,73 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
           <EditableSelect label="Typ chrániče" value={cranicFormData.typ} onChange={(val) => setCranicFormData({ ...cranicFormData, typ: val })} options={['A', 'AC', 'B', 'F', 'G']} />
           <EditableSelect label="Jmenovitý proud" value={cranicFormData.proud} onChange={(val) => setCranicFormData({ ...cranicFormData, proud: val })} options={['10A', '16A', '20A', '25A', '32A', '40A', '63A']} />
         </div>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <Select label="Citlivost IΔn (mA)" value={String(cranicFormData.citlivostMa)} onChange={(e) => setCranicFormData({ ...cranicFormData, citlivostMa: parseFloat(e.target.value) })} options={[{ value: '10', label: '10 mA' }, { value: '30', label: '30 mA' }, { value: '100', label: '100 mA' }, { value: '300', label: '300 mA' }, { value: '500', label: '500 mA' }]} />
           <Select label="Počet pólů" value={String(cranicFormData.pocetPolu)} onChange={(e) => setCranicFormData({ ...cranicFormData, pocetPolu: parseInt(e.target.value) })} options={[{ value: '2', label: '2' }, { value: '4', label: '4' }]} />
-          <Input type="number" step="0.01" label="Čas odpojení tA (s)" value={cranicFormData.casOdpojeni ?? ''} onChange={(e) => setCranicFormData({ ...cranicFormData, casOdpojeni: e.target.value ? parseFloat(e.target.value) : undefined })} />
+        </div>
+        {/* Měřené hodnoty */}
+        <div className="border-t border-slate-200 pt-3">
+          <p className="text-xs font-medium text-slate-500 mb-3">Měřené hodnoty</p>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex items-center gap-2 text-xs">
+              <input type="checkbox"
+                checked={!!cranicFormData.testovacitlacitko}
+                onChange={(e) => setCranicFormData({ ...cranicFormData, testovacitlacitko: e.target.checked || undefined })}
+                className="rounded border-slate-300" />
+              <span>Testovací tlačítko ✓</span>
+            </label>
+            <label className="flex items-center gap-2 text-xs">
+              <input type="checkbox"
+                checked={!!cranicFormData.nevybavovaci}
+                onChange={(e) => setCranicFormData({ ...cranicFormData, nevybavovaci: e.target.checked || undefined })}
+                className="rounded border-slate-300" />
+              <span>Nevybavení při 0,5×IΔn ✓</span>
+            </label>
+          </div>
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <Input type="number" step="0.1" label="Dotykové napětí Uc [V]"
+              value={cranicFormData.dotykoveNapeti ?? ''}
+              onChange={(e) => setCranicFormData({ ...cranicFormData, dotykoveNapeti: e.target.value ? parseFloat(e.target.value) : undefined })} />
+            <Input type="number" step="0.1" label="Vybavovací proud IΔ [mA]"
+              value={cranicFormData.vybavovacProud ?? ''}
+              onChange={(e) => setCranicFormData({ ...cranicFormData, vybavovacProud: e.target.value ? parseFloat(e.target.value) : undefined })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <Input type="number" step="1" label="Čas odpojení tA při 1×IΔn [ms]"
+              value={cranicFormData.casOdpojeni1x ?? ''}
+              onChange={(e) => setCranicFormData({ ...cranicFormData, casOdpojeni1x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+            {['AC', 'A'].includes(cranicFormData.typ) && (
+              <Input type="number" step="1" label="Čas odpojení tA při 5×IΔn [ms]"
+                value={cranicFormData.casOdpojeni5x ?? ''}
+                onChange={(e) => setCranicFormData({ ...cranicFormData, casOdpojeni5x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+            )}
+            {cranicFormData.typ === 'F' && (
+              <>
+                <Input type="number" step="1" label="Čas odpojení tA při 1,4×IΔn [ms]"
+                  value={cranicFormData.casOdpojeni1_4x ?? ''}
+                  onChange={(e) => setCranicFormData({ ...cranicFormData, casOdpojeni1_4x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+                <Input type="number" step="1" label="Čas odpojení tA při 2×IΔn [ms]"
+                  value={cranicFormData.casOdpojeni2x ?? ''}
+                  onChange={(e) => setCranicFormData({ ...cranicFormData, casOdpojeni2x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+                <label className="flex items-center gap-2 text-xs col-span-2">
+                  <input type="checkbox"
+                    checked={!!cranicFormData.zkouskaVypnuti2x}
+                    onChange={(e) => setCranicFormData({ ...cranicFormData, zkouskaVypnuti2x: e.target.checked || undefined })}
+                    className="rounded border-slate-300" />
+                  <span>Zkouška vypnutí 2×IΔn nárůstem proudu ✓</span>
+                </label>
+              </>
+            )}
+          </div>
+          <div className="mt-3">
+            <label className="flex items-center gap-2 text-xs">
+              <input type="checkbox"
+                checked={!!cranicFormData.selektivita}
+                onChange={(e) => setCranicFormData({ ...cranicFormData, selektivita: e.target.checked || undefined })}
+                className="rounded border-slate-300" />
+              <span>Selektivita (typ S/G) ✓</span>
+            </label>
+          </div>
         </div>
         <Input label="Poznámka" value={cranicFormData.poznamka} onChange={(e) => setCranicFormData({ ...cranicFormData, poznamka: e.target.value })} />
       </form>
