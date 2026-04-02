@@ -303,7 +303,7 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
               {hasEvents && (
                 <div className="mt-1 flex items-center justify-center gap-0.5 flex-wrap">
                   {dayZ.slice(0, 3).map((z) => {
-                    const color = z.stav === 'dokončeno' ? 'bg-slate-400' : z.stav === 'v realizaci' ? 'bg-slate-600' : 'bg-slate-800';
+                    const color = z.stav === 'dokončeno' ? 'bg-slate-400' : z.priorita === 'vysoká' ? 'bg-red-500' : z.priorita === 'střední' ? 'bg-amber-400' : 'bg-blue-400';
                     return <span key={z.id} className={`h-1 w-1 rounded-full ${color}`} />;
                   })}
                   {dayZ.length > 3 && (
@@ -348,7 +348,10 @@ export function Dashboard() {
         pristrojeKRekalibraci: expiringOrExpired.length,
         planovaneZakazky: zakazky.filter(z => z.stav === 'plánováno').length,
       },
-      recentRevize: revize.slice(-5).reverse(),
+      recentRevize: revize
+        .filter(r => r.stav === 'rozpracováno')
+        .sort((a, b) => new Date(b.datum).getTime() - new Date(a.datum).getTime())
+        .slice(0, 5),
       upcomingZakazky: zakazky
         .filter(z => z.stav === 'plánováno')
         .sort((a, b) => new Date(a.datumPlanovany).getTime() - new Date(b.datumPlanovany).getTime())
@@ -378,71 +381,70 @@ export function Dashboard() {
     return 'Dobrý večer';
   })();
 
+  const todayLabel = new Date().toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
   return (
     <div className="space-y-6">
       {/* ═══ Header ═══ */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold text-slate-800">{greeting}</h1>
-          <p className="text-xs text-slate-400">Přehled revizí a zakázek</p>
+          <p className="text-xs text-slate-400 capitalize">{todayLabel}</p>
         </div>
         <div className="flex gap-1.5">
           <Link to="/revize" className="inline-flex items-center rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">
             + Revize
           </Link>
-          <Link to="/planovani" className="inline-flex items-center rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+          <Link to="/planovani" className="inline-flex items-center rounded border border-slate-800 bg-slate-800 px-2.5 py-1 text-[11px] font-medium text-white hover:bg-slate-700 transition-colors">
             + Zakázka
           </Link>
         </div>
       </div>
 
-      {/* ═══ Stat karty + Měsíční kalendář ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-        {/* Stat karty 2x2 */}
-        <div className="grid grid-cols-2 gap-2.5">
-          <StatCard
-            title="Celkem revizí"
-            value={stats.celkemRevizi}
-            subtitle={`${stats.dokonceno} dokončených`}
-            accent="border-l-slate-400"
-            link="/revize"
-          />
-          <StatCard
-            title="Rozpracováno"
-            value={stats.rozpracovano}
-            subtitle="čeká na dokončení"
-            accent="border-l-amber-400"
-            link="/revize"
-          />
-          <StatCard
-            title="K rekalibraci"
-            value={stats.pristrojeKRekalibraci}
-            subtitle="do 30 dnů"
-            accent="border-l-red-400"
-            link="/pristroje"
-          />
-          <StatCard
-            title="Plánované zakázky"
-            value={stats.planovaneZakazky}
-            subtitle="naplánováno"
-            accent="border-l-emerald-400"
-            link="/planovani"
-          />
-        </div>
-
-        {/* Měsíční kalendář */}
-        <MonthCalendar zakazky={zakazky} />
+      {/* ═══ Stat karty ═══ */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+        <StatCard
+          title="Celkem revizí"
+          value={stats.celkemRevizi}
+          subtitle={`${stats.dokonceno} dokončených`}
+          accent="border-l-slate-400"
+          link="/revize"
+        />
+        <StatCard
+          title="Rozpracováno"
+          value={stats.rozpracovano}
+          subtitle="čeká na dokončení"
+          accent="border-l-amber-400"
+          link="/revize"
+        />
+        <StatCard
+          title="K rekalibraci"
+          value={stats.pristrojeKRekalibraci}
+          subtitle="do 30 dnů"
+          accent="border-l-red-400"
+          link="/pristroje"
+        />
+        <StatCard
+          title="Plánované zakázky"
+          value={stats.planovaneZakazky}
+          subtitle="naplánováno"
+          accent="border-l-emerald-400"
+          link="/planovani"
+        />
       </div>
 
-      {/* ═══ Počasí ═══ */}
-      <WeatherWidget />
+      {/* ═══ Počasí + Kalendář ═══ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        <WeatherWidget />
+        <MonthCalendar zakazky={zakazky} />
+      </div>
 
       {/* ═══ Sekce: revize + zakázky ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <SectionCard
-          title="Poslední revize"
+          title="Rozpracované revize"
           icon=""
-          count={revize.length}
+          count={stats.rozpracovano}
           viewAllLink="/revize"
           empty="Zatím nemáte žádné revize."
           emptyLink="/revize"
