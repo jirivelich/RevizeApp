@@ -266,6 +266,7 @@ export function RozvadecDetailPage() {
         isOpen={isOkruhModalOpen}
         onClose={() => { setIsOkruhModalOpen(false); setEditingOkruh(null); }}
         title={editingOkruh ? 'Upravit okruh' : 'Přidat okruh'}
+        size="lg"
         footer={
           <>
             <Button variant="secondary" onClick={() => { setIsOkruhModalOpen(false); setEditingOkruh(null); }}>
