@@ -140,7 +140,16 @@ export async function initializeDatabase() {
         proud TEXT,
         "citlivostMa" REAL,
         "pocetPolu" INTEGER,
-        "casOdpojeni" REAL,
+        "testovacitlacitko" BOOLEAN,
+        nevybavovaci BOOLEAN,
+        "dotykoveNapeti" REAL,
+        "vybavovacProud" REAL,
+        "casOdpojeni1x" REAL,
+        "casOdpojeni5x" REAL,
+        "casOdpojeni1_4x" REAL,
+        "casOdpojeni2x" REAL,
+        "zkouskaVypnuti2x" BOOLEAN,
+        selektivita BOOLEAN,
         poznamka TEXT
       )
     `);
@@ -410,6 +419,17 @@ export async function initializeDatabase() {
       // Chranic: odstrání sloupce chranice z okruhu (přesun do samostatné entity)
       'ALTER TABLE okruh DROP COLUMN IF EXISTS "proudovyChranicMa"',
       'ALTER TABLE okruh DROP COLUMN IF EXISTS "casOdpojeni"',
+      // Chranic: renám a rozšíření měřených hodnot
+      'ALTER TABLE chranic RENAME COLUMN "casOdpojeni" TO "casOdpojeni1x"',
+      'ALTER TABLE chranic ADD COLUMN IF NOT EXISTS "testovacitlacitko" BOOLEAN',
+      'ALTER TABLE chranic ADD COLUMN IF NOT EXISTS nevybavovaci BOOLEAN',
+      'ALTER TABLE chranic ADD COLUMN IF NOT EXISTS "dotykoveNapeti" REAL',
+      'ALTER TABLE chranic ADD COLUMN IF NOT EXISTS "vybavovacProud" REAL',
+      'ALTER TABLE chranic ADD COLUMN IF NOT EXISTS "casOdpojeni5x" REAL',
+      'ALTER TABLE chranic ADD COLUMN IF NOT EXISTS "casOdpojeni1_4x" REAL',
+      'ALTER TABLE chranic ADD COLUMN IF NOT EXISTS "casOdpojeni2x" REAL',
+      'ALTER TABLE chranic ADD COLUMN IF NOT EXISTS "zkouskaVypnuti2x" BOOLEAN',
+      'ALTER TABLE chranic ADD COLUMN IF NOT EXISTS selektivita BOOLEAN',
     ];
     
     for (const migration of migrations) {

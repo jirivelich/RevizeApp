@@ -158,13 +158,30 @@ export function RozvadecDetailPage() {
     proud: '25A',
     citlivostMa: 30,
     pocetPolu: 2,
-    casOdpojeni: undefined as number | undefined,
+    testovacitlacitko: undefined as boolean | undefined,
+    nevybavovaci: undefined as boolean | undefined,
+    dotykoveNapeti: undefined as number | undefined,
+    vybavovacProud: undefined as number | undefined,
+    casOdpojeni1x: undefined as number | undefined,
+    casOdpojeni5x: undefined as number | undefined,
+    casOdpojeni1_4x: undefined as number | undefined,
+    casOdpojeni2x: undefined as number | undefined,
+    zkouskaVypnuti2x: undefined as boolean | undefined,
+    selektivita: undefined as boolean | undefined,
     poznamka: '',
   });
 
+  const CHRANIC_EMPTY = {
+    cislo: 1, nazev: '', typ: 'A', proud: '25A', citlivostMa: 30, pocetPolu: 2,
+    testovacitlacitko: undefined, nevybavovaci: undefined, dotykoveNapeti: undefined,
+    vybavovacProud: undefined, casOdpojeni1x: undefined, casOdpojeni5x: undefined,
+    casOdpojeni1_4x: undefined, casOdpojeni2x: undefined, zkouskaVypnuti2x: undefined,
+    selektivita: undefined, poznamka: '',
+  };
+
   const resetCranicForm = () => {
     const nextCislo = chranice.length > 0 ? Math.max(...chranice.map(c => c.cislo)) + 1 : 1;
-    setCranicFormData({ cislo: nextCislo, nazev: '', typ: 'A', proud: '25A', citlivostMa: 30, pocetPolu: 2, casOdpojeni: undefined, poznamka: '' });
+    setCranicFormData({ ...CHRANIC_EMPTY, cislo: nextCislo });
   };
 
   const handleAddChranic = (e: React.FormEvent) => {
@@ -188,7 +205,16 @@ export function RozvadecDetailPage() {
       proud: c.proud,
       citlivostMa: c.citlivostMa,
       pocetPolu: c.pocetPolu,
-      casOdpojeni: c.casOdpojeni,
+      testovacitlacitko: c.testovacitlacitko,
+      nevybavovaci: c.nevybavovaci,
+      dotykoveNapeti: c.dotykoveNapeti,
+      vybavovacProud: c.vybavovacProud,
+      casOdpojeni1x: c.casOdpojeni1x,
+      casOdpojeni5x: c.casOdpojeni5x,
+      casOdpojeni1_4x: c.casOdpojeni1_4x,
+      casOdpojeni2x: c.casOdpojeni2x,
+      zkouskaVypnuti2x: c.zkouskaVypnuti2x,
+      selektivita: c.selektivita,
       poznamka: c.poznamka || '',
     });
     setIsCranicModalOpen(true);
@@ -412,7 +438,8 @@ export function RozvadecDetailPage() {
                   <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Proud</th>
                   <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">IΔn [mA]</th>
                   <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Pólů</th>
-                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">tA [s]</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">IΔ [mA]</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">tA 1× [ms]</th>
                   <th className="text-right py-2 px-3 font-medium text-slate-600 text-sm">Akce</th>
                 </tr>
               </thead>
@@ -429,7 +456,8 @@ export function RozvadecDetailPage() {
                     <td className="py-2 px-3 text-slate-600">{c.proud}</td>
                     <td className="py-2 px-3 text-slate-600">{c.citlivostMa}</td>
                     <td className="py-2 px-3 text-slate-600">{c.pocetPolu}</td>
-                    <td className="py-2 px-3 text-slate-600">{c.casOdpojeni != null ? c.casOdpojeni : '—'}</td>
+                    <td className="py-2 px-3 text-slate-600">{c.vybavovacProud != null ? c.vybavovacProud : '—'}</td>
+                    <td className="py-2 px-3 text-slate-600">{c.casOdpojeni1x != null ? c.casOdpojeni1x : '—'}</td>
                     <td className="py-2 px-3 text-right">
                       <div className="flex justify-end gap-1">
                         <Button variant="secondary" size="sm" onClick={() => handleEditChranic(c)}>Upravit</Button>
@@ -516,13 +544,73 @@ export function RozvadecDetailPage() {
                 { value: '4', label: '4' },
               ]}
             />
-            <Input
-              type="number"
-              step="0.01"
-              label="Čas odpojení tA (s)"
-              value={cranicFormData.casOdpojeni ?? ''}
-              onChange={(e) => setCranicFormData({ ...cranicFormData, casOdpojeni: e.target.value ? parseFloat(e.target.value) : undefined })}
-            />
+          </div>
+
+          {/* Měřené hodnoty – společné pro všechny typy */}
+          <div className="border-t border-slate-200 pt-3">
+            <p className="text-xs font-medium text-slate-500 mb-3">Měřené hodnoty</p>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex items-center gap-2 text-xs">
+                <input type="checkbox"
+                  checked={!!cranicFormData.testovacitlacitko}
+                  onChange={(e) => setCranicFormData({ ...cranicFormData, testovacitlacitko: e.target.checked || undefined })}
+                  className="rounded border-slate-300" />
+                <span>Testovací tlačítko ✓</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs">
+                <input type="checkbox"
+                  checked={!!cranicFormData.nevybavovaci}
+                  onChange={(e) => setCranicFormData({ ...cranicFormData, nevybavovaci: e.target.checked || undefined })}
+                  className="rounded border-slate-300" />
+                <span>Nevybavení při 0,5×IΔn ✓</span>
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <Input type="number" step="0.1" label="Dotykové napětí Uc [V]"
+                value={cranicFormData.dotykoveNapeti ?? ''}
+                onChange={(e) => setCranicFormData({ ...cranicFormData, dotykoveNapeti: e.target.value ? parseFloat(e.target.value) : undefined })} />
+              <Input type="number" step="0.1" label="Vybavovací proud IΔ [mA]"
+                value={cranicFormData.vybavovacProud ?? ''}
+                onChange={(e) => setCranicFormData({ ...cranicFormData, vybavovacProud: e.target.value ? parseFloat(e.target.value) : undefined })} />
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <Input type="number" step="1" label="Čas odpojení tA při 1×IΔn [ms]"
+                value={cranicFormData.casOdpojeni1x ?? ''}
+                onChange={(e) => setCranicFormData({ ...cranicFormData, casOdpojeni1x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+              {/* AC a A: tA při 5×IΔn */}
+              {['AC', 'A'].includes(cranicFormData.typ) && (
+                <Input type="number" step="1" label="Čas odpojení tA při 5×IΔn [ms]"
+                  value={cranicFormData.casOdpojeni5x ?? ''}
+                  onChange={(e) => setCranicFormData({ ...cranicFormData, casOdpojeni5x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+              )}
+              {/* F: tA při 1,4× a 2× */}
+              {cranicFormData.typ === 'F' && (
+                <>
+                  <Input type="number" step="1" label="Čas odpojení tA při 1,4×IΔn [ms]"
+                    value={cranicFormData.casOdpojeni1_4x ?? ''}
+                    onChange={(e) => setCranicFormData({ ...cranicFormData, casOdpojeni1_4x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+                  <Input type="number" step="1" label="Čas odpojení tA při 2×IΔn [ms]"
+                    value={cranicFormData.casOdpojeni2x ?? ''}
+                    onChange={(e) => setCranicFormData({ ...cranicFormData, casOdpojeni2x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+                  <label className="flex items-center gap-2 text-xs col-span-2">
+                    <input type="checkbox"
+                      checked={!!cranicFormData.zkouskaVypnuti2x}
+                      onChange={(e) => setCranicFormData({ ...cranicFormData, zkouskaVypnuti2x: e.target.checked || undefined })}
+                      className="rounded border-slate-300" />
+                    <span>Zkouška vypnutí 2×IΔn nárůstem proudu ✓</span>
+                  </label>
+                </>
+              )}
+            </div>
+            <div className="mt-3">
+              <label className="flex items-center gap-2 text-xs">
+                <input type="checkbox"
+                  checked={!!cranicFormData.selektivita}
+                  onChange={(e) => setCranicFormData({ ...cranicFormData, selektivita: e.target.checked || undefined })}
+                  className="rounded border-slate-300" />
+                <span>Selektivita (typ S/G) ✓</span>
+              </label>
+            </div>
           </div>
           <Input
             label="Poznámka"

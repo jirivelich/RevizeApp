@@ -521,12 +521,21 @@ async function startServer() {
 
   app.post('/api/chranice', authMiddleware, async (req, res) => {
     try {
-      const { rozvadecId, cislo, nazev, typ, proud, citlivostMa, pocetPolu, casOdpojeni, poznamka } = req.body;
+      const { rozvadecId, cislo, nazev, typ, proud, citlivostMa, pocetPolu,
+        testovacitlacitko, nevybavovaci, dotykoveNapeti, vybavovacProud,
+        casOdpojeni1x, casOdpojeni5x, casOdpojeni1_4x, casOdpojeni2x,
+        zkouskaVypnuti2x, selektivita, poznamka } = req.body;
       const result = await pool.query(`
-        INSERT INTO chranic ("rozvadecId", cislo, nazev, typ, proud, "citlivostMa", "pocetPolu", "casOdpojeni", poznamka)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        INSERT INTO chranic ("rozvadecId", cislo, nazev, typ, proud, "citlivostMa", "pocetPolu",
+          "testovacitlacitko", nevybavovaci, "dotykoveNapeti", "vybavovacProud",
+          "casOdpojeni1x", "casOdpojeni5x", "casOdpojeni1_4x", "casOdpojeni2x",
+          "zkouskaVypnuti2x", selektivita, poznamka)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
         RETURNING id
-      `, [rozvadecId, cislo, nazev, typ, proud, citlivostMa, pocetPolu, casOdpojeni, poznamka]);
+      `, [rozvadecId, cislo, nazev, typ, proud, citlivostMa, pocetPolu,
+          testovacitlacitko, nevybavovaci, dotykoveNapeti, vybavovacProud,
+          casOdpojeni1x, casOdpojeni5x, casOdpojeni1_4x, casOdpojeni2x,
+          zkouskaVypnuti2x, selektivita, poznamka]);
       res.json({ id: result.rows[0].id });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });

@@ -161,7 +161,17 @@ export interface Chranic {
   proud: string;
   citlivostMa: number;
   pocetPolu: number;
-  casOdpojeni?: number;
+  // Měřené hodnoty
+  testovacitlacitko?: boolean;
+  nevybavovaci?: boolean;
+  dotykoveNapeti?: number;
+  vybavovacProud?: number;
+  casOdpojeni1x?: number;
+  casOdpojeni5x?: number;
+  casOdpojeni1_4x?: number;
+  casOdpojeni2x?: number;
+  zkouskaVypnuti2x?: boolean;
+  selektivita?: boolean;
   poznamka?: string;
 }
 
