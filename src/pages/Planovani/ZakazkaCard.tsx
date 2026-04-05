@@ -65,4 +65,3 @@ export function ZakazkaCard({ zakazka: z, onEdit, onUpdateStav, onDelete, onCrea
     </div>
   );
 }
-}
