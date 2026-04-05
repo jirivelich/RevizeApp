@@ -125,6 +125,76 @@ function SectionCard({ title, icon: _icon, count, viewAllLink, viewAllLabel, emp
   );
 }
 
+/* ═══ Today Panel ═══ */
+
+const QUICK_ACTIONS = [
+  { label: 'Nová revize', to: '/revize', icon: '📋' },
+  { label: 'Naplánovat zakázku', to: '/planovani', icon: '📅' },
+  { label: 'Přidat firmu', to: '/firmy', icon: '🏢' },
+  { label: 'Přístroje', to: '/pristroje', icon: '🔧' },
+] as const;
+
+function TodayPanel({ zakazky }: { zakazky: Zakazka[] }) {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayZakazky = zakazky.filter(
+    z => z.datumPlanovany === todayStr && (z.stav === 'plánováno' || z.stav === 'v realizaci')
+  ).sort((a, b) => (a.casPlanovany ?? '99:99').localeCompare(b.casPlanovany ?? '99:99'));
+
+  const prioritaBar = {
+    'vysoká': 'border-l-red-500',
+    'střední': 'border-l-amber-400',
+    'nizká': 'border-l-blue-400',
+  } as const;
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100">
+        <h2 className="text-[13px] font-semibold text-slate-700">Dnes</h2>
+        <Link to="/planovani" className="text-[11px] font-medium text-slate-500 hover:text-slate-700 transition-colors">
+          Vše →
+        </Link>
+      </div>
+      {todayZakazky.length > 0 ? (
+        <div className="divide-y divide-slate-100">
+          {todayZakazky.map(z => (
+            <Link
+              key={z.id}
+              to="/planovani"
+              className={`group flex items-center gap-3 px-4 py-2.5 border-l-[3px] ${prioritaBar[z.priorita] ?? 'border-l-slate-300'} hover:bg-slate-50 transition-colors`}
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-medium text-slate-700 group-hover:text-slate-900">{z.nazev}</p>
+                <p className="text-[11px] text-slate-400">{z.klient}</p>
+              </div>
+              {z.casPlanovany && (
+                <span className="shrink-0 text-[11px] font-medium text-slate-500 bg-slate-100 rounded px-2 py-0.5">
+                  {z.casPlanovany}
+                </span>
+              )}
+              {z.stav === 'v realizaci' && (
+                <span className="shrink-0 text-[10px] font-medium text-amber-600 bg-amber-50 rounded px-2 py-0.5">probíhá</span>
+              )}
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="p-3 grid grid-cols-2 gap-2">
+          {QUICK_ACTIONS.map(a => (
+            <Link
+              key={a.to}
+              to={a.to}
+              className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-[12px] font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all"
+            >
+              <span className="text-base leading-none">{a.icon}</span>
+              {a.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ═══ Weather ═══ */
 
 const WEATHER_URL =
@@ -481,9 +551,12 @@ export function Dashboard() {
         />
       </div>
 
-      {/* ═══ Počasí + Kalendář ═══ */}
+      {/* ═══ Počasí + Dnes + Kalendář ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-        <WeatherWidget />
+        <div className="flex flex-col gap-4">
+          <WeatherWidget />
+          <TodayPanel zakazky={zakazky} />
+        </div>
         <MonthCalendar zakazky={zakazky} />
       </div>
 
