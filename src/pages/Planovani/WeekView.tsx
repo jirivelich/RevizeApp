@@ -11,7 +11,7 @@ import {
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import type { Zakazka } from '../../types';
 import { Card } from '../../components/ui';
-import { getPriorityColor, getStatusColor } from './utils';
+import { getPriorityColor, getStatusColor, getRealizaceDays } from './utils';
 
 // ========== Helpers ==========
 
@@ -182,14 +182,22 @@ export function WeekView({ zakazky, onZakazkaClick, onSlotClick, onMove }: WeekV
     return `${startStr} – ${endStr}`;
   }, [weekDays]);
 
-  // Group zakazky by date+hour
+  // Group zakazky by date+hour — každá zakázka se zobrazí na každý den realizace
   const zakazkyMap = useMemo(() => {
     const map = new Map<string, Zakazka[]>();
     for (const z of zakazky) {
+      const days = getRealizaceDays(z);
       const hour = z.casPlanovany ? parseInt(z.casPlanovany.split(':')[0]) : 8;
-      const key = `${z.datumPlanovany}|${hour}`;
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(z);
+      for (const day of days) {
+        // Pouze 1. den má čas, ostatní dny jdou do slotu 8:00
+        const slotHour = day === days[0] ? hour : 8;
+        const key = `${day}|${slotHour}`;
+        if (!map.has(key)) map.set(key, []);
+        // Nevkládat duplikáty (zakázka může mít 1. den = datumPlanovany a datumyRealizace může být prázdné)
+        if (!map.get(key)!.find((x) => x.id === z.id)) {
+          map.get(key)!.push(z);
+        }
+      }
     }
     return map;
   }, [zakazky]);

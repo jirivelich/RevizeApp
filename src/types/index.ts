@@ -222,6 +222,9 @@ export interface Zakazka {
   datumPlanovany: string;
   casPlanovany?: string; // HH:mm format
   datumDokonceni?: string;
+  datumyRealizace?: string[]; // konkrétní dny realizace ["YYYY-MM-DD", ...]
+  lhutaZpravyDni?: number;   // počet dní po posledním dni pro odevzdání zprávy
+  datumOdevzdaniZpravy?: string; // plánované odevzdání zprávy YYYY-MM-DD
   stav: 'plánováno' | 'v realizaci' | 'dokončeno' | 'zrušeno';
   priorita: 'nizká' | 'střední' | 'vysoká';
   revizeId?: number;

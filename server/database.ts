@@ -430,6 +430,10 @@ export async function initializeDatabase() {
       'ALTER TABLE chranic ADD COLUMN IF NOT EXISTS "casOdpojeni2x" REAL',
       'ALTER TABLE chranic ADD COLUMN IF NOT EXISTS "zkouskaVypnuti2x" BOOLEAN',
       'ALTER TABLE chranic ADD COLUMN IF NOT EXISTS selektivita BOOLEAN',
+      // Vícedenní zakázky s revizní zprávou
+      'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS "datumyRealizace" TEXT',
+      'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS "lhutaZpravyDni" INTEGER DEFAULT 4',
+      'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS "datumOdevzdaniZpravy" TEXT',
     ];
     
     for (const migration of migrations) {

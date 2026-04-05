@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Zakazka } from '../../types';
 import { Card } from '../../components/ui';
-import { getPriorityColor } from './utils';
+import { getPriorityColor, getRealizaceDays, getReportDeadline, isOverdue } from './utils';
 
 interface CalendarViewProps {
   zakazky: Zakazka[];
@@ -66,7 +66,19 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
   // Day cells
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = formatDateStr(day);
-    const dayZakazky = zakazky.filter((z) => z.datumPlanovany === dateStr);
+
+    // Zakázky s realizací v tento den
+    const dayZakazky = zakazky.filter((z) => getRealizaceDays(z).includes(dateStr));
+
+    // Deadline zpráv v tento den
+    const deadlineZpravy = zakazky.filter((z) => {
+      const dl = getReportDeadline(z);
+      return dl === dateStr;
+    });
+
+    // Plánované odevzdání v tento den
+    const odevzdani = zakazky.filter((z) => z.datumOdevzdaniZpravy === dateStr);
+
     const todayClass = isToday(day);
 
     days.push(
@@ -87,24 +99,48 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
           {day}
         </span>
         <div className="mt-1 space-y-1">
-          {dayZakazky.slice(0, 3).map((z) => (
-            <div
-              key={z.id}
-              className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 ${getPriorityColor(z.priorita)}`}
-              title={`${z.nazev} — ${z.klient}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onZakazkaClick(z);
-              }}
-            >
-              {z.nazev}
-            </div>
-          ))}
+          {dayZakazky.slice(0, 3).map((z) => {
+            const days = getRealizaceDays(z);
+            const isFirst = days[0] === dateStr;
+            return (
+              <div
+                key={z.id}
+                className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 ${getPriorityColor(z.priorita)} ${!isFirst ? 'opacity-70' : ''}`}
+                title={`${z.nazev} — ${z.klient}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onZakazkaClick(z);
+                }}
+              >
+                {isFirst ? '● ' : '▬ '}{z.nazev}
+              </div>
+            );
+          })}
           {dayZakazky.length > 3 && (
             <div className="text-xs text-slate-400 pl-1">
               +{dayZakazky.length - 3} dalších
             </div>
           )}
+          {deadlineZpravy.map((z) => (
+            <div
+              key={`dl-${z.id}`}
+              className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 ${isOverdue(dateStr) ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}
+              title={`Zpráva: ${z.nazev} — ${z.klient}`}
+              onClick={(e) => { e.stopPropagation(); onZakazkaClick(z); }}
+            >
+              📋 {z.klient}
+            </div>
+          ))}
+          {odevzdani.map((z) => (
+            <div
+              key={`ov-${z.id}`}
+              className="text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 bg-green-100 text-green-700"
+              title={`Odevzdání: ${z.nazev} — ${z.klient}`}
+              onClick={(e) => { e.stopPropagation(); onZakazkaClick(z); }}
+            >
+              ✓ {z.klient}
+            </div>
+          ))}
         </div>
       </div>
     );

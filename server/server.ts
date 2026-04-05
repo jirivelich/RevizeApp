@@ -804,7 +804,11 @@ async function startServer() {
   app.get('/api/zakazky', authMiddleware, async (req, res) => {
     try {
       const result = await pool.query('SELECT * FROM zakazka ORDER BY "datumPlanovany" DESC');
-      res.json(result.rows);
+      const rows = result.rows.map((r: any) => ({
+        ...r,
+        datumyRealizace: r.datumyRealizace ? JSON.parse(r.datumyRealizace) : [],
+      }));
+      res.json(rows);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
@@ -812,15 +816,21 @@ async function startServer() {
 
   app.post('/api/zakazky', authMiddleware, async (req, res) => {
     try {
-      const { nazev, klient, adresa, datumPlanovany, stav, priorita, revizeId, poznamka } = req.body;
+      const { nazev, klient, adresa, datumPlanovany, casPlanovany, stav, priorita, revizeId, poznamka,
+              datumyRealizace, lhutaZpravyDni, datumOdevzdaniZpravy } = req.body;
       const now = new Date().toISOString();
-      
+      const realizaceJson = Array.isArray(datumyRealizace) && datumyRealizace.length > 0
+        ? JSON.stringify(datumyRealizace) : null;
+
       const result = await pool.query(`
-        INSERT INTO zakazka (nazev, klient, adresa, "datumPlanovany", stav, priorita, "revizeId", poznamka, "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        INSERT INTO zakazka (nazev, klient, adresa, "datumPlanovany", "casPlanovany", stav, priorita,
+          "revizeId", poznamka, "datumyRealizace", "lhutaZpravyDni", "datumOdevzdaniZpravy", "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING id
-      `, [nazev, klient, adresa, datumPlanovany, stav, priorita, revizeId, poznamka, now, now]);
-      
+      `, [nazev, klient, adresa, datumPlanovany, casPlanovany || null, stav, priorita,
+          revizeId || null, poznamka || null, realizaceJson, lhutaZpravyDni ?? 4,
+          datumOdevzdaniZpravy || null, now, now]);
+
       res.json({ id: result.rows[0].id });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -830,13 +840,19 @@ async function startServer() {
   app.put('/api/zakazky/:id', authMiddleware, async (req, res) => {
     try {
       const now = new Date().toISOString();
-      const updates = { ...req.body, updatedAt: now };
+      const body = { ...req.body };
+      // Serializace pole datumyRealizace
+      if (Array.isArray(body.datumyRealizace)) {
+        body.datumyRealizace = body.datumyRealizace.length > 0
+          ? JSON.stringify(body.datumyRealizace) : null;
+      }
+      const updates = { ...body, updatedAt: now };
       const keys = Object.keys(updates);
       const values = Object.values(updates);
-      
+
       const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
       await pool.query(`UPDATE zakazka SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
-      
+
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });

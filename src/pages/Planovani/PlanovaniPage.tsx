@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Modal } from '../../components/ui';
 import { useRevize, useZakazky, useCreateZakazka, useUpdateZakazka, useDeleteZakazka, useCreateRevize } from '../../hooks/useQueries';
 import type { Zakazka, KategorieRevize } from '../../types';
-import { emptyFormData, zakazkaToFormData } from './utils';
+import { emptyFormData, zakazkaToFormData, getRealizaceDays, addDays } from './utils';
 import type { ZakazkaFormData } from './utils';
 import { ListView } from './ListView';
 import { CalendarView } from './CalendarView';
 import { WeekView } from './WeekView';
+import { GanttView } from './GanttView';
 import { ZakazkaForm } from './ZakazkaForm';
 
 // Definice kategorií - sdílená s RevizePage
@@ -56,7 +57,7 @@ export function PlanovaniPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filterStav, setFilterStav] = useState('');
-  const [viewMode, setViewMode] = useState<'list' | 'calendar' | 'week'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar' | 'week' | 'gantt'>('list');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState<ZakazkaFormData>({ ...emptyFormData });
 
@@ -165,6 +166,45 @@ export function PlanovaniPage() {
     });
   };
 
+  // === Gantt handlers ===
+  const handleGanttMove = (zakazkaId: number, daysDelta: number) => {
+    const z = zakazky.find((x) => x.id === zakazkaId);
+    if (!z || daysDelta === 0) return;
+    const realizDays = getRealizaceDays(z);
+    const newDays = realizDays.map((d) => addDays(d, daysDelta));
+    const newFirst = newDays[0];
+    const newOdevzdani = z.datumOdevzdaniZpravy ? addDays(z.datumOdevzdaniZpravy, daysDelta) : undefined;
+    updateZakazka.mutate({
+      id: zakazkaId,
+      data: {
+        datumPlanovany: newFirst,
+        datumyRealizace: newDays.length > 1 ? newDays : [],
+        ...(newOdevzdani ? { datumOdevzdaniZpravy: newOdevzdani } : {}),
+      },
+    });
+  };
+
+  const handleGanttAddDay = (zakazkaId: number, date: string) => {
+    const z = zakazky.find((x) => x.id === zakazkaId);
+    if (!z) return;
+    const realizDays = getRealizaceDays(z);
+    if (realizDays.includes(date)) return;
+    const newDays = [...realizDays, date].sort();
+    updateZakazka.mutate({ id: zakazkaId, data: { datumyRealizace: newDays } });
+  };
+
+  const handleGanttRemoveDay = (zakazkaId: number, date: string) => {
+    const z = zakazky.find((x) => x.id === zakazkaId);
+    if (!z) return;
+    const realizDays = getRealizaceDays(z);
+    if (realizDays.length <= 1) return;
+    const newDays = realizDays.filter((d) => d !== date);
+    updateZakazka.mutate({
+      id: zakazkaId,
+      data: { datumPlanovany: newDays[0], datumyRealizace: newDays.length > 1 ? newDays : [] },
+    });
+  };
+
   // === Delete ===
   const handleDelete = (id: number) => {
     if (window.confirm('Opravdu chcete smazat tuto zakázku?')) {
@@ -212,6 +252,16 @@ export function PlanovaniPage() {
             >
               Měsíc
             </button>
+            <button
+              onClick={() => setViewMode('gantt')}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                viewMode === 'gantt'
+                  ? 'bg-slate-800 text-white'
+                  : 'bg-white text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Gantt
+            </button>
           </div>
           <Button onClick={() => openCreate()}>+ Nová zakázka</Button>
         </div>
@@ -238,6 +288,14 @@ export function PlanovaniPage() {
           zakazky={zakazky}
           onDayClick={(dateStr) => openCreate(dateStr)}
           onZakazkaClick={(z) => openEdit(z)}
+        />
+      ) : viewMode === 'gantt' ? (
+        <GanttView
+          zakazky={zakazky}
+          onZakazkaClick={(z) => openEdit(z)}
+          onMove={handleGanttMove}
+          onAddDay={handleGanttAddDay}
+          onRemoveDay={handleGanttRemoveDay}
         />
       ) : (
         <ListView
