@@ -81,12 +81,11 @@ export const PRIORITA_OPTIONS = [
 
 // ========== Helpery pro vícedenní zakázky ==========
 
-/** Vrátí seřazené dny realizace. Pokud datumyRealizace je prázdné, použije datumPlanovany. */
+/** Vrátí seřazené dny realizace. Vždy zahrnuje datumPlanovany + případné extra dny. */
 export function getRealizaceDays(z: Zakazka): string[] {
-  const days = z.datumyRealizace && z.datumyRealizace.length > 0
-    ? [...z.datumyRealizace]
-    : [z.datumPlanovany];
-  return days.sort();
+  const extra = z.datumyRealizace && z.datumyRealizace.length > 0 ? z.datumyRealizace : [];
+  const all = [z.datumPlanovany, ...extra];
+  return [...new Set(all)].sort();
 }
 
 /** Vrátí poslední den realizace. */

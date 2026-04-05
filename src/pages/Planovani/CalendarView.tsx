@@ -112,7 +112,7 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
                   onZakazkaClick(z);
                 }}
               >
-                {isFirst ? '● ' : '▬ '}{z.nazev}
+                {isFirst ? '● ' : '▬ '}{z.klient || z.nazev}
               </div>
             );
           })}
