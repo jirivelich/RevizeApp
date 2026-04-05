@@ -1,10 +1,22 @@
-import { Outlet } from 'react-router-dom';
-import { useState } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { useState, useCallback } from 'react';
 import { Sidebar } from './Sidebar';
 import { AIChatAssistant } from './AIChatAssistant';
+import { useIdleTimeout } from '../hooks/useIdleTimeout';
+import { IdleWarningModal } from './IdleWarningModal';
 
 export function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('lastActivity');
+    navigate('/login');
+  }, [navigate]);
+
+  const { showWarning, remainingSeconds, resetTimer } = useIdleTimeout({ onLogout: handleLogout });
 
   return (
     <div className="min-h-screen">
@@ -43,6 +55,13 @@ export function Layout() {
         </div>
       </main>
       <AIChatAssistant />
+      {showWarning && (
+        <IdleWarningModal
+          remainingSeconds={remainingSeconds}
+          onStay={resetTimer}
+          onLogout={handleLogout}
+        />
+      )}
     </div>
   );
 }
