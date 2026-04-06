@@ -100,7 +100,3 @@ export function useIdleTimeout({ onLogout }: UseIdleTimeoutOptions): UseIdleTime
 
   return { showWarning, remainingSeconds, resetTimer };
 }
-
-
-  return { showWarning, remainingSeconds, resetTimer };
-}
