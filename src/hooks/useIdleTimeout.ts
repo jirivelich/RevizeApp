@@ -4,7 +4,7 @@ const IDLE_MS = 58 * 60 * 1000;              // 58 minut neaktivity → varován
 const WARNING_MS = 2 * 60 * 1000;           // 2 minuty → logout
 const MAX_SESSION_MS = 24 * 60 * 60 * 1000; // 24 hodin při zavřené záložce → logout
 const POLL_MS = 10_000;                      // kontrola každých 10s (odolné vůči throttlingu)
-const LAST_ACTIVITY_KEY = 'lastActivity';
+const LAST_ACTIVITY_KEY = 'lastActivity';    // klíč v localStorage
 
 interface UseIdleTimeoutOptions {
   onLogout: () => void;
