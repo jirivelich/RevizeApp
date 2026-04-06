@@ -1,8 +1,9 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 
-const IDLE_MS = 58 * 60 * 1000;              // 58 minut neaktivity na stránce → varování
+const IDLE_MS = 58 * 60 * 1000;              // 58 minut neaktivity → varování
 const WARNING_MS = 2 * 60 * 1000;           // 2 minuty → logout
-const MAX_SESSION_MS = 24 * 60 * 60 * 1000; // 24 hodin od poslední aktivity → logout při opětovném otevření
+const MAX_SESSION_MS = 24 * 60 * 60 * 1000; // 24 hodin při zavřené záložce → logout
+const POLL_MS = 10_000;                      // kontrola každých 10s (odolné vůči throttlingu)
 const LAST_ACTIVITY_KEY = 'lastActivity';
 
 interface UseIdleTimeoutOptions {
@@ -19,52 +20,24 @@ export function useIdleTimeout({ onLogout }: UseIdleTimeoutOptions): UseIdleTime
   const [showWarning, setShowWarning] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(WARNING_MS / 1000);
 
-  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const onLogoutRef = useRef(onLogout);
   onLogoutRef.current = onLogout;
+
+  // Čas, kdy začalo varování (null = varování neběží)
+  const warningStartRef = useRef<number | null>(null);
 
   const doLogout = useCallback(() => {
     localStorage.removeItem(LAST_ACTIVITY_KEY);
     onLogoutRef.current();
   }, []);
 
-  const clearCountdown = useCallback(() => {
-    if (countdownIntervalRef.current !== null) {
-      clearInterval(countdownIntervalRef.current);
-      countdownIntervalRef.current = null;
-    }
-  }, []);
-
-  const startCountdown = useCallback(() => {
-    setShowWarning(true);
-    setRemainingSeconds(WARNING_MS / 1000);
-
-    const deadline = Date.now() + WARNING_MS;
-
-    countdownIntervalRef.current = setInterval(() => {
-      const remaining = Math.ceil((deadline - Date.now()) / 1000);
-      if (remaining <= 0) {
-        clearCountdown();
-        setShowWarning(false);
-        doLogout();
-      } else {
-        setRemainingSeconds(remaining);
-      }
-    }, 500);
-  }, [clearCountdown, doLogout]);
-
   const resetTimer = useCallback(() => {
-    clearCountdown();
+    warningStartRef.current = null;
     setShowWarning(false);
     setRemainingSeconds(WARNING_MS / 1000);
     localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
-
-    if (idleTimerRef.current !== null) {
-      clearTimeout(idleTimerRef.current);
-    }
-    idleTimerRef.current = setTimeout(startCountdown, IDLE_MS);
-  }, [clearCountdown, startCountdown]);
+  }, []);
 
   useEffect(() => {
     // Kontrola při načtení stránky: pokud od poslední aktivity uplynulo >24h → okamžitý logout
@@ -75,29 +48,59 @@ export function useIdleTimeout({ onLogout }: UseIdleTimeoutOptions): UseIdleTime
     }
     localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
 
-    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'] as const;
-
+    // Aktivita uživatele — resetovat jen pokud varování ještě neběží
     const handleActivity = () => {
-      // Resetovat jen pokud varování ještě neběží (jinak uživatel musí kliknout v modalu)
-      setShowWarning(current => {
-        if (!current) {
-          resetTimer();
-        }
-        return current;
-      });
+      if (warningStartRef.current === null) {
+        localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+      }
     };
 
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'] as const;
     events.forEach(e => window.addEventListener(e, handleActivity, { passive: true }));
 
-    // Spustit první timer
-    idleTimerRef.current = setTimeout(startCountdown, IDLE_MS);
+    // Polling — spolehlivější než dlouhý setTimeout (prohlížeče throttlují bg záložky)
+    pollRef.current = setInterval(() => {
+      const stored = localStorage.getItem(LAST_ACTIVITY_KEY);
+      if (!stored) return;
+
+      const elapsed = Date.now() - parseInt(stored, 10);
+
+      if (elapsed >= IDLE_MS + WARNING_MS) {
+        // Čas na logout
+        if (pollRef.current !== null) clearInterval(pollRef.current);
+        warningStartRef.current = null;
+        setShowWarning(false);
+        doLogout();
+        return;
+      }
+
+      if (elapsed >= IDLE_MS) {
+        // Zobrazit varování
+        if (warningStartRef.current === null) {
+          warningStartRef.current = Date.now();
+          setShowWarning(true);
+        }
+        const timeLeft = Math.ceil((IDLE_MS + WARNING_MS - elapsed) / 1000);
+        setRemainingSeconds(Math.max(0, timeLeft));
+      } else {
+        // Uživatel byl aktivní — skrýt varování pokud bylo zobrazeno
+        if (warningStartRef.current !== null) {
+          warningStartRef.current = null;
+          setShowWarning(false);
+          setRemainingSeconds(WARNING_MS / 1000);
+        }
+      }
+    }, POLL_MS);
 
     return () => {
       events.forEach(e => window.removeEventListener(e, handleActivity));
-      if (idleTimerRef.current !== null) clearTimeout(idleTimerRef.current);
-      clearCountdown();
+      if (pollRef.current !== null) clearInterval(pollRef.current);
     };
-  }, [resetTimer, startCountdown, clearCountdown, doLogout]);
+  }, [doLogout]);
+
+  return { showWarning, remainingSeconds, resetTimer };
+}
+
 
   return { showWarning, remainingSeconds, resetTimer };
 }
