@@ -214,6 +214,18 @@
   break-after: avoid;
 }
 
+.report-subsection-subtitle {
+  font-size: 9pt;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 8px 0 3px 0;
+  padding: 3px 8px;
+  background: #e8ecf0;
+  border-left: 3px solid #3e4a5b;
+  border-radius: 2px;
+  break-after: avoid;
+}
+
 /* ── Info tabulka (key: value) ── */
 .report-info-table {
   width: 100%;
