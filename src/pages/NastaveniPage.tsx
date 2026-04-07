@@ -506,11 +506,6 @@ export function NastaveniPage() {
                     onChange={(e) => setNewDoklad({ ...newDoklad, platOd: e.target.value })}
                   />
                   <Input
-                    label="Jméno a příjmení"
-                    value={newDoklad.reviznniTechnikJmeno || ''}
-                    onChange={(e) => setNewDoklad({ ...newDoklad, reviznniTechnikJmeno: e.target.value })}
-                  />
-                  <Input
                     label="Číslo oprávnění"
                     value={newDoklad.reviznniTechnikCisloOpravneni || ''}
                     onChange={(e) => setNewDoklad({ ...newDoklad, reviznniTechnikCisloOpravneni: e.target.value })}
