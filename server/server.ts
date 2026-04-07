@@ -119,7 +119,7 @@ async function startServer() {
       const now = new Date().toISOString();
 
       // Načíst nejnovější doklad technika pro snapshot
-      const histRow = await pool.query('SELECT * FROM "technikHistorie" ORDER BY "platOd" DESC, "createdAt" DESC LIMIT 1');
+      const histRow = await pool.query('SELECT * FROM "technikHistorie" ORDER BY "createdAt" DESC LIMIT 1');
       const h = histRow.rows[0] || {};
       // Fallback na nastaveni pokud ještě nejsou záznamy v historii
       const nastaveniRow = await pool.query('SELECT * FROM nastaveni LIMIT 1');
@@ -1168,7 +1168,7 @@ async function startServer() {
 
   app.get('/api/technik-historie', authMiddleware, async (req, res) => {
     try {
-      const result = await pool.query('SELECT * FROM "technikHistorie" ORDER BY "platOd" DESC, "createdAt" DESC');
+      const result = await pool.query('SELECT * FROM "technikHistorie" ORDER BY "createdAt" DESC');
       res.json(result.rows);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
