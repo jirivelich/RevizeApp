@@ -112,7 +112,7 @@ export const nastaveniApi = {
     }).then(handleResponse);
   },
 
-  async getHistorie() {
+  async getHistorie(): Promise<import('../types').TechnikHistorie[]> {
     return fetch(`${API_BASE_URL}/technik-historie`, {
       headers: getAuthHeaders(),
     }).then(handleResponse);

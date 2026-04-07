@@ -620,7 +620,7 @@ export function useSaveNastaveni() {
 export function useTechnikHistorie() {
   return useQuery<TechnikHistorie[]>({
     queryKey: ['technikHistorie'],
-    queryFn: () => nastaveniApi.getHistorie(),
+    queryFn: () => nastaveniApi.getHistorie() as Promise<TechnikHistorie[]>,
   });
 }
 
