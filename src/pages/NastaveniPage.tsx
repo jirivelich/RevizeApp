@@ -464,7 +464,6 @@ export function NastaveniPage() {
                       <th className="pb-2 pr-4">Platnost opr.</th>
                       <th className="pb-2 pr-4">Č. osvědčení</th>
                       <th className="pb-2 pr-4">Platnost osv.</th>
-                      <th className="pb-2 pr-4">Jméno</th>
                       <th className="pb-2"></th>
                     </tr>
                   </thead>
@@ -481,7 +480,6 @@ export function NastaveniPage() {
                         <td className="py-2 pr-4">{h.reviznniTechnikPlatnostOpravneni || '—'}</td>
                         <td className="py-2 pr-4">{h.reviznniTechnikOsvedceni || '—'}</td>
                         <td className="py-2 pr-4">{h.reviznniTechnikPlatnostOsvedceni || '—'}</td>
-                        <td className="py-2 pr-4">{h.reviznniTechnikJmeno || '—'}</td>
                         <td className="py-2">
                           <button
                             onClick={() => h.id !== undefined && handleDeleteDoklad(h.id)}
