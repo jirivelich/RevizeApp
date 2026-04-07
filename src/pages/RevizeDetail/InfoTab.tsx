@@ -211,6 +211,31 @@ export function InfoTab({
         </div>
       </div>
 
+      {/* ═══ 06 – REVIZNÍ TECHNIK (snapshot) ═══ */}
+      <div className={TW.card}>
+        <SectionHeader num="06">Revizní technik</SectionHeader>
+        <div className="p-4">
+          <p className="text-xs text-slate-400 mb-3">Údaje technika přiřazené k této revizi. Lze opravit nezávisle na nastavení.</p>
+          <div className={TW.grid2}>
+            <Field label="Jméno a příjmení">
+              <input className={TW.input} value={formData.rtJmeno || ''} onChange={(e) => setFormData({ ...formData, rtJmeno: e.target.value })} />
+            </Field>
+            <Field label="Číslo oprávnění">
+              <input className={TW.input} value={formData.rtCisloOpravneni || ''} onChange={(e) => setFormData({ ...formData, rtCisloOpravneni: e.target.value })} />
+            </Field>
+            <Field label="Platnost oprávnění">
+              <input className={TW.input} placeholder="31.12.2026" value={formData.rtPlatnostOpravneni || ''} onChange={(e) => setFormData({ ...formData, rtPlatnostOpravneni: e.target.value })} />
+            </Field>
+            <Field label="Číslo osvědčení">
+              <input className={TW.input} value={formData.rtCisloOsvedceni || ''} onChange={(e) => setFormData({ ...formData, rtCisloOsvedceni: e.target.value })} />
+            </Field>
+            <Field label="Platnost osvědčení">
+              <input className={TW.input} placeholder="31.12.2026" value={formData.rtPlatnostOsvedceni || ''} onChange={(e) => setFormData({ ...formData, rtPlatnostOsvedceni: e.target.value })} />
+            </Field>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }

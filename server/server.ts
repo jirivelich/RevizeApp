@@ -179,6 +179,8 @@ async function startServer() {
         'normySoulad', 'lhutaText',
         // Historie / návaznost revizí
         'predchoziRevizeId', 'skupinaRevizi',
+        // Snapshot revizního technika
+        'rtJmeno', 'rtCisloOpravneni', 'rtPlatnostOpravneni', 'rtCisloOsvedceni', 'rtPlatnostOsvedceni',
       ];
       
       const updates: Record<string, any> = { updatedAt: now };
