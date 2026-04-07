@@ -73,6 +73,13 @@ export interface Revize {
   predchoziRevizeId?: number; // FK na předchozí revizi (řetězení)
   skupinaRevizi?: string;     // UUID sdílené celou řadou navazujících revizí
   
+  // Snapshot revizního technika platný v době vytvoření zprávy
+  rtJmeno?: string;
+  rtCisloOpravneni?: string;
+  rtPlatnostOpravneni?: string;
+  rtCisloOsvedceni?: string;
+  rtPlatnostOsvedceni?: string;
+
   // Firma provádějící revizi (může být jiná než firma technika)
   firmaJmeno?: string;
   firmaAdresa?: string;
@@ -256,12 +263,25 @@ export interface Nastaveni {
   firmaDic?: string;
   reviznniTechnikJmeno: string;
   reviznniTechnikCisloOpravneni: string;
+  reviznniTechnikPlatnostOpravneni?: string;
   reviznniTechnikOsvedceni?: string;
+  reviznniTechnikPlatnostOsvedceni?: string;
   reviznniTechnikAdresa?: string;
   reviznniTechnikIco?: string;
   kontaktEmail?: string;
   kontaktTelefon?: string;
   logo?: string; // Base64 encoded image
+}
+
+export interface TechnikHistorie {
+  id: number;
+  reviznniTechnikJmeno?: string;
+  reviznniTechnikCisloOpravneni?: string;
+  reviznniTechnikPlatnostOpravneni?: string;
+  reviznniTechnikOsvedceni?: string;
+  reviznniTechnikPlatnostOsvedceni?: string;
+  platOd?: string;
+  createdAt: string;
 }
 
 // Měřící přístroje

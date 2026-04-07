@@ -111,6 +111,12 @@ export const nastaveniApi = {
       body: JSON.stringify(data),
     }).then(handleResponse);
   },
+
+  async getHistorie() {
+    return fetch(`${API_BASE_URL}/technik-historie`, {
+      headers: getAuthHeaders(),
+    }).then(handleResponse);
+  },
 };
 
 // ==================== BACKUP ====================

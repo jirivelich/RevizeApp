@@ -378,9 +378,9 @@ export function ReportPrintPage() {
       {/* 3. REVIZNÍ TECHNIK */}
       <ReportSection title="3. Revizní technik">
         <table className="report-info-table"><tbody>
-          <tr><td className="label-cell">Jméno:</td><td>{nastaveni?.reviznniTechnikJmeno || '—'}</td></tr>
-          <tr><td className="label-cell">Oprávnění:</td><td>{nastaveni?.reviznniTechnikCisloOpravneni || '—'}</td></tr>
-          {nastaveni?.reviznniTechnikOsvedceni && <tr><td className="label-cell">Osvědčení:</td><td>{nastaveni.reviznniTechnikOsvedceni}</td></tr>}
+          <tr><td className="label-cell">Jméno:</td><td>{revize.rtJmeno || nastaveni?.reviznniTechnikJmeno || '—'}</td></tr>
+          <tr><td className="label-cell">Oprávnění:</td><td>{revize.rtCisloOpravneni || nastaveni?.reviznniTechnikCisloOpravneni || '—'}</td></tr>
+          {(revize.rtCisloOsvedceni || nastaveni?.reviznniTechnikOsvedceni) && <tr><td className="label-cell">Osvědčení:</td><td>{revize.rtCisloOsvedceni || nastaveni?.reviznniTechnikOsvedceni}</td></tr>}
           {nastaveni?.reviznniTechnikAdresa && <tr><td className="label-cell">Adresa:</td><td>{nastaveni.reviznniTechnikAdresa}</td></tr>}
           {nastaveni?.reviznniTechnikIco && <tr><td className="label-cell">IČO:</td><td>{nastaveni.reviznniTechnikIco}</td></tr>}
         </tbody></table>
@@ -419,8 +419,8 @@ export function ReportPrintPage() {
         <div className="report-signatures">
           <div className="report-signature-box">
             <div className="report-signature-label">Revizní technik:</div>
-            <div className="report-signature-name">{nastaveni?.reviznniTechnikJmeno || '—'}</div>
-            <div className="report-signature-cert">Oprávnění: {nastaveni?.reviznniTechnikCisloOpravneni || '—'}</div>
+            <div className="report-signature-name">{revize.rtJmeno || nastaveni?.reviznniTechnikJmeno || '—'}</div>
+            <div className="report-signature-cert">Oprávnění: {revize.rtCisloOpravneni || nastaveni?.reviznniTechnikCisloOpravneni || '—'}</div>
             <div className="report-signature-line"></div>
             <div className="report-signature-hint">Podpis</div>
           </div>

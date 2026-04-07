@@ -292,6 +292,19 @@ export async function initializeDatabase() {
     `);
 
     await client.query(`
+      CREATE TABLE IF NOT EXISTS "technikHistorie" (
+        id SERIAL PRIMARY KEY,
+        "reviznniTechnikJmeno" TEXT,
+        "reviznniTechnikCisloOpravneni" TEXT,
+        "reviznniTechnikPlatnostOpravneni" TEXT,
+        "reviznniTechnikOsvedceni" TEXT,
+        "reviznniTechnikPlatnostOsvedceni" TEXT,
+        "platOd" TEXT,
+        "createdAt" TEXT NOT NULL
+      )
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS "zavadaKatalog" (
         id SERIAL PRIMARY KEY,
         popis TEXT NOT NULL,
@@ -434,6 +447,15 @@ export async function initializeDatabase() {
       'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS "datumyRealizace" TEXT',
       'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS "lhutaZpravyDni" INTEGER DEFAULT 4',
       'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS "datumOdevzdaniZpravy" TEXT',
+      // === Historie dokladů revizního technika ===
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "reviznniTechnikPlatnostOpravneni" TEXT',
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "reviznniTechnikPlatnostOsvedceni" TEXT',
+      // Snapshot technika v revizi – zachovat data technika platná v době vytvoření zprávy
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "rtJmeno" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "rtCisloOpravneni" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "rtPlatnostOpravneni" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "rtCisloOsvedceni" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "rtPlatnostOsvedceni" TEXT',
     ];
     
     for (const migration of migrations) {

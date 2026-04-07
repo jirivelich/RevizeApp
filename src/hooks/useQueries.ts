@@ -27,10 +27,11 @@ import {
   zakazniciService,
   backupService,
 } from '../services/database';
+import { nastaveniApi } from '../services/api';
 import { queryKeys } from './queryKeys';
 import type {
   Revize, Rozvadec, Okruh, Chranic, Mistnost, Zavada,
-  MericiPristroj, Firma, Zakazka, Nastaveni,
+  MericiPristroj, Firma, Zakazka, Nastaveni, TechnikHistorie,
   ZavadaKatalog, PredvolenyText, Zakaznik, Kalibrace,
 } from '../types';
 
@@ -613,6 +614,13 @@ export function useSaveNastaveni() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.nastaveni.all });
     },
+  });
+}
+
+export function useTechnikHistorie() {
+  return useQuery<TechnikHistorie[]>({
+    queryKey: ['technikHistorie'],
+    queryFn: () => nastaveniApi.getHistorie(),
   });
 }
 

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Input } from '../components/ui';
 import { backupService } from '../services/database';
-import { useNastaveni, useSaveNastaveni, usePredvoleneTexty, useCreatePredvolenyText, useUpdatePredvolenyText, useDeletePredvolenyText, useDatabaseStats } from '../hooks/useQueries';
+import { useNastaveni, useSaveNastaveni, usePredvoleneTexty, useCreatePredvolenyText, useUpdatePredvolenyText, useDeletePredvolenyText, useDatabaseStats, useTechnikHistorie } from '../hooks/useQueries';
 import type { Nastaveni, PredvolenyText } from '../types';
 
 // Čitelné názvy tabulek
@@ -47,6 +47,7 @@ export function NastaveniPage() {
   const { data: statsData, refetch: refetchStats } = useDatabaseStats();
   const databaseStats = statsData?.stats ?? null;
   const databaseSize = statsData?.sizeMB ?? null;
+  const { data: technikHistorie = [] } = useTechnikHistorie();
 
   // Local state for nastaveni form (user edits before saving)
   const [nastaveni, setNastaveni] = useState<Nastaveni>({
@@ -56,7 +57,9 @@ export function NastaveniPage() {
     firmaDic: '',
     reviznniTechnikJmeno: '',
     reviznniTechnikCisloOpravneni: '',
+    reviznniTechnikPlatnostOpravneni: '',
     reviznniTechnikOsvedceni: '',
+    reviznniTechnikPlatnostOsvedceni: '',
     reviznniTechnikAdresa: '',
     reviznniTechnikIco: '',
     kontaktEmail: '',
@@ -360,9 +363,21 @@ export function NastaveniPage() {
             onChange={(e) => setNastaveni({ ...nastaveni, reviznniTechnikCisloOpravneni: e.target.value })}
           />
           <Input
+            label="Platnost oprávnění"
+            placeholder="31.12.2026"
+            value={nastaveni.reviznniTechnikPlatnostOpravneni || ''}
+            onChange={(e) => setNastaveni({ ...nastaveni, reviznniTechnikPlatnostOpravneni: e.target.value })}
+          />
+          <Input
             label="Osvědčení"
             value={nastaveni.reviznniTechnikOsvedceni || ''}
             onChange={(e) => setNastaveni({ ...nastaveni, reviznniTechnikOsvedceni: e.target.value })}
+          />
+          <Input
+            label="Platnost osvědčení"
+            placeholder="31.12.2026"
+            value={nastaveni.reviznniTechnikPlatnostOsvedceni || ''}
+            onChange={(e) => setNastaveni({ ...nastaveni, reviznniTechnikPlatnostOsvedceni: e.target.value })}
           />
           <Input
             label="Adresa"
@@ -386,6 +401,41 @@ export function NastaveniPage() {
             onChange={(e) => setNastaveni({ ...nastaveni, kontaktTelefon: e.target.value })}
           />
         </div>
+      </Card>
+
+      <Card title="Historie dokladů technika">
+        {technikHistorie.length === 0 ? (
+          <p className="text-sm text-slate-400">Žádné záznamy v historii. Historie se vytvoří při změně čísla nebo platnosti oprávnění/osvědčení.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-xs text-slate-500 uppercase">
+                  <th className="pb-2 pr-4">Platné od</th>
+                  <th className="pb-2 pr-4">Č. oprávnění</th>
+                  <th className="pb-2 pr-4">Platnost opr.</th>
+                  <th className="pb-2 pr-4">Č. osvědčení</th>
+                  <th className="pb-2 pr-4">Platnost osv.</th>
+                  <th className="pb-2">Jméno</th>
+                </tr>
+              </thead>
+              <tbody>
+                {technikHistorie.map((h) => (
+                  <tr key={h.id} className="border-b border-slate-100 last:border-0">
+                    <td className="py-2 pr-4 text-slate-500 whitespace-nowrap">
+                      {h.platOd ? new Date(h.platOd).toLocaleDateString('cs-CZ') : '—'}
+                    </td>
+                    <td className="py-2 pr-4">{h.reviznniTechnikCisloOpravneni || '—'}</td>
+                    <td className="py-2 pr-4">{h.reviznniTechnikPlatnostOpravneni || '—'}</td>
+                    <td className="py-2 pr-4">{h.reviznniTechnikOsvedceni || '—'}</td>
+                    <td className="py-2 pr-4">{h.reviznniTechnikPlatnostOsvedceni || '—'}</td>
+                    <td className="py-2">{h.reviznniTechnikJmeno || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
 
       <Card title="O aplikaci">

@@ -117,13 +117,27 @@ async function startServer() {
     try {
       const { cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav, kategorieRevize } = req.body;
       const now = new Date().toISOString();
-      
+
+      // Načíst aktuální data technika pro snapshot
+      const nastaveniRow = await pool.query('SELECT * FROM nastaveni LIMIT 1');
+      const n = nastaveniRow.rows[0] || {};
+
       const result = await pool.query(`
-        INSERT INTO revize ("cisloRevize", nazev, adresa, objednatel, datum, termin, "typRevize", stav, "kategorieRevize", "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        INSERT INTO revize ("cisloRevize", nazev, adresa, objednatel, datum, termin, "typRevize", stav, "kategorieRevize",
+          "rtJmeno", "rtCisloOpravneni", "rtPlatnostOpravneni", "rtCisloOsvedceni", "rtPlatnostOsvedceni",
+          "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING id
-      `, [cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav, kategorieRevize || 'elektro', now, now]);
-      
+      `, [
+        cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav, kategorieRevize || 'elektro',
+        n.reviznniTechnikJmeno || null,
+        n.reviznniTechnikCisloOpravneni || null,
+        n.reviznniTechnikPlatnostOpravneni || null,
+        n.reviznniTechnikOsvedceni || null,
+        n.reviznniTechnikPlatnostOsvedceni || null,
+        now, now,
+      ]);
+
       res.json({ id: result.rows[0].id });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -1149,30 +1163,68 @@ async function startServer() {
     }
   });
 
+  app.get('/api/technik-historie', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM "technikHistorie" ORDER BY "createdAt" DESC');
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
   app.put('/api/nastaveni', authMiddleware, async (req, res) => {
     try {
       const now = new Date().toISOString();
-      const existing = await pool.query('SELECT id FROM nastaveni LIMIT 1');
-      
+      const existing = await pool.query('SELECT * FROM nastaveni LIMIT 1');
+
       if (existing.rows.length === 0) {
         const data = { ...req.body };
         const keys = Object.keys(data);
         const values = Object.values(data);
         const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
-        
+
         await pool.query(`
-          INSERT INTO nastaveni (${keys.map(k => `"${k}"`).join(', ')}}, "createdAt", "updatedAt")
+          INSERT INTO nastaveni (${keys.map(k => `"${k}"`).join(', ')}, "createdAt", "updatedAt")
           VALUES (${placeholders}, $${keys.length + 1}, $${keys.length + 2})
         `, [...values, now, now]);
       } else {
+        const old = existing.rows[0];
+        const incoming = req.body;
+
+        // Logovat historii pokud se změnilo číslo nebo platnost oprávnění/osvědčení
+        const historickeSloupce = [
+          'reviznniTechnikCisloOpravneni',
+          'reviznniTechnikPlatnostOpravneni',
+          'reviznniTechnikOsvedceni',
+          'reviznniTechnikPlatnostOsvedceni',
+        ];
+        const zmeneno = historickeSloupce.some(
+          k => (incoming[k] ?? '') !== (old[k] ?? '')
+        );
+        if (zmeneno) {
+          await pool.query(
+            `INSERT INTO "technikHistorie" ("reviznniTechnikJmeno", "reviznniTechnikCisloOpravneni", "reviznniTechnikPlatnostOpravneni", "reviznniTechnikOsvedceni", "reviznniTechnikPlatnostOsvedceni", "platOd", "createdAt")
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [
+              old.reviznniTechnikJmeno,
+              old.reviznniTechnikCisloOpravneni,
+              old.reviznniTechnikPlatnostOpravneni,
+              old.reviznniTechnikOsvedceni,
+              old.reviznniTechnikPlatnostOsvedceni,
+              old.updatedAt,
+              now,
+            ]
+          );
+        }
+
         const data = { ...req.body, updatedAt: now };
         const keys = Object.keys(data);
         const values = Object.values(data);
-        
+
         const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
         await pool.query(`UPDATE nastaveni SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, existing.rows[0].id]);
       }
-      
+
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
