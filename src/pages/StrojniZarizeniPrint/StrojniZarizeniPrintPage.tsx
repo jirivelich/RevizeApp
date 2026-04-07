@@ -346,8 +346,10 @@ export function StrojniZarizeniPrintPage() {
       <ReportSection title="4. Revizní technik">
         <table className="report-info-table"><tbody>
           <tr><td className="label-cell">Jméno:</td><td>{revize.rtJmeno || nastaveni?.reviznniTechnikJmeno || '—'}</td></tr>
-          <tr><td className="label-cell">Ev. číslo osvědčení:</td><td>{revize.rtCisloOpravneni || nastaveni?.reviznniTechnikCisloOpravneni || '—'}</td></tr>
+          <tr><td className="label-cell">Oprávnění:</td><td>{revize.rtCisloOpravneni || nastaveni?.reviznniTechnikCisloOpravneni || '—'}</td></tr>
+          {(revize.rtPlatnostOpravneni || nastaveni?.reviznniTechnikPlatnostOpravneni) && <tr><td className="label-cell">Platnost oprávnění:</td><td>{revize.rtPlatnostOpravneni || nastaveni?.reviznniTechnikPlatnostOpravneni}</td></tr>}
           {(revize.rtCisloOsvedceni || nastaveni?.reviznniTechnikOsvedceni) && <tr><td className="label-cell">Osvědčení:</td><td>{revize.rtCisloOsvedceni || nastaveni?.reviznniTechnikOsvedceni}</td></tr>}
+          {(revize.rtPlatnostOsvedceni || nastaveni?.reviznniTechnikPlatnostOsvedceni) && <tr><td className="label-cell">Platnost osvědčení:</td><td>{revize.rtPlatnostOsvedceni || nastaveni?.reviznniTechnikPlatnostOsvedceni}</td></tr>}
           {nastaveni?.reviznniTechnikAdresa && <tr><td className="label-cell">Adresa:</td><td>{nastaveni.reviznniTechnikAdresa}</td></tr>}
           {nastaveni?.reviznniTechnikIco && <tr><td className="label-cell">IČO:</td><td>{nastaveni.reviznniTechnikIco}</td></tr>}
         </tbody></table>
