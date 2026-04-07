@@ -117,6 +117,21 @@ export const nastaveniApi = {
       headers: getAuthHeaders(),
     }).then(r => handleResponse<import('../types').TechnikHistorie[]>(r));
   },
+
+  async addHistorie(data: Omit<import('../types').TechnikHistorie, 'id' | 'createdAt'>): Promise<{ id: number }> {
+    return fetch(`${API_BASE_URL}/technik-historie`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    }).then(r => handleResponse<{ id: number }>(r));
+  },
+
+  async deleteHistorie(id: number): Promise<void> {
+    return fetch(`${API_BASE_URL}/technik-historie/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    }).then(r => handleResponse<void>(r));
+  },
 };
 
 // ==================== BACKUP ====================

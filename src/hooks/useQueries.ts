@@ -624,6 +624,26 @@ export function useTechnikHistorie() {
   });
 }
 
+export function useAddTechnikHistorie() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Omit<TechnikHistorie, 'id' | 'createdAt'>) => nastaveniApi.addHistorie(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['technikHistorie'] });
+    },
+  });
+}
+
+export function useDeleteTechnikHistorie() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => nastaveniApi.deleteHistorie(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['technikHistorie'] });
+    },
+  });
+}
+
 /* ═══════════════════════════════════════════
    PŘEDVOLENÉ TEXTY
    ═══════════════════════════════════════════ */

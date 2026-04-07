@@ -118,7 +118,10 @@ async function startServer() {
       const { cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav, kategorieRevize } = req.body;
       const now = new Date().toISOString();
 
-      // Načíst aktuální data technika pro snapshot
+      // Načíst nejnovější doklad technika pro snapshot
+      const histRow = await pool.query('SELECT * FROM "technikHistorie" ORDER BY "platOd" DESC, "createdAt" DESC LIMIT 1');
+      const h = histRow.rows[0] || {};
+      // Fallback na nastaveni pokud ještě nejsou záznamy v historii
       const nastaveniRow = await pool.query('SELECT * FROM nastaveni LIMIT 1');
       const n = nastaveniRow.rows[0] || {};
 
@@ -130,11 +133,11 @@ async function startServer() {
         RETURNING id
       `, [
         cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav, kategorieRevize || 'elektro',
-        n.reviznniTechnikJmeno || null,
-        n.reviznniTechnikCisloOpravneni || null,
-        n.reviznniTechnikPlatnostOpravneni || null,
-        n.reviznniTechnikOsvedceni || null,
-        n.reviznniTechnikPlatnostOsvedceni || null,
+        h.reviznniTechnikJmeno || n.reviznniTechnikJmeno || null,
+        h.reviznniTechnikCisloOpravneni || n.reviznniTechnikCisloOpravneni || null,
+        h.reviznniTechnikPlatnostOpravneni || n.reviznniTechnikPlatnostOpravneni || null,
+        h.reviznniTechnikOsvedceni || n.reviznniTechnikOsvedceni || null,
+        h.reviznniTechnikPlatnostOsvedceni || n.reviznniTechnikPlatnostOsvedceni || null,
         now, now,
       ]);
 
@@ -1165,8 +1168,32 @@ async function startServer() {
 
   app.get('/api/technik-historie', authMiddleware, async (req, res) => {
     try {
-      const result = await pool.query('SELECT * FROM "technikHistorie" ORDER BY "createdAt" DESC');
+      const result = await pool.query('SELECT * FROM "technikHistorie" ORDER BY "platOd" DESC, "createdAt" DESC');
       res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/technik-historie', authMiddleware, async (req, res) => {
+    try {
+      const { reviznniTechnikJmeno, reviznniTechnikCisloOpravneni, reviznniTechnikPlatnostOpravneni, reviznniTechnikOsvedceni, reviznniTechnikPlatnostOsvedceni, platOd } = req.body;
+      const now = new Date().toISOString();
+      const result = await pool.query(
+        `INSERT INTO "technikHistorie" ("reviznniTechnikJmeno", "reviznniTechnikCisloOpravneni", "reviznniTechnikPlatnostOpravneni", "reviznniTechnikOsvedceni", "reviznniTechnikPlatnostOsvedceni", "platOd", "createdAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+        [reviznniTechnikJmeno, reviznniTechnikCisloOpravneni, reviznniTechnikPlatnostOpravneni, reviznniTechnikOsvedceni, reviznniTechnikPlatnostOsvedceni, platOd, now]
+      );
+      res.json({ id: result.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/technik-historie/:id', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM "technikHistorie" WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
@@ -1188,35 +1215,6 @@ async function startServer() {
           VALUES (${placeholders}, $${keys.length + 1}, $${keys.length + 2})
         `, [...values, now, now]);
       } else {
-        const old = existing.rows[0];
-        const incoming = req.body;
-
-        // Logovat historii pokud se změnilo číslo nebo platnost oprávnění/osvědčení
-        const historickeSloupce = [
-          'reviznniTechnikCisloOpravneni',
-          'reviznniTechnikPlatnostOpravneni',
-          'reviznniTechnikOsvedceni',
-          'reviznniTechnikPlatnostOsvedceni',
-        ];
-        const zmeneno = historickeSloupce.some(
-          k => (incoming[k] ?? '') !== (old[k] ?? '')
-        );
-        if (zmeneno) {
-          await pool.query(
-            `INSERT INTO "technikHistorie" ("reviznniTechnikJmeno", "reviznniTechnikCisloOpravneni", "reviznniTechnikPlatnostOpravneni", "reviznniTechnikOsvedceni", "reviznniTechnikPlatnostOsvedceni", "platOd", "createdAt")
-             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [
-              old.reviznniTechnikJmeno,
-              old.reviznniTechnikCisloOpravneni,
-              old.reviznniTechnikPlatnostOpravneni,
-              old.reviznniTechnikOsvedceni,
-              old.reviznniTechnikPlatnostOsvedceni,
-              old.updatedAt,
-              now,
-            ]
-          );
-        }
-
         const data = { ...req.body, updatedAt: now };
         const keys = Object.keys(data);
         const values = Object.values(data);
