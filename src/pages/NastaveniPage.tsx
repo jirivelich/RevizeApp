@@ -542,7 +542,7 @@ export function NastaveniPage() {
               </div>
             ) : (
               <button
-                onClick={() => { setNewDoklad(emptyDoklad()); setShowNewDoklad(true); }}}
+                onClick={() => { setNewDoklad(emptyDoklad()); setShowNewDoklad(true); }}
                 className="text-sm text-slate-600 hover:text-slate-800 hover:bg-slate-50 px-3 py-1.5 rounded transition-colors cursor-pointer font-medium"
               >
                 + Přidat doklad
