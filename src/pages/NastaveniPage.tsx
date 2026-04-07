@@ -101,6 +101,7 @@ export function NastaveniPage() {
   // Předvolené texty – UI state
   const [editingText, setEditingText] = useState<PredvolenyText | null>(null);
   const [newText, setNewText] = useState<{ pole: string; nazev: string; text: string } | null>(null);
+  const [selectedKategorie, setSelectedKategorie] = useState<string>(POLE_KATEGORIE[0].key);
 
   // Doklady technika – UI state
   const [showNewDoklad, setShowNewDoklad] = useState(false);
@@ -692,109 +693,148 @@ export function NastaveniPage() {
 
       {/* ══════ TAB: TEXTY ══════ */}
       {activeTab === 'texty' && (
-        <div className="space-y-6">
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+        <div className="space-y-4">
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
             <p className="text-sm text-slate-600">
-              Zde můžete spravovat vlastní předvolené texty, které se zobrazí v dropdown menu u textových polí v záložce „Revidované zařízení".
-              Texty jsou rozděleny podle jednotlivých polí revizní zprávy.
+              Předvolené texty se zobrazí v dropdown menu u textových polí v záložce „Revidované zařízení".
             </p>
           </div>
 
           {textyLoading ? (
             <div className="text-center py-8 text-slate-500">Načítání...</div>
           ) : (
-            POLE_KATEGORIE.map(({ key, label }) => {
-              const textyPole = vlastniTexty.filter(t => t.pole === key);
-              return (
-                <Card key={key} title={label}>
-                  {textyPole.length > 0 ? (
-                    <div className="space-y-2">
-                      {textyPole.map(t => (
-                        <div key={t.id} className="border border-slate-200 rounded-lg overflow-hidden">
-                          {editingText && editingText.id === t.id ? (
-                            /* Editační režim */
-                            <div className="p-3 bg-slate-50 space-y-2">
-                              <input
-                                type="text"
-                                value={editingText.nazev}
-                                onChange={(e) => setEditingText({ ...editingText, nazev: e.target.value })}
-                                className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-slate-400 focus:outline-none"
-                                placeholder="Název předvolby"
-                              />
-                              <textarea
-                                value={editingText.text}
-                                onChange={(e) => setEditingText({ ...editingText, text: e.target.value })}
-                                rows={4}
-                                className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-slate-400 focus:outline-none resize-y"
-                                placeholder="Text předvolby"
-                              />
-                              <div className="flex gap-2 justify-end">
-                                <Button variant="secondary" size="sm" onClick={() => setEditingText(null)}>Zrušit</Button>
-                                <Button size="sm" onClick={() => handleSaveText(editingText)} disabled={!editingText.nazev.trim() || !editingText.text.trim()}>Uložit</Button>
-                              </div>
-                            </div>
-                          ) : (
-                            /* Zobrazení */
-                            <div className="flex items-start">
-                              <div className="flex-1 p-3">
-                                <div className="text-sm font-semibold text-slate-800">{t.nazev}</div>
-                                <div className="text-xs text-slate-500 mt-1 whitespace-pre-wrap line-clamp-3">{t.text}</div>
-                              </div>
-                              <div className="flex items-center gap-1 p-2">
-                                <button
-                                  onClick={() => setEditingText({ ...t })}
-                                  className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded transition-colors cursor-pointer text-xs"
-                                  title="Upravit"
-                                >Upravit</button>
-                                <button
-                                  onClick={() => t.id && handleDeleteText(t.id)}
-                                  className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer text-xs"
-                                  title="Smazat"
-                                >×</button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-slate-400 italic">Žádné vlastní předvolby pro toto pole.</p>
-                  )}
-
-                  {/* Přidání nové předvolby */}
-                  {newText?.pole === key ? (
-                    <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
-                      <input
-                        type="text"
-                        value={newText.nazev}
-                        onChange={(e) => setNewText({ ...newText, nazev: e.target.value })}
-                        className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                        placeholder="Název předvolby"
-                        autoFocus
-                      />
-                      <textarea
-                        value={newText.text}
-                        onChange={(e) => setNewText({ ...newText, text: e.target.value })}
-                        rows={4}
-                        className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none resize-y"
-                        placeholder="Text předvolby"
-                      />
-                      <div className="flex gap-2 justify-end">
-                        <Button variant="secondary" size="sm" onClick={() => setNewText(null)}>Zrušit</Button>
-                        <Button size="sm" onClick={() => handleSaveText(newText)} disabled={!newText.nazev.trim() || !newText.text.trim()}>Uložit</Button>
-                      </div>
-                    </div>
-                  ) : (
+            <div className="flex border border-slate-200 rounded-lg overflow-hidden min-h-[420px]">
+              {/* Levý panel – kategorie */}
+              <div className="w-56 shrink-0 border-r border-slate-200 bg-slate-50 flex flex-col">
+                {POLE_KATEGORIE.map(({ key, label }) => {
+                  const count = vlastniTexty.filter(t => t.pole === key).length;
+                  const isActive = selectedKategorie === key;
+                  return (
                     <button
-                      onClick={() => setNewText({ pole: key, nazev: '', text: '' })}
-                      className="mt-3 text-sm text-slate-600 hover:text-slate-800 hover:bg-slate-50 px-3 py-1.5 rounded transition-colors cursor-pointer font-medium"
+                      key={key}
+                      onClick={() => {
+                        setSelectedKategorie(key);
+                        setEditingText(null);
+                        setNewText(null);
+                      }}
+                      className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between gap-2 border-b border-slate-100 last:border-b-0 transition-colors cursor-pointer ${
+                        isActive
+                          ? 'bg-white text-slate-900 font-semibold border-l-2 border-l-slate-600'
+                          : 'text-slate-600 hover:bg-white hover:text-slate-800'
+                      }`}
                     >
-                      + Přidat předvolbu
+                      <span className="truncate">{label}</span>
+                      {count > 0 && (
+                        <span className="shrink-0 px-1.5 py-0.5 text-[10px] bg-slate-200 text-slate-600 rounded-full">{count}</span>
+                      )}
                     </button>
-                  )}
-                </Card>
-              );
-            })
+                  );
+                })}
+              </div>
+
+              {/* Pravý panel – texty vybrané kategorie */}
+              <div className="flex-1 min-w-0 p-4 flex flex-col gap-3">
+                {(() => {
+                  const katLabel = POLE_KATEGORIE.find(k => k.key === selectedKategorie)?.label ?? '';
+                  const textyPole = vlastniTexty.filter(t => t.pole === selectedKategorie);
+                  return (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-semibold text-slate-700">{katLabel}</h3>
+                        {newText?.pole !== selectedKategorie && (
+                          <button
+                            onClick={() => {
+                              setNewText({ pole: selectedKategorie, nazev: '', text: '' });
+                              setEditingText(null);
+                            }}
+                            className="text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 px-2.5 py-1 rounded transition-colors cursor-pointer font-medium"
+                          >
+                            + Přidat předvolbu
+                          </button>
+                        )}
+                      </div>
+
+                      {textyPole.length === 0 && !newText && (
+                        <p className="text-sm text-slate-400 italic">Žádné vlastní předvolby pro toto pole.</p>
+                      )}
+
+                      <div className="space-y-2">
+                        {textyPole.map(t => (
+                          <div key={t.id} className="border border-slate-200 rounded-lg overflow-hidden">
+                            {editingText && editingText.id === t.id ? (
+                              <div className="p-3 bg-slate-50 space-y-2">
+                                <input
+                                  type="text"
+                                  value={editingText.nazev}
+                                  onChange={(e) => setEditingText({ ...editingText, nazev: e.target.value })}
+                                  className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-slate-400 focus:outline-none"
+                                  placeholder="Název předvolby"
+                                />
+                                <textarea
+                                  value={editingText.text}
+                                  onChange={(e) => setEditingText({ ...editingText, text: e.target.value })}
+                                  rows={4}
+                                  className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded focus:ring-1 focus:ring-slate-400 focus:outline-none resize-y"
+                                  placeholder="Text předvolby"
+                                />
+                                <div className="flex gap-2 justify-end">
+                                  <Button variant="secondary" size="sm" onClick={() => setEditingText(null)}>Zrušit</Button>
+                                  <Button size="sm" onClick={() => handleSaveText(editingText)} disabled={!editingText.nazev.trim() || !editingText.text.trim()}>Uložit</Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-start">
+                                <div className="flex-1 p-3">
+                                  <div className="text-sm font-semibold text-slate-800">{t.nazev}</div>
+                                  <div className="text-xs text-slate-500 mt-1 whitespace-pre-wrap line-clamp-3">{t.text}</div>
+                                </div>
+                                <div className="flex items-center gap-1 p-2">
+                                  <button
+                                    onClick={() => setEditingText({ ...t })}
+                                    className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors cursor-pointer text-xs"
+                                    title="Upravit"
+                                  >Upravit</button>
+                                  <button
+                                    onClick={() => t.id && handleDeleteText(t.id)}
+                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer text-xs"
+                                    title="Smazat"
+                                  >×</button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Formulář nové předvolby */}
+                      {newText?.pole === selectedKategorie && (
+                        <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
+                          <input
+                            type="text"
+                            value={newText.nazev}
+                            onChange={(e) => setNewText({ ...newText, nazev: e.target.value })}
+                            className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                            placeholder="Název předvolby"
+                            autoFocus
+                          />
+                          <textarea
+                            value={newText.text}
+                            onChange={(e) => setNewText({ ...newText, text: e.target.value })}
+                            rows={4}
+                            className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none resize-y"
+                            placeholder="Text předvolby"
+                          />
+                          <div className="flex gap-2 justify-end">
+                            <Button variant="secondary" size="sm" onClick={() => setNewText(null)}>Zrušit</Button>
+                            <Button size="sm" onClick={() => handleSaveText(newText)} disabled={!newText.nazev.trim() || !newText.text.trim()}>Uložit</Button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
           )}
         </div>
       )}
