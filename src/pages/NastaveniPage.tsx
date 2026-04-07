@@ -2,8 +2,8 @@ import { useEffect, useState, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Input } from '../components/ui';
 import { backupService } from '../services/database';
-import { useNastaveni, useSaveNastaveni, usePredvoleneTexty, useCreatePredvolenyText, useUpdatePredvolenyText, useDeletePredvolenyText, useDatabaseStats, useTechnikHistorie } from '../hooks/useQueries';
-import type { Nastaveni, PredvolenyText } from '../types';
+import { useNastaveni, useSaveNastaveni, usePredvoleneTexty, useCreatePredvolenyText, useUpdatePredvolenyText, useDeletePredvolenyText, useDatabaseStats, useTechnikHistorie, useAddTechnikHistorie, useDeleteTechnikHistorie } from '../hooks/useQueries';
+import type { Nastaveni, PredvolenyText, TechnikHistorie } from '../types';
 
 // Čitelné názvy tabulek
 const TABLE_LABELS: Record<string, string> = {
@@ -34,6 +34,15 @@ const POLE_KATEGORIE: { key: string; label: string }[] = [
   { key: 'zaver', label: 'Závěr revize' },
 ];
 
+const EMPTY_DOKLAD: Omit<TechnikHistorie, 'id' | 'createdAt'> = {
+  reviznniTechnikJmeno: '',
+  reviznniTechnikCisloOpravneni: '',
+  reviznniTechnikPlatnostOpravneni: '',
+  reviznniTechnikOsvedceni: '',
+  reviznniTechnikPlatnostOsvedceni: '',
+  platOd: '',
+};
+
 export function NastaveniPage() {
   const qc = useQueryClient();
 
@@ -48,6 +57,8 @@ export function NastaveniPage() {
   const databaseStats = statsData?.stats ?? null;
   const databaseSize = statsData?.sizeMB ?? null;
   const { data: technikHistorie = [] } = useTechnikHistorie();
+  const addHistorieMut = useAddTechnikHistorie();
+  const deleteHistorieMut = useDeleteTechnikHistorie();
 
   // Local state for nastaveni form (user edits before saving)
   const [nastaveni, setNastaveni] = useState<Nastaveni>({
@@ -68,7 +79,7 @@ export function NastaveniPage() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
-  const [activeTab, setActiveTab] = useState<'obecne' | 'texty' | 'zalohy'>('obecne');
+  const [activeTab, setActiveTab] = useState<'obecne' | 'technik' | 'texty' | 'zalohy'>('obecne');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Backup state
@@ -84,6 +95,10 @@ export function NastaveniPage() {
   // Předvolené texty – UI state
   const [editingText, setEditingText] = useState<PredvolenyText | null>(null);
   const [newText, setNewText] = useState<{ pole: string; nazev: string; text: string } | null>(null);
+
+  // Doklady technika – UI state
+  const [showNewDoklad, setShowNewDoklad] = useState(false);
+  const [newDoklad, setNewDoklad] = useState<Omit<TechnikHistorie, 'id' | 'createdAt'>>(EMPTY_DOKLAD);
 
   // Sync nastaveni from query data into local form state
   useEffect(() => {
@@ -123,6 +138,17 @@ export function NastaveniPage() {
       setSaveMessage('Chyba při ukládání nastavení.');
     }
     setIsSaving(false);
+  };
+
+  const handleSaveDoklad = async () => {
+    await addHistorieMut.mutateAsync({ ...newDoklad });
+    setShowNewDoklad(false);
+    setNewDoklad(EMPTY_DOKLAD);
+  };
+
+  const handleDeleteDoklad = async (id: number) => {
+    if (!window.confirm('Smazat tento doklad?')) return;
+    await deleteHistorieMut.mutateAsync(id);
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -261,6 +287,16 @@ export function NastaveniPage() {
           Obecné
         </button>
         <button
+          onClick={() => setActiveTab('technik')}
+          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors cursor-pointer ${
+            activeTab === 'technik'
+              ? 'bg-white text-slate-800 border border-b-white border-slate-200 -mb-px'
+              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+          }`}
+        >
+          Revizní technik
+        </button>
+        <button
           onClick={() => setActiveTab('texty')}
           className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors cursor-pointer ${
             activeTab === 'texty'
@@ -350,94 +386,6 @@ export function NastaveniPage() {
         </div>
       </Card>
 
-      <Card title="Revizní technik">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label="Jméno a příjmení"
-            value={nastaveni.reviznniTechnikJmeno}
-            onChange={(e) => setNastaveni({ ...nastaveni, reviznniTechnikJmeno: e.target.value })}
-          />
-          <Input
-            label="Číslo oprávnění"
-            value={nastaveni.reviznniTechnikCisloOpravneni}
-            onChange={(e) => setNastaveni({ ...nastaveni, reviznniTechnikCisloOpravneni: e.target.value })}
-          />
-          <Input
-            label="Platnost oprávnění"
-            placeholder="31.12.2026"
-            value={nastaveni.reviznniTechnikPlatnostOpravneni || ''}
-            onChange={(e) => setNastaveni({ ...nastaveni, reviznniTechnikPlatnostOpravneni: e.target.value })}
-          />
-          <Input
-            label="Osvědčení"
-            value={nastaveni.reviznniTechnikOsvedceni || ''}
-            onChange={(e) => setNastaveni({ ...nastaveni, reviznniTechnikOsvedceni: e.target.value })}
-          />
-          <Input
-            label="Platnost osvědčení"
-            placeholder="31.12.2026"
-            value={nastaveni.reviznniTechnikPlatnostOsvedceni || ''}
-            onChange={(e) => setNastaveni({ ...nastaveni, reviznniTechnikPlatnostOsvedceni: e.target.value })}
-          />
-          <Input
-            label="Adresa"
-            value={nastaveni.reviznniTechnikAdresa || ''}
-            onChange={(e) => setNastaveni({ ...nastaveni, reviznniTechnikAdresa: e.target.value })}
-          />
-          <Input
-            label="IČO"
-            value={nastaveni.reviznniTechnikIco || ''}
-            onChange={(e) => setNastaveni({ ...nastaveni, reviznniTechnikIco: e.target.value })}
-          />
-          <Input
-            label="E-mail"
-            type="email"
-            value={nastaveni.kontaktEmail || ''}
-            onChange={(e) => setNastaveni({ ...nastaveni, kontaktEmail: e.target.value })}
-          />
-          <Input
-            label="Telefon"
-            value={nastaveni.kontaktTelefon || ''}
-            onChange={(e) => setNastaveni({ ...nastaveni, kontaktTelefon: e.target.value })}
-          />
-        </div>
-      </Card>
-
-      <Card title="Historie dokladů technika">
-        {technikHistorie.length === 0 ? (
-          <p className="text-sm text-slate-400">Žádné záznamy v historii. Historie se vytvoří při změně čísla nebo platnosti oprávnění/osvědčení.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-xs text-slate-500 uppercase">
-                  <th className="pb-2 pr-4">Platné od</th>
-                  <th className="pb-2 pr-4">Č. oprávnění</th>
-                  <th className="pb-2 pr-4">Platnost opr.</th>
-                  <th className="pb-2 pr-4">Č. osvědčení</th>
-                  <th className="pb-2 pr-4">Platnost osv.</th>
-                  <th className="pb-2">Jméno</th>
-                </tr>
-              </thead>
-              <tbody>
-                {technikHistorie.map((h) => (
-                  <tr key={h.id} className="border-b border-slate-100 last:border-0">
-                    <td className="py-2 pr-4 text-slate-500 whitespace-nowrap">
-                      {h.platOd ? new Date(h.platOd).toLocaleDateString('cs-CZ') : '—'}
-                    </td>
-                    <td className="py-2 pr-4">{h.reviznniTechnikCisloOpravneni || '—'}</td>
-                    <td className="py-2 pr-4">{h.reviznniTechnikPlatnostOpravneni || '—'}</td>
-                    <td className="py-2 pr-4">{h.reviznniTechnikOsvedceni || '—'}</td>
-                    <td className="py-2 pr-4">{h.reviznniTechnikPlatnostOsvedceni || '—'}</td>
-                    <td className="py-2">{h.reviznniTechnikJmeno || '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
-
       <Card title="O aplikaci">
         <div className="space-y-2 text-slate-600">
           <p><strong>RevizeApp</strong> - Aplikace pro správu elektrotechnických revizí</p>
@@ -455,6 +403,146 @@ export function NastaveniPage() {
           {isSaving ? 'Ukládání...' : 'Uložit nastavení'}
         </Button>
       </div>
+        </>
+      )}
+
+      {/* ══════ TAB: REVIZNÍ TECHNIK ══════ */}
+      {activeTab === 'technik' && (
+        <>
+          <Card title="Údaje technika">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Jméno a příjmení"
+                value={nastaveni.reviznniTechnikJmeno}
+                onChange={(e) => setNastaveni({ ...nastaveni, reviznniTechnikJmeno: e.target.value })}
+              />
+              <Input
+                label="Adresa"
+                value={nastaveni.reviznniTechnikAdresa || ''}
+                onChange={(e) => setNastaveni({ ...nastaveni, reviznniTechnikAdresa: e.target.value })}
+              />
+              <Input
+                label="IČO"
+                value={nastaveni.reviznniTechnikIco || ''}
+                onChange={(e) => setNastaveni({ ...nastaveni, reviznniTechnikIco: e.target.value })}
+              />
+              <Input
+                label="E-mail"
+                type="email"
+                value={nastaveni.kontaktEmail || ''}
+                onChange={(e) => setNastaveni({ ...nastaveni, kontaktEmail: e.target.value })}
+              />
+              <Input
+                label="Telefon"
+                value={nastaveni.kontaktTelefon || ''}
+                onChange={(e) => setNastaveni({ ...nastaveni, kontaktTelefon: e.target.value })}
+              />
+            </div>
+            <div className="flex justify-end mt-4">
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving ? 'Ukládání...' : 'Uložit údaje'}
+              </Button>
+            </div>
+          </Card>
+
+          <Card title="Doklady technika">
+            {technikHistorie.length === 0 ? (
+              <p className="text-sm text-slate-400 mb-4">Žádné doklady. Přidejte první doklad tlačítkem níže.</p>
+            ) : (
+              <div className="overflow-x-auto mb-4">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-left text-xs text-slate-500 uppercase">
+                      <th className="pb-2 pr-4">Platné od</th>
+                      <th className="pb-2 pr-4">Č. oprávnění</th>
+                      <th className="pb-2 pr-4">Platnost opr.</th>
+                      <th className="pb-2 pr-4">Č. osvědčení</th>
+                      <th className="pb-2 pr-4">Platnost osv.</th>
+                      <th className="pb-2 pr-4">Jméno</th>
+                      <th className="pb-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {technikHistorie.map((h, idx) => (
+                      <tr key={h.id} className="border-b border-slate-100 last:border-0">
+                        <td className="py-2 pr-4 text-slate-500 whitespace-nowrap">
+                          {h.platOd || '—'}
+                          {idx === 0 && (
+                            <span className="ml-2 px-1.5 py-0.5 text-[10px] bg-green-100 text-green-700 rounded font-medium">Aktuální</span>
+                          )}
+                        </td>
+                        <td className="py-2 pr-4">{h.reviznniTechnikCisloOpravneni || '—'}</td>
+                        <td className="py-2 pr-4">{h.reviznniTechnikPlatnostOpravneni || '—'}</td>
+                        <td className="py-2 pr-4">{h.reviznniTechnikOsvedceni || '—'}</td>
+                        <td className="py-2 pr-4">{h.reviznniTechnikPlatnostOsvedceni || '—'}</td>
+                        <td className="py-2 pr-4">{h.reviznniTechnikJmeno || '—'}</td>
+                        <td className="py-2">
+                          <button
+                            onClick={() => h.id !== undefined && handleDeleteDoklad(h.id)}
+                            className="text-slate-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded text-xs transition-colors cursor-pointer"
+                            title="Smazat"
+                          >×</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {showNewDoklad ? (
+              <div className="border border-slate-200 rounded-lg p-4 bg-slate-50 space-y-3">
+                <h4 className="text-sm font-medium text-slate-700">Nový doklad</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <Input
+                    label="Platné od"
+                    placeholder="01.01.2025"
+                    value={newDoklad.platOd || ''}
+                    onChange={(e) => setNewDoklad({ ...newDoklad, platOd: e.target.value })}
+                  />
+                  <Input
+                    label="Jméno a příjmení"
+                    value={newDoklad.reviznniTechnikJmeno || ''}
+                    onChange={(e) => setNewDoklad({ ...newDoklad, reviznniTechnikJmeno: e.target.value })}
+                  />
+                  <Input
+                    label="Číslo oprávnění"
+                    value={newDoklad.reviznniTechnikCisloOpravneni || ''}
+                    onChange={(e) => setNewDoklad({ ...newDoklad, reviznniTechnikCisloOpravneni: e.target.value })}
+                  />
+                  <Input
+                    label="Platnost oprávnění"
+                    placeholder="31.12.2026"
+                    value={newDoklad.reviznniTechnikPlatnostOpravneni || ''}
+                    onChange={(e) => setNewDoklad({ ...newDoklad, reviznniTechnikPlatnostOpravneni: e.target.value })}
+                  />
+                  <Input
+                    label="Číslo osvědčení"
+                    value={newDoklad.reviznniTechnikOsvedceni || ''}
+                    onChange={(e) => setNewDoklad({ ...newDoklad, reviznniTechnikOsvedceni: e.target.value })}
+                  />
+                  <Input
+                    label="Platnost osvědčení"
+                    placeholder="31.12.2026"
+                    value={newDoklad.reviznniTechnikPlatnostOsvedceni || ''}
+                    onChange={(e) => setNewDoklad({ ...newDoklad, reviznniTechnikPlatnostOsvedceni: e.target.value })}
+                  />
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button variant="secondary" size="sm" onClick={() => { setShowNewDoklad(false); setNewDoklad(EMPTY_DOKLAD); }}>Zrušit</Button>
+                  <Button size="sm" onClick={handleSaveDoklad} disabled={addHistorieMut.isPending}>
+                    {addHistorieMut.isPending ? 'Ukládání...' : 'Uložit doklad'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowNewDoklad(true)}
+                className="text-sm text-slate-600 hover:text-slate-800 hover:bg-slate-50 px-3 py-1.5 rounded transition-colors cursor-pointer font-medium"
+              >
+                + Přidat doklad
+              </button>
+            )}
+          </Card>
         </>
       )}
 
