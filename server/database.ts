@@ -19,6 +19,11 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
+// Zajistit UTF-8 kódování pro každé připojení (Czech diacritics)
+pool.on('connect', (client) => {
+  client.query("SET client_encoding TO 'UTF8'").catch(() => {});
+});
+
 // Export pool pro přímé použití v serveru
 export { pool };
 export default pool;
