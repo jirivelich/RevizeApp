@@ -34,14 +34,20 @@ const POLE_KATEGORIE: { key: string; label: string }[] = [
   { key: 'zaver', label: 'Závěr revize' },
 ];
 
-const EMPTY_DOKLAD: Omit<TechnikHistorie, 'id' | 'createdAt'> = {
-  reviznniTechnikJmeno: '',
-  reviznniTechnikCisloOpravneni: '',
-  reviznniTechnikPlatnostOpravneni: '',
-  reviznniTechnikOsvedceni: '',
-  reviznniTechnikPlatnostOsvedceni: '',
-  platOd: '',
-};
+function emptyDoklad(): Omit<TechnikHistorie, 'id' | 'createdAt'> {
+  const d = new Date();
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  return {
+    reviznniTechnikJmeno: '',
+    reviznniTechnikCisloOpravneni: '',
+    reviznniTechnikPlatnostOpravneni: '',
+    reviznniTechnikOsvedceni: '',
+    reviznniTechnikPlatnostOsvedceni: '',
+    platOd: `${dd}.${mm}.${yyyy}`,
+  };
+}
 
 export function NastaveniPage() {
   const qc = useQueryClient();
@@ -98,7 +104,7 @@ export function NastaveniPage() {
 
   // Doklady technika – UI state
   const [showNewDoklad, setShowNewDoklad] = useState(false);
-  const [newDoklad, setNewDoklad] = useState<Omit<TechnikHistorie, 'id' | 'createdAt'>>(EMPTY_DOKLAD);
+  const [newDoklad, setNewDoklad] = useState<Omit<TechnikHistorie, 'id' | 'createdAt'>>(emptyDoklad);
 
   // Sync nastaveni from query data into local form state
   useEffect(() => {
@@ -143,7 +149,7 @@ export function NastaveniPage() {
   const handleSaveDoklad = async () => {
     await addHistorieMut.mutateAsync({ ...newDoklad });
     setShowNewDoklad(false);
-    setNewDoklad(EMPTY_DOKLAD);
+    setNewDoklad(emptyDoklad());
   };
 
   const handleDeleteDoklad = async (id: number) => {
@@ -528,7 +534,7 @@ export function NastaveniPage() {
                   />
                 </div>
                 <div className="flex gap-2 justify-end">
-                  <Button variant="secondary" size="sm" onClick={() => { setShowNewDoklad(false); setNewDoklad(EMPTY_DOKLAD); }}>Zrušit</Button>
+                  <Button variant="secondary" size="sm" onClick={() => { setShowNewDoklad(false); setNewDoklad(emptyDoklad()); }}>Zrušit</Button>
                   <Button size="sm" onClick={handleSaveDoklad} disabled={addHistorieMut.isPending}>
                     {addHistorieMut.isPending ? 'Ukládání...' : 'Uložit doklad'}
                   </Button>
@@ -536,7 +542,7 @@ export function NastaveniPage() {
               </div>
             ) : (
               <button
-                onClick={() => setShowNewDoklad(true)}
+                onClick={() => { setNewDoklad(emptyDoklad()); setShowNewDoklad(true); }}}
                 className="text-sm text-slate-600 hover:text-slate-800 hover:bg-slate-50 px-3 py-1.5 rounded transition-colors cursor-pointer font-medium"
               >
                 + Přidat doklad
