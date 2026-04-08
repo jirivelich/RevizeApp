@@ -633,7 +633,6 @@ export function ReportPrintPage() {
                 {m.nazev}
                 {m.patro && ` (${m.patro})`}
                 {m.typ && ` – ${m.typ}`}
-                {m.prostredi && ` | Prostředí: ${m.prostredi}`}
               </div>
               {m.zarizeniList.length > 0 ? (
                 <ReportTable

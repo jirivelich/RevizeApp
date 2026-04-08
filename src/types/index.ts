@@ -203,7 +203,7 @@ export interface Mistnost {
   patro?: string;
   plocha?: number;
   typ: string;
-  prostredi: string;
+  prostredi?: string;
   poznamka?: string;
 }
 

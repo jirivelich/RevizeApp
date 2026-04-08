@@ -87,9 +87,7 @@ export function RevizeDetailPage() {
   const [mistnostFormData, setMistnostFormData] = useState({
     nazev: '',
     patro: '',
-    plocha: undefined as number | undefined,
     typ: 'obytný prostor',
-    prostredi: 'normální',
     poznamka: '',
   });
   const [zarizeniFormData, setZarizeniFormData] = useState({
@@ -444,9 +442,7 @@ export function RevizeDetailPage() {
     setMistnostFormData({
       nazev: '',
       patro: '',
-      plocha: undefined,
       typ: 'obytný prostor',
-      prostredi: 'normální',
       poznamka: '',
     });
     setEditingMistnost(null);
@@ -474,9 +470,7 @@ export function RevizeDetailPage() {
     setMistnostFormData({
       nazev: mistnost.nazev,
       patro: mistnost.patro || '',
-      plocha: mistnost.plocha,
       typ: mistnost.typ,
-      prostredi: mistnost.prostredi,
       poznamka: mistnost.poznamka || '',
     });
     setIsMistnostModalOpen(true);
@@ -1842,11 +1836,10 @@ export function RevizeDetailPage() {
                           </span>
                         </div>
                         <p className="text-xs text-slate-500">
-                          {m.typ} • {m.prostredi}
+                          {m.typ}
                         </p>
                         <p className="text-xs text-slate-400">
                           {m.patro && `${m.patro}`}
-                          {m.plocha && ` • ${m.plocha} m²`}
                         </p>
                       </div>
                     </div>
@@ -1887,22 +1880,14 @@ export function RevizeDetailPage() {
                   </div>
                 }
               >
-                <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="mb-6 grid grid-cols-2 md:grid-cols-2 gap-4">
                   <div className="p-3 bg-slate-50 rounded-lg">
                     <p className="text-xs text-slate-500">Typ</p>
                     <p className="font-medium">{selectedMistnost.typ}</p>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-lg">
-                    <p className="text-xs text-slate-500">Prostředí</p>
-                    <p className="font-medium">{selectedMistnost.prostredi}</p>
-                  </div>
-                  <div className="p-3 bg-slate-50 rounded-lg">
                     <p className="text-xs text-slate-500">Patro</p>
                     <p className="font-medium">{selectedMistnost.patro || '—'}</p>
-                  </div>
-                  <div className="p-3 bg-slate-50 rounded-lg">
-                    <p className="text-xs text-slate-500">Plocha</p>
-                    <p className="font-medium">{selectedMistnost.plocha ? `${selectedMistnost.plocha} m²` : '—'}</p>
                   </div>
                 </div>
 
@@ -2323,15 +2308,6 @@ export function RevizeDetailPage() {
               onChange={(e) => setMistnostFormData({ ...mistnostFormData, patro: e.target.value })}
               placeholder="např. 1.NP, přízemí..."
             />
-            <Input
-              label="Plocha (m²)"
-              type="number"
-              value={mistnostFormData.plocha?.toString() || ''}
-              onChange={(e) => setMistnostFormData({ ...mistnostFormData, plocha: e.target.value ? parseFloat(e.target.value) : undefined })}
-              placeholder="např. 25"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
             <Select
               label="Typ místnosti"
               value={mistnostFormData.typ}
@@ -2349,20 +2325,6 @@ export function RevizeDetailPage() {
                 { value: 'kancelář', label: 'Kancelář' },
                 { value: 'technická místnost', label: 'Technická místnost' },
                 { value: 'jiné', label: 'Jiné' },
-              ]}
-            />
-            <Select
-              label="Prostředí"
-              value={mistnostFormData.prostredi}
-              onChange={(e) => setMistnostFormData({ ...mistnostFormData, prostredi: e.target.value })}
-              options={[
-                { value: 'normální', label: 'Normální' },
-                { value: 'vlhké', label: 'Vlhké' },
-                { value: 'mokré', label: 'Mokré' },
-                { value: 'prašné', label: 'Prašné' },
-                { value: 'horké', label: 'Horké' },
-                { value: 'venkovní', label: 'Venkovní' },
-                { value: 's nebezpečím výbuchu', label: 'S nebezpečím výbuchu' },
               ]}
             />
           </div>

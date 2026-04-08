@@ -464,7 +464,6 @@ export async function exportElektroToWord(data: ReportData): Promise<void> {
       let title = m.nazev;
       if (m.patro) title += ` (${m.patro})`;
       if (m.typ) title += ` – ${m.typ}`;
-      if (m.prostredi) title += ` | Prostředí: ${m.prostredi}`;
       children.push(subsectionTitle(title));
 
       if (m.zarizeniList.length > 0) {

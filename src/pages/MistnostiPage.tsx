@@ -14,10 +14,8 @@ export function MistnostiPage() {
     revizeId: 0,
     nazev: '',
     patro: '',
-    plocha: undefined as number | undefined,
     typ: 'obytný prostor',
-    prostredi: 'normální',
-    poznamka: '',
+    poznamka: ''
   });
 
   useEffect(() => {
@@ -56,9 +54,7 @@ export function MistnostiPage() {
       revizeId: 0,
       nazev: '',
       patro: '',
-      plocha: undefined,
       typ: 'obytný prostor',
-      prostredi: 'normální',
       poznamka: '',
     });
   };
@@ -69,9 +65,7 @@ export function MistnostiPage() {
       revizeId: mistnost.revizeId,
       nazev: mistnost.nazev,
       patro: mistnost.patro || '',
-      plocha: mistnost.plocha,
       typ: mistnost.typ,
-      prostredi: mistnost.prostredi,
       poznamka: mistnost.poznamka || '',
     });
     setIsModalOpen(true);
@@ -84,20 +78,12 @@ export function MistnostiPage() {
     }
   };
 
-  const prostrediFikce = {
-    'normální': 'bg-slate-100 text-slate-600',
-    'vlhké': 'bg-slate-100 text-slate-600',
-    'prašné': 'bg-slate-100 text-slate-600',
-    'nebezpečné': 'bg-red-50 text-red-600',
-    'venkovní': 'bg-slate-100 text-slate-600',
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold text-slate-800">Místnosti</h1>
-          <p className="text-xs text-slate-400">Evidence místností a prostředí</p>
+          <p className="text-xs text-slate-400">Evidence místností</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
           + Nová místnost
@@ -131,15 +117,7 @@ export function MistnostiPage() {
                 </div>
                 <div className="space-y-1 text-sm">
                   {m.patro && <p className="text-slate-500">Patro: {m.patro}</p>}
-                  {m.plocha && <p className="text-slate-500">Plocha: {m.plocha} m²</p>}
                   <p className="text-slate-500">Typ: {m.typ}</p>
-                  <div className="flex gap-2 mt-2">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      prostrediFikce[m.prostredi as keyof typeof prostrediFikce] || 'bg-slate-100 text-slate-700'
-                    }`}>
-                      {m.prostredi}
-                    </span>
-                  </div>
                   <p className="text-xs text-slate-400 mt-2">{m.revizeNazev}</p>
                 </div>
               </div>
@@ -186,20 +164,11 @@ export function MistnostiPage() {
             onChange={(e) => setFormData({ ...formData, nazev: e.target.value })}
             required
           />
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Patro"
-              value={formData.patro}
-              onChange={(e) => setFormData({ ...formData, patro: e.target.value })}
-            />
-            <Input
-              type="number"
-              step="0.1"
-              label="Plocha (m²)"
-              value={formData.plocha || ''}
-              onChange={(e) => setFormData({ ...formData, plocha: e.target.value ? parseFloat(e.target.value) : undefined })}
-            />
-          </div>
+          <Input
+            label="Patro"
+            value={formData.patro}
+            onChange={(e) => setFormData({ ...formData, patro: e.target.value })}
+          />
           <Select
             label="Typ místnosti"
             value={formData.typ}
@@ -219,18 +188,7 @@ export function MistnostiPage() {
               { value: 'jiné', label: 'Jiné' },
             ]}
           />
-          <Select
-            label="Prostředí"
-            value={formData.prostredi}
-            onChange={(e) => setFormData({ ...formData, prostredi: e.target.value })}
-            options={[
-              { value: 'normální', label: 'Normální' },
-              { value: 'vlhké', label: 'Vlhké' },
-              { value: 'prašné', label: 'Prašné' },
-              { value: 'nebezpečné', label: 'Nebezpečné' },
-              { value: 'venkovní', label: 'Venkovní' },
-            ]}
-          />
+
           <Input
             label="Poznámka"
             value={formData.poznamka}

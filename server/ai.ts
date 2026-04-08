@@ -98,7 +98,7 @@ ZÁVADY (${data.zavady.length}):
 ${data.zavady.map((z: any) => `- [${z.zavaznost}] ${z.popis} (stav: ${z.stav})`).join('\n') || 'žádné závady'}
 
 MÍSTNOSTI (${data.mistnosti.length}):
-${data.mistnosti.map((m: any) => `- ${m.nazev} (${m.typ}, prostředí: ${m.prostredi})`).join('\n') || 'žádné'}
+${data.mistnosti.map((m: any) => `- ${m.nazev} (${m.typ})`).join('\n') || 'žádné'}
 
 ZAŘÍZENÍ (${data.zarizeni.length}):
 ${data.zarizeni.map((z: any) => `- ${z.nazev}, třída ${z.trida}, stav: ${z.stav}${z.prikonW ? `, příkon ${z.prikonW}W` : ''}`).join('\n') || 'žádná'}
