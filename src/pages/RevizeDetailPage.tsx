@@ -87,7 +87,6 @@ export function RevizeDetailPage() {
   const [mistnostFormData, setMistnostFormData] = useState({
     nazev: '',
     patro: '',
-    typ: 'obytný prostor',
     poznamka: '',
   });
   const [zarizeniFormData, setZarizeniFormData] = useState({
@@ -442,7 +441,6 @@ export function RevizeDetailPage() {
     setMistnostFormData({
       nazev: '',
       patro: '',
-      typ: 'obytný prostor',
       poznamka: '',
     });
     setEditingMistnost(null);
@@ -470,7 +468,6 @@ export function RevizeDetailPage() {
     setMistnostFormData({
       nazev: mistnost.nazev,
       patro: mistnost.patro || '',
-      typ: mistnost.typ,
       poznamka: mistnost.poznamka || '',
     });
     setIsMistnostModalOpen(true);
@@ -1835,9 +1832,6 @@ export function RevizeDetailPage() {
                             {zarizeniCounts[m.id!] || 0}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-500">
-                          {m.typ}
-                        </p>
                         <p className="text-xs text-slate-400">
                           {m.patro && `${m.patro}`}
                         </p>
@@ -1880,12 +1874,8 @@ export function RevizeDetailPage() {
                   </div>
                 }
               >
-                <div className="mb-6 grid grid-cols-2 md:grid-cols-2 gap-4">
-                  <div className="p-3 bg-slate-50 rounded-lg">
-                    <p className="text-xs text-slate-500">Typ</p>
-                    <p className="font-medium">{selectedMistnost.typ}</p>
-                  </div>
-                  <div className="p-3 bg-slate-50 rounded-lg">
+                <div className="mb-6">
+                  <div className="p-3 bg-slate-50 rounded-lg inline-block">
                     <p className="text-xs text-slate-500">Patro</p>
                     <p className="font-medium">{selectedMistnost.patro || '—'}</p>
                   </div>
@@ -2301,33 +2291,12 @@ export function RevizeDetailPage() {
             placeholder="např. Obývací pokoj, Kuchyň..."
             required
           />
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Patro"
-              value={mistnostFormData.patro}
-              onChange={(e) => setMistnostFormData({ ...mistnostFormData, patro: e.target.value })}
-              placeholder="např. 1.NP, přízemí..."
-            />
-            <Select
-              label="Typ místnosti"
-              value={mistnostFormData.typ}
-              onChange={(e) => setMistnostFormData({ ...mistnostFormData, typ: e.target.value })}
-              options={[
-                { value: 'obytný prostor', label: 'Obytný prostor' },
-                { value: 'kuchyň', label: 'Kuchyň' },
-                { value: 'koupelna', label: 'Koupelna' },
-                { value: 'WC', label: 'WC' },
-                { value: 'chodba', label: 'Chodba' },
-                { value: 'sklep', label: 'Sklep' },
-                { value: 'garáž', label: 'Garáž' },
-                { value: 'dílna', label: 'Dílna' },
-                { value: 'sklad', label: 'Sklad' },
-                { value: 'kancelář', label: 'Kancelář' },
-                { value: 'technická místnost', label: 'Technická místnost' },
-                { value: 'jiné', label: 'Jiné' },
-              ]}
-            />
-          </div>
+          <Input
+            label="Patro"
+            value={mistnostFormData.patro}
+            onChange={(e) => setMistnostFormData({ ...mistnostFormData, patro: e.target.value })}
+            placeholder="např. 1.NP, přízemí..."
+          />
           <Input
             label="Poznámka"
             value={mistnostFormData.poznamka}

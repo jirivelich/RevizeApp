@@ -14,7 +14,6 @@ export function MistnostiPage() {
     revizeId: 0,
     nazev: '',
     patro: '',
-    typ: 'obytný prostor',
     poznamka: ''
   });
 
@@ -54,7 +53,6 @@ export function MistnostiPage() {
       revizeId: 0,
       nazev: '',
       patro: '',
-      typ: 'obytný prostor',
       poznamka: '',
     });
   };
@@ -65,7 +63,6 @@ export function MistnostiPage() {
       revizeId: mistnost.revizeId,
       nazev: mistnost.nazev,
       patro: mistnost.patro || '',
-      typ: mistnost.typ,
       poznamka: mistnost.poznamka || '',
     });
     setIsModalOpen(true);
@@ -117,7 +114,6 @@ export function MistnostiPage() {
                 </div>
                 <div className="space-y-1 text-sm">
                   {m.patro && <p className="text-slate-500">Patro: {m.patro}</p>}
-                  <p className="text-slate-500">Typ: {m.typ}</p>
                   <p className="text-xs text-slate-400 mt-2">{m.revizeNazev}</p>
                 </div>
               </div>
@@ -169,26 +165,6 @@ export function MistnostiPage() {
             value={formData.patro}
             onChange={(e) => setFormData({ ...formData, patro: e.target.value })}
           />
-          <Select
-            label="Typ místnosti"
-            value={formData.typ}
-            onChange={(e) => setFormData({ ...formData, typ: e.target.value })}
-            options={[
-              { value: 'obytný prostor', label: 'Obytný prostor' },
-              { value: 'kuchyně', label: 'Kuchyně' },
-              { value: 'koupelna', label: 'Koupelna' },
-              { value: 'WC', label: 'WC' },
-              { value: 'chodba', label: 'Chodba' },
-              { value: 'sklep', label: 'Sklep' },
-              { value: 'garáž', label: 'Garáž' },
-              { value: 'technická místnost', label: 'Technická místnost' },
-              { value: 'kancelář', label: 'Kancelář' },
-              { value: 'sklad', label: 'Sklad' },
-              { value: 'výrobní prostor', label: 'Výrobní prostor' },
-              { value: 'jiné', label: 'Jiné' },
-            ]}
-          />
-
           <Input
             label="Poznámka"
             value={formData.poznamka}

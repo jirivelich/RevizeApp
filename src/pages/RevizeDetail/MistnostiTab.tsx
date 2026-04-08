@@ -25,8 +25,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
   const [zarizeniCounts, setZarizeniCounts] = useState<Record<number, number>>(propCounts);
 
   const [mistnostFormData, setMistnostFormData] = useState({
-    nazev: '', patro: '',
-    typ: 'obytný prostor', poznamka: ''
+    nazev: '', patro: '', poznamka: ''
   });
 
   const [zarizeniFormData, setZarizeniFormData] = useState({
@@ -53,7 +52,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
 
   // Místnosti CRUD
   const resetMistnostForm = () => {
-    setMistnostFormData({ nazev: '', patro: '', typ: 'obytný prostor', poznamka: '' });
+    setMistnostFormData({ nazev: '', patro: '', poznamka: '' });
     setEditingMistnost(null);
   };
 
@@ -79,7 +78,6 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
               id: newId as unknown as number,
               nazev: mistnostFormData.nazev,
               patro: mistnostFormData.patro,
-              typ: mistnostFormData.typ,
               poznamka: mistnostFormData.poznamka,
               revizeId,
             });
@@ -94,7 +92,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
     setEditingMistnost(mistnost);
     setMistnostFormData({
       nazev: mistnost.nazev, patro: mistnost.patro || '',
-      typ: mistnost.typ, poznamka: mistnost.poznamka || ''
+      poznamka: mistnost.poznamka || ''
     });
     setIsMistnostModalOpen(true);
   };
@@ -180,7 +178,6 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
                         {zarizeniCounts[m.id!] || 0}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500">{m.typ}</p>
                     <p className="text-xs text-slate-400">{m.patro && `${m.patro}`}</p>
                   </div>
                 </div>
@@ -206,7 +203,6 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
             }
           >
             <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="p-2 bg-slate-50 rounded-lg"><p className="text-[10px] text-slate-500">Typ</p><p className="font-medium text-xs">{selectedMistnost.typ}</p></div>
               <div className="p-2 bg-slate-50 rounded-lg"><p className="text-[10px] text-slate-500">Patro</p><p className="font-medium text-xs">{selectedMistnost.patro || '—'}</p></div>
             </div>
 
@@ -280,18 +276,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
     >
       <form onSubmit={handleAddMistnost} className="space-y-3">
         <Input label="Název místnosti" value={mistnostFormData.nazev} onChange={(e) => setMistnostFormData({ ...mistnostFormData, nazev: e.target.value })} placeholder="např. Obývací pokoj, Kuchyň..." required />
-        <div className="grid grid-cols-2 gap-3">
-          <Input label="Patro" value={mistnostFormData.patro} onChange={(e) => setMistnostFormData({ ...mistnostFormData, patro: e.target.value })} placeholder="např. 1.NP, přízemí..." />
-          <Select label="Typ místnosti" value={mistnostFormData.typ} onChange={(e) => setMistnostFormData({ ...mistnostFormData, typ: e.target.value })}
-            options={[
-              { value: 'obytný prostor', label: 'Obytný prostor' }, { value: 'kuchyň', label: 'Kuchyň' },
-              { value: 'koupelna', label: 'Koupelna' }, { value: 'WC', label: 'WC' },
-              { value: 'chodba', label: 'Chodba' }, { value: 'sklep', label: 'Sklep' },
-              { value: 'garáž', label: 'Garáž' }, { value: 'dílna', label: 'Dílna' },
-              { value: 'sklad', label: 'Sklad' }, { value: 'kancelář', label: 'Kancelář' },
-              { value: 'technická místnost', label: 'Technická místnost' }, { value: 'jiné', label: 'Jiné' },
-            ]} />
-        </div>
+        <Input label="Patro" value={mistnostFormData.patro} onChange={(e) => setMistnostFormData({ ...mistnostFormData, patro: e.target.value })} placeholder="např. 1.NP, přízemí..." />
         <Input label="Poznámka" value={mistnostFormData.poznamka} onChange={(e) => setMistnostFormData({ ...mistnostFormData, poznamka: e.target.value })} placeholder="Volitelná poznámka..." />
       </form>
     </Modal>

@@ -632,7 +632,6 @@ export function ReportPrintPage() {
               <div className="report-subsection-title">
                 {m.nazev}
                 {m.patro && ` (${m.patro})`}
-                {m.typ && ` – ${m.typ}`}
               </div>
               {m.zarizeniList.length > 0 ? (
                 <ReportTable
