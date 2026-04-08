@@ -454,6 +454,15 @@
 /* ========================================
    PŘÍLOHA – Fotodokumentace závad
    ======================================== */
+/* ── Znění normy pod popisem závady (sekce 13) ── */
+.report-zavada-poznamka {
+  font-size: 7.5pt;
+  color: #475569;
+  font-style: italic;
+  margin-top: 3px;
+  white-space: pre-line;
+}
+
 .report-photo-appendix {
   margin-top: 0;
 }

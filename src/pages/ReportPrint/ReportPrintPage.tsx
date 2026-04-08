@@ -663,17 +663,33 @@ export function ReportPrintPage() {
       {/* 13. ZÁVADY */}
       <ReportSection title="13. Přehled zjištěných závad">
         {zavady.length > 0 ? (
-          <ReportTable
-            columns={['#', 'Popis závady', 'Závažnost', 'Stav', 'Zjištěna']}
-            widths={['5%', '45%', '15%', '15%', '20%']}
-            rows={zavady.map((z, i) => [
-              String(i + 1),
-              z.popis,
-              z.zavaznost === 'C1' ? 'C1 – Kritická' : z.zavaznost === 'C2' ? 'C2 – Vážná' : 'C3 – Méně závažná',
-              z.stav === 'otevřená' ? 'Otevřená' : z.stav === 'v řešení' ? 'V řešení' : 'Vyřešená',
-              z.datumZjisteni ? new Date(z.datumZjisteni).toLocaleDateString('cs-CZ') : '—',
-            ])}
-          />
+          <table className="report-data-table">
+            <thead>
+              <tr>
+                <th style={{ width: '5%' }}>#</th>
+                <th style={{ width: '45%' }}>Popis závady</th>
+                <th style={{ width: '15%' }}>Závažnost</th>
+                <th style={{ width: '15%' }}>Stav</th>
+                <th style={{ width: '20%' }}>Zjištěna</th>
+              </tr>
+            </thead>
+            <tbody>
+              {zavady.map((z, i) => (
+                <tr key={z.id ?? i}>
+                  <td>{i + 1}</td>
+                  <td>
+                    <div>{z.popis}</div>
+                    {z.poznamka && (
+                      <div className="report-zavada-poznamka">{z.poznamka}</div>
+                    )}
+                  </td>
+                  <td>{z.zavaznost === 'C1' ? 'C1 – Kritická' : z.zavaznost === 'C2' ? 'C2 – Vážná' : 'C3 – Méně závažná'}</td>
+                  <td>{z.stav === 'otevřená' ? 'Otevřená' : z.stav === 'v řešení' ? 'V řešení' : 'Vyřešená'}</td>
+                  <td>{z.datumZjisteni ? new Date(z.datumZjisteni).toLocaleDateString('cs-CZ') : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         ) : (
           <p className="report-text"><strong>Při revizi nebyly zjištěny žádné závady.</strong></p>
         )}
