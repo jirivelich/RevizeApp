@@ -3,3 +3,4 @@ export { Input } from './Input';
 export { Select } from './Select';
 export { Card } from './Card';
 export { Modal } from './Modal';
+export { BottomSheet } from './BottomSheet';

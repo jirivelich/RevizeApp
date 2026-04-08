@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Button, Card, Input, Select, Modal } from '../../components/ui';
+import { Button, Card, Input, Select, Modal, BottomSheet } from '../../components/ui';
 import { TW } from './tw';
 import { okruhService, cranicService } from '../../services/database';
 import { useCreateRozvadec, useDeleteRozvadec, useUpdateRozvadec } from '../../hooks/useQueries';
@@ -79,6 +79,13 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
   const [chranice, setChranice] = useState<Chranic[]>([]);
   const [isCranicModalOpen, setIsCranicModalOpen] = useState(false);
   const [editingChranic, setEditingChranic] = useState<Chranic | null>(null);
+  // Quick-add state (mobile only)
+  const [okruhQuickOpen, setOkruhQuickOpen] = useState(false);
+  const [okruhQuickNazev, setOkruhQuickNazev] = useState('');
+  const [isOkruhSheetOpen, setIsOkruhSheetOpen] = useState(false);
+  const [cranicQuickOpen, setCranicQuickOpen] = useState(false);
+  const [cranicQuickNazev, setCranicQuickNazev] = useState('');
+  const [isCranicSheetOpen, setIsCranicSheetOpen] = useState(false);
   const [cranicFormData, setCranicFormData] = useState({
     cislo: 1, nazev: '', typ: 'A', proud: '25A',
     citlivostMa: 30, pocetPolu: 2,
@@ -198,25 +205,41 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     });
   };
 
+  const saveOkruh = async () => {
+    if (!selectedRozvadec?.id) return;
+    const { impedanceSmyckyMax, ...okruhData } = okruhFormData;
+    const saveData = { ...okruhData, izolacniOdpor: okruhData.izolacniOdpor || undefined, impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky || undefined };
+    if (editingOkruh?.id) {
+      await okruhService.update(editingOkruh.id, saveData);
+    } else {
+      await okruhService.create({ ...saveData, rozvadecId: selectedRozvadec.id });
+    }
+    setIsOkruhModalOpen(false);
+    setIsOkruhSheetOpen(false);
+    setEditingOkruh(null);
+    resetOkruhForm();
+    const okruhyData = await okruhService.getByRozvadec(selectedRozvadec.id);
+    setOkruhy(okruhyData);
+    setOkruhyCounts(prev => ({ ...prev, [selectedRozvadec.id!]: okruhyData.length }));
+  };
+
   const handleAddOkruh = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedRozvadec?.id) {
-      if (editingOkruh?.id) {
-          const { impedanceSmyckyMax, ...okruhData } = okruhFormData;
-        const saveData = { ...okruhData, izolacniOdpor: okruhData.izolacniOdpor || undefined, impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky || undefined };
-        await okruhService.update(editingOkruh.id, saveData);
-      } else {
-        const { impedanceSmyckyMax, ...okruhData } = okruhFormData;
-        const saveData = { ...okruhData, izolacniOdpor: okruhData.izolacniOdpor || undefined, impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky || undefined };
-        await okruhService.create({ ...saveData, rozvadecId: selectedRozvadec.id });
-      }
-      setIsOkruhModalOpen(false);
-      setEditingOkruh(null);
-      resetOkruhForm();
-      const okruhyData = await okruhService.getByRozvadec(selectedRozvadec.id);
-      setOkruhy(okruhyData);
-      setOkruhyCounts(prev => ({ ...prev, [selectedRozvadec.id!]: okruhyData.length }));
-    }
+    await saveOkruh();
+  };
+
+  const handleQuickAddOkruh = async () => {
+    if (!okruhQuickNazev.trim() || !selectedRozvadec?.id) return;
+    const nextCislo = okruhy.length > 0 ? Math.max(...okruhy.map(o => o.cislo)) + 1 : 1;
+    await okruhService.create({
+      cislo: nextCislo, nazev: okruhQuickNazev.trim(),
+      jisticTyp: 'B', jisticProud: '16A', pocetFazi: 1, vodic: '3x2,5',
+      rozvadecId: selectedRozvadec.id,
+    });
+    const okruhyData = await okruhService.getByRozvadec(selectedRozvadec.id);
+    setOkruhy(okruhyData);
+    setOkruhyCounts(prev => ({ ...prev, [selectedRozvadec.id!]: okruhyData.length }));
+    setOkruhQuickNazev('');
   };
 
   const handleEditOkruh = (okruh: Okruh) => {
@@ -227,7 +250,11 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
       impedanceSmycky: okruh.impedanceSmycky?.replace(/^max\.\s*/, '') || '', impedanceSmyckyMax: okruh.impedanceSmycky?.startsWith('max.') || false,
       poznamka: okruh.poznamka || '',
     });
-    setIsOkruhModalOpen(true);
+    if (window.innerWidth < 640) {
+      setIsOkruhSheetOpen(true);
+    } else {
+      setIsOkruhModalOpen(true);
+    }
   };
 
   const handleDeleteOkruh = async (okruhId: number) => {
@@ -267,19 +294,35 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     });
   };
 
+  const saveCranic = async () => {
+    if (!selectedRozvadec?.id) return;
+    if (editingChranic?.id) {
+      await cranicService.update(editingChranic.id, { ...cranicFormData, rozvadecId: selectedRozvadec.id });
+    } else {
+      await cranicService.create({ ...cranicFormData, rozvadecId: selectedRozvadec.id });
+    }
+    setIsCranicModalOpen(false);
+    setIsCranicSheetOpen(false);
+    setEditingChranic(null);
+    resetCranicForm();
+    setChranice(await cranicService.getByRozvadec(selectedRozvadec.id));
+  };
+
   const handleAddChranic = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedRozvadec?.id) {
-      if (editingChranic?.id) {
-        await cranicService.update(editingChranic.id, { ...cranicFormData, rozvadecId: selectedRozvadec.id });
-      } else {
-        await cranicService.create({ ...cranicFormData, rozvadecId: selectedRozvadec.id });
-      }
-      setIsCranicModalOpen(false);
-      setEditingChranic(null);
-      resetCranicForm();
-      setChranice(await cranicService.getByRozvadec(selectedRozvadec.id));
-    }
+    await saveCranic();
+  };
+
+  const handleQuickAddCranic = async () => {
+    if (!cranicQuickNazev.trim() || !selectedRozvadec?.id) return;
+    const nextCislo = chranice.length > 0 ? Math.max(...chranice.map(c => c.cislo)) + 1 : 1;
+    await cranicService.create({
+      cislo: nextCislo, nazev: cranicQuickNazev.trim(),
+      typ: 'A', proud: '25A', citlivostMa: 30, pocetPolu: 2,
+      rozvadecId: selectedRozvadec.id,
+    });
+    setChranice(await cranicService.getByRozvadec(selectedRozvadec.id));
+    setCranicQuickNazev('');
   };
 
   const handleEditChranic = (c: Chranic) => {
@@ -299,7 +342,11 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
       selektivita: c.selektivita,
       poznamka: c.poznamka || '',
     });
-    setIsCranicModalOpen(true);
+    if (window.innerWidth < 640) {
+      setIsCranicSheetOpen(true);
+    } else {
+      setIsCranicModalOpen(true);
+    }
   };
 
   const handleDeleteChranic = async (cranicId: number) => {
@@ -414,11 +461,19 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
             title={`${selectedRozvadec.nazev}`}
             actions={
               <div className="flex gap-2">
-                <Button size="sm" onClick={() => { resetOkruhForm(); setIsOkruhModalOpen(true); }}>
+                <Button size="sm" onClick={() => {
+                  resetOkruhForm();
+                  if (window.innerWidth < 640) { setOkruhQuickOpen(true); setOkruhQuickNazev(''); }
+                  else { setIsOkruhModalOpen(true); }
+                }}>
                   <span className="sm:hidden">⊕</span>
                   <span className="hidden sm:inline">+ Přidat okruh</span>
                 </Button>
-                <Button size="sm" onClick={() => { resetCranicForm(); setIsCranicModalOpen(true); }}>
+                <Button size="sm" onClick={() => {
+                  resetCranicForm();
+                  if (window.innerWidth < 640) { setCranicQuickOpen(true); setCranicQuickNazev(''); }
+                  else { setIsCranicModalOpen(true); }
+                }}>
                   <span className="sm:hidden">⚡</span>
                   <span className="hidden sm:inline">+ Přidat chránič</span>
                 </Button>
@@ -446,6 +501,32 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
             </div>
 
             <h4 className="font-medium text-sm text-slate-700 mb-2">Okruhy ({okruhy.length})</h4>
+            {okruhQuickOpen && (
+              <div className="sm:hidden flex items-center gap-2 mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                <input
+                  autoFocus
+                  className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white min-w-0"
+                  placeholder="Název okruhu..."
+                  value={okruhQuickNazev}
+                  onChange={(e) => setOkruhQuickNazev(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleQuickAddOkruh();
+                    if (e.key === 'Escape') { setOkruhQuickOpen(false); setOkruhQuickNazev(''); }
+                  }}
+                />
+                <button onClick={handleQuickAddOkruh} disabled={!okruhQuickNazev.trim()}
+                  className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg bg-blue-500 text-white disabled:opacity-40"
+                  title="Přidat okruh">&#10003;</button>
+                <button onClick={() => {
+                  setOkruhFormData(prev => ({ ...prev, nazev: okruhQuickNazev }));
+                  setOkruhQuickOpen(false);
+                  setIsOkruhSheetOpen(true);
+                }} className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg bg-slate-200 text-slate-600 text-lg"
+                  title="Více možností">⋯</button>
+                <button onClick={() => { setOkruhQuickOpen(false); setOkruhQuickNazev(''); }}
+                  className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-slate-400">×</button>
+              </div>
+            )}
             {okruhy.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -516,8 +597,32 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
               </p>
             )}
 
-            <h4 className="font-medium text-sm text-slate-700 mt-4 mb-2">Proudové chraniče ({chranice.length})</h4>
-            {chranice.length > 0 ? (
+            <h4 className="font-medium text-sm text-slate-700 mt-4 mb-2">Proudové chraniče ({chranice.length})</h4>            {cranicQuickOpen && (
+              <div className="sm:hidden flex items-center gap-2 mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                <input
+                  autoFocus
+                  className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white min-w-0"
+                  placeholder="Název chrániče..."
+                  value={cranicQuickNazev}
+                  onChange={(e) => setCranicQuickNazev(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleQuickAddCranic();
+                    if (e.key === 'Escape') { setCranicQuickOpen(false); setCranicQuickNazev(''); }
+                  }}
+                />
+                <button onClick={handleQuickAddCranic} disabled={!cranicQuickNazev.trim()}
+                  className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg bg-blue-500 text-white disabled:opacity-40"
+                  title="Přidat chránič">&#10003;</button>
+                <button onClick={() => {
+                  setCranicFormData(prev => ({ ...prev, nazev: cranicQuickNazev }));
+                  setCranicQuickOpen(false);
+                  setIsCranicSheetOpen(true);
+                }} className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg bg-slate-200 text-slate-600 text-lg"
+                  title="Více možností">⋯</button>
+                <button onClick={() => { setCranicQuickOpen(false); setCranicQuickNazev(''); }}
+                  className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-slate-400">×</button>
+              </div>
+            )}            {chranice.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -732,6 +837,113 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
         <Input label="Poznámka" value={cranicFormData.poznamka} onChange={(e) => setCranicFormData({ ...cranicFormData, poznamka: e.target.value })} />
       </form>
     </Modal>
+    {/* BottomSheet pro okruh (mobil) */}
+    <BottomSheet
+      isOpen={isOkruhSheetOpen}
+      onClose={() => { setIsOkruhSheetOpen(false); setEditingOkruh(null); resetOkruhForm(); }}
+      title={editingOkruh ? 'Upravit okruh' : 'Přidat okruh'}
+      footer={
+        <>
+          <Button onClick={saveOkruh}>{editingOkruh ? 'Uložit' : 'Přidat'}</Button>
+          <Button variant="secondary" onClick={() => { setIsOkruhSheetOpen(false); setEditingOkruh(null); resetOkruhForm(); }}>Zrušit</Button>
+        </>
+      }
+    >
+      <form onSubmit={(e) => { e.preventDefault(); saveOkruh(); }} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <Input type="number" label="Číslo okruhu" value={okruhFormData.cislo} onChange={(e) => setOkruhFormData({ ...okruhFormData, cislo: parseInt(e.target.value) })} required />
+          <Input label="Název" value={okruhFormData.nazev} onChange={(e) => setOkruhFormData({ ...okruhFormData, nazev: e.target.value })} required />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <EditableSelect label="Typ jištění" value={okruhFormData.jisticTyp} onChange={(val) => setOkruhFormData({ ...okruhFormData, jisticTyp: val })} options={['B', 'C', 'D', 'gG', 'aM', 'IT', 'IJ', 'IJV', 'ITM']} />
+          <EditableSelect label="Proud jističe" value={okruhFormData.jisticProud} onChange={(val) => setOkruhFormData({ ...okruhFormData, jisticProud: val })} options={['2A','4A','6A','10A','13A','16A','20A','25A','32A','40A','50A','63A','80A','100A','125A','160A']} />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Select label="Počet fází" value={okruhFormData.pocetFazi.toString()} onChange={(e) => setOkruhFormData({ ...okruhFormData, pocetFazi: parseInt(e.target.value) })} options={[{ value: '1', label: '1P' }, { value: '2', label: '2P' }, { value: '3', label: '3P' }]} />
+          <Input label="Vodič" value={okruhFormData.vodic} onChange={(e) => setOkruhFormData({ ...okruhFormData, vodic: e.target.value })} />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Input label="Izolační odpor (MΩ)" value={okruhFormData.izolacniOdpor} onChange={(e) => setOkruhFormData({ ...okruhFormData, izolacniOdpor: e.target.value })} />
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <Input label="Impedance smyčky (Ω)" value={okruhFormData.impedanceSmycky} onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmycky: e.target.value })} />
+            </div>
+            <label className="flex items-center gap-1.5 pb-2 cursor-pointer select-none">
+              <input type="checkbox" checked={okruhFormData.impedanceSmyckyMax} onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmyckyMax: e.target.checked })} className="rounded border-slate-300" />
+              <span className="text-xs text-slate-600 whitespace-nowrap">max.</span>
+            </label>
+          </div>
+        </div>
+      </form>
+    </BottomSheet>
+
+    {/* BottomSheet pro chránič (mobil) */}
+    <BottomSheet
+      isOpen={isCranicSheetOpen}
+      onClose={() => { setIsCranicSheetOpen(false); setEditingChranic(null); resetCranicForm(); }}
+      title={editingChranic ? 'Upravit chránič' : 'Přidat chránič'}
+      footer={
+        <>
+          <Button onClick={saveCranic}>{editingChranic ? 'Uložit' : 'Přidat'}</Button>
+          <Button variant="secondary" onClick={() => { setIsCranicSheetOpen(false); setEditingChranic(null); resetCranicForm(); }}>Zrušit</Button>
+        </>
+      }
+    >
+      <form onSubmit={(e) => { e.preventDefault(); saveCranic(); }} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <Input type="number" label="Číslo" value={cranicFormData.cislo} onChange={(e) => setCranicFormData({ ...cranicFormData, cislo: parseInt(e.target.value) || 1 })} required />
+          <Input label="Název" value={cranicFormData.nazev} onChange={(e) => setCranicFormData({ ...cranicFormData, nazev: e.target.value })} required />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <EditableSelect label="Typ chrániče" value={cranicFormData.typ} onChange={(val) => setCranicFormData({ ...cranicFormData, typ: val })} options={['A', 'AC', 'B', 'F', 'G']} />
+          <EditableSelect label="Jmenovitý proud" value={cranicFormData.proud} onChange={(val) => setCranicFormData({ ...cranicFormData, proud: val })} options={['10A', '16A', '20A', '25A', '32A', '40A', '63A']} />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Select label="Citlivost Iδn (mA)" value={String(cranicFormData.citlivostMa)} onChange={(e) => setCranicFormData({ ...cranicFormData, citlivostMa: parseFloat(e.target.value) })} options={[{ value: '10', label: '10 mA' }, { value: '30', label: '30 mA' }, { value: '100', label: '100 mA' }, { value: '300', label: '300 mA' }, { value: '500', label: '500 mA' }]} />
+          <Select label="Počet pólů" value={String(cranicFormData.pocetPolu)} onChange={(e) => setCranicFormData({ ...cranicFormData, pocetPolu: parseInt(e.target.value) })} options={[{ value: '2', label: '2' }, { value: '4', label: '4' }]} />
+        </div>
+        <div className="border-t border-slate-200 pt-3">
+          <p className="text-xs font-medium text-slate-500 mb-3">Měřené hodnoty</p>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex items-center gap-2 text-xs">
+              <input type="checkbox" checked={!!cranicFormData.testovacitlacitko} onChange={(e) => setCranicFormData({ ...cranicFormData, testovacitlacitko: e.target.checked || undefined })} className="rounded border-slate-300" />
+              <span>Testovací tlačítko ✓</span>
+            </label>
+            <label className="flex items-center gap-2 text-xs">
+              <input type="checkbox" checked={!!cranicFormData.nevybavovaci} onChange={(e) => setCranicFormData({ ...cranicFormData, nevybavovaci: e.target.checked || undefined })} className="rounded border-slate-300" />
+              <span>Nevybavení při 0,5×Iδn ✓</span>
+            </label>
+          </div>
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <Input type="number" step="0.1" label="Dotykové napětí Uc [V]" value={cranicFormData.dotykoveNapeti ?? ''} onChange={(e) => setCranicFormData({ ...cranicFormData, dotykoveNapeti: e.target.value ? parseFloat(e.target.value) : undefined })} />
+            <Input type="number" step="0.1" label="Vybavovací proud Iδ [mA]" value={cranicFormData.vybavovacProud ?? ''} onChange={(e) => setCranicFormData({ ...cranicFormData, vybavovacProud: e.target.value ? parseFloat(e.target.value) : undefined })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <Input type="number" step="1" label="Čas odpojení tA při 1×Iδn [ms]" value={cranicFormData.casOdpojeni1x ?? ''} onChange={(e) => setCranicFormData({ ...cranicFormData, casOdpojeni1x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+            {['AC', 'A'].includes(cranicFormData.typ) && (
+              <Input type="number" step="1" label="Čas odpojení tA při 5×Iδn [ms]" value={cranicFormData.casOdpojeni5x ?? ''} onChange={(e) => setCranicFormData({ ...cranicFormData, casOdpojeni5x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+            )}
+            {cranicFormData.typ === 'F' && (
+              <>
+                <Input type="number" step="1" label="Čas odpojení tA při 1,4×Iδn [ms]" value={cranicFormData.casOdpojeni1_4x ?? ''} onChange={(e) => setCranicFormData({ ...cranicFormData, casOdpojeni1_4x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+                <Input type="number" step="1" label="Čas odpojení tA při 2×Iδn [ms]" value={cranicFormData.casOdpojeni2x ?? ''} onChange={(e) => setCranicFormData({ ...cranicFormData, casOdpojeni2x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+                <label className="flex items-center gap-2 text-xs col-span-2">
+                  <input type="checkbox" checked={!!cranicFormData.zkouskaVypnuti2x} onChange={(e) => setCranicFormData({ ...cranicFormData, zkouskaVypnuti2x: e.target.checked || undefined })} className="rounded border-slate-300" />
+                  <span>Zkouška vypnutí 2×Iδn nárůstem proudu ✓</span>
+                </label>
+              </>
+            )}
+          </div>
+          <div className="mt-3">
+            <label className="flex items-center gap-2 text-xs">
+              <input type="checkbox" checked={!!cranicFormData.selektivita} onChange={(e) => setCranicFormData({ ...cranicFormData, selektivita: e.target.checked || undefined })} className="rounded border-slate-300" />
+              <span>Selektivita (typ S/G) ✓</span>
+            </label>
+          </div>
+        </div>
+        <Input label="Poznámka" value={cranicFormData.poznamka} onChange={(e) => setCranicFormData({ ...cranicFormData, poznamka: e.target.value })} />
+      </form>
+    </BottomSheet>
     </>
   );
 }

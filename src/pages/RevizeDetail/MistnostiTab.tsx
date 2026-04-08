@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Button, Card, Input, Select, Modal } from '../../components/ui';
+import { Button, Card, Input, Select, Modal, BottomSheet } from '../../components/ui';
 import { TW } from './tw';
 import { zarizeniService } from '../../services/database';
 import { useCreateMistnost, useUpdateMistnost, useDeleteMistnost } from '../../hooks/useQueries';
@@ -22,6 +22,10 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
   const [editingMistnost, setEditingMistnost] = useState<Mistnost | null>(null);
   const [isZarizeniModalOpen, setIsZarizeniModalOpen] = useState(false);
   const [editingZarizeni, setEditingZarizeni] = useState<Zarizeni | null>(null);
+  // Quick-add state (mobile only)
+  const [zarizeniQuickOpen, setZarizeniQuickOpen] = useState(false);
+  const [zarizeniQuickNazev, setZarizeniQuickNazev] = useState('');
+  const [isZarizeniSheetOpen, setIsZarizeniSheetOpen] = useState(false);
   const [zarizeniCounts, setZarizeniCounts] = useState<Record<number, number>>(propCounts);
 
   const [mistnostFormData, setMistnostFormData] = useState({
@@ -119,20 +123,36 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
     setEditingZarizeni(null);
   };
 
+  const saveZarizeni = async () => {
+    if (!selectedMistnost?.id) return;
+    if (editingZarizeni?.id) {
+      await zarizeniService.update(editingZarizeni.id, zarizeniFormData);
+    } else {
+      await zarizeniService.create({ ...zarizeniFormData, mistnostId: selectedMistnost.id });
+    }
+    setIsZarizeniModalOpen(false);
+    setIsZarizeniSheetOpen(false);
+    resetZarizeniForm();
+    const zarizeniData = await zarizeniService.getByMistnost(selectedMistnost.id);
+    setZarizeni(zarizeniData);
+    setZarizeniCounts(prev => ({ ...prev, [selectedMistnost.id!]: zarizeniData.length }));
+  };
+
   const handleAddZarizeni = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedMistnost?.id) {
-      if (editingZarizeni?.id) {
-        await zarizeniService.update(editingZarizeni.id, zarizeniFormData);
-      } else {
-        await zarizeniService.create({ ...zarizeniFormData, mistnostId: selectedMistnost.id });
-      }
-      setIsZarizeniModalOpen(false);
-      resetZarizeniForm();
-      const zarizeniData = await zarizeniService.getByMistnost(selectedMistnost.id);
-      setZarizeni(zarizeniData);
-      setZarizeniCounts(prev => ({ ...prev, [selectedMistnost.id!]: zarizeniData.length }));
-    }
+    await saveZarizeni();
+  };
+
+  const handleQuickAddZarizeni = async () => {
+    if (!zarizeniQuickNazev.trim() || !selectedMistnost?.id) return;
+    await zarizeniService.create({
+      nazev: zarizeniQuickNazev.trim(), mistnostId: selectedMistnost.id,
+      pocetKs: 1, trida: 'I', stav: 'nekontrolováno', oznaceni: '', ochranaPredDotykem: '', poznamka: '',
+    });
+    const zarizeniData = await zarizeniService.getByMistnost(selectedMistnost.id);
+    setZarizeni(zarizeniData);
+    setZarizeniCounts(prev => ({ ...prev, [selectedMistnost.id!]: zarizeniData.length }));
+    setZarizeniQuickNazev('');
   };
 
   const handleEditZarizeni = (zar: Zarizeni) => {
@@ -142,7 +162,11 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
       trida: zar.trida || 'I', prikonW: zar.prikonW, ochranaPredDotykem: zar.ochranaPredDotykem || '',
       stav: zar.stav, poznamka: zar.poznamka || '',
     });
-    setIsZarizeniModalOpen(true);
+    if (window.innerWidth < 640) {
+      setIsZarizeniSheetOpen(true);
+    } else {
+      setIsZarizeniModalOpen(true);
+    }
   };
 
   const handleDeleteZarizeni = async (zarizeniId: number) => {
@@ -196,7 +220,14 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
             title={`${selectedMistnost.nazev}`}
             actions={
               <div className="flex gap-2">
-                <Button size="sm" onClick={() => { resetZarizeniForm(); setIsZarizeniModalOpen(true); }}>+ Přidat zařízení</Button>
+                <Button size="sm" onClick={() => {
+                  resetZarizeniForm();
+                  if (window.innerWidth < 640) { setZarizeniQuickOpen(true); setZarizeniQuickNazev(''); }
+                  else { setIsZarizeniModalOpen(true); }
+                }}>
+                  <span className="sm:hidden text-base leading-none">+</span>
+                  <span className="hidden sm:inline">+ Přidat zařízení</span>
+                </Button>
                 <Button variant="secondary" size="sm" onClick={() => handleEditMistnost(selectedMistnost)}>Upravit</Button>
                 <Button variant="danger" size="sm" onClick={() => handleDeleteMistnost(selectedMistnost.id!)}>🗑️ Smazat</Button>
               </div>
@@ -207,6 +238,32 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
             </div>
 
             <h4 className="font-medium text-sm text-slate-700 mb-2">Zařízení ({zarizeni.length})</h4>
+            {zarizeniQuickOpen && (
+              <div className="sm:hidden flex items-center gap-2 mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                <input
+                  autoFocus
+                  className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white min-w-0"
+                  placeholder="Název zařízení..."
+                  value={zarizeniQuickNazev}
+                  onChange={(e) => setZarizeniQuickNazev(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleQuickAddZarizeni();
+                    if (e.key === 'Escape') { setZarizeniQuickOpen(false); setZarizeniQuickNazev(''); }
+                  }}
+                />
+                <button onClick={handleQuickAddZarizeni} disabled={!zarizeniQuickNazev.trim()}
+                  className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg bg-blue-500 text-white disabled:opacity-40"
+                  title="Přidat zařízení">&#10003;</button>
+                <button onClick={() => {
+                  setZarizeniFormData(prev => ({ ...prev, nazev: zarizeniQuickNazev }));
+                  setZarizeniQuickOpen(false);
+                  setIsZarizeniSheetOpen(true);
+                }} className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg bg-slate-200 text-slate-600 text-lg"
+                  title="Více možností">⋯</button>
+                <button onClick={() => { setZarizeniQuickOpen(false); setZarizeniQuickNazev(''); }}
+                  className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-slate-400">×</button>
+              </div>
+            )}
             {zarizeni.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -334,6 +391,56 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
         <Input label="Poznámka" value={zarizeniFormData.poznamka} onChange={(e) => setZarizeniFormData({ ...zarizeniFormData, poznamka: e.target.value })} placeholder="Volitelná poznámka..." />
       </form>
     </Modal>
+
+    {/* BottomSheet pro zařízení (mobil) */}
+    <BottomSheet
+      isOpen={isZarizeniSheetOpen}
+      onClose={() => { setIsZarizeniSheetOpen(false); resetZarizeniForm(); }}
+      title={editingZarizeni ? 'Upravit zařízení' : 'Přidat zařízení'}
+      footer={
+        <>
+          <Button onClick={saveZarizeni}>{editingZarizeni ? 'Uložit změny' : 'Přidat'}</Button>
+          <Button variant="secondary" onClick={() => { setIsZarizeniSheetOpen(false); resetZarizeniForm(); }}>Zrušit</Button>
+        </>
+      }
+    >
+      <form onSubmit={(e) => { e.preventDefault(); saveZarizeni(); }} className="space-y-3">
+        <Input label="Název zařízení" value={zarizeniFormData.nazev} onChange={(e) => setZarizeniFormData({ ...zarizeniFormData, nazev: e.target.value })} placeholder="např. Zásuvka u okna..." required />
+        <div className="grid grid-cols-3 gap-3">
+          <Input label="Označení" value={zarizeniFormData.oznaceni} onChange={(e) => setZarizeniFormData({ ...zarizeniFormData, oznaceni: e.target.value })} placeholder="např. Z1, L2..." />
+          <Input label="Počet kusů" type="number" min="1" value={zarizeniFormData.pocetKs.toString()}
+            onChange={(e) => {
+              const newPocet = parseInt(e.target.value) || 1;
+              let ochrana = zarizeniFormData.ochranaPredDotykem;
+              if (zarizeniFormData.trida === 'I') {
+                if (newPocet > 1 && !ochrana?.startsWith('max.')) { ochrana = 'max.' + (ochrana || ''); }
+                else if (newPocet === 1 && ochrana?.startsWith('max.')) { ochrana = ochrana.replace('max.', ''); }
+              }
+              setZarizeniFormData({ ...zarizeniFormData, pocetKs: newPocet, ochranaPredDotykem: ochrana });
+            }} />
+          <Select label="Třída" value={zarizeniFormData.trida}
+            onChange={(e) => {
+              const newTrida = e.target.value as Zarizeni['trida'];
+              let ochrana = zarizeniFormData.ochranaPredDotykem;
+              if (newTrida === 'II') { ochrana = 'izolací'; }
+              else if (newTrida === 'III') { ochrana = 'MN'; }
+              else if (newTrida === 'I') { ochrana = zarizeniFormData.pocetKs > 1 ? 'max.' : ''; }
+              setZarizeniFormData({ ...zarizeniFormData, trida: newTrida, ochranaPredDotykem: ochrana });
+            }}
+            options={[{ value: 'I', label: 'I' }, { value: 'II', label: 'II' }, { value: 'III', label: 'III' }]} />
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <Input label="Příkon (W)" type="number" value={zarizeniFormData.prikonW?.toString() || ''}
+            onChange={(e) => setZarizeniFormData({ ...zarizeniFormData, prikonW: e.target.value ? parseFloat(e.target.value) : undefined })} placeholder="např. 60" />
+          <Input label="Ochrana před dotykem" value={zarizeniFormData.ochranaPredDotykem}
+            onChange={(e) => setZarizeniFormData({ ...zarizeniFormData, ochranaPredDotykem: e.target.value })}
+            placeholder={zarizeniFormData.trida === 'I' ? (zarizeniFormData.pocetKs > 1 ? 'např. max.0.6 Ω' : 'např. 0.6 Ω') : zarizeniFormData.trida === 'II' ? 'např. izolací' : 'např. malým napětím'} />
+          <Select label="Stav" value={zarizeniFormData.stav} onChange={(e) => setZarizeniFormData({ ...zarizeniFormData, stav: e.target.value as Zarizeni['stav'] })}
+            options={[{ value: 'nekontrolováno', label: 'Nekontrolováno' }, { value: 'OK', label: 'OK' }, { value: 'závada', label: 'Závada' }]} />
+        </div>
+        <Input label="Poznámka" value={zarizeniFormData.poznamka} onChange={(e) => setZarizeniFormData({ ...zarizeniFormData, poznamka: e.target.value })} placeholder="Volitelná poznámka..." />
+      </form>
+    </BottomSheet>
     </>
   );
 }
