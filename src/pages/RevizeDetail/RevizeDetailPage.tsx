@@ -192,8 +192,8 @@ export function RevizeDetailPage() {
         { id: 'info', label: 'Základní údaje', icon: '' },
         { id: 'dokumentace', label: 'Revidované zařízení', icon: '' },
         { id: 'rozvadece', label: `Rozvaděče (${rozvadece.length})`, icon: '' },
-        { id: 'zavady', label: `Závady (${zavady.length})`, icon: '' },
         { id: 'mistnosti', label: `Místnosti (${mistnosti.length})`, icon: '' },
+        { id: 'zavady', label: `Závady (${zavady.length})`, icon: '' },
       ];
 
   const handleReload = () => {
