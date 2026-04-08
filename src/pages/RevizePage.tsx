@@ -254,14 +254,15 @@ export function RevizePage() {
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex-1 min-h-0 flex flex-col overflow-hidden">
         <div className="px-6 pt-5 pb-3 flex-shrink-0">
-          <div className="flex flex-wrap gap-4">
-          <div className="flex-1 min-w-[200px]">
+          <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:gap-4">
+          <div className="w-full md:flex-1 md:min-w-[200px]">
             <Input
               placeholder="Hledat revize..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          <div className="grid grid-cols-2 gap-3 md:contents">
           <Select
             value={filterKategorie}
             onChange={(e) => setFilterKategorie(e.target.value)}
@@ -283,10 +284,81 @@ export function RevizePage() {
             ]}
           />
           </div>
+          </div>
         </div>
 
         {filteredRevize.length > 0 ? (
-          <div className="px-6 pb-4 flex-1 min-h-0 overflow-auto">
+          <>
+          {/* Mobilní seznam karet */}
+          <div className="md:hidden px-4 pb-4 flex-1 min-h-0 overflow-auto space-y-2">
+            {filteredRevize.map((r) => (
+              <div key={r.id} className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm">
+                <Link to={`/revize/${r.id}`} className="block">
+                  <p className="font-semibold text-slate-800 text-sm leading-snug">{r.nazev}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{r.adresa}</p>
+                </Link>
+                <div className="flex items-center justify-between mt-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700">
+                      {r.kategorieRevize === 'elektro' ? 'Elektro' :
+                       r.kategorieRevize === 'hromosvod' ? 'Hromosvod' :
+                       r.kategorieRevize === 'stroje' ? 'Stroje' : r.kategorieRevize}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                      r.stav === 'dokončeno' ? 'bg-emerald-50 text-emerald-600' :
+                      r.stav === 'rozpracováno' ? 'bg-amber-50 text-amber-600' :
+                      'bg-slate-100 text-slate-600'
+                    }`}>{r.stav}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-400">{new Date(r.datum).toLocaleDateString('cs-CZ')}</span>
+                    <div className="relative" ref={openMenuId === r.id ? menuRef : undefined}>
+                      <button
+                        onClick={() => setOpenMenuId(openMenuId === r.id ? null : r.id!)}
+                        className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                        </svg>
+                      </button>
+                      {openMenuId === r.id && (
+                        <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
+                          <button
+                            onClick={() => { setOpenMenuId(null); navigate(`/revize/${r.id}`); }}
+                            className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                          >
+                            <span className="text-xs">✏️</span> Upravit
+                          </button>
+                          <button
+                            onClick={() => { setOpenMenuId(null); openDuplikatModal(r.id!, r.cisloRevize); }}
+                            className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                          >
+                            <span className="text-xs">📋</span> Kopírovat revizi
+                          </button>
+                          <button
+                            onClick={() => { setOpenMenuId(null); openHistorieModal(r.id!, r.cisloRevize); }}
+                            className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                          >
+                            <span className="text-xs">🕐</span> Historie
+                          </button>
+                          <div className="border-t border-slate-100 my-1"></div>
+                          <button
+                            onClick={() => { setOpenMenuId(null); handleDelete(r.id!); }}
+                            className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
+                          >
+                            <span className="text-xs">🗑️</span> Smazat
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-400 mt-1.5">{r.cisloRevize}</p>
+              </div>
+            ))}
+          </div>
+          {/* Desktopová tabulka */}
+          <div className="hidden md:block px-6 pb-4 flex-1 min-h-0 overflow-auto">
             <table className="w-full">
               <thead className="sticky top-0 bg-white z-10">
                 <tr className="border-b border-slate-200">
@@ -386,6 +458,7 @@ export function RevizePage() {
               </tbody>
             </table>
           </div>
+          </>
         ) : (
           <p className="text-center text-slate-500 py-8 px-6">
             {searchTerm || filterStav
