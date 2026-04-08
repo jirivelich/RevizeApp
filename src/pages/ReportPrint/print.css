@@ -450,3 +450,82 @@
     border-width: 2px !important;
   }
 }
+
+/* ========================================
+   PŘÍLOHA – Fotodokumentace závad
+   ======================================== */
+.report-photo-appendix {
+  margin-top: 0;
+}
+
+.report-photo-appendix-title {
+  font-size: 14pt;
+  font-weight: 800;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 2px solid #b0b0b0;
+  padding-bottom: 6px;
+  margin-bottom: 16px;
+}
+
+.report-photo-entry {
+  margin-bottom: 20px;
+  break-inside: avoid;
+}
+
+.report-photo-entry-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  background: #f1f5f9;
+  border-left: 3px solid #3e4a5b;
+  border-radius: 3px;
+  padding: 5px 10px;
+  margin-bottom: 8px;
+  break-after: avoid;
+}
+
+.report-photo-entry-num {
+  font-size: 9.5pt;
+  font-weight: 800;
+  color: #1e293b;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.report-photo-entry-popis {
+  font-size: 9.5pt;
+  color: #1e293b;
+  flex: 1;
+}
+
+.report-photo-entry-badge {
+  font-size: 8pt;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.report-photo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.report-photo-img {
+  width: 100%;
+  height: 70mm;
+  object-fit: cover;
+  border: 1px solid #cbd5e1;
+  border-radius: 2px;
+  display: block;
+}
+
+@media print {
+  .report-photo-img {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

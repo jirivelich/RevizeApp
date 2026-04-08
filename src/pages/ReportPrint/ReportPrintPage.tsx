@@ -292,6 +292,11 @@ export function ReportPrintPage() {
   }
   const isSekceVisible = (key: string) => tiskSekce[key] !== false; // default true
 
+  // Závady s fotkami (zachováme původní pořadové číslo ze sekce 13)
+  const zavadySFotkami = zavady
+    .map((z, i) => ({ ...z, cisloZavady: i + 1 }))
+    .filter(z => Array.isArray(z.fotky) && z.fotky.length > 0);
+
   const ochranaLabels: Record<string, string> = {
     'zakladni-izolace': 'Základní izolace živých částí',
     'kryty-pricka': 'Přepážky nebo kryty',
@@ -704,6 +709,32 @@ export function ReportPrintPage() {
       <ReportSection title="17. Závěr">
         <p className="report-text">{revize.zaver}</p>
       </ReportSection>
+      )}
+
+      {/* PŘÍLOHA – Fotodokumentace závad (pouze pokud existují závady s fotkami) */}
+      {zavadySFotkami.length > 0 && (
+        <>
+          <div className="report-page-break" />
+          <div className="report-photo-appendix">
+            <div className="report-photo-appendix-title">Příloha – Fotodokumentace závad</div>
+            {zavadySFotkami.map((z) => (
+              <div key={z.id ?? z.cisloZavady} className="report-photo-entry">
+                <div className="report-photo-entry-header">
+                  <span className="report-photo-entry-num">#{z.cisloZavady}</span>
+                  <span className="report-photo-entry-popis">{z.popis}</span>
+                  <span className="report-photo-entry-badge">
+                    {z.zavaznost === 'C1' ? 'C1 – Kritická' : z.zavaznost === 'C2' ? 'C2 – Vážná' : 'C3 – Méně závažná'}
+                  </span>
+                </div>
+                <div className="report-photo-grid">
+                  {z.fotky.map((foto, idx) => (
+                    <img key={idx} src={foto} alt={`Závada ${z.cisloZavady} – foto ${idx + 1}`} className="report-photo-img" />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
     </div>
