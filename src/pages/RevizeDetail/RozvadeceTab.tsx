@@ -79,12 +79,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
   const [chranice, setChranice] = useState<Chranic[]>([]);
   const [isCranicModalOpen, setIsCranicModalOpen] = useState(false);
   const [editingChranic, setEditingChranic] = useState<Chranic | null>(null);
-  // Quick-add state (mobile only)
-  const [okruhQuickOpen, setOkruhQuickOpen] = useState(false);
-  const [okruhQuickNazev, setOkruhQuickNazev] = useState('');
   const [isOkruhSheetOpen, setIsOkruhSheetOpen] = useState(false);
-  const [cranicQuickOpen, setCranicQuickOpen] = useState(false);
-  const [cranicQuickNazev, setCranicQuickNazev] = useState('');
   const [isCranicSheetOpen, setIsCranicSheetOpen] = useState(false);
   const [cranicFormData, setCranicFormData] = useState({
     cislo: 1, nazev: '', typ: 'A', proud: '25A',
@@ -228,20 +223,6 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     await saveOkruh();
   };
 
-  const handleQuickAddOkruh = async () => {
-    if (!okruhQuickNazev.trim() || !selectedRozvadec?.id) return;
-    const nextCislo = okruhy.length > 0 ? Math.max(...okruhy.map(o => o.cislo)) + 1 : 1;
-    await okruhService.create({
-      cislo: nextCislo, nazev: okruhQuickNazev.trim(),
-      jisticTyp: 'B', jisticProud: '16A', pocetFazi: 1, vodic: '3x2,5',
-      rozvadecId: selectedRozvadec.id,
-    });
-    const okruhyData = await okruhService.getByRozvadec(selectedRozvadec.id);
-    setOkruhy(okruhyData);
-    setOkruhyCounts(prev => ({ ...prev, [selectedRozvadec.id!]: okruhyData.length }));
-    setOkruhQuickNazev('');
-  };
-
   const handleEditOkruh = (okruh: Okruh) => {
     setEditingOkruh(okruh);
     setOkruhFormData({
@@ -311,18 +292,6 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
   const handleAddChranic = async (e: React.FormEvent) => {
     e.preventDefault();
     await saveCranic();
-  };
-
-  const handleQuickAddCranic = async () => {
-    if (!cranicQuickNazev.trim() || !selectedRozvadec?.id) return;
-    const nextCislo = chranice.length > 0 ? Math.max(...chranice.map(c => c.cislo)) + 1 : 1;
-    await cranicService.create({
-      cislo: nextCislo, nazev: cranicQuickNazev.trim(),
-      typ: 'A', proud: '25A', citlivostMa: 30, pocetPolu: 2,
-      rozvadecId: selectedRozvadec.id,
-    });
-    setChranice(await cranicService.getByRozvadec(selectedRozvadec.id));
-    setCranicQuickNazev('');
   };
 
   const handleEditChranic = (c: Chranic) => {
@@ -463,7 +432,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
               <div className="flex gap-2">
                 <Button size="sm" onClick={() => {
                   resetOkruhForm();
-                  if (window.innerWidth < 640) { setOkruhQuickOpen(true); setOkruhQuickNazev(''); }
+                  if (window.innerWidth < 640) { setIsOkruhSheetOpen(true); }
                   else { setIsOkruhModalOpen(true); }
                 }}>
                   <span className="sm:hidden">⊕</span>
@@ -471,7 +440,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                 </Button>
                 <Button size="sm" onClick={() => {
                   resetCranicForm();
-                  if (window.innerWidth < 640) { setCranicQuickOpen(true); setCranicQuickNazev(''); }
+                  if (window.innerWidth < 640) { setIsCranicSheetOpen(true); }
                   else { setIsCranicModalOpen(true); }
                 }}>
                   <span className="sm:hidden">⚡</span>
@@ -501,32 +470,6 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
             </div>
 
             <h4 className="font-medium text-sm text-slate-700 mb-2">Okruhy ({okruhy.length})</h4>
-            {okruhQuickOpen && (
-              <div className="sm:hidden flex items-center gap-2 mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
-                <input
-                  autoFocus
-                  className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white min-w-0"
-                  placeholder="Název okruhu..."
-                  value={okruhQuickNazev}
-                  onChange={(e) => setOkruhQuickNazev(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleQuickAddOkruh();
-                    if (e.key === 'Escape') { setOkruhQuickOpen(false); setOkruhQuickNazev(''); }
-                  }}
-                />
-                <button onClick={handleQuickAddOkruh} disabled={!okruhQuickNazev.trim()}
-                  className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg bg-blue-500 text-white disabled:opacity-40"
-                  title="Přidat okruh">&#10003;</button>
-                <button onClick={() => {
-                  setOkruhFormData(prev => ({ ...prev, nazev: okruhQuickNazev }));
-                  setOkruhQuickOpen(false);
-                  setIsOkruhSheetOpen(true);
-                }} className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg bg-slate-200 text-slate-600 text-lg"
-                  title="Více možností">⋯</button>
-                <button onClick={() => { setOkruhQuickOpen(false); setOkruhQuickNazev(''); }}
-                  className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-slate-400">×</button>
-              </div>
-            )}
             {okruhy.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -597,32 +540,8 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
               </p>
             )}
 
-            <h4 className="font-medium text-sm text-slate-700 mt-4 mb-2">Proudové chraniče ({chranice.length})</h4>            {cranicQuickOpen && (
-              <div className="sm:hidden flex items-center gap-2 mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
-                <input
-                  autoFocus
-                  className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white min-w-0"
-                  placeholder="Název chrániče..."
-                  value={cranicQuickNazev}
-                  onChange={(e) => setCranicQuickNazev(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleQuickAddCranic();
-                    if (e.key === 'Escape') { setCranicQuickOpen(false); setCranicQuickNazev(''); }
-                  }}
-                />
-                <button onClick={handleQuickAddCranic} disabled={!cranicQuickNazev.trim()}
-                  className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg bg-blue-500 text-white disabled:opacity-40"
-                  title="Přidat chránič">&#10003;</button>
-                <button onClick={() => {
-                  setCranicFormData(prev => ({ ...prev, nazev: cranicQuickNazev }));
-                  setCranicQuickOpen(false);
-                  setIsCranicSheetOpen(true);
-                }} className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg bg-slate-200 text-slate-600 text-lg"
-                  title="Více možností">⋯</button>
-                <button onClick={() => { setCranicQuickOpen(false); setCranicQuickNazev(''); }}
-                  className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-slate-400">×</button>
-              </div>
-            )}            {chranice.length > 0 ? (
+            <h4 className="font-medium text-sm text-slate-700 mt-4 mb-2">Proudové chraniče ({chranice.length})</h4>
+            {chranice.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>

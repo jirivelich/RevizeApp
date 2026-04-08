@@ -22,9 +22,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
   const [editingMistnost, setEditingMistnost] = useState<Mistnost | null>(null);
   const [isZarizeniModalOpen, setIsZarizeniModalOpen] = useState(false);
   const [editingZarizeni, setEditingZarizeni] = useState<Zarizeni | null>(null);
-  // Quick-add state (mobile only)
-  const [zarizeniQuickOpen, setZarizeniQuickOpen] = useState(false);
-  const [zarizeniQuickNazev, setZarizeniQuickNazev] = useState('');
+
   const [isZarizeniSheetOpen, setIsZarizeniSheetOpen] = useState(false);
   const [zarizeniCounts, setZarizeniCounts] = useState<Record<number, number>>(propCounts);
 
@@ -143,18 +141,6 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
     await saveZarizeni();
   };
 
-  const handleQuickAddZarizeni = async () => {
-    if (!zarizeniQuickNazev.trim() || !selectedMistnost?.id) return;
-    await zarizeniService.create({
-      nazev: zarizeniQuickNazev.trim(), mistnostId: selectedMistnost.id,
-      pocetKs: 1, trida: 'I', stav: 'nekontrolováno', oznaceni: '', ochranaPredDotykem: '', poznamka: '',
-    });
-    const zarizeniData = await zarizeniService.getByMistnost(selectedMistnost.id);
-    setZarizeni(zarizeniData);
-    setZarizeniCounts(prev => ({ ...prev, [selectedMistnost.id!]: zarizeniData.length }));
-    setZarizeniQuickNazev('');
-  };
-
   const handleEditZarizeni = (zar: Zarizeni) => {
     setEditingZarizeni(zar);
     setZarizeniFormData({
@@ -222,7 +208,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
               <div className="flex gap-2">
                 <Button size="sm" onClick={() => {
                   resetZarizeniForm();
-                  if (window.innerWidth < 640) { setZarizeniQuickOpen(true); setZarizeniQuickNazev(''); }
+                  if (window.innerWidth < 640) { setIsZarizeniSheetOpen(true); }
                   else { setIsZarizeniModalOpen(true); }
                 }}>
                   <span className="sm:hidden text-base leading-none">+</span>
@@ -238,32 +224,6 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
             </div>
 
             <h4 className="font-medium text-sm text-slate-700 mb-2">Zařízení ({zarizeni.length})</h4>
-            {zarizeniQuickOpen && (
-              <div className="sm:hidden flex items-center gap-2 mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
-                <input
-                  autoFocus
-                  className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white min-w-0"
-                  placeholder="Název zařízení..."
-                  value={zarizeniQuickNazev}
-                  onChange={(e) => setZarizeniQuickNazev(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleQuickAddZarizeni();
-                    if (e.key === 'Escape') { setZarizeniQuickOpen(false); setZarizeniQuickNazev(''); }
-                  }}
-                />
-                <button onClick={handleQuickAddZarizeni} disabled={!zarizeniQuickNazev.trim()}
-                  className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg bg-blue-500 text-white disabled:opacity-40"
-                  title="Přidat zařízení">&#10003;</button>
-                <button onClick={() => {
-                  setZarizeniFormData(prev => ({ ...prev, nazev: zarizeniQuickNazev }));
-                  setZarizeniQuickOpen(false);
-                  setIsZarizeniSheetOpen(true);
-                }} className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg bg-slate-200 text-slate-600 text-lg"
-                  title="Více možností">⋯</button>
-                <button onClick={() => { setZarizeniQuickOpen(false); setZarizeniQuickNazev(''); }}
-                  className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg text-slate-400">×</button>
-              </div>
-            )}
             {zarizeni.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
