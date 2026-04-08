@@ -265,7 +265,8 @@ export function RozvadecDetailPage() {
         title="Okruhy"
         actions={
           <Button size="sm" onClick={() => { resetOkruhForm(); setIsOkruhModalOpen(true); }}>
-            + Přidat okruh
+            <span className="sm:hidden text-base leading-none">+</span>
+            <span className="hidden sm:inline">+ Přidat okruh</span>
           </Button>
         }
       >
@@ -423,7 +424,8 @@ export function RozvadecDetailPage() {
         title="Proudové chraniče"
         actions={
           <Button size="sm" onClick={() => { resetCranicForm(); setIsCranicModalOpen(true); }}>
-            + Přidat chránič
+            <span className="sm:hidden text-base leading-none">+</span>
+            <span className="hidden sm:inline">+ Přidat chránič</span>
           </Button>
         }
       >

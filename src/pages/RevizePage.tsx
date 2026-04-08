@@ -248,7 +248,8 @@ export function RevizePage() {
           <p className="text-xs text-slate-400">Správa revizí elektrických instalací, hromosvodů a strojních zařízení</p>
         </div>
         <Button onClick={openModal}>
-          + Nová revize
+          <span className="sm:hidden text-lg leading-none">+</span>
+          <span className="hidden sm:inline">+ Nová revize</span>
         </Button>
       </div>
 

@@ -113,7 +113,8 @@ export function ZavadyPage() {
           <p className="text-xs text-slate-400">Databáze typických závad s odkazy na normy a zákony</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
-          + Nová závada
+          <span className="sm:hidden text-lg leading-none">+</span>
+          <span className="hidden sm:inline">+ Nová závada</span>
         </Button>
       </div>
 

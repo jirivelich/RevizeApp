@@ -121,7 +121,8 @@ export function PristrojePage() {
           <p className="text-xs text-slate-400">Správa měřících přístrojů a jejich kalibračních termínů</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
-          + Přidat přístroj
+          <span className="sm:hidden text-lg leading-none">+</span>
+          <span className="hidden sm:inline">+ Přidat přístroj</span>
         </Button>
       </div>
 
@@ -393,7 +394,10 @@ export function PristrojePage() {
                 poznamka: '',
               });
               setIsKalibraceModalOpen(true);
-            }}>+ Nová kalibrace</Button>
+            }}>
+              <span className="sm:hidden text-base leading-none">+</span>
+              <span className="hidden sm:inline">+ Nová kalibrace</span>
+            </Button>
           )}
 
           {/* Formulář nové kalibrace */}

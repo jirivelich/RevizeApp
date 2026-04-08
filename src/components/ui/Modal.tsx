@@ -54,7 +54,7 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
           {children}
         </div>
         {footer && (
-          <div className="flex justify-end gap-2 px-5 py-3 border-t border-slate-200">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 px-5 py-3 border-t border-slate-200 [&>button]:w-full [&>button]:sm:w-auto">
             {footer}
           </div>
         )}

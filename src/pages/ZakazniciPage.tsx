@@ -121,7 +121,8 @@ const ZakazniciPage: React.FC = () => {
           <p className="text-xs text-slate-400">Správa zákazníků a jejich revizí</p>
         </div>
         <Button onClick={handleNewZakaznik}>
-          Nový zákazník
+          <span className="sm:hidden text-lg leading-none">+</span>
+          <span className="hidden sm:inline">Nový zákazník</span>
         </Button>
       </div>
 

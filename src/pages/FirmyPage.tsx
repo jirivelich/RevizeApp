@@ -88,7 +88,10 @@ export function FirmyPage() {
             Seznam firem, pro které provádíte revize. Tyto firmy můžete vybírat při vytváření revize.
           </p>
         </div>
-        <Button onClick={() => handleOpenModal()}>+ Přidat firmu</Button>
+        <Button onClick={() => handleOpenModal()}>
+          <span className="sm:hidden text-lg leading-none">+</span>
+          <span className="hidden sm:inline">+ Přidat firmu</span>
+        </Button>
       </div>
 
       {firmy.length === 0 ? (

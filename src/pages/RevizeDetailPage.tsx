@@ -1378,7 +1378,10 @@ export function RevizeDetailPage() {
           <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center justify-between">
             <span className={!isSekceVisible('pristroje') ? 'opacity-50 line-through' : ''}>2.3 Použité měřicí přístroje</span>
             <div className="flex items-center gap-2">
-              <Button size="sm" onClick={() => setIsPristrojModalOpen(true)} className="!py-0.5 !px-2 !text-xs bg-white/20 hover:bg-white/30 text-white border-0">+ Přidat</Button>
+              <Button size="sm" onClick={() => setIsPristrojModalOpen(true)} className="!py-0.5 !px-2 !text-xs bg-white/20 hover:bg-white/30 text-white border-0">
+                <span className="sm:hidden">+</span>
+                <span className="hidden sm:inline">+ Přidat</span>
+              </Button>
               <button onClick={() => toggleSekce('pristroje')} className="flex items-center gap-1 text-[10px] font-normal normal-case tracking-normal opacity-70 hover:opacity-100 transition-opacity cursor-pointer" title={isSekceVisible('pristroje') ? 'Skrýt v tisku' : 'Zobrazit v tisku'}>
                 {isSekceVisible('pristroje') ? '🖨️' : '🚫'} <span className="hidden sm:inline">{isSekceVisible('pristroje') ? 'Tisk ✓' : 'Skryto'}</span>
               </button>
@@ -1585,7 +1588,8 @@ export function RevizeDetailPage() {
                 actions={
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => { resetOkruhForm(); setIsOkruhModalOpen(true); }}>
-                      + Přidat okruh
+                      <span className="sm:hidden text-base leading-none">+</span>
+                      <span className="hidden sm:inline">+ Přidat okruh</span>
                     </Button>
                     <Button
                       variant="danger"
@@ -1720,7 +1724,8 @@ export function RevizeDetailPage() {
           title="Závady"
           actions={
             <Button size="sm" onClick={() => { resetZavadaForm(); setIsZavadaModalOpen(true); }}>
-              + Přidat závadu
+              <span className="sm:hidden text-base leading-none">+</span>
+              <span className="hidden sm:inline">+ Přidat závadu</span>
             </Button>
           }
         >
@@ -1855,7 +1860,8 @@ export function RevizeDetailPage() {
                 actions={
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => { resetZarizeniForm(); setIsZarizeniModalOpen(true); }}>
-                      + Přidat zařízení
+                      <span className="sm:hidden text-base leading-none">+</span>
+                      <span className="hidden sm:inline">+ Přidat zařízení</span>
                     </Button>
                     <Button
                       variant="secondary"

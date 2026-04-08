@@ -83,7 +83,8 @@ export function MistnostiPage() {
           <p className="text-xs text-slate-400">Evidence místností</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
-          + Nová místnost
+          <span className="sm:hidden text-lg leading-none">+</span>
+          <span className="hidden sm:inline">+ Nová místnost</span>
         </Button>
       </div>
 
