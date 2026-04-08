@@ -414,8 +414,14 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
             title={`${selectedRozvadec.nazev}`}
             actions={
               <div className="flex gap-2">
-                <Button size="sm" onClick={() => { resetOkruhForm(); setIsOkruhModalOpen(true); }}>+ Přidat okruh</Button>
-                <Button size="sm" onClick={() => { resetCranicForm(); setIsCranicModalOpen(true); }}>+ Přidat chránič</Button>
+                <Button size="sm" onClick={() => { resetOkruhForm(); setIsOkruhModalOpen(true); }}>
+                  <span className="sm:hidden text-base leading-none">+</span>
+                  <span className="hidden sm:inline">+ Přidat okruh</span>
+                </Button>
+                <Button size="sm" onClick={() => { resetCranicForm(); setIsCranicModalOpen(true); }}>
+                  <span className="sm:hidden text-base leading-none">+</span>
+                  <span className="hidden sm:inline">+ Přidat chránič</span>
+                </Button>
                 <Button variant="secondary" size="sm" onClick={() => {
                   setEditingRozvadec(selectedRozvadec);
                   setRozvadecFormData({
