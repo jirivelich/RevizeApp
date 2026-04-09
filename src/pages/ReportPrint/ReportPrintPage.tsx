@@ -631,9 +631,9 @@ export function ReportPrintPage() {
         )}
       </ReportSection>
 
-      {/* MÍSTNOSTI A ZAŘÍZENÍ */}
+      {/* 13. PROSTORY A ZAŘÍZENÍ */}
       {mistnosti.length > 0 && (
-        <ReportSection title="Místnosti a zařízení">
+        <ReportSection title="13. Prostory a zařízení">
           {mistnosti.map((m) => (
             <div key={m.id} className="report-subsection">
               <div className="report-subsection-title">
@@ -662,8 +662,8 @@ export function ReportPrintPage() {
         </ReportSection>
       )}
 
-      {/* 13. ZÁVADY */}
-      <ReportSection title="13. Přehled zjištěných závad">
+      {/* 14. ZÁVADY */}
+      <ReportSection title="14. Přehled zjištěných závad">
         {zavady.length > 0 ? (
           <table className="report-data-table">
             <thead>
@@ -697,9 +697,9 @@ export function ReportPrintPage() {
         )}
       </ReportSection>
 
-      {/* 14. VYHODNOCENÍ PŘEDCHOZÍCH REVIZÍ */}
+      {/* 15. VYHODNOCENÍ PŘEDCHOZÍCH REVIZÍ */}
       {isSekceVisible('vyhodnoceniPredchozich') && (
-      <ReportSection title="14. Vyhodnocení předchozích revizí">
+      <ReportSection title="15. Vyhodnocení předchozích revizí">
         {revize.vyhodnoceniPredchozich ? (
           <p className="report-text">{revize.vyhodnoceniPredchozich}</p>
         ) : (
@@ -708,23 +708,23 @@ export function ReportPrintPage() {
       </ReportSection>
       )}
 
-      {/* 15. LHŮTA PŘÍŠTÍ REVIZE */}
-      <ReportSection title="15. Doporučená lhůta provedení příští revize">
+      {/* 16. LHŮTA PŘÍŠTÍ REVIZE */}
+      <ReportSection title="16. Doporučená lhůta provedení příští revize">
         <p className="report-text">
           Příští revize by měla být provedena nejpozději do <strong>{revize.datumPlatnosti ? new Date(revize.datumPlatnosti).toLocaleDateString('cs-CZ') : `${revize.termin} měsíců od data provedení`}</strong>.
         </p>
       </ReportSection>
 
-      {/* 16. ODŮVODNĚNÍ */}
+      {/* 17. ODŮVODNĚNÍ */}
       {isSekceVisible('vysledekOduvodneni') && revize.vysledekOduvodneni && (
-      <ReportSection title="16. Odůvodnění">
+      <ReportSection title="17. Odůvodnění">
         <p className="report-text">{revize.vysledekOduvodneni}</p>
       </ReportSection>
       )}
 
-      {/* 17. ZÁVĚR */}
+      {/* 18. ZÁVĚR */}
       {isSekceVisible('zaver') && revize.zaver && (
-      <ReportSection title="17. Závěr">
+      <ReportSection title="18. Závěr">
         <p className="report-text">{revize.zaver}</p>
       </ReportSection>
       )}
