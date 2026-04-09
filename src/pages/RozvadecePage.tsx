@@ -134,7 +134,7 @@ export function RozvadecDetailPage() {
       jisticTyp: okruh.jisticTyp,
       jisticProud: okruh.jisticProud,
       pocetFazi: okruh.pocetFazi || 1,
-      vodic: okruh.vodic,
+      vodic: okruh.vodic || '',
       izolacniOdpor: okruh.izolacniOdpor || '',
       impedanceSmycky: okruh.impedanceSmycky?.replace(/^max\.\s*/, '') || '',
       impedanceSmyckyMax: okruh.impedanceSmycky?.startsWith('max.') || false,
