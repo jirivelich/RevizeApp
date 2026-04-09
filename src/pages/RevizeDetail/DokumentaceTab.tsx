@@ -489,7 +489,7 @@ export function DokumentaceTab({
 
     </div>
 
-    {/* Modal pro přidání přístroje k revizi */
+    {/* Modal pro přidání přístroje k revizi */}
     <Modal
       isOpen={isPristrojModalOpen}
       onClose={() => setIsPristrojModalOpen(false)}
