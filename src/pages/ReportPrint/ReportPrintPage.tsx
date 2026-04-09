@@ -742,9 +742,9 @@ export function ReportPrintPage() {
       </ReportSection>
       )}
 
-      {/* ROZDĚLOVNÍK */}
+      {/* 19. ROZDĚLOVNÍK */}
       {isSekceVisible('rozdelovnik') && revize.rozdelovnik && (
-      <ReportSection title="Rozdělovník">
+      <ReportSection title="19. Rozdělovník">
         <table className="report-data-table">
           <thead><tr><th>Příjemce</th><th style={{width:'80px',textAlign:'center'}}>Počet</th></tr></thead>
           <tbody>
