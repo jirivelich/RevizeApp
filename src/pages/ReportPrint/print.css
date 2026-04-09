@@ -405,93 +405,10 @@
   padding-top: 4px;
 }
 
-/* ── Náhled shell – toolbar + scroll oblast ── */
-.nahled-shell {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-  background: #e2e8f0;
-}
-
-.nahled-toolbar {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: #1e293b;
-  box-shadow: 0 2px 8px rgba(0,0,0,.25);
-}
-
-.nahled-scroll {
-  flex: 1;
-  overflow: auto;
-}
-
-.nahled-waiting {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  font-size: 16px;
-  color: #64748b;
-  font-family: 'Segoe UI', Arial, sans-serif;
-}
-
-.nahled-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 16px;
-  border-radius: 20px;
-  border: none;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: 'Segoe UI', Arial, sans-serif;
-  cursor: pointer;
-  transition: opacity .15s;
-  white-space: nowrap;
-}
-
-.nahled-btn:hover {
-  opacity: .85;
-}
-
-.nahled-btn--back {
-  background: #475569;
-  color: #fff;
-}
-
-.nahled-btn--print {
-  background: #2563eb;
-  color: #fff;
-}
-
-.nahled-btn--print:disabled {
-  opacity: .45;
-  cursor: not-allowed;
-}
-
 /* ========================================
    TISKOVÁ MÉDIA – @media print
    ======================================== */
 @media print {
-  .nahled-shell {
-    display: block !important;
-    height: auto !important;
-    overflow: visible !important;
-    background: white !important;
-  }
-
-  .nahled-toolbar {
-    display: none !important;
-  }
-
-  .nahled-scroll {
-    overflow: visible !important;
-  }
-
   .report-source {
     display: none !important;
   }

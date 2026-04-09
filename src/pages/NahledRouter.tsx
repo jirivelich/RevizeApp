@@ -4,7 +4,7 @@ import { revizeService } from '../services/database';
 import { ReportPrintPage } from './ReportPrint';
 import { HromosvodPrintPage } from './HromosvodPrint';
 import { StrojniZarizeniPrintPage } from './StrojniZarizeniPrint';
-import './ReportPrint/print.css';
+import './ReportPrint/nahled.css';
 
 /**
  * Router-wrapper pro tiskový náhled.
