@@ -25,6 +25,9 @@
 /* ── Pagedjs cílový kontejner ── */
 .report-preview {
   padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /* ── String-set prvky (vizuálně skryté, ale v layoutu) ── */
