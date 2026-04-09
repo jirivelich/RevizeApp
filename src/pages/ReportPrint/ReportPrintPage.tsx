@@ -695,6 +695,19 @@ export function ReportPrintPage() {
         ) : (
           <p className="report-text"><strong>Při revizi nebyly zjištěny žádné závady.</strong></p>
         )}
+        {zavady.length > 0 && (
+          <div className="report-zavada-legenda">
+            <strong>Kategorie závad:</strong>{' '}
+            <span><strong>C1</strong> – Kritická závada (bezprostřední nebezpečí, je nutné ihned odpojit zařízení od napájení);</span>{' '}
+            <span><strong>C2</strong> – Vážná závada (nutná náprava v co nejkratší době);</span>{' '}
+            <span><strong>C3</strong> – Méně závažná závada (doporučení ke zlepšení, zařízení může být provozováno).</span>
+          </div>
+        )}
+        {zavadySFotkami.length > 0 && (
+          <p className="report-zavada-foto-note">
+            Fotografie k závadám jsou přiloženy na následujících stránách.
+          </p>
+        )}
       </ReportSection>
 
       {/* 15. VYHODNOCENÍ PŘEDCHOZÍCH REVIZÍ */}

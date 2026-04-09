@@ -538,3 +538,17 @@
     print-color-adjust: exact !important;
   }
 }
+
+.report-zavada-legenda {
+  margin-top: 8px;
+  font-size: 8pt;
+  color: #555;
+  line-height: 1.6;
+}
+
+.report-zavada-foto-note {
+  margin-top: 6px;
+  font-size: 8.5pt;
+  font-style: italic;
+  color: #333;
+}
