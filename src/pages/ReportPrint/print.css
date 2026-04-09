@@ -409,6 +409,11 @@
    TISKOVÁ MÉDIA – @media print
    ======================================== */
 @media print {
+  /* Reset mobilního zoomu při tisku */
+  .pagedjs_pages {
+    zoom: 1 !important;
+  }
+
   .report-source {
     display: none !important;
   }

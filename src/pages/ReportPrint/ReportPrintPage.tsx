@@ -233,6 +233,21 @@ export function ReportPrintPage() {
           });
       }
 
+      // Mobilní zoom: zmáčknout A4 stránky na šířku viewportu
+      const applyZoom = () => {
+        if (!previewRef.current) return;
+        const pages = previewRef.current.querySelector('.pagedjs_pages') as HTMLElement | null;
+        if (!pages) return;
+        const scale = Math.min(1, (previewRef.current.clientWidth || window.innerWidth) / 850);
+        pages.style.zoom = String(scale);
+        // Kompenzovat výšku scroll oblasti po zmenšení
+        pages.style.transformOrigin = 'top center';
+      };
+      applyZoom();
+      window.addEventListener('resize', applyZoom);
+      // Uložit handler pro cleanup
+      (previewRef.current as any).__zoomHandler = applyZoom;
+
       // Odpojit ResizeObserver ze všech pagedjs stránek (zabrání crashům v checkUnderflowAfterResize)
       try { flow?.pages?.forEach((p: any) => p.removeListeners?.()); } catch { /* ok */ }
     } catch (err) {
@@ -257,7 +272,12 @@ export function ReportPrintPage() {
     if (data) {
       // Malý timeout aby se React stačil vykreslit obsah do sourceRef
       const timer = setTimeout(runPagedjs, 100);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        // Cleanup resize handleru při unmount
+        const handler = previewRef.current && (previewRef.current as any).__zoomHandler;
+        if (handler) window.removeEventListener('resize', handler);
+      };
     }
   }, [data, runPagedjs]);
 

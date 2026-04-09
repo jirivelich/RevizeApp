@@ -73,6 +73,12 @@
   cursor: not-allowed;
 }
 
+@media (max-width: 900px) {
+  .nahled-scroll {
+    overflow-x: hidden;
+  }
+}
+
 @media print {
   .nahled-shell {
     display: block !important;
