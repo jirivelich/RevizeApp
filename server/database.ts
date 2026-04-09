@@ -461,6 +461,10 @@ export async function initializeDatabase() {
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "rtPlatnostOpravneni" TEXT',
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "rtCisloOsvedceni" TEXT',
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "rtPlatnostOsvedceni" TEXT',
+      // Vodic: rozdělení na typKabelu, pocetZil, prurez
+      'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "typKabelu" TEXT',
+      'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "pocetZil" TEXT',
+      'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS prurez TEXT',
     ];
     
     for (const migration of migrations) {

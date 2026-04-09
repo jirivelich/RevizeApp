@@ -349,9 +349,9 @@ async function startServer() {
         const okruhy = await client.query('SELECT * FROM okruh WHERE "rozvadecId" = $1', [rozv.id]);
         for (const okr of okruhy.rows) {
           await client.query(`
-            INSERT INTO okruh ("rozvadecId", cislo, nazev, "jisticTyp", "jisticProud", "pocetFazi", vodic, "izolacniOdpor", "impedanceSmycky", "proudovyChranicMa", "casOdpojeni", poznamka)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-          `, [newRozvId, okr.cislo, okr.nazev, okr.jisticTyp, okr.jisticProud, okr.pocetFazi, okr.vodic, okr.izolacniOdpor, okr.impedanceSmycky, okr.proudovyChranicMa, okr.casOdpojeni, okr.poznamka]);
+            INSERT INTO okruh ("rozvadecId", cislo, nazev, "jisticTyp", "jisticProud", "pocetFazi", vodic, "typKabelu", "pocetZil", prurez, "izolacniOdpor", "impedanceSmycky", poznamka)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+          `, [newRozvId, okr.cislo, okr.nazev, okr.jisticTyp, okr.jisticProud, okr.pocetFazi, okr.vodic, okr.typKabelu, okr.pocetZil, okr.prurez, okr.izolacniOdpor, okr.impedanceSmycky, okr.poznamka]);
         }
       }
       console.log(`  ✅ Zkopírováno ${rozvadece.rows.length} rozvaděčů`);
@@ -491,13 +491,13 @@ async function startServer() {
 
   app.post('/api/okruhy', authMiddleware, async (req, res) => {
     try {
-      const { rozvadecId, cislo, nazev, jisticTyp, jisticProud, pocetFazi, vodic, izolacniOdpor, impedanceSmycky, poznamka } = req.body;
+      const { rozvadecId, cislo, nazev, jisticTyp, jisticProud, pocetFazi, vodic, typKabelu, pocetZil, prurez, izolacniOdpor, impedanceSmycky, poznamka } = req.body;
       
       const result = await pool.query(`
-        INSERT INTO okruh ("rozvadecId", cislo, nazev, "jisticTyp", "jisticProud", "pocetFazi", vodic, "izolacniOdpor", "impedanceSmycky", poznamka)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        INSERT INTO okruh ("rozvadecId", cislo, nazev, "jisticTyp", "jisticProud", "pocetFazi", vodic, "typKabelu", "pocetZil", prurez, "izolacniOdpor", "impedanceSmycky", poznamka)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING id
-      `, [rozvadecId, cislo, nazev, jisticTyp, jisticProud, pocetFazi, vodic, izolacniOdpor, impedanceSmycky, poznamka]);
+      `, [rozvadecId, cislo, nazev, jisticTyp, jisticProud, pocetFazi, vodic, typKabelu, pocetZil, prurez, izolacniOdpor, impedanceSmycky, poznamka]);
       
       res.json({ id: result.rows[0].id });
     } catch (error) {

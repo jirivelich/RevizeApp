@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
+import { EditableSelect, computeVodic } from './RevizeDetail/RozvadeceTab';
+import { TYPY_KABELU, PRUREZY } from './RevizeDetail/RozvadeceTab';
 import { revizeService, rozvadecService, zavadaService, mistnostService, okruhService, pristrojService, revizePristrojService, zarizeniService, firmaService, zavadaKatalogService, nastaveniService, zakazniciService, predvolenyTextService } from '../services/database';
 import type { Revize, Rozvadec, Zavada, Mistnost, Okruh, MericiPristroj, Zarizeni, Firma, ZavadaKatalog, Nastaveni, Zakaznik, PredvolenyText } from '../types';
 
@@ -106,7 +108,9 @@ export function RevizeDetailPage() {
     jisticTyp: 'B',
     jisticProud: '16A',
     pocetFazi: 1,
-    vodic: '3x2,5',
+    typKabelu: 'CYKY',
+    pocetZil: '3',
+    prurez: '2,5',
     izolacniOdpor: '',
     impedanceSmycky: '',
     impedanceSmyckyMax: false,
@@ -304,8 +308,16 @@ export function RevizeDetailPage() {
   const handleAddOkruh = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedRozvadec?.id) {
-      const { impedanceSmyckyMax, ...okruhData } = okruhFormData;
-      const saveData = { ...okruhData, izolacniOdpor: okruhData.izolacniOdpor || undefined, impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky || undefined };
+      const { impedanceSmyckyMax, typKabelu, pocetZil, prurez, ...okruhData } = okruhFormData;
+      const saveData = {
+        ...okruhData,
+        typKabelu: typKabelu || undefined,
+        pocetZil: pocetZil || undefined,
+        prurez: prurez || undefined,
+        vodic: computeVodic(typKabelu, pocetZil, prurez) || undefined,
+        izolacniOdpor: okruhData.izolacniOdpor || undefined,
+        impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky || undefined,
+      };
       if (editingOkruh?.id) {
         await okruhService.update(editingOkruh.id, saveData);
       } else {
@@ -331,7 +343,9 @@ export function RevizeDetailPage() {
       jisticTyp: 'B',
       jisticProud: '16A',
       pocetFazi: 1,
-      vodic: '3x2,5',
+      typKabelu: 'CYKY',
+      pocetZil: '3',
+      prurez: '2,5',
       izolacniOdpor: '',
       impedanceSmycky: '',
       impedanceSmyckyMax: false,
@@ -560,13 +574,25 @@ export function RevizeDetailPage() {
 
   const handleEditOkruh = (okruh: Okruh) => {
     setEditingOkruh(okruh);
+    let typKabelu = okruh.typKabelu || '';
+    let pocetZil = okruh.pocetZil || '';
+    let prurez = okruh.prurez || '';
+    if (!typKabelu && !pocetZil && !prurez && okruh.vodic) {
+      const m3 = okruh.vodic.match(/^(\S+)\s+(\d+)x(\S+)$/);
+      const m2 = okruh.vodic.match(/^(\S+)\s+(\S+)$/);
+      const m1 = okruh.vodic.match(/^(\d+)x(\S+)$/);
+      if (m3) { typKabelu = m3[1]; pocetZil = m3[2]; prurez = m3[3]; }
+      else if (m2) { typKabelu = m2[1]; prurez = m2[2]; }
+      else if (m1) { pocetZil = m1[1]; prurez = m1[2]; }
+      else { prurez = okruh.vodic; }
+    }
     setOkruhFormData({
       cislo: okruh.cislo,
       nazev: okruh.nazev,
       jisticTyp: okruh.jisticTyp,
       jisticProud: okruh.jisticProud,
       pocetFazi: okruh.pocetFazi || 1,
-      vodic: okruh.vodic,
+      typKabelu, pocetZil, prurez,
       izolacniOdpor: okruh.izolacniOdpor || '',
       impedanceSmycky: okruh.impedanceSmycky?.replace(/^max\.\s*/, '') || '',
       impedanceSmyckyMax: okruh.impedanceSmycky?.startsWith('max.') || false,
@@ -596,6 +622,9 @@ export function RevizeDetailPage() {
         jisticTyp: okruh.jisticTyp,
         jisticProud: okruh.jisticProud,
         pocetFazi: okruh.pocetFazi || 1,
+        typKabelu: okruh.typKabelu,
+        pocetZil: okruh.pocetZil,
+        prurez: okruh.prurez,
         vodic: okruh.vodic,
         izolacniOdpor: okruh.izolacniOdpor,
         impedanceSmycky: okruh.impedanceSmycky,
@@ -1660,7 +1689,7 @@ export function RevizeDetailPage() {
                               </span>
                             </td>
                             <td className="py-2 px-3">{o.nazev}</td>
-                            <td className="py-2 px-3 text-slate-600">{o.vodic}</td>
+                            <td className="py-2 px-3 text-slate-600">{computeVodic(o.typKabelu, o.pocetZil, o.prurez) || o.vodic}</td>
                             <td className="py-2 px-3 text-slate-600">
                               {o.izolacniOdpor || '—'}
                             </td>
@@ -2050,7 +2079,7 @@ export function RevizeDetailPage() {
               required
             />
           </div>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <Select
               label="Typ jističe"
               value={okruhFormData.jisticTyp}
@@ -2084,11 +2113,16 @@ export function RevizeDetailPage() {
                 { value: '3', label: '3P' },
               ]}
             />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <EditableSelect label="Typ kabelu" value={okruhFormData.typKabelu} onChange={(val) => setOkruhFormData({ ...okruhFormData, typKabelu: val })} options={TYPY_KABELU} />
             <Input
-              label="Vodič"
-              value={okruhFormData.vodic}
-              onChange={(e) => setOkruhFormData({ ...okruhFormData, vodic: e.target.value })}
+              label="Počet žil (volitelné)"
+              value={okruhFormData.pocetZil}
+              onChange={(e) => setOkruhFormData({ ...okruhFormData, pocetZil: e.target.value })}
+              placeholder="např. 3"
             />
+            <EditableSelect label="Průřez (mm²)" value={okruhFormData.prurez} onChange={(val) => setOkruhFormData({ ...okruhFormData, prurez: val })} options={PRUREZY} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Input

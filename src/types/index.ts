@@ -153,7 +153,10 @@ export interface Okruh {
   jisticTyp: string;
   jisticProud: string;
   pocetFazi: number;
-  vodic: string;
+  vodic?: string;
+  typKabelu?: string;
+  pocetZil?: string;
+  prurez?: string;
   izolacniOdpor?: string;
   impedanceSmycky?: string;
   poznamka?: string;

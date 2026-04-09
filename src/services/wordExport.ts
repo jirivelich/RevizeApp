@@ -444,7 +444,9 @@ export async function exportElektroToWord(data: ReportData): Promise<void> {
             String(o.cislo),
             `${o.jisticTyp}${o.jisticProud}`,
             o.nazev,
-            o.vodic,
+            (o.typKabelu || o.pocetZil || o.prurez)
+              ? [o.typKabelu, o.pocetZil ? `${o.pocetZil}x${o.prurez ?? ''}` : o.prurez ?? ''].filter(Boolean).join(' ')
+              : (o.vodic ?? ''),
             o.izolacniOdpor != null ? String(o.izolacniOdpor) : '—',
             o.impedanceSmycky != null ? String(o.impedanceSmycky) : '—',
           ]),

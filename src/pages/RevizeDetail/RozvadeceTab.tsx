@@ -5,6 +5,15 @@ import { okruhService, cranicService } from '../../services/database';
 import { useCreateRozvadec, useDeleteRozvadec, useUpdateRozvadec } from '../../hooks/useQueries';
 import type { Rozvadec, Okruh, Chranic } from '../../types';
 
+export const TYPY_KABELU = ['CYKY', 'CY', 'NYM', 'CYKFY', 'YDY', 'AYKY', 'AY'];
+export const PRUREZY = ['1', '1,5', '2,5', '4', '6', '10', '16', '25', '35', '50', '70', '95', '120'];
+
+export function computeVodic(typKabelu?: string, pocetZil?: string, prurez?: string): string {
+  if (!typKabelu && !pocetZil && !prurez) return '';
+  const core = pocetZil ? `${pocetZil}x${prurez ?? ''}` : prurez ?? '';
+  return [typKabelu, core].filter(Boolean).join(' ');
+}
+
 // EditableSelect – select s možností zadat vlastní hodnotu
 export function EditableSelect({ label, value, onChange, options }: {
   label: string; value: string; onChange: (val: string) => void; options: string[];
@@ -114,7 +123,9 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     jisticTyp: 'B',
     jisticProud: '16A',
     pocetFazi: 1,
-    vodic: '3x2,5',
+    typKabelu: 'CYKY',
+    pocetZil: '3',
+    prurez: '2,5',
     izolacniOdpor: '',
     impedanceSmycky: '',
     impedanceSmyckyMax: false,
@@ -195,15 +206,24 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
   const resetOkruhForm = () => {
     const nextCislo = okruhy.length > 0 ? Math.max(...okruhy.map(o => o.cislo)) + 1 : 1;
     setOkruhFormData({
-      cislo: nextCislo, nazev: '', jisticTyp: 'B', jisticProud: '16A', pocetFazi: 1, vodic: '3x2,5',
+      cislo: nextCislo, nazev: '', jisticTyp: 'B', jisticProud: '16A', pocetFazi: 1,
+      typKabelu: 'CYKY', pocetZil: '3', prurez: '2,5',
       izolacniOdpor: '', impedanceSmycky: '', impedanceSmyckyMax: false, poznamka: '',
     });
   };
 
   const saveOkruh = async () => {
     if (!selectedRozvadec?.id) return;
-    const { impedanceSmyckyMax, ...okruhData } = okruhFormData;
-    const saveData = { ...okruhData, izolacniOdpor: okruhData.izolacniOdpor || undefined, impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky || undefined };
+    const { impedanceSmyckyMax, typKabelu, pocetZil, prurez, ...okruhData } = okruhFormData;
+    const saveData = {
+      ...okruhData,
+      typKabelu: typKabelu || undefined,
+      pocetZil: pocetZil || undefined,
+      prurez: prurez || undefined,
+      vodic: computeVodic(typKabelu, pocetZil, prurez) || undefined,
+      izolacniOdpor: okruhData.izolacniOdpor || undefined,
+      impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky || undefined,
+    };
     if (editingOkruh?.id) {
       await okruhService.update(editingOkruh.id, saveData);
     } else {
@@ -225,9 +245,22 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
 
   const handleEditOkruh = (okruh: Okruh) => {
     setEditingOkruh(okruh);
+    let typKabelu = okruh.typKabelu || '';
+    let pocetZil = okruh.pocetZil || '';
+    let prurez = okruh.prurez || '';
+    if (!typKabelu && !pocetZil && !prurez && okruh.vodic) {
+      const m3 = okruh.vodic.match(/^(\S+)\s+(\d+)x(\S+)$/);
+      const m2 = okruh.vodic.match(/^(\S+)\s+(\S+)$/);
+      const m1 = okruh.vodic.match(/^(\d+)x(\S+)$/);
+      if (m3) { typKabelu = m3[1]; pocetZil = m3[2]; prurez = m3[3]; }
+      else if (m2) { typKabelu = m2[1]; prurez = m2[2]; }
+      else if (m1) { pocetZil = m1[1]; prurez = m1[2]; }
+      else { prurez = okruh.vodic; }
+    }
     setOkruhFormData({
       cislo: okruh.cislo, nazev: okruh.nazev, jisticTyp: okruh.jisticTyp, jisticProud: okruh.jisticProud,
-      pocetFazi: okruh.pocetFazi || 1, vodic: okruh.vodic, izolacniOdpor: okruh.izolacniOdpor || '',
+      pocetFazi: okruh.pocetFazi || 1, typKabelu, pocetZil, prurez,
+      izolacniOdpor: okruh.izolacniOdpor || '',
       impedanceSmycky: okruh.impedanceSmycky?.replace(/^max\.\s*/, '') || '', impedanceSmyckyMax: okruh.impedanceSmycky?.startsWith('max.') || false,
       poznamka: okruh.poznamka || '',
     });
@@ -255,6 +288,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
       await okruhService.create({
         rozvadecId: selectedRozvadec.id, cislo: nextCislo, nazev: okruh.nazev,
         jisticTyp: okruh.jisticTyp, jisticProud: okruh.jisticProud, pocetFazi: okruh.pocetFazi || 1,
+        typKabelu: okruh.typKabelu, pocetZil: okruh.pocetZil, prurez: okruh.prurez,
         vodic: okruh.vodic, izolacniOdpor: okruh.izolacniOdpor, impedanceSmycky: okruh.impedanceSmycky,
         poznamka: okruh.poznamka,
       });
@@ -513,7 +547,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                           </span>
                         </td>
                         <td className="py-1 px-2 text-xs">{o.nazev}</td>
-                        <td className="py-1 px-2 text-xs text-slate-600">{o.vodic}</td>
+                        <td className="py-1 px-2 text-xs text-slate-600">{computeVodic(o.typKabelu, o.pocetZil, o.prurez) || o.vodic}</td>
                         <td className="py-1 px-2 text-xs text-slate-600">{o.izolacniOdpor || '—'}</td>
                         <td className="py-1 px-2 text-xs text-slate-600">{o.impedanceSmycky || '—'}</td>
                         <td className="py-1 px-2 text-xs text-right">
@@ -642,11 +676,15 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
           <Input type="number" label="Číslo okruhu" value={okruhFormData.cislo} onChange={(e) => setOkruhFormData({ ...okruhFormData, cislo: parseInt(e.target.value) })} required />
           <Input label="Název" value={okruhFormData.nazev} onChange={(e) => setOkruhFormData({ ...okruhFormData, nazev: e.target.value })} required />
         </div>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <EditableSelect label="Typ jištění" value={okruhFormData.jisticTyp} onChange={(val) => setOkruhFormData({ ...okruhFormData, jisticTyp: val })} options={['B', 'C', 'D', 'gG', 'aM', 'IT', 'IJ', 'IJV', 'ITM']} />
           <EditableSelect label="Proud jističe" value={okruhFormData.jisticProud} onChange={(val) => setOkruhFormData({ ...okruhFormData, jisticProud: val })} options={['2A','4A','6A','10A','13A','16A','20A','25A','32A','40A','50A','63A','80A','100A','125A','160A']} />
           <Select label="Počet fází" value={okruhFormData.pocetFazi.toString()} onChange={(e) => setOkruhFormData({ ...okruhFormData, pocetFazi: parseInt(e.target.value) })} options={[{ value: '1', label: '1P' }, { value: '2', label: '2P' }, { value: '3', label: '3P' }]} />
-          <Input label="Vodič" value={okruhFormData.vodic} onChange={(e) => setOkruhFormData({ ...okruhFormData, vodic: e.target.value })} />
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          <EditableSelect label="Typ kabelu" value={okruhFormData.typKabelu} onChange={(val) => setOkruhFormData({ ...okruhFormData, typKabelu: val })} options={TYPY_KABELU} />
+          <Input label="Počet žil (volitelné)" value={okruhFormData.pocetZil} onChange={(e) => setOkruhFormData({ ...okruhFormData, pocetZil: e.target.value })} placeholder="např. 3" />
+          <EditableSelect label="Průřez (mm²)" value={okruhFormData.prurez} onChange={(val) => setOkruhFormData({ ...okruhFormData, prurez: val })} options={PRUREZY} />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <Input label="Izolační odpor (MΩ)" value={okruhFormData.izolacniOdpor} onChange={(e) => setOkruhFormData({ ...okruhFormData, izolacniOdpor: e.target.value })} />
@@ -779,7 +817,11 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
         </div>
         <div className="grid grid-cols-2 gap-4">
           <Select label="Počet fází" value={okruhFormData.pocetFazi.toString()} onChange={(e) => setOkruhFormData({ ...okruhFormData, pocetFazi: parseInt(e.target.value) })} options={[{ value: '1', label: '1P' }, { value: '2', label: '2P' }, { value: '3', label: '3P' }]} />
-          <Input label="Vodič" value={okruhFormData.vodic} onChange={(e) => setOkruhFormData({ ...okruhFormData, vodic: e.target.value })} />
+          <EditableSelect label="Typ kabelu" value={okruhFormData.typKabelu} onChange={(val) => setOkruhFormData({ ...okruhFormData, typKabelu: val })} options={TYPY_KABELU} />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Input label="Počet žil (volitelné)" value={okruhFormData.pocetZil} onChange={(e) => setOkruhFormData({ ...okruhFormData, pocetZil: e.target.value })} placeholder="např. 3" />
+          <EditableSelect label="Průřez (mm²)" value={okruhFormData.prurez} onChange={(val) => setOkruhFormData({ ...okruhFormData, prurez: val })} options={PRUREZY} />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <Input label="Izolační odpor (MΩ)" value={okruhFormData.izolacniOdpor} onChange={(e) => setOkruhFormData({ ...okruhFormData, izolacniOdpor: e.target.value })} />
