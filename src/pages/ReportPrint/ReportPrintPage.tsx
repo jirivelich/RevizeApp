@@ -234,16 +234,20 @@ export function ReportPrintPage() {
       }
 
       // Mobilní zoom: zmáčknout A4 stránky na šířku viewportu
+      // setTimeout(300) – PagedJS spouští interní callbacky po preview(),
+      // které by přepsaly okamžitě aplikovaný zoom.
       const applyZoom = () => {
-        if (!previewRef.current) return;
-        const pages = previewRef.current.querySelector('.pagedjs_pages') as HTMLElement | null;
-        if (!pages) return;
-        const scale = Math.min(1, (previewRef.current.clientWidth || window.innerWidth) / 850);
-        pages.style.zoom = String(scale);
-        // Kompenzovat výšku scroll oblasti po zmenšení
-        pages.style.transformOrigin = 'top center';
+        requestAnimationFrame(() => {
+          if (!previewRef.current) return;
+          const pages = previewRef.current.querySelector('.pagedjs_pages') as HTMLElement | null;
+          if (!pages) return;
+          const pageWidth = pages.scrollWidth || 850;
+          const containerWidth = window.innerWidth;
+          const scale = Math.min(1, containerWidth / pageWidth);
+          pages.style.zoom = String(scale);
+        });
       };
-      applyZoom();
+      setTimeout(applyZoom, 300);
       window.addEventListener('resize', applyZoom);
       // Uložit handler pro cleanup
       (previewRef.current as any).__zoomHandler = applyZoom;

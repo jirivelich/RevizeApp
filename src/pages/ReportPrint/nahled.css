@@ -74,8 +74,9 @@
 }
 
 @media (max-width: 900px) {
+  /* overflow-x: auto jako záložní na případ že zoom nefunguje (Firefox mobile) */
   .nahled-scroll {
-    overflow-x: hidden;
+    overflow-x: auto;
   }
 }
 
