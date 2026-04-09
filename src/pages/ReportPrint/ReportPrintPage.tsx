@@ -218,7 +218,21 @@ export function ReportPrintPage() {
       );
       URL.revokeObjectURL(cssUrl);
 
-      setPageCount(flow?.total || 1);
+      const total = flow?.total || 1;
+      setPageCount(total);
+
+      // Oprava counter(pages) = 0 při prvním renderování (pagedjs timing issue):
+      // po dokončení preview opravíme text zápatí na správný celkový počet stránek
+      if (previewRef.current && total > 0) {
+        previewRef.current
+          .querySelectorAll('.pagedjs_margin-bottom-center .pagedjs_margin-content')
+          .forEach(el => {
+            if (el.textContent?.match(/\/\s*0\b/)) {
+              el.textContent = el.textContent.replace(/\/\s*0\b/, `/ ${total}`);
+            }
+          });
+      }
+
       // Odpojit ResizeObserver ze všech pagedjs stránek (zabrání crashům v checkUnderflowAfterResize)
       try { flow?.pages?.forEach((p: any) => p.removeListeners?.()); } catch { /* ok */ }
     } catch (err) {
