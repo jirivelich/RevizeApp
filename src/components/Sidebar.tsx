@@ -33,6 +33,7 @@ interface SidebarProps {
 
 import styles from './SidebarLight.module.css';
 import { useState } from 'react';
+import { NotificationBell } from './NotificationBell';
 
 export function Sidebar({ onClose }: SidebarProps) {
   const location = useLocation();
@@ -103,6 +104,9 @@ export function Sidebar({ onClose }: SidebarProps) {
           })}
         </ul>
       </nav>
+      <div className={light ? `${styles['sidebar-footer']} px-2 pb-1` : 'px-2 pb-1 border-t border-slate-800 pt-2'}>
+        <NotificationBell light={light} />
+      </div>
       <div className={light ? `${styles['sidebar-footer']} px-3 py-3 space-y-2` : 'border-t border-slate-800 px-3 py-3 space-y-2'}>
         {user && (
           <div className={light ? 'text-xs' : 'text-slate-400 text-xs'}>

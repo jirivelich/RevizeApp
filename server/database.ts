@@ -467,6 +467,12 @@ export async function initializeDatabase() {
       'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS prurez TEXT',
       // Rozdělovník – seznam příjemců revizní zprávy s počty kusů
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "rozdelovnik" TEXT',
+      // Prahové hodnoty pro systém upozornění
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "upozorneniZakazkaDni" INTEGER DEFAULT 7',
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "upozorneniRevizeDni" INTEGER DEFAULT 14',
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "upozorneniKalibraceDni" INTEGER DEFAULT 30',
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "upozorneniZpravaDni" INTEGER DEFAULT 3',
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "upozorneniTechnikDni" INTEGER DEFAULT 60',
     ];
     
     for (const migration of migrations) {

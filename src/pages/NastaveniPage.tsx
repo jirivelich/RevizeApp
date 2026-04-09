@@ -85,7 +85,7 @@ export function NastaveniPage() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
-  const [activeTab, setActiveTab] = useState<'obecne' | 'technik' | 'texty' | 'zalohy'>('obecne');
+  const [activeTab, setActiveTab] = useState<'obecne' | 'technik' | 'texty' | 'zalohy' | 'notifikace'>('obecne');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Backup state
@@ -325,6 +325,16 @@ export function NastaveniPage() {
           }`}
         >
           Zálohy
+        </button>
+        <button
+          onClick={() => setActiveTab('notifikace')}
+          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors cursor-pointer ${
+            activeTab === 'notifikace'
+              ? 'bg-white text-slate-800 border border-b-white border-slate-200 -mb-px'
+              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+          }`}
+        >
+          Notifikace
         </button>
       </div>
 
@@ -687,6 +697,107 @@ export function NastaveniPage() {
                 Tip: Pravidelně exportujte zálohu. Doporučujeme provádět zálohu alespoň jednou týdně nebo před každým důležitým importem.
               </p>
             </div>
+          </Card>
+        </div>
+      )}
+
+
+      {/* ══════ TAB: NOTIFIKACE ══════ */}
+      {activeTab === 'notifikace' && (
+        <div className="space-y-4">
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+            <p className="text-sm text-slate-600">
+              Nastavte, kolik dní dopředu (nebo zpět) má systém zobrazit upozornění. Změny se projeví ihned.
+            </p>
+          </div>
+          <Card title="Prahové hodnoty upozornění">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">
+                  Plánované zakázky — upozornit X dní dopředu
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={365}
+                  value={nastaveni.upozorneniZakazkaDni ?? 7}
+                  onChange={(e) => setNastaveni({ ...nastaveni, upozorneniZakazkaDni: Number(e.target.value) })}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">Výchozí: 7 dní</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">
+                  Rozpracované revize — upozornit po X dnech neaktívity
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={365}
+                  value={nastaveni.upozorneniRevizeDni ?? 14}
+                  onChange={(e) => setNastaveni({ ...nastaveni, upozorneniRevizeDni: Number(e.target.value) })}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">Výchozí: 14 dní</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">
+                  Deadline odevzdání zprávy — upozornit X dní dopředu
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={30}
+                  value={nastaveni.upozorneniZpravaDni ?? 3}
+                  onChange={(e) => setNastaveni({ ...nastaveni, upozorneniZpravaDni: Number(e.target.value) })}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">Výchozí: 3 dny</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">
+                  Expirace kalibrace přístrojů — upozornit X dní dopředu
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={365}
+                  value={nastaveni.upozorneniKalibraceDni ?? 30}
+                  onChange={(e) => setNastaveni({ ...nastaveni, upozorneniKalibraceDni: Number(e.target.value) })}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">Výchozí: 30 dní</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">
+                  Expirace oprávnění / osvědčení technika — upozornit X dní dopředu
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={365}
+                  value={nastaveni.upozorneniTechnikDni ?? 60}
+                  onChange={(e) => setNastaveni({ ...nastaveni, upozorneniTechnikDni: Number(e.target.value) })}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">Výchozí: 60 dní</p>
+              </div>
+            </div>
+            <div className="mt-5 flex items-center gap-3">
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving ? 'Ukládám...' : 'Uložit nastavení'}
+              </Button>
+            </div>
+          </Card>
+          <Card title="Jak fungují upozornění">
+            <ul className="space-y-2 text-sm text-slate-600">
+              <li className="flex gap-2"><span className="text-blue-500 mt-0.5">•</span><span><strong>Plánované zakázky</strong> — upozorní na zakázky se stavem „Plánováno“, které mají datum realizace během nastaveného počtu dní.</span></li>
+              <li className="flex gap-2"><span className="text-amber-500 mt-0.5">•</span><span><strong>Rozpracované revize</strong> — upozorní na revize ve stavu „Rozpracováno“, které nebyly dokončeny delší dobu než nastavený počet dní.</span></li>
+              <li className="flex gap-2"><span className="text-red-500 mt-0.5">•</span><span><strong>Deadline zprávy</strong> — upozorní na přiblížející se (nebo promekaný) deadline odevzdání revizní zprávy po dokončené zakázce.</span></li>
+              <li className="flex gap-2"><span className="text-red-500 mt-0.5">•</span><span><strong>Kalibrace přístrojů</strong> — upozorní, když se blíží konec platnosti kalibrace měřicího přístroje.</span></li>
+              <li className="flex gap-2"><span className="text-red-500 mt-0.5">•</span><span><strong>Expirace dokladů technika</strong> — upozorní na končec platnosti oprávnění či osvědčení revizního technika (nastaveného v záložce Revizní technik).</span></li>
+            </ul>
+            <p className="text-xs text-slate-400 mt-3">Upozornění jsou barevně rozlišena: červená = po termínu, jantárová = do 3 dní, modrá = před termínem. Zobrazuju se v reálném čase ve zvončku v bočním panelu.</p>
           </Card>
         </div>
       )}

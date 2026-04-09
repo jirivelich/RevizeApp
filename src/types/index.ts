@@ -277,6 +277,30 @@ export interface Nastaveni {
   kontaktEmail?: string;
   kontaktTelefon?: string;
   logo?: string; // Base64 encoded image
+  upozorneniZakazkaDni?: number;
+  upozorneniRevizeDni?: number;
+  upozorneniKalibraceDni?: number;
+  upozorneniZpravaDni?: number;
+  upozorneniTechnikDni?: number;
+}
+
+export type NotificationType =
+  | 'zakazka_upcoming'
+  | 'revize_overdue'
+  | 'report_deadline'
+  | 'kalibrace_expiring'
+  | 'technik_expiry';
+
+export type NotificationSeverity = 'critical' | 'warning' | 'info';
+
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  severity: NotificationSeverity;
+  title: string;
+  description: string;
+  daysUntil: number; // záporné = po termínu
+  link: string;
 }
 
 export interface TechnikHistorie {
