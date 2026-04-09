@@ -181,6 +181,8 @@ async function startServer() {
         'predchoziRevizeId', 'skupinaRevizi',
         // Snapshot revizního technika
         'rtJmeno', 'rtCisloOpravneni', 'rtPlatnostOpravneni', 'rtCisloOsvedceni', 'rtPlatnostOsvedceni',
+        // Rozdělovník – seznam příjemců zprávy
+        'rozdelovnik',
       ];
       
       const updates: Record<string, any> = { updatedAt: now };
