@@ -102,7 +102,7 @@ export async function exportHromosvodToWord(data: HromosvodWordData): Promise<vo
   const isSekce = (key: string) => isSekceVisible(tiskSekce, key);
 
   const typRevizeLabel = revize.typRevize === 'výchozí' ? 'Výchozí revize' :
-    revize.typRevize === 'pravidelná' ? 'Pravidelná (periodická) revize' :
+    revize.typRevize === 'pravidelná' ? 'Pravidelná revize' :
     `Mimořádná revize${revize.duvodMimoradne ? ` – ${revize.duvodMimoradne}` : ''}`;
 
   const vysledekLabel = revize.vysledek === 'schopno' ? 'SCHOPNO BEZPEČNÉHO PROVOZU' :

@@ -254,7 +254,7 @@ export function StrojniZarizeniPrintPage() {
   const { revize, nastaveni, zakaznik, zavady, pristroje, strojniData: sd } = data;
 
   const typRevizeLabel = revize.typRevize === 'výchozí' ? 'Výchozí revize' :
-    revize.typRevize === 'pravidelná' ? 'Pravidelná (periodická) revize' :
+    revize.typRevize === 'pravidelná' ? 'Pravidelná revize' :
     `Mimořádná revize${revize.duvodMimoradne ? ` – ${revize.duvodMimoradne}` : ''}`;
 
   const vysledekLabel = sd?.verdikt === 'pass' ? 'Revidované strojní zařízení je z hlediska zajištění ochrany před úrazem el. proudem schopné provozu.' :

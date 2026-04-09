@@ -323,7 +323,7 @@ export function ReportPrintPage() {
   }
 
   const typRevizeLabel = revize.typRevize === 'výchozí' ? 'Výchozí revize' :
-    revize.typRevize === 'pravidelná' ? 'Pravidelná (periodická) revize' :
+    revize.typRevize === 'pravidelná' ? 'Pravidelná revize' :
     `Mimořádná revize${revize.duvodMimoradne ? ` – ${revize.duvodMimoradne}` : ''}`;
 
   const vysledekLabel = revize.vysledek === 'schopno' ? 'ELEKTRICKÁ INSTALACE JE Z HLEDISKA BEZPEČNOSTI SCHOPNA PROVOZU' :
