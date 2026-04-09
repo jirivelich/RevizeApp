@@ -238,6 +238,26 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     setOkruhyCounts(prev => ({ ...prev, [selectedRozvadec.id!]: okruhyData.length }));
   };
 
+  const saveOkruhAndContinue = async () => {
+    if (!selectedRozvadec?.id) return;
+    const { impedanceSmyckyMax, typKabelu, pocetZil, prurez, ...okruhData } = okruhFormData;
+    const saveData = {
+      ...okruhData,
+      typKabelu: typKabelu || undefined,
+      pocetZil: pocetZil || undefined,
+      prurez: prurez || undefined,
+      vodic: computeVodic(typKabelu, pocetZil, prurez) || undefined,
+      izolacniOdpor: okruhData.izolacniOdpor || undefined,
+      impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky || undefined,
+    };
+    await okruhService.create({ ...saveData, rozvadecId: selectedRozvadec.id });
+    const okruhyData = await okruhService.getByRozvadec(selectedRozvadec.id);
+    setOkruhy(okruhyData);
+    setOkruhyCounts(prev => ({ ...prev, [selectedRozvadec.id!]: okruhyData.length }));
+    const nextCislo = okruhyData.length > 0 ? Math.max(...okruhyData.map(o => o.cislo)) + 1 : 1;
+    setOkruhFormData(prev => ({ ...prev, cislo: nextCislo }));
+  };
+
   const handleAddOkruh = async (e: React.FormEvent) => {
     e.preventDefault();
     await saveOkruh();
@@ -667,6 +687,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
       footer={
         <>
           <Button variant="secondary" onClick={() => { setIsOkruhModalOpen(false); setEditingOkruh(null); }}>Zrušit</Button>
+          {!editingOkruh && <Button variant="secondary" onClick={saveOkruhAndContinue}>Přidat a pokračovat</Button>}
           <Button onClick={handleAddOkruh}>{editingOkruh ? 'Uložit' : 'Přidat'}</Button>
         </>
       }
@@ -802,6 +823,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
       footer={
         <>
           <Button onClick={saveOkruh}>{editingOkruh ? 'Uložit' : 'Přidat'}</Button>
+          {!editingOkruh && <Button variant="secondary" onClick={saveOkruhAndContinue}>Přidat a pokr.</Button>}
           <Button variant="secondary" onClick={() => { setIsOkruhSheetOpen(false); setEditingOkruh(null); resetOkruhForm(); }}>Zrušit</Button>
         </>
       }
