@@ -123,6 +123,9 @@ export interface Revize {
   // Měření odporů uzemnění (JSON pole měření)
   hromosvodMereniOdporu?: string;      // JSON: [{bod, hodnota, limit, vyhovuje}]
 
+  // Rozdělovník – seznam příjemců revizní zprávy
+  rozdelovnik?: string;                // volný text, jeden příjemce per řádek
+
   // ═══ STROJNÍ ZAŘÍZENÍ - data formuláře (JSON) ═══
   strojniData?: string;                // JSON: StrojniFormData
 

@@ -578,6 +578,23 @@ export function HromosvodPrintPage() {
         </p>
       </ReportSection>
 
+      {/* ROZDĚLOVNÍK */}
+      {isSekceVisible('rozdelovnik') && revize.rozdelovnik && (
+      <ReportSection title="Rozdělovník">
+        <table className="report-data-table">
+          <thead><tr><th>Příjemce</th><th style={{width:'80px',textAlign:'center'}}>Počet</th></tr></thead>
+          <tbody>
+            {revize.rozdelovnik.split('\n').filter(r => r.trim()).map((radek, i) => {
+              const sep = radek.lastIndexOf(':');
+              const prijemce = sep >= 0 ? radek.substring(0, sep).trim() : radek.trim();
+              const pocet = sep >= 0 ? radek.substring(sep + 1).trim() : '';
+              return <tr key={i}><td>{prijemce}</td><td style={{textAlign:'center'}}>{pocet}</td></tr>;
+            })}
+          </tbody>
+        </table>
+      </ReportSection>
+      )}
+
       {/* s) PODPISY */}
       <ReportSection title="19. Potvrzení o předání zprávy">
         <div className="report-signatures">

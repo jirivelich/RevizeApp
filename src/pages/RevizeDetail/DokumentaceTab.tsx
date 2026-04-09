@@ -468,9 +468,28 @@ export function DokumentaceTab({
         )}
       </div>
 
+      {/* ═══ 11 – ROZDĚLOVNÍK ═══ */}
+      <div className={TW.card}>
+        <ToggleSectionHeader num="11" visible={isSekceVisible('rozdelovnik')} onToggle={() => toggleSekce('rozdelovnik')}>
+          Rozdělovník
+        </ToggleSectionHeader>
+        {isSekceVisible('rozdelovnik') && (
+        <div className="p-4">
+          <p className="text-xs text-slate-500 mb-2">Seznam příjemců zprávy – každý příjemce na nový řádek, např.:<br /><code>Revizní technik: 1ks</code><br /><code>Objednávatel: 2ks</code></p>
+          <textarea
+            className={TW.textarea}
+            rows={4}
+            value={formData.rozdelovnik || ''}
+            onChange={(e) => setFormData({ ...formData, rozdelovnik: e.target.value })}
+            placeholder={`Revizní technik: 1ks\nObjednávatel: 2ks\nArchiv: 1ks`}
+          />
+        </div>
+        )}
+      </div>
+
     </div>
 
-    {/* Modal pro přidání přístroje k revizi */}
+    {/* Modal pro přidání přístroje k revizi */
     <Modal
       isOpen={isPristrojModalOpen}
       onClose={() => setIsPristrojModalOpen(false)}

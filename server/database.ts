@@ -465,6 +465,8 @@ export async function initializeDatabase() {
       'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "typKabelu" TEXT',
       'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "pocetZil" TEXT',
       'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS prurez TEXT',
+      // Rozdělovník – seznam příjemců revizní zprávy s počty kusů
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "rozdelovnik" TEXT',
     ];
     
     for (const migration of migrations) {
