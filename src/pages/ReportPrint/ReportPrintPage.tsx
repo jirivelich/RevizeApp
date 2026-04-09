@@ -234,22 +234,26 @@ export function ReportPrintPage() {
       }
 
       // Mobilní zoom: zmáčknout A4 stránky na šířku viewportu
-      // setTimeout(300) – PagedJS spouští interní callbacky po preview(),
-      // které by přepsaly okamžitě aplikovaný zoom.
+      // Dvoufázový přístup: 1) reset zoom → 2) změř → 3) aplikuj
+      // Měříme pages.offsetWidth (PŘED zoomem), ne scrollWidth (který zoom zahrnuje)
       const applyZoom = () => {
+        if (!previewRef.current) return;
+        const pages = previewRef.current.querySelector('.pagedjs_pages') as HTMLElement | null;
+        if (!pages) return;
+        // Fáze 1: resetovat zoom aby měření bylo přesné
+        pages.style.zoom = '1';
+        // Fáze 2: měřit a aplikovat v dalším frame (po resetu)
         requestAnimationFrame(() => {
-          if (!previewRef.current) return;
-          const pages = previewRef.current.querySelector('.pagedjs_pages') as HTMLElement | null;
           if (!pages) return;
-          const pageWidth = pages.scrollWidth || 850;
-          const containerWidth = window.innerWidth;
-          const scale = Math.min(1, containerWidth / pageWidth);
+          const pagesWidth = pages.offsetWidth || 794; // 794px = A4 při 96dpi
+          const availableWidth = window.innerWidth;
+          const scale = Math.min(1, availableWidth / pagesWidth);
+          console.log('[zoom] pagesWidth=', pagesWidth, 'viewportWidth=', availableWidth, 'scale=', scale);
           pages.style.zoom = String(scale);
         });
       };
-      setTimeout(applyZoom, 300);
+      setTimeout(applyZoom, 500);
       window.addEventListener('resize', applyZoom);
-      // Uložit handler pro cleanup
       (previewRef.current as any).__zoomHandler = applyZoom;
 
       // Odpojit ResizeObserver ze všech pagedjs stránek (zabrání crashům v checkUnderflowAfterResize)
