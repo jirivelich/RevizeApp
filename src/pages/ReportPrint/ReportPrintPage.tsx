@@ -332,6 +332,28 @@ export function ReportPrintPage() {
   const vysledekColor = revize.vysledek === 'schopno' ? '#1e293b' :
     revize.vysledek === 'neschopno' ? '#dc2626' : '#1e293b';
 
+  // Dynamické pořadové číslovaní odstavců – sekce 1–6 jsou vždy pevné
+  const sectionNums = (() => {
+    let n = 6;
+    const num = (visible: boolean) => visible ? ++n : 0;
+    return {
+      popisZarizeni:          num(isSekceVisible('popisZarizeni') && !!revize.popisZarizeni),
+      rozsahRevize:           num(isSekceVisible('rozsahRevize')),
+      charakteristika:        num(isSekceVisible('charakteristika') && !!(revize.napetovaSoustava || ochranaList.length > 0)),
+      pristroje:              num(isSekceVisible('pristroje')),
+      podklady:               num(isSekceVisible('podklady')),
+      provedeneUkony:         num(isSekceVisible('provedeneUkony')),
+      rozvadece:              num(true),
+      prostory:               num(mistnosti.length > 0),
+      zavady:                 num(true),
+      vyhodnoceniPredchozich: num(isSekceVisible('vyhodnoceniPredchozich')),
+      lhuta:                  num(true),
+      oduvodneni:             num(isSekceVisible('vysledekOduvodneni') && !!revize.vysledekOduvodneni),
+      zaver:                  num(isSekceVisible('zaver') && !!revize.zaver),
+      rozdelovnik:            num(isSekceVisible('rozdelovnik') && !!revize.rozdelovnik),
+    };
+  })();
+
   /* ── Společný obsah zprávy (použijeme 2×: zdrojový hidden + fallback) ── */
   const reportContent = (
     <div className="report-page">
@@ -447,16 +469,16 @@ export function ReportPrintPage() {
       {/* ══════ STRANA 2+ ══════ */}
       <div className="report-page-break" />
 
-      {/* 7. POPIS REVIDOVANÉHO ZAŘÍZENÍ */}
+      {/* POPIS REVIDOVANÉHO ZAŘÍZENÍ */}
       {isSekceVisible('popisZarizeni') && revize.popisZarizeni && (
-      <ReportSection title="7. Popis revidovaného zařízení">
+      <ReportSection title={`${sectionNums.popisZarizeni}. Popis revidovaného zařízení`}>
         <p className="report-text">{revize.popisZarizeni}</p>
       </ReportSection>
       )}
 
-      {/* 8. ROZSAH REVIZE */}
+      {/* ROZSAH REVIZE */}
       {isSekceVisible('rozsahRevize') && (
-      <ReportSection title="8. Vymezení rozsahu revize">
+      <ReportSection title={`${sectionNums.rozsahRevize}. Vymezení rozsahu revize`}>
         {revize.rozsahRevize && (
           <div className="report-text">
             <strong>Předmět revize je:</strong>
@@ -475,7 +497,7 @@ export function ReportPrintPage() {
 
       {/* CHARAKTERISTIKA ZAŘÍZENÍ */}
       {isSekceVisible('charakteristika') && (revize.napetovaSoustava || ochranaList.length > 0) && (
-        <ReportSection title="Charakteristika revidovaného zařízení">
+        <ReportSection title={`${sectionNums.charakteristika}. Charakteristika revidovaného zařízení`}>
           <table className="report-info-table"><tbody>
             {revize.napetovaSoustava && (
               <tr><td className="label-cell">Napěťová soustava:</td><td>{revize.napetovaSoustava}</td></tr>
@@ -494,9 +516,9 @@ export function ReportPrintPage() {
         </ReportSection>
       )}
 
-      {/* 9. MĚŘICÍ PŘÍSTROJE */}
+      {/* MĚŘICÍ PŘÍSTROJE */}
       {isSekceVisible('pristroje') && (
-      <ReportSection title="9. Soupis použitých měřicích přístrojů">
+      <ReportSection title={`${sectionNums.pristroje}. Soupis použitých měřicích přístrojů`}>
         {pristroje.length > 0 ? (
           <ReportTable
             columns={['Název', 'Výrobce / Model', 'Výrobní číslo', 'Kalibrace', 'Platnost']}
@@ -515,9 +537,9 @@ export function ReportPrintPage() {
       </ReportSection>
       )}
 
-      {/* 10. PODKLADY */}
+      {/* PODKLADY */}
       {isSekceVisible('podklady') && (
-      <ReportSection title="10. Seznam podkladů použitých k provedení revize">
+      <ReportSection title={`${sectionNums.podklady}. Seznam podkladů použitých k provedení revize`}>
         {revize.podklady ? (
           <p className="report-text">{revize.podklady}</p>
         ) : (
@@ -526,9 +548,9 @@ export function ReportPrintPage() {
       </ReportSection>
       )}
 
-      {/* 11. PROVEDENÉ ÚKONY */}
+      {/* PROVEDENÉ ÚKONY */}
       {isSekceVisible('provedeneUkony') && (
-      <ReportSection title="11. Soupis provedených úkonů">
+      <ReportSection title={`${sectionNums.provedeneUkony}. Soupis provedených úknů`}>
         {revize.provedeneUkony ? (
           <p className="report-text">{revize.provedeneUkony}</p>
         ) : (
@@ -537,8 +559,8 @@ export function ReportPrintPage() {
       </ReportSection>
       )}
 
-      {/* 12. ROZVADĚČE A OKRUHY */}
-      <ReportSection title="12. Naměřené hodnoty – Rozvaděče a okruhy">
+      {/* ROZVÁDĚČE A OKRUHY */}
+      <ReportSection title={`${sectionNums.rozvadece}. Naměřené hodnoty – Rozvádeče a okruhy`}>
         {rozvadece.length > 0 ? rozvadece.map((roz) => (
           <div key={roz.id} className="report-subsection">
             <div className="report-subsection-title">
@@ -631,9 +653,9 @@ export function ReportPrintPage() {
         )}
       </ReportSection>
 
-      {/* 13. PROSTORY A ZAŘÍZENÍ */}
+      {/* PROSTORY A ZAŘÍZENÍ */}
       {mistnosti.length > 0 && (
-        <ReportSection title="13. Prostory a zařízení">
+        <ReportSection title={`${sectionNums.prostory}. Prostory a zařízení`}>
           {mistnosti.map((m) => (
             <div key={m.id} className="report-subsection">
               <div className="report-subsection-title">
@@ -662,8 +684,8 @@ export function ReportPrintPage() {
         </ReportSection>
       )}
 
-      {/* 14. ZÁVADY */}
-      <ReportSection title="14. Přehled zjištěných závad">
+      {/* ZÁVADY */}
+      <ReportSection title={`${sectionNums.zavady}. Přehled zjištěných závad`}>
         {zavady.length > 0 ? (
           <table className="report-data-table">
             <thead>
@@ -710,9 +732,9 @@ export function ReportPrintPage() {
         )}
       </ReportSection>
 
-      {/* 15. VYHODNOCENÍ PŘEDCHOZÍCH REVIZÍ */}
+      {/* VYHODNOCENÍ PŘEDCHOZÍCH REVIZÍ */}
       {isSekceVisible('vyhodnoceniPredchozich') && (
-      <ReportSection title="15. Vyhodnocení předchozích revizí">
+      <ReportSection title={`${sectionNums.vyhodnoceniPredchozich}. Vyhodnocení předchozích revizí`}>
         {revize.vyhodnoceniPredchozich ? (
           <p className="report-text">{revize.vyhodnoceniPredchozich}</p>
         ) : (
@@ -721,30 +743,30 @@ export function ReportPrintPage() {
       </ReportSection>
       )}
 
-      {/* 16. LHŮTA PŘÍŠTÍ REVIZE */}
-      <ReportSection title="16. Doporučená lhůta provedení příští revize">
+      {/* LHŮTA PŘÍŠTÍ REVIZE */}
+      <ReportSection title={`${sectionNums.lhuta}. Doporučená lhůta provedení příští revize`}>
         <p className="report-text">
           Příští revize by měla být provedena nejpozději do <strong>{revize.datumPlatnosti ? new Date(revize.datumPlatnosti).toLocaleDateString('cs-CZ') : `${revize.termin} měsíců od data provedení`}</strong>.
         </p>
       </ReportSection>
 
-      {/* 17. ODŮVODNĚNÍ */}
+      {/* ODŮVODNĚNÍ */}
       {isSekceVisible('vysledekOduvodneni') && revize.vysledekOduvodneni && (
-      <ReportSection title="17. Odůvodnění">
+      <ReportSection title={`${sectionNums.oduvodneni}. Odůvodnění`}>
         <p className="report-text">{revize.vysledekOduvodneni}</p>
       </ReportSection>
       )}
 
-      {/* 18. ZÁVĚR */}
+      {/* ZÁVĚR */}
       {isSekceVisible('zaver') && revize.zaver && (
-      <ReportSection title="18. Závěr">
+      <ReportSection title={`${sectionNums.zaver}. Závěr`}>
         <p className="report-text">{revize.zaver}</p>
       </ReportSection>
       )}
 
-      {/* 19. ROZDĚLOVNÍK */}
+      {/* ROZDĚLOVNÍK */}
       {isSekceVisible('rozdelovnik') && revize.rozdelovnik && (
-      <ReportSection title="19. Rozdělovník">
+      <ReportSection title={`${sectionNums.rozdelovnik}. Rozdělovník`}>
         <table className="report-data-table">
           <thead><tr><th>Příjemce</th><th style={{width:'80px',textAlign:'center'}}>Počet</th></tr></thead>
           <tbody>
