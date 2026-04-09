@@ -405,10 +405,61 @@
   padding-top: 4px;
 }
 
+/* ── Plovoucí akční tlačítka ── */
+.report-fab-group {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+}
+
+.report-fab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 24px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,.22);
+  transition: opacity .15s, transform .15s;
+  white-space: nowrap;
+}
+
+.report-fab:hover {
+  opacity: .9;
+  transform: translateY(-1px);
+}
+
+.report-fab--back {
+  background: #475569;
+  color: #fff;
+}
+
+.report-fab--print {
+  background: #1e40af;
+  color: #fff;
+}
+
+.report-fab--print:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* ========================================
    TISKOVÁ MÉDIA – @media print
    ======================================== */
 @media print {
+  .report-fab-group {
+    display: none !important;
+  }
   .report-source {
     display: none !important;
   }
