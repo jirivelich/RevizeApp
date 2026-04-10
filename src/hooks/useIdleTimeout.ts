@@ -1,10 +1,8 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+﻿import { useEffect, useRef, useCallback, useState } from 'react';
 
-const IDLE_MS = 58 * 60 * 1000;              // 58 minut neaktivity → varování
-const WARNING_MS = 2 * 60 * 1000;           // 2 minuty → logout
-const MAX_SESSION_MS = 24 * 60 * 60 * 1000; // 24 hodin při zavřené záložce → logout
-const POLL_MS = 10_000;                      // kontrola každých 10s (odolné vůči throttlingu)
-const LAST_ACTIVITY_KEY = 'lastActivity';    // klíč v localStorage
+const IDLE_MS = 58 * 60 * 1000;
+const WARNING_MS = 2 * 60 * 1000;
+const POLL_MS = 10_000;
 
 interface UseIdleTimeoutOptions {
   onLogout: () => void;
@@ -24,68 +22,44 @@ export function useIdleTimeout({ onLogout }: UseIdleTimeoutOptions): UseIdleTime
   const onLogoutRef = useRef(onLogout);
   onLogoutRef.current = onLogout;
 
-  // Čas, kdy začalo varování (null = varování neběží)
-  const warningStartRef = useRef<number | null>(null);
-
-  const doLogout = useCallback(() => {
-    localStorage.removeItem(LAST_ACTIVITY_KEY);
-    onLogoutRef.current();
-  }, []);
+  const lastActivityRef = useRef<number>(Date.now());
+  const warningActiveRef = useRef(false);
 
   const resetTimer = useCallback(() => {
-    warningStartRef.current = null;
+    lastActivityRef.current = Date.now();
+    warningActiveRef.current = false;
     setShowWarning(false);
     setRemainingSeconds(WARNING_MS / 1000);
-    localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
   }, []);
 
   useEffect(() => {
-    // Kontrola při načtení stránky: pokud od poslední aktivity uplynulo >24h → okamžitý logout
-    const last = localStorage.getItem(LAST_ACTIVITY_KEY);
-    if (last && Date.now() - parseInt(last, 10) > MAX_SESSION_MS) {
-      doLogout();
-      return;
-    }
-    localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
-
-    // Aktivita uživatele — resetovat jen pokud varování ještě neběží
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'] as const;
     const handleActivity = () => {
-      if (warningStartRef.current === null) {
-        localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+      if (!warningActiveRef.current) {
+        lastActivityRef.current = Date.now();
       }
     };
-
-    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'] as const;
     events.forEach(e => window.addEventListener(e, handleActivity, { passive: true }));
 
-    // Polling — spolehlivější než dlouhý setTimeout (prohlížeče throttlují bg záložky)
     pollRef.current = setInterval(() => {
-      const stored = localStorage.getItem(LAST_ACTIVITY_KEY);
-      if (!stored) return;
-
-      const elapsed = Date.now() - parseInt(stored, 10);
-
+      const elapsed = Date.now() - lastActivityRef.current;
       if (elapsed >= IDLE_MS + WARNING_MS) {
-        // Čas na logout
         if (pollRef.current !== null) clearInterval(pollRef.current);
-        warningStartRef.current = null;
+        warningActiveRef.current = false;
         setShowWarning(false);
-        doLogout();
+        onLogoutRef.current();
         return;
       }
-
       if (elapsed >= IDLE_MS) {
-        // Zobrazit varování
-        if (warningStartRef.current === null) {
-          warningStartRef.current = Date.now();
+        if (!warningActiveRef.current) {
+          warningActiveRef.current = true;
           setShowWarning(true);
         }
         const timeLeft = Math.ceil((IDLE_MS + WARNING_MS - elapsed) / 1000);
         setRemainingSeconds(Math.max(0, timeLeft));
       } else {
-        // Uživatel byl aktivní — skrýt varování pokud bylo zobrazeno
-        if (warningStartRef.current !== null) {
-          warningStartRef.current = null;
+        if (warningActiveRef.current) {
+          warningActiveRef.current = false;
           setShowWarning(false);
           setRemainingSeconds(WARNING_MS / 1000);
         }
@@ -96,7 +70,7 @@ export function useIdleTimeout({ onLogout }: UseIdleTimeoutOptions): UseIdleTime
       events.forEach(e => window.removeEventListener(e, handleActivity));
       if (pollRef.current !== null) clearInterval(pollRef.current);
     };
-  }, [doLogout]);
+  }, []);
 
   return { showWarning, remainingSeconds, resetTimer };
 }

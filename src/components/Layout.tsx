@@ -4,15 +4,14 @@ import { Sidebar } from './Sidebar';
 import { AIChatAssistant } from './AIChatAssistant';
 import { useIdleTimeout } from '../hooks/useIdleTimeout';
 import { IdleWarningModal } from './IdleWarningModal';
+import { logoutApi } from '../services/api';
 
 export function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogout = useCallback(() => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('lastActivity');
+  const handleLogout = useCallback(async () => {
+    await logoutApi();
     navigate('/login');
   }, [navigate]);
 

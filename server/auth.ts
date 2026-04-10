@@ -1,9 +1,9 @@
-import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { randomUUID } from 'crypto';
 import { Request, Response, NextFunction } from 'express';
 import { pool } from './database';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const SESSION_TTL_MS = 60 * 60 * 1000; // 1 hodina neaktivity
 
 export interface AuthRequest extends Request {
   user?: {
@@ -11,6 +11,7 @@ export interface AuthRequest extends Request {
     username: string;
     email: string;
   };
+  sessionId?: string;
 }
 
 // Hashovat heslo
@@ -23,30 +24,64 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash);
 }
 
-// Vytvořit JWT token
-export function createToken(userId: number, username: string, email: string): string {
-  return jwt.sign(
-    { id: userId, username, email },
-    JWT_SECRET,
-    { expiresIn: '7d' }
+// Vytvořit session v DB a vrátit session ID
+export async function createSession(userId: number, username: string, email: string): Promise<string> {
+  const id = randomUUID();
+  const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
+  await pool.query(
+    `INSERT INTO sessions (id, user_id, username, email, expires_at) VALUES ($1, $2, $3, $4, $5)`,
+    [id, userId, username, email, expiresAt]
   );
+  return id;
 }
 
-// Middleware pro ověření tokenu
-export function authMiddleware(req: AuthRequest, res: Response, next: NextFunction): void {
-  const token = req.headers.authorization?.replace('Bearer ', '');
+// Smazat session (logout)
+export async function logoutSession(sessionId: string): Promise<void> {
+  await pool.query('DELETE FROM sessions WHERE id = $1', [sessionId]);
+}
 
-  if (!token) {
+// Middleware pro ověření session
+export async function authMiddleware(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  const sessionId = req.headers.authorization?.replace('Bearer ', '');
+
+  if (!sessionId) {
     res.status(401).json({ error: 'Chybí autentizační token' });
     return;
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
-    req.user = decoded;
+    const result = await pool.query(
+      `SELECT id, user_id, username, email, expires_at FROM sessions WHERE id = $1`,
+      [sessionId]
+    );
+
+    if (result.rows.length === 0) {
+      res.status(401).json({ error: 'Neplatná nebo vypršená session' });
+      return;
+    }
+
+    const session = result.rows[0];
+
+    if (new Date(session.expires_at) < new Date()) {
+      // Session expirovala — smazat a odmítnout
+      await pool.query('DELETE FROM sessions WHERE id = $1', [sessionId]);
+      res.status(401).json({ error: 'Session vypršela, přihlaste se znovu' });
+      return;
+    }
+
+    // Prodloužit session o 1 hodinu (klouzavá expira)
+    const newExpiry = new Date(Date.now() + SESSION_TTL_MS);
+    await pool.query(
+      `UPDATE sessions SET expires_at = $1, last_activity = NOW() WHERE id = $2`,
+      [newExpiry, sessionId]
+    );
+
+    req.user = { id: session.user_id, username: session.username, email: session.email };
+    req.sessionId = sessionId;
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Neplatný nebo vypršený token' });
+    console.error('authMiddleware error:', error);
+    res.status(500).json({ error: 'Chyba serveru při ověřování' });
   }
 }
 
@@ -98,10 +133,10 @@ export async function loginUser(username: string, password: string): Promise<{ t
     throw new Error('Nesprávné heslo');
   }
 
-  const token = createToken(user.id, user.username, user.email);
+  const sessionId = await createSession(user.id, user.username, user.email);
 
   return {
-    token,
+    token: sessionId,
     user: {
       id: user.id,
       username: user.username,

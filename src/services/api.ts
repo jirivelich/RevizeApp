@@ -21,9 +21,10 @@ function getAuthHeaders(): HeadersInit {
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (response.status === 401) {
-    // Token vypršel nebo není platný
+    // Session vypršela nebo není platná
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('lastActivity');
     window.location.href = '/login';
     throw new Error('Sezení vypršelo. Přihlaste se znovu.');
   }
@@ -32,6 +33,24 @@ async function handleResponse<T>(response: Response): Promise<T> {
     throw new Error(error.error || 'API chyba');
   }
   return response.json();
+}
+
+// Odhlásit — smaže session v DB, pak vyčistí localStorage
+export async function logoutApi(): Promise<void> {
+  const token = getToken();
+  if (token) {
+    try {
+      await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
+    } catch {
+      // Offline nebo chyba sítě — pokračujeme v odhlášení lokálně
+    }
+  }
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  localStorage.removeItem('lastActivity');
 }
 
 // ==================== REVIZE ====================

@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { logoutApi } from '../services/api';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: (
@@ -40,9 +41,8 @@ export function Sidebar({ onClose }: SidebarProps) {
   const navigate = useNavigate();
   const [light, setLight] = useState(true);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  const handleLogout = async () => {
+    await logoutApi();
     navigate('/login');
   };
 

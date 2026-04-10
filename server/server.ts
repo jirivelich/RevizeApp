@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { pool, initializeDatabase } from './database';
-import { authMiddleware, loginUser, registerUser, AuthRequest } from './auth';
+import { authMiddleware, loginUser, registerUser, logoutSession, AuthRequest } from './auth';
 import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion } from './ai';
 import fs from 'fs';
 import path from 'path';
@@ -91,6 +91,16 @@ async function startServer() {
   // Verify token endpoint
   app.post('/api/auth/verify', authMiddleware, (req: AuthRequest, res) => {
     res.json({ valid: true, user: req.user });
+  });
+
+  // Logout endpoint
+  app.post('/api/auth/logout', authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      await logoutSession(req.sessionId!);
+      res.json({ ok: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
   });
 
   // ==================== REVIZE ====================
