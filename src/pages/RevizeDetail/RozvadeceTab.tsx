@@ -493,18 +493,10 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     setOkruhy(okruhyData);
     setOkruhyCounts(prev => ({ ...prev, [rozvadecId]: okruhyData.length }));
     const nextCislo = okruhyData.length > 0 ? Math.max(...okruhyData.map(o => o.cislo)) + 1 : 1;
-    // Zachovat vše kromě cislo a nazev (nazev se nuluje pro nový popis okruhu)
+    // Zachovat všechna data z předchozího řádku, pouze inkrementovat cislo
     setInlineOkruhDraft({
+      ...prevDraft,
       cislo: nextCislo,
-      nazev: '',
-      jisticTyp: prevDraft.jisticTyp,
-      jisticProud: prevDraft.jisticProud,
-      pocetFazi: prevDraft.pocetFazi,
-      typKabelu: prevDraft.typKabelu,
-      pocetZil: prevDraft.pocetZil,
-      prurez: prevDraft.prurez,
-      izolacniOdpor: '',
-      impedanceSmycky: '',
     });
     setTimeout(() => inlineNazevRef.current?.focus(), 50);
   };
@@ -778,7 +770,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                 <p className="text-xs text-slate-400 mt-2 select-none">
                   <kbd className="px-1 bg-slate-100 rounded border border-slate-200 text-[10px]">Tab</kbd> přechod &nbsp;·&nbsp;
                   <kbd className="px-1 bg-slate-100 rounded border border-slate-200 text-[10px]">Enter</kbd> uložit řádek &nbsp;·&nbsp;
-                  <kbd className="px-1 bg-slate-100 rounded border border-slate-200 text-[10px]">Shift+Enter</kbd> uložit + zkopírovat jistič/kabel &nbsp;·&nbsp;
+                  <kbd className="px-1 bg-slate-100 rounded border border-slate-200 text-[10px]">Shift+Enter</kbd> uložit + zkopírovat celý řádek &nbsp;·&nbsp;
                   ✎ upravit vč. poznámky
                 </p>
               </div>
