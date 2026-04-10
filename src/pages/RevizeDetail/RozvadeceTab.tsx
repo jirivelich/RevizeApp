@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button, Card, Input, Select, Modal, BottomSheet } from '../../components/ui';
 import { TW } from './tw';
 import { okruhService, cranicService } from '../../services/database';
@@ -107,6 +107,21 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
   });
   const [draggedRozvadec, setDraggedRozvadec] = useState<Rozvadec | null>(null);
   const [okruhyCounts, setOkruhyCounts] = useState<Record<number, number>>(propCounts);
+  const [inlineModeRozvadecId, setInlineModeRozvadecId] = useState<number | null>(null);
+  const [inlineOkruhDraft, setInlineOkruhDraft] = useState({
+    cislo: 1, nazev: '', jisticTyp: 'B', jisticProud: '16A', pocetFazi: 1,
+    typKabelu: 'CYKY', pocetZil: '3', prurez: '2,5',
+    izolacniOdpor: '', impedanceSmycky: '',
+  });
+  const inlineNazevRef = useRef<HTMLInputElement>(null);
+  const inlineJisticTypRef = useRef<HTMLSelectElement>(null);
+  const inlineJisticProudRef = useRef<HTMLSelectElement>(null);
+  const inlinePocetFaziRef = useRef<HTMLSelectElement>(null);
+  const inlineTypKabeluRef = useRef<HTMLSelectElement>(null);
+  const inlinePocetZilRef = useRef<HTMLSelectElement>(null);
+  const inlinePrurezRef = useRef<HTMLSelectElement>(null);
+  const inlineIzolacniOdporRef = useRef<HTMLInputElement>(null);
+  const inlineImpedanceSmyckyRef = useRef<HTMLInputElement>(null);
 
   const [rozvadecFormData, setRozvadecFormData] = useState({
     nazev: '',
@@ -430,11 +445,56 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     setDraggedRozvadec(null);
   };
 
+  const handleInlineOkruhSave = async (rozvadecId: number) => {
+    if (!inlineOkruhDraft.nazev.trim()) return;
+    const vodic = computeVodic(inlineOkruhDraft.typKabelu, inlineOkruhDraft.pocetZil, inlineOkruhDraft.prurez);
+    await okruhService.create({
+      rozvadecId,
+      cislo: inlineOkruhDraft.cislo,
+      nazev: inlineOkruhDraft.nazev,
+      jisticTyp: inlineOkruhDraft.jisticTyp,
+      jisticProud: inlineOkruhDraft.jisticProud,
+      pocetFazi: inlineOkruhDraft.pocetFazi,
+      typKabelu: inlineOkruhDraft.typKabelu || undefined,
+      pocetZil: inlineOkruhDraft.pocetZil || undefined,
+      prurez: inlineOkruhDraft.prurez || undefined,
+      vodic: vodic || undefined,
+      izolacniOdpor: inlineOkruhDraft.izolacniOdpor || undefined,
+      impedanceSmycky: inlineOkruhDraft.impedanceSmycky || undefined,
+    });
+    const okruhyData = await okruhService.getByRozvadec(rozvadecId);
+    setOkruhy(okruhyData);
+    setOkruhyCounts(prev => ({ ...prev, [rozvadecId]: okruhyData.length }));
+    const nextCislo = okruhyData.length > 0 ? Math.max(...okruhyData.map(o => o.cislo)) + 1 : 1;
+    setInlineOkruhDraft(d => ({ ...d, cislo: nextCislo, nazev: '', izolacniOdpor: '', impedanceSmycky: '' }));
+    setTimeout(() => inlineNazevRef.current?.focus(), 50);
+  };
+
+  const handleInlineOkruhKeyDown = (
+    e: React.KeyboardEvent,
+    field: 'nazev' | 'jisticTyp' | 'jisticProud' | 'pocetFazi' | 'typKabelu' | 'pocetZil' | 'prurez' | 'izolacniOdpor' | 'impedanceSmycky',
+    rozvadecId: number,
+  ) => {
+    if (e.key === 'Enter') { e.preventDefault(); handleInlineOkruhSave(rozvadecId); return; }
+    if (e.key === 'Tab' && !e.shiftKey) {
+      const order = ['nazev', 'jisticTyp', 'jisticProud', 'pocetFazi', 'typKabelu', 'pocetZil', 'prurez', 'izolacniOdpor', 'impedanceSmycky'] as const;
+      const refs = [inlineNazevRef, inlineJisticTypRef, inlineJisticProudRef, inlinePocetFaziRef, inlineTypKabeluRef, inlinePocetZilRef, inlinePrurezRef, inlineIzolacniOdporRef, inlineImpedanceSmyckyRef];
+      const idx = order.indexOf(field as typeof order[number]);
+      if (idx < order.length - 1) {
+        e.preventDefault();
+        refs[idx + 1].current?.focus();
+      } else {
+        e.preventDefault();
+        handleInlineOkruhSave(rozvadecId);
+      }
+    }
+  };
+
   return (
     <>
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      {/* Seznam rozvaděčů - levá strana */}
-      <div className="lg:col-span-1">
+      {/* Seznam rozvaděčů - levá strana (skrytá v inline módu) */}
+      <div className={inlineModeRozvadecId !== null ? 'hidden' : 'lg:col-span-1'}>
         <Card
           title="Rozvaděče"
           actions={<Button size="sm" onClick={() => setIsRozvadecModalOpen(true)}>+ Přidat</Button>}
@@ -477,42 +537,67 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
         </Card>
       </div>
 
-      {/* Detail rozvaděče - pravá strana */}
-      <div className="lg:col-span-2">
+      {/* Detail rozvaděče - pravá strana (rozšíří se v inline módu) */}
+      <div className={inlineModeRozvadecId !== null ? 'col-span-full' : 'lg:col-span-2'}>
         {selectedRozvadec ? (
           <Card
             title={`${selectedRozvadec.nazev}`}
             actions={
               <div className="flex gap-2">
-                <Button size="sm" onClick={() => {
-                  resetOkruhForm();
-                  if (window.innerWidth < 640) { setIsOkruhSheetOpen(true); }
-                  else { setIsOkruhModalOpen(true); }
-                }}>
-                  <span className="sm:hidden">⊕</span>
-                  <span className="hidden sm:inline">+ Přidat okruh</span>
+                <Button
+                  size="sm"
+                  variant={inlineModeRozvadecId === selectedRozvadec.id ? 'primary' : 'secondary'}
+                  className="hidden md:inline-flex"
+                  onClick={() => {
+                    if (inlineModeRozvadecId === selectedRozvadec.id) {
+                      setInlineModeRozvadecId(null);
+                    } else {
+                      const nextCislo = okruhy.length > 0 ? Math.max(...okruhy.map(o => o.cislo)) + 1 : 1;
+                      setInlineOkruhDraft(d => ({ ...d, cislo: nextCislo, nazev: '', izolacniOdpor: '', impedanceSmycky: '' }));
+                      setInlineModeRozvadecId(selectedRozvadec.id!);
+                      setTimeout(() => inlineNazevRef.current?.focus(), 80);
+                    }
+                  }}
+                >
+                  {inlineModeRozvadecId === selectedRozvadec.id ? '← Karty' : '⌨ Hromadný vstup'}
                 </Button>
-                <Button size="sm" onClick={() => {
-                  resetCranicForm();
-                  if (window.innerWidth < 640) { setIsCranicSheetOpen(true); }
-                  else { setIsCranicModalOpen(true); }
-                }}>
-                  <span className="sm:hidden">⚡</span>
-                  <span className="hidden sm:inline">+ Přidat chránič</span>
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => {
-                  setEditingRozvadec(selectedRozvadec);
-                  setRozvadecFormData({
-                    nazev: selectedRozvadec.nazev,
-                    oznaceni: selectedRozvadec.oznaceni || '',
-                    umisteni: selectedRozvadec.umisteni || '',
-                    typRozvadece: selectedRozvadec.typRozvadece || '',
-                    stupenKryti: selectedRozvadec.stupenKryti || 'IP20',
-                    poznamka: selectedRozvadec.poznamka || '',
-                  });
-                  setIsRozvadecModalOpen(true);
-                }}>Upravit</Button>
-                <Button variant="danger" size="sm" onClick={() => handleDeleteRozvadec(selectedRozvadec.id!)}>Smazat</Button>
+                {inlineModeRozvadecId !== selectedRozvadec.id && (
+                  <Button size="sm" onClick={() => {
+                    resetOkruhForm();
+                    if (window.innerWidth < 640) { setIsOkruhSheetOpen(true); }
+                    else { setIsOkruhModalOpen(true); }
+                  }}>
+                    <span className="sm:hidden">⊕</span>
+                    <span className="hidden sm:inline">+ Přidat okruh</span>
+                  </Button>
+                )}
+                {inlineModeRozvadecId !== selectedRozvadec.id && (
+                  <Button size="sm" onClick={() => {
+                    resetCranicForm();
+                    if (window.innerWidth < 640) { setIsCranicSheetOpen(true); }
+                    else { setIsCranicModalOpen(true); }
+                  }}>
+                    <span className="sm:hidden">⚡</span>
+                    <span className="hidden sm:inline">+ Přidat chránič</span>
+                  </Button>
+                )}
+                {inlineModeRozvadecId !== selectedRozvadec.id && (
+                  <Button variant="secondary" size="sm" onClick={() => {
+                    setEditingRozvadec(selectedRozvadec);
+                    setRozvadecFormData({
+                      nazev: selectedRozvadec.nazev,
+                      oznaceni: selectedRozvadec.oznaceni || '',
+                      umisteni: selectedRozvadec.umisteni || '',
+                      typRozvadece: selectedRozvadec.typRozvadece || '',
+                      stupenKryti: selectedRozvadec.stupenKryti || 'IP20',
+                      poznamka: selectedRozvadec.poznamka || '',
+                    });
+                    setIsRozvadecModalOpen(true);
+                  }}>Upravit</Button>
+                )}
+                {inlineModeRozvadecId !== selectedRozvadec.id && (
+                  <Button variant="danger" size="sm" onClick={() => handleDeleteRozvadec(selectedRozvadec.id!)}>Smazat</Button>
+                )}
               </div>
             }
           >
@@ -524,7 +609,139 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
             </div>
 
             <h4 className="font-medium text-sm text-slate-700 mb-2">Okruhy ({okruhy.length})</h4>
-            {okruhy.length > 0 ? (
+            {inlineModeRozvadecId === selectedRozvadec.id ? (
+              // ─── HROMADNÝ VSTUP – inline tabulka ─────────────────────────
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wide">
+                      <th className="text-left py-2 pr-2 font-medium w-8">Č.</th>
+                      <th className="text-left py-2 pr-2 font-medium">Název</th>
+                      <th className="text-left py-2 pr-2 font-medium w-16">Typ</th>
+                      <th className="text-left py-2 pr-2 font-medium w-20">Proud</th>
+                      <th className="text-left py-2 pr-2 font-medium w-14">Fáze</th>
+                      <th className="text-left py-2 pr-2 font-medium w-20">Kabel</th>
+                      <th className="text-left py-2 pr-2 font-medium w-14">Žíly</th>
+                      <th className="text-left py-2 pr-2 font-medium w-16">Průřez</th>
+                      <th className="text-left py-2 pr-2 font-medium w-20">Iz. odpor</th>
+                      <th className="text-left py-2 pr-2 font-medium w-20">Imp. smyčky</th>
+                      <th className="w-10"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {okruhy.sort((a, b) => a.cislo - b.cislo).map((o) => (
+                      <tr key={o.id} className="border-b border-slate-100 hover:bg-slate-50 group">
+                        <td className="py-1.5 pr-2 text-xs font-medium text-slate-500">{o.cislo}</td>
+                        <td className="py-1.5 pr-2 text-xs font-medium">{o.nazev}</td>
+                        <td className="py-1.5 pr-2">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100">{o.jisticTyp}</span>
+                        </td>
+                        <td className="py-1.5 pr-2 text-xs text-slate-600">{o.jisticProud}</td>
+                        <td className="py-1.5 pr-2 text-xs text-slate-600">{o.pocetFazi}P</td>
+                        <td className="py-1.5 pr-2 text-xs text-slate-500">{o.typKabelu || '—'}</td>
+                        <td className="py-1.5 pr-2 text-xs text-slate-500">{o.pocetZil || '—'}</td>
+                        <td className="py-1.5 pr-2 text-xs text-slate-500">{o.prurez ? `${o.prurez} mm²` : '—'}</td>
+                        <td className="py-1.5 pr-2 text-xs text-slate-600">{o.izolacniOdpor || '—'}</td>
+                        <td className="py-1.5 pr-2 text-xs text-slate-600">{o.impedanceSmycky || '—'}</td>
+                        <td className="py-1.5">
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button type="button" title="Upravit" onClick={() => handleEditOkruh(o)}
+                              className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-200 text-slate-500 hover:text-slate-800 text-xs">✎</button>
+                            <button type="button" title="Smazat" onClick={() => handleDeleteOkruh(o.id!)}
+                              className="w-6 h-6 flex items-center justify-center rounded hover:bg-red-100 text-slate-400 hover:text-red-600 text-xs">✕</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {/* Draft řádek */}
+                    <tr className="bg-blue-50/60 border-b border-blue-100">
+                      <td className="py-1 pr-2 text-xs font-medium text-slate-400 pl-1">{inlineOkruhDraft.cislo}</td>
+                      <td className="py-1 pr-2">
+                        <input ref={inlineNazevRef} type="text" value={inlineOkruhDraft.nazev}
+                          onChange={(e) => setInlineOkruhDraft(d => ({ ...d, nazev: e.target.value }))}
+                          onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'nazev', selectedRozvadec.id!)}
+                          placeholder="Název okruhu..." autoComplete="off"
+                          className="w-full px-2 py-1 border border-slate-300 rounded bg-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                      </td>
+                      <td className="py-1 pr-2">
+                        <select ref={inlineJisticTypRef} value={inlineOkruhDraft.jisticTyp}
+                          onChange={(e) => setInlineOkruhDraft(d => ({ ...d, jisticTyp: e.target.value }))}
+                          onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'jisticTyp', selectedRozvadec.id!)}
+                          className="w-full px-1.5 py-1 border border-slate-300 rounded bg-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-400">
+                          {['B','C','D','gG','aM','IT','IJ','IJV','ITM'].map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                      </td>
+                      <td className="py-1 pr-2">
+                        <select ref={inlineJisticProudRef} value={inlineOkruhDraft.jisticProud}
+                          onChange={(e) => setInlineOkruhDraft(d => ({ ...d, jisticProud: e.target.value }))}
+                          onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'jisticProud', selectedRozvadec.id!)}
+                          className="w-full px-1.5 py-1 border border-slate-300 rounded bg-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-400">
+                          {['2A','4A','6A','10A','13A','16A','20A','25A','32A','40A','50A','63A','80A','100A','125A','160A'].map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                      </td>
+                      <td className="py-1 pr-2">
+                        <select ref={inlinePocetFaziRef} value={inlineOkruhDraft.pocetFazi}
+                          onChange={(e) => setInlineOkruhDraft(d => ({ ...d, pocetFazi: Number(e.target.value) }))}
+                          onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'pocetFazi', selectedRozvadec.id!)}
+                          className="w-full px-1.5 py-1 border border-slate-300 rounded bg-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-400">
+                          <option value={1}>1P</option>
+                          <option value={2}>2P</option>
+                          <option value={3}>3P</option>
+                        </select>
+                      </td>
+                      <td className="py-1 pr-2">
+                        <select ref={inlineTypKabeluRef} value={inlineOkruhDraft.typKabelu}
+                          onChange={(e) => setInlineOkruhDraft(d => ({ ...d, typKabelu: e.target.value }))}
+                          onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'typKabelu', selectedRozvadec.id!)}
+                          className="w-full px-1.5 py-1 border border-slate-300 rounded bg-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-400">
+                          {TYPY_KABELU.map(k => <option key={k} value={k}>{k}</option>)}
+                        </select>
+                      </td>
+                      <td className="py-1 pr-2">
+                        <select ref={inlinePocetZilRef} value={inlineOkruhDraft.pocetZil}
+                          onChange={(e) => setInlineOkruhDraft(d => ({ ...d, pocetZil: e.target.value }))}
+                          onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'pocetZil', selectedRozvadec.id!)}
+                          className="w-full px-1.5 py-1 border border-slate-300 rounded bg-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-400">
+                          {['1','2','3','4','5'].map(z => <option key={z} value={z}>{z}</option>)}
+                        </select>
+                      </td>
+                      <td className="py-1 pr-2">
+                        <select ref={inlinePrurezRef} value={inlineOkruhDraft.prurez}
+                          onChange={(e) => setInlineOkruhDraft(d => ({ ...d, prurez: e.target.value }))}
+                          onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'prurez', selectedRozvadec.id!)}
+                          className="w-full px-1.5 py-1 border border-slate-300 rounded bg-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-400">
+                          {PRUREZY.map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                      </td>
+                      <td className="py-1 pr-2">
+                        <input ref={inlineIzolacniOdporRef} type="text" value={inlineOkruhDraft.izolacniOdpor}
+                          onChange={(e) => setInlineOkruhDraft(d => ({ ...d, izolacniOdpor: e.target.value }))}
+                          onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'izolacniOdpor', selectedRozvadec.id!)}
+                          placeholder="MΩ" autoComplete="off"
+                          className="w-full px-2 py-1 border border-slate-300 rounded bg-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                      </td>
+                      <td className="py-1 pr-2">
+                        <input ref={inlineImpedanceSmyckyRef} type="text" value={inlineOkruhDraft.impedanceSmycky}
+                          onChange={(e) => setInlineOkruhDraft(d => ({ ...d, impedanceSmycky: e.target.value }))}
+                          onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'impedanceSmycky', selectedRozvadec.id!)}
+                          placeholder="Ω" autoComplete="off"
+                          className="w-full px-2 py-1 border border-slate-300 rounded bg-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-400" />
+                      </td>
+                      <td className="py-1">
+                        <button type="button" title="Uložit (Enter)" onClick={() => handleInlineOkruhSave(selectedRozvadec.id!)}
+                          disabled={!inlineOkruhDraft.nazev.trim()}
+                          className="w-7 h-7 flex items-center justify-center rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-base">↵</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p className="text-xs text-slate-400 mt-2 select-none">
+                  <kbd className="px-1 bg-slate-100 rounded border border-slate-200 text-[10px]">Tab</kbd> přechod &nbsp;·&nbsp;
+                  <kbd className="px-1 bg-slate-100 rounded border border-slate-200 text-[10px]">Enter</kbd> uložit řádek &nbsp;·&nbsp;
+                  ✎ upravit vč. poznámky
+                </p>
+              </div>
+            ) : okruhy.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
