@@ -470,11 +470,51 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     setTimeout(() => inlineNazevRef.current?.focus(), 50);
   };
 
+  // Shift+Enter — uloží řádek a zkopíruje tech. data (jistic, kabel) do nového
+  const handleInlineOkruhSaveDuplicate = async (rozvadecId: number) => {
+    if (!inlineOkruhDraft.nazev.trim()) return;
+    const prevDraft = { ...inlineOkruhDraft };
+    const vodic = computeVodic(prevDraft.typKabelu, prevDraft.pocetZil, prevDraft.prurez);
+    await okruhService.create({
+      rozvadecId,
+      cislo: prevDraft.cislo,
+      nazev: prevDraft.nazev,
+      jisticTyp: prevDraft.jisticTyp,
+      jisticProud: prevDraft.jisticProud,
+      pocetFazi: prevDraft.pocetFazi,
+      typKabelu: prevDraft.typKabelu || undefined,
+      pocetZil: prevDraft.pocetZil || undefined,
+      prurez: prevDraft.prurez || undefined,
+      vodic: vodic || undefined,
+      izolacniOdpor: prevDraft.izolacniOdpor || undefined,
+      impedanceSmycky: prevDraft.impedanceSmycky || undefined,
+    });
+    const okruhyData = await okruhService.getByRozvadec(rozvadecId);
+    setOkruhy(okruhyData);
+    setOkruhyCounts(prev => ({ ...prev, [rozvadecId]: okruhyData.length }));
+    const nextCislo = okruhyData.length > 0 ? Math.max(...okruhyData.map(o => o.cislo)) + 1 : 1;
+    // Zachovat vše kromě cislo a nazev (nazev se nuluje pro nový popis okruhu)
+    setInlineOkruhDraft({
+      cislo: nextCislo,
+      nazev: '',
+      jisticTyp: prevDraft.jisticTyp,
+      jisticProud: prevDraft.jisticProud,
+      pocetFazi: prevDraft.pocetFazi,
+      typKabelu: prevDraft.typKabelu,
+      pocetZil: prevDraft.pocetZil,
+      prurez: prevDraft.prurez,
+      izolacniOdpor: '',
+      impedanceSmycky: '',
+    });
+    setTimeout(() => inlineNazevRef.current?.focus(), 50);
+  };
+
   const handleInlineOkruhKeyDown = (
     e: React.KeyboardEvent,
     field: 'nazev' | 'jisticTyp' | 'jisticProud' | 'pocetFazi' | 'typKabelu' | 'pocetZil' | 'prurez' | 'izolacniOdpor' | 'impedanceSmycky',
     rozvadecId: number,
   ) => {
+    if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); handleInlineOkruhSaveDuplicate(rozvadecId); return; }
     if (e.key === 'Enter') { e.preventDefault(); handleInlineOkruhSave(rozvadecId); return; }
     if (e.key === 'Tab' && !e.shiftKey) {
       const order = ['nazev', 'jisticTyp', 'jisticProud', 'pocetFazi', 'typKabelu', 'pocetZil', 'prurez', 'izolacniOdpor', 'impedanceSmycky'] as const;
@@ -738,6 +778,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                 <p className="text-xs text-slate-400 mt-2 select-none">
                   <kbd className="px-1 bg-slate-100 rounded border border-slate-200 text-[10px]">Tab</kbd> přechod &nbsp;·&nbsp;
                   <kbd className="px-1 bg-slate-100 rounded border border-slate-200 text-[10px]">Enter</kbd> uložit řádek &nbsp;·&nbsp;
+                  <kbd className="px-1 bg-slate-100 rounded border border-slate-200 text-[10px]">Shift+Enter</kbd> uložit + zkopírovat jistič/kabel &nbsp;·&nbsp;
                   ✎ upravit vč. poznámky
                 </p>
               </div>
