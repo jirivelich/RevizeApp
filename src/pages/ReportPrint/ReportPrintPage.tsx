@@ -417,7 +417,7 @@ export function ReportPrintPage() {
       <div className="report-normy-text">{revize.normySoulad || DEFAULT_NORMY_SOULAD}</div>
 
       <div className="report-title">
-        ZPRÁVA O REVIZI ELEKTRICKÉ INSTALACE
+        ZPRÁVA O REVIZI ELEKTRICKÉ INSTALACI
       </div>
       <div className="report-subtitle">{typRevizeLabel}</div>
 
