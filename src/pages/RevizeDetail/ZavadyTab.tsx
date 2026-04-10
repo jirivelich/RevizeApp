@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button, Card, Select, Modal } from '../../components/ui';
 import { zavadaService, revizeService } from '../../services/database';
 import { useCreateZavada, useUpdateZavada, useDeleteZavada } from '../../hooks/useQueries';
@@ -21,6 +21,17 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
   const [editingZavada, setEditingZavada] = useState<Zavada | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [selectedKatalogZavada, setSelectedKatalogZavada] = useState<string>('');
+  const [inlineMode, setInlineMode] = useState(false);
+  const [inlineDraft, setInlineDraft] = useState({
+    popis: '',
+    zavaznost: 'C2' as Zavada['zavaznost'],
+    stav: 'otevřená' as Zavada['stav'],
+    poznamka: '',
+  });
+  const inlinePopisRef = useRef<HTMLInputElement>(null);
+  const inlineZavaznostRef = useRef<HTMLSelectElement>(null);
+  const inlineStavRef = useRef<HTMLSelectElement>(null);
+  const inlinePoznamkaRef = useRef<HTMLInputElement>(null);
   const [zavadaFormData, setZavadaFormData] = useState({
     popis: '',
     zavaznost: 'C2' as Zavada['zavaznost'],
@@ -103,13 +114,176 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
     }
   };
 
+  const handleInlineSave = () => {
+    if (!inlineDraft.popis.trim()) return;
+    createZavada.mutate(
+      { ...inlineDraft, revizeId, datumZjisteni: new Date(), fotky: [] } as any,
+      {
+        onSuccess: async () => {
+          await updateRevizeVysledek(revizeId);
+          setInlineDraft({ popis: '', zavaznost: 'C2', stav: 'otevřená', poznamka: '' });
+          setTimeout(() => inlinePopisRef.current?.focus(), 50);
+        },
+      }
+    );
+  };
+
+  const handleInlineKeyDown = (e: React.KeyboardEvent, field: 'popis' | 'zavaznost' | 'stav' | 'poznamka') => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleInlineSave();
+      return;
+    }
+    if (e.key === 'Tab' && !e.shiftKey) {
+      if (field === 'popis') { e.preventDefault(); inlineZavaznostRef.current?.focus(); }
+      else if (field === 'zavaznost') { e.preventDefault(); inlineStavRef.current?.focus(); }
+      else if (field === 'stav') { e.preventDefault(); inlinePoznamkaRef.current?.focus(); }
+      else if (field === 'poznamka') { e.preventDefault(); handleInlineSave(); }
+    }
+  };
+
   return (
     <>
     <Card
       title="Závady"
-      actions={<Button size="sm" onClick={() => { resetZavadaForm(); setIsZavadaModalOpen(true); }}>+ Přidat závadu</Button>}
+      actions={
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant={inlineMode ? 'primary' : 'secondary'}
+            className="hidden md:inline-flex"
+            onClick={() => {
+              const next = !inlineMode;
+              setInlineMode(next);
+              if (next) setTimeout(() => inlinePopisRef.current?.focus(), 80);
+            }}
+          >
+            {inlineMode ? '← Karty' : '⌨ Hromadný vstup'}
+          </Button>
+          {!inlineMode && (
+            <Button size="sm" onClick={() => { resetZavadaForm(); setIsZavadaModalOpen(true); }}>+ Přidat závadu</Button>
+          )}
+        </div>
+      }
     >
-      {zavady.length > 0 ? (
+      {inlineMode ? (
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wide">
+                <th className="text-left py-2 pr-3 font-medium">Popis závady</th>
+                <th className="text-left py-2 pr-3 font-medium w-20">Závažnost</th>
+                <th className="text-left py-2 pr-3 font-medium w-28">Stav</th>
+                <th className="text-left py-2 pr-3 font-medium w-52">Poznámka / Norma</th>
+                <th className="w-16"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {zavady.map((z) => (
+                <tr key={z.id} className="border-b border-slate-100 hover:bg-slate-50 group">
+                  <td className="py-2 pr-3 font-medium">{z.popis}</td>
+                  <td className="py-2 pr-3">
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                      z.zavaznost === 'C1' ? 'bg-red-100 text-red-700' :
+                      z.zavaznost === 'C2' ? 'bg-orange-100 text-orange-700' :
+                      'bg-amber-100 text-amber-700'
+                    }`}>{z.zavaznost}</span>
+                  </td>
+                  <td className="py-2 pr-3">
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                      z.stav === 'vyřešená' ? 'bg-green-100 text-green-700' :
+                      z.stav === 'v řešení' ? 'bg-blue-100 text-blue-700' :
+                      'bg-slate-100 text-slate-700'
+                    }`}>{z.stav}</span>
+                  </td>
+                  <td className="py-2 pr-3 text-xs text-slate-500 italic truncate max-w-[200px]">{z.poznamka || '—'}</td>
+                  <td className="py-2">
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        title="Upravit (vč. fotek)"
+                        onClick={() => handleEditZavada(z)}
+                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-500 hover:text-slate-800"
+                      >✎</button>
+                      <button
+                        type="button"
+                        title="Smazat"
+                        onClick={() => handleDeleteZavada(z.id!)}
+                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-red-100 text-slate-400 hover:text-red-600"
+                      >✕</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {/* Draft row */}
+              <tr className="bg-blue-50/60 border-b border-blue-100">
+                <td className="py-1.5 pr-3">
+                  <input
+                    ref={inlinePopisRef}
+                    type="text"
+                    value={inlineDraft.popis}
+                    onChange={(e) => setInlineDraft(d => ({ ...d, popis: e.target.value }))}
+                    onKeyDown={(e) => handleInlineKeyDown(e, 'popis')}
+                    placeholder="Popis nové závady..."
+                    className="w-full px-2 py-1 border border-slate-300 rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </td>
+                <td className="py-1.5 pr-3">
+                  <select
+                    ref={inlineZavaznostRef}
+                    value={inlineDraft.zavaznost}
+                    onChange={(e) => setInlineDraft(d => ({ ...d, zavaznost: e.target.value as Zavada['zavaznost'] }))}
+                    onKeyDown={(e) => handleInlineKeyDown(e, 'zavaznost')}
+                    className="w-full px-1.5 py-1 border border-slate-300 rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  >
+                    <option value="C1">C1</option>
+                    <option value="C2">C2</option>
+                    <option value="C3">C3</option>
+                  </select>
+                </td>
+                <td className="py-1.5 pr-3">
+                  <select
+                    ref={inlineStavRef}
+                    value={inlineDraft.stav}
+                    onChange={(e) => setInlineDraft(d => ({ ...d, stav: e.target.value as Zavada['stav'] }))}
+                    onKeyDown={(e) => handleInlineKeyDown(e, 'stav')}
+                    className="w-full px-1.5 py-1 border border-slate-300 rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  >
+                    <option value="otevřená">Otevřená</option>
+                    <option value="v řešení">V řešení</option>
+                    <option value="vyřešená">Vyřešená</option>
+                  </select>
+                </td>
+                <td className="py-1.5 pr-3">
+                  <input
+                    ref={inlinePoznamkaRef}
+                    type="text"
+                    value={inlineDraft.poznamka}
+                    onChange={(e) => setInlineDraft(d => ({ ...d, poznamka: e.target.value }))}
+                    onKeyDown={(e) => handleInlineKeyDown(e, 'poznamka')}
+                    placeholder="Norma, poznámka..."
+                    className="w-full px-2 py-1 border border-slate-300 rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </td>
+                <td className="py-1.5">
+                  <button
+                    type="button"
+                    title="Uložit (Enter)"
+                    disabled={!inlineDraft.popis.trim() || createZavada.isPending}
+                    onClick={handleInlineSave}
+                    className="w-7 h-7 flex items-center justify-center rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-base"
+                  >↵</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p className="text-xs text-slate-400 mt-2 select-none">
+            <kbd className="px-1 bg-slate-100 rounded border border-slate-200 text-[10px]">Tab</kbd> přechod &nbsp;·&nbsp;
+            <kbd className="px-1 bg-slate-100 rounded border border-slate-200 text-[10px]">Enter</kbd> uložit řádek &nbsp;·&nbsp;
+            ✎ upravit vč. fotek
+          </p>
+        </div>
+      ) : zavady.length > 0 ? (
         <div className="space-y-4">
           {zavady.map((z) => (
             <div key={z.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200">
