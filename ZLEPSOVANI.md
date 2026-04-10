@@ -44,7 +44,7 @@ Vygenerováno: 10. dubna 2026
 
 ## UX detaily
 
-14. **Klávesové zkratky** — `Ctrl+S` uložit, `Ctrl+P` náhled tisku, `Alt+N` nová závada. Technici pracující celý den to ocení.
+14. ~~**Klávesové zkratky** — `Ctrl+S` uložit, `Ctrl+D` duplikovat (otevře dialog kopie revize). Technici pracující celý den to ocení.~~ ✅ *Splněno 10. 4. 2026*
 
 15. **Offline-first měření** — Možnost zadat celou revizi offline na tabletu v terénu, sync při připojení. `useOfflineQueue` hook existuje, záleží jak plně je implementovaný.
 

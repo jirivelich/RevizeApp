@@ -123,6 +123,24 @@ export function RevizeDetailPage() {
     }
   }, [id]);
 
+  // Ctrl+S = uložit, Ctrl+D = otevřít dialog duplikace
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        setDuplikatCislo(generateCisloRevize());
+        setDuplikatTyp('navazujici');
+        setIsDuplikatModalOpen(true);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  });
+
   const loadData = async (revizeId: number) => {
     setLoading(true);
     setError(null);
