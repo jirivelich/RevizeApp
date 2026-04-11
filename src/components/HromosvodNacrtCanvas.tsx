@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 
-type Tool = 'jimaec' | 'svod' | 'uzemneni' | 'vedeni' | 'pero' | 'text' | 'guma';
+type Tool = 'jimaec' | 'svod' | 'uzemneni' | 'vedeni' | 'obdelnik' | 'pero' | 'text' | 'guma';
 
 interface Props {
   value?: string; // base64 PNG data URL
@@ -13,85 +13,55 @@ const GUMA_R = 12;
 
 // ─── LPS symbol renderers ───────────────────────────────────────────────────
 
-function drawJimaec(ctx: CanvasRenderingContext2D, x: number, y: number) {
+function drawJimaec(ctx: CanvasRenderingContext2D, x: number, y: number, rotDeg = 0) {
   ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate((rotDeg * Math.PI) / 180);
   ctx.strokeStyle = '#1e3a8a';
   ctx.fillStyle = '#1e3a8a';
   ctx.lineWidth = 2;
   ctx.lineCap = 'round';
-  // Staff (vertical line)
-  ctx.beginPath();
-  ctx.moveTo(x, y + 24);
-  ctx.lineTo(x, y - 16);
-  ctx.stroke();
-  // Pointed tip (triangle)
-  ctx.beginPath();
-  ctx.moveTo(x - 5, y - 12);
-  ctx.lineTo(x, y - 24);
-  ctx.lineTo(x + 5, y - 12);
-  ctx.stroke();
-  // Base bracket
-  ctx.beginPath();
-  ctx.moveTo(x - 10, y + 24);
-  ctx.lineTo(x + 10, y + 24);
-  ctx.stroke();
-  // Small label
-  ctx.font = 'bold 9px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('J', x, y + 36);
+  ctx.beginPath(); ctx.moveTo(0, 24); ctx.lineTo(0, -16); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-5, -12); ctx.lineTo(0, -24); ctx.lineTo(5, -12); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-10, 24); ctx.lineTo(10, 24); ctx.stroke();
+  ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('J', 0, 36);
   ctx.restore();
 }
 
-function drawSvod(ctx: CanvasRenderingContext2D, x: number, y: number) {
+function drawSvod(ctx: CanvasRenderingContext2D, x: number, y: number, rotDeg = 0) {
   ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate((rotDeg * Math.PI) / 180);
   ctx.strokeStyle = '#166534';
   ctx.fillStyle = '#166534';
   ctx.lineWidth = 2;
   ctx.lineCap = 'round';
-  // Upper conductor
-  ctx.beginPath();
-  ctx.moveTo(x, y - 24);
-  ctx.lineTo(x, y - 9);
-  ctx.stroke();
-  // Test clamp (rectangle)
-  ctx.strokeRect(x - 8, y - 9, 16, 13);
-  // Lower conductor
-  ctx.beginPath();
-  ctx.moveTo(x, y + 4);
-  ctx.lineTo(x, y + 24);
-  ctx.stroke();
-  // Label
-  ctx.font = 'bold 9px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('S', x, y + 36);
+  ctx.beginPath(); ctx.moveTo(0, -24); ctx.lineTo(0, -9); ctx.stroke();
+  ctx.strokeRect(-8, -9, 16, 13);
+  ctx.beginPath(); ctx.moveTo(0, 4); ctx.lineTo(0, 24); ctx.stroke();
+  ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('S', 0, 36);
   ctx.restore();
 }
 
-function drawUzemneni(ctx: CanvasRenderingContext2D, x: number, y: number) {
+function drawUzemneni(ctx: CanvasRenderingContext2D, x: number, y: number, rotDeg = 0) {
   ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate((rotDeg * Math.PI) / 180);
   ctx.strokeStyle = '#7c2d12';
   ctx.fillStyle = '#7c2d12';
   ctx.lineWidth = 2;
   ctx.lineCap = 'round';
-  // Vertical conductor
-  ctx.beginPath();
-  ctx.moveTo(x, y - 20);
-  ctx.lineTo(x, y);
-  ctx.stroke();
-  // Three earth bars (18, 13, 8 px wide)
+  ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(0, 0); ctx.stroke();
   const bars = [18, 13, 8];
   for (let i = 0; i < bars.length; i++) {
     const hw = bars[i] / 2;
-    const yy = y + i * 6;
-    ctx.beginPath();
-    ctx.moveTo(x - hw, yy);
-    ctx.lineTo(x + hw, yy);
-    ctx.stroke();
+    const yy = i * 6;
+    ctx.beginPath(); ctx.moveTo(-hw, yy); ctx.lineTo(hw, yy); ctx.stroke();
   }
-  // Label
-  ctx.font = 'bold 9px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('E', x, y + 26);
+  ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('E', 0, 26);
   ctx.restore();
 }
 
@@ -116,6 +86,12 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
   const [color, setColor] = useState('#c00000');
   const [lineWidth, setLineWidth] = useState(2);
   const [historyCount, setHistoryCount] = useState(0);
+  const [symbolRotation, setSymbolRotation] = useState<0 | 90 | 180 | 270>(0);
+
+  const isSymbolTool = tool === 'jimaec' || tool === 'svod' || tool === 'uzemneni';
+
+  function rotateLeft()  { setSymbolRotation(r => ((r - 90 + 360) % 360) as 0 | 90 | 180 | 270); }
+  function rotateRight() { setSymbolRotation(r => ((r + 90) % 360) as 0 | 90 | 180 | 270); }
 
   // Drag state
   const isDragging = useRef(false);
@@ -210,16 +186,16 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     }
 
     // One-click symbol tools
-    if (tool === 'jimaec') { snapshot(); drawJimaec(ctx, pt.x, pt.y); emit(); return; }
-    if (tool === 'svod')   { snapshot(); drawSvod(ctx, pt.x, pt.y);   emit(); return; }
-    if (tool === 'uzemneni') { snapshot(); drawUzemneni(ctx, pt.x, pt.y); emit(); return; }
+    if (tool === 'jimaec')   { snapshot(); drawJimaec(ctx, pt.x, pt.y, symbolRotation);   emit(); return; }
+    if (tool === 'svod')     { snapshot(); drawSvod(ctx, pt.x, pt.y, symbolRotation);     emit(); return; }
+    if (tool === 'uzemneni') { snapshot(); drawUzemneni(ctx, pt.x, pt.y, symbolRotation); emit(); return; }
 
     // Drag-based tools
     isDragging.current = true;
     startPt.current = pt;
     prevPt.current = pt;
 
-    if (tool === 'vedeni') {
+    if (tool === 'vedeni' || tool === 'obdelnik') {
       dragSnapshot.current = ctx.getImageData(0, 0, CANVAS_W, CANVAS_H);
     }
     if (tool === 'pero') {
@@ -245,6 +221,17 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
       ctx.lineTo(pt.x, pt.y);
       ctx.stroke();
       ctx.restore();
+    } else if (tool === 'obdelnik' && dragSnapshot.current) {
+      ctx.putImageData(dragSnapshot.current, 0, 0);
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth;
+      ctx.beginPath();
+      ctx.strokeRect(
+        startPt.current.x, startPt.current.y,
+        pt.x - startPt.current.x, pt.y - startPt.current.y,
+      );
+      ctx.restore();
     } else if (tool === 'pero') {
       ctx.save();
       ctx.strokeStyle = color;
@@ -263,6 +250,13 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
       ctx.arc(pt.x, pt.y, GUMA_R, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
+      // Redraw grid only in the erased region
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, GUMA_R + 1, 0, Math.PI * 2);
+      ctx.clip();
+      drawGrid(ctx);
+      ctx.restore();
     }
 
     prevPt.current = pt;
@@ -275,7 +269,6 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     const ctx = canvasRef.current!.getContext('2d')!;
 
     if (tool === 'vedeni' && dragSnapshot.current) {
-      // Finalize the line
       ctx.putImageData(dragSnapshot.current, 0, 0);
       ctx.save();
       ctx.strokeStyle = color;
@@ -285,6 +278,18 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
       ctx.moveTo(startPt.current.x, startPt.current.y);
       ctx.lineTo(pt.x, pt.y);
       ctx.stroke();
+      ctx.restore();
+      dragSnapshot.current = null;
+    } else if (tool === 'obdelnik' && dragSnapshot.current) {
+      ctx.putImageData(dragSnapshot.current, 0, 0);
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth;
+      ctx.beginPath();
+      ctx.strokeRect(
+        startPt.current.x, startPt.current.y,
+        pt.x - startPt.current.x, pt.y - startPt.current.y,
+      );
       ctx.restore();
       dragSnapshot.current = null;
     }
@@ -321,14 +326,15 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     { id: 'svod',     label: '🔌 Svod',     title: 'Svod (svodové vedení) — kliknutím umístíte symbol se zkušební svorkou' },
     { id: 'uzemneni', label: '⏚ Uzemnění', title: 'Uzemnění (zemní elektroda) — kliknutím umístíte symbol' },
     { id: 'vedeni',   label: '━ Vedení',   title: 'Vedení hromosvodu — tažením nakreslíte vodič' },
+    { id: 'obdelnik', label: '▭ Obdélník', title: 'Obdélník — tažením nakreslíte obdélník (půdorys objektu)' },
     { id: 'pero',     label: '✏ Pero',     title: 'Pero — volné kreslení (obrysy objektu, popisy)' },
     { id: 'text',     label: 'T Text',     title: 'Text — kliknutím přidáte textový popisek' },
-    { id: 'guma',     label: '◻ Guma',     title: 'Guma — vymazání (bílé kolečko)' },
+    { id: 'guma',     label: '◻ Guma',     title: 'Guma — vymazání (zachovává mřížku)' },
   ];
 
   const cursorMap: Record<Tool, string> = {
     jimaec: 'crosshair', svod: 'crosshair', uzemneni: 'crosshair',
-    vedeni: 'crosshair', pero: 'crosshair', text: 'text', guma: 'cell',
+    vedeni: 'crosshair', obdelnik: 'crosshair', pero: 'crosshair', text: 'text', guma: 'cell',
   };
 
   return (
@@ -417,7 +423,18 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
         >
           🗑 Smazat vše
         </button>
-
+        {/* Symbol rotation — visible only for symbol tools */}
+        {isSymbolTool && (
+          <>
+            <div className="w-px h-6 bg-slate-300 mx-1" />
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-slate-500">Otočení:</span>
+              <button type="button" onClick={rotateLeft}  title="Otočit doleva o 90°" className="px-2 py-1 text-xs rounded border bg-white text-slate-700 border-slate-300 hover:border-slate-400">↺</button>
+              <span className="text-xs font-medium text-slate-700 w-8 text-center">{symbolRotation}°</span>
+              <button type="button" onClick={rotateRight} title="Otočit doprava o 90°" className="px-2 py-1 text-xs rounded border bg-white text-slate-700 border-slate-300 hover:border-slate-400">↻</button>
+            </div>
+          </>
+        )}
         <div className="ml-auto text-xs text-slate-400 hidden md:block">
           J = Jímač &nbsp;·&nbsp; S = Svod &nbsp;·&nbsp; E = Uzemnění
         </div>
