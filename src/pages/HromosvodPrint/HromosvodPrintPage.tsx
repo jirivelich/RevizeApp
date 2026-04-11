@@ -537,15 +537,21 @@ export function HromosvodPrintPage() {
       )}
 
       {/* Příloha – náčrt LPS */}
-      {revize.hromosvodNacrt && (
-        <ReportSection title="Příloha – Schéma hromosvodu (LPS)">
-          <img
-            src={revize.hromosvodNacrt}
-            alt="Schéma hromosvodu LPS"
-            style={{ width: '100%', maxWidth: '700px', display: 'block', border: '1px solid #e2e8f0', borderRadius: '4px' }}
-          />
-        </ReportSection>
-      )}
+      {revize.hromosvodNacrt && (() => {
+        let imgSrc = revize.hromosvodNacrt;
+        if (imgSrc.startsWith('{')) {
+          try { imgSrc = (JSON.parse(imgSrc) as { full: string }).full; } catch { /* use as-is */ }
+        }
+        return (
+          <ReportSection title="Příloha – Schéma hromosvodu (LPS)">
+            <img
+              src={imgSrc}
+              alt="Schéma hromosvodu LPS"
+              style={{ width: '100%', maxWidth: '700px', display: 'block', border: '1px solid #e2e8f0', borderRadius: '4px' }}
+            />
+          </ReportSection>
+        );
+      })()}
 
       {/* p) ZÁVADY */}
       <ReportSection title="16. Přehled zjištěných závad">
