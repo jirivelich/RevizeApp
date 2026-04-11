@@ -1,5 +1,5 @@
 import React from 'react';
-import { Revize } from '../../types';
+import type { Revize } from '../../types';
 import { HromosvodNacrtCanvas } from '../../components/HromosvodNacrtCanvas';
 
 interface Props {
