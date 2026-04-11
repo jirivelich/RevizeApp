@@ -2,7 +2,7 @@
 
 const IDLE_MS = 58 * 60 * 1000;
 const WARNING_MS = 2 * 60 * 1000;
-const POLL_MS = 10_000;
+const POLL_MS = 30_000; // 30s stačí pro detekci 58min nečinnosti
 
 interface UseIdleTimeoutOptions {
   onLogout: () => void;
@@ -41,10 +41,10 @@ export function useIdleTimeout({ onLogout }: UseIdleTimeoutOptions): UseIdleTime
     };
     events.forEach(e => window.addEventListener(e, handleActivity, { passive: true }));
 
-    pollRef.current = setInterval(() => {
+    const tick = () => {
       const elapsed = Date.now() - lastActivityRef.current;
       if (elapsed >= IDLE_MS + WARNING_MS) {
-        if (pollRef.current !== null) clearInterval(pollRef.current);
+        stopPoll();
         warningActiveRef.current = false;
         setShowWarning(false);
         onLogoutRef.current();
@@ -64,11 +64,37 @@ export function useIdleTimeout({ onLogout }: UseIdleTimeoutOptions): UseIdleTime
           setRemainingSeconds(WARNING_MS / 1000);
         }
       }
-    }, POLL_MS);
+    };
+
+    const startPoll = () => {
+      if (pollRef.current !== null) return;
+      pollRef.current = setInterval(tick, POLL_MS);
+    };
+
+    const stopPoll = () => {
+      if (pollRef.current !== null) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+
+    // Pozastavit interval když je tab skrytý (obrazovka vypnutá, přepnutá app)
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stopPoll();
+      } else {
+        tick(); // okamžitá kontrola po návratu (mohla vypršet nečinnost)
+        startPoll();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    startPoll();
 
     return () => {
       events.forEach(e => window.removeEventListener(e, handleActivity));
-      if (pollRef.current !== null) clearInterval(pollRef.current);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      stopPoll();
     };
   }, []);
 
