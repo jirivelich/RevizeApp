@@ -30,7 +30,7 @@ Vygenerováno: 10. dubna 2026
 
 10. **Import měření z přístroje** — CSV import z Metrel/Fluke/Sonel zařízení → auto-fill hodnot okruhů. Technici tato zařízení používají a data jsou dostupná.
 
-11. **Náčrt hromosvodu na objektu** — V sekci hromosvodu možnost nakreslit schéma LPS přímo na obrys nebo fotografii objektu (SVG/canvas kreslení). Výsledek se tiskne jako příloha zprávy.
+11. ~~**Náčrt hromosvodu na objektu** — V sekci hromosvodu možnost nakreslit schéma LPS přímo na obrys nebo fotografii objektu (SVG/canvas kreslení). Výsledek se tiskne jako příloha zprávy.~~ ✅ *Splněno 11. 4. 2026*
 
 12. **Mapa revizí** — V přehledu revizí přidat záložku Mapa (OpenStreetMap + Leaflet.js). Každá revize s vyplněnou adresou = pin na mapě. Po kliknutí na pin → detail revize. Geokódování adresy přes Nominatim API (zdarma, bez API klíče).
 
