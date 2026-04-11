@@ -13,8 +13,8 @@ interface LpsSymbol {
 
 interface StoredV2 {
   v: 2;
-  full: string;  // composite PNG â€“ for printing (bg + symbols)
-  bg: string;    // clean bg PNG â€“ for editing
+  full: string;  // composite PNG – for printing (bg + symbols)
+  bg: string;    // clean bg PNG – for editing
   symbols: LpsSymbol[];
 }
 
@@ -34,7 +34,7 @@ const GUMA_R = 14;
 const HIT_R = 32;
 const MAX_HIST = 40;
 
-// â”€â”€â”€ symbol renderers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── symbol renderers ────────────────────────────────────────────────────────
 
 function drawJimaec(ctx: CanvasRenderingContext2D, x: number, y: number, rot: number) {
   ctx.save(); ctx.translate(x, y); ctx.rotate((rot * Math.PI) / 180);
@@ -92,7 +92,7 @@ function drawGrid(ctx: CanvasRenderingContext2D) {
   ctx.restore();
 }
 
-// â”€â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
   const visRef  = useRef<HTMLCanvasElement>(null);         // visible canvas
@@ -138,7 +138,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
   const getBg  = () => bgElRef.current?.getContext('2d') ?? null;
   const getVis = () => visRef.current?.getContext('2d') ?? null;
 
-  // Render: bgCanvas â†’ visible + symbols on top
+  // Render: bgCanvas → visible + symbols on top
   function fullRedraw(selId: string | null) {
     const vis = getVis();
     const bg  = bgElRef.current;
@@ -174,7 +174,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     drawAllSymbols(vis, syms, selId);
   }
 
-  // â”€â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Init ────────────────────────────────────────────────────────────────
   const initialized = useRef(false);
   useEffect(() => {
     if (initialized.current) return;
@@ -205,7 +205,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
           }
         } catch { /* fall through */ }
       }
-      // Legacy: plain PNG â€” load into bg layer
+      // Legacy: plain PNG — load into bg layer
       const img = new Image();
       img.onload = () => { bgCtx.drawImage(img, 0, 0); boot([]); };
       img.src = value;
@@ -214,7 +214,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // â”€â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Actions ─────────────────────────────────────────────────────────────
 
   function undo() {
     if (history.current.length <= 1) return;
@@ -263,7 +263,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     emitState(newSyms, null);
   }
 
-  // â”€â”€â”€ Input helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Input helpers ───────────────────────────────────────────────────────
 
   function getPos(e: React.MouseEvent | React.TouchEvent) {
     const canvas = visRef.current!;
@@ -286,7 +286,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     return best;
   }
 
-  // â”€â”€â”€ Mouse / touch handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Mouse / touch handlers ──────────────────────────────────────────────
 
   function onDown(e: React.MouseEvent | React.TouchEvent) {
     e.preventDefault();
@@ -488,18 +488,18 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     emitState(symRef.current, selRef.current);
   }
 
-  // â”€â”€â”€ Toolbar config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Toolbar config ──────────────────────────────────────────────────────
 
   const toolDefs: { id: Tool; label: string; title: string }[] = [
-    { id: 'select',   label: 'â†– VĂ˝bÄ›r',    title: 'VĂ˝bÄ›r â€“ kliknutĂ­m vyberte umĂ­stÄ›nĂ˝ symbol; potom ho tĂˇhnÄ›te nebo potoÄŤte' },
-    { id: 'jimaec',   label: 'âšˇ JĂ­maÄŤ',   title: 'JĂ­maÄŤ (tyÄŤovĂ˝) â€“ kliknutĂ­m umĂ­stĂ­te symbol' },
-    { id: 'svod',     label: 'đź”Ś Svod',     title: 'Svod (svodovĂ© vedenĂ­) â€“ kliknutĂ­m umĂ­stĂ­te symbol' },
-    { id: 'uzemneni', label: 'âŹš UzemnÄ›nĂ­', title: 'UzemnÄ›nĂ­ (zemnĂ­ elektroda) â€“ kliknutĂ­m umĂ­stĂ­te symbol' },
-    { id: 'vedeni',   label: 'â” VedenĂ­',   title: 'VedenĂ­ hromosvodu â€“ taĹľenĂ­m nakreslete vodiÄŤ' },
-    { id: 'obdelnik', label: 'â–­ ObdĂ©lnĂ­k', title: 'ObdĂ©lnĂ­k â€“ taĹľenĂ­m nakreslete obrys objektu' },
-    { id: 'pero',     label: 'âśŹ Pero',     title: 'Pero â€“ volnĂ© kreslenĂ­' },
-    { id: 'text',     label: 'T Text',     title: 'Text â€“ kliknutĂ­m pĹ™idejte popisek' },
-    { id: 'guma',     label: 'â—» Guma',     title: 'Guma â€“ vĂ˝mazĂˇnĂ­ (zachovĂˇvĂˇ mĹ™Ă­Ĺľku)' },
+    { id: 'select',   label: '↖ Výběr',    title: 'Výběr – kliknutím vyberte umístěný symbol; potom ho táhněte nebo potočte' },
+    { id: 'jimaec',   label: '⚡ Jímač',   title: 'Jímač (tyčový) – kliknutím umístíte symbol' },
+    { id: 'svod',     label: '🔌 Svod',     title: 'Svod (svodové vedení) – kliknutím umístíte symbol' },
+    { id: 'uzemneni', label: '⏚ Uzemnění', title: 'Uzemnění (zemní elektroda) – kliknutím umístíte symbol' },
+    { id: 'vedeni',   label: '━ Vedení',   title: 'Vedení hromosvodu – tažením nakreslete vodič' },
+    { id: 'obdelnik', label: '▭ Obdélník', title: 'Obdélník – tažením nakreslete obrys objektu' },
+    { id: 'pero',     label: '✏ Pero',     title: 'Pero – volné kreslení' },
+    { id: 'text',     label: 'T Text',     title: 'Text – kliknutím přidejte popisek' },
+    { id: 'guma',     label: '◻ Guma',     title: 'Guma – výmazání (zachovává mřížku)' },
   ];
 
   const cursorMap: Record<Tool, string> = {
@@ -553,38 +553,38 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
             />
           ))}
           <input type="color" value={color} onChange={e => setColor(e.target.value)}
-            className="w-6 h-6 rounded border border-slate-300 cursor-pointer p-0" title="VlastnĂ­ barva" />
+            className="w-6 h-6 rounded border border-slate-300 cursor-pointer p-0" title="Vlastní barva" />
         </div>
 
         <div className="w-px h-6 bg-slate-300 mx-1 hidden sm:block" />
 
         {/* Line width */}
         <div className="flex items-center gap-1">
-          <span className="text-xs text-slate-500 hidden sm:inline">TlouĹˇĹĄka:</span>
+          <span className="text-xs text-slate-500 hidden sm:inline">Tloušťka:</span>
           {([1, 2, 4] as const).map(w => (
             <button key={w} type="button" onClick={() => setLineWidth(w)}
               className={`px-2 py-1 text-xs rounded border ${
                 lineWidth === w ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-700 border-slate-300 hover:border-slate-400'
               }`}
-            >{w === 1 ? 'tenkĂˇ' : w === 2 ? 'stĹ™ednĂ­' : 'silnĂˇ'}</button>
+            >{w === 1 ? 'tenká' : w === 2 ? 'střední' : 'silná'}</button>
           ))}
         </div>
 
         <div className="w-px h-6 bg-slate-300 mx-1 hidden sm:block" />
 
-        {/* Rotation controls â€” for symbol placement or selected symbol */}
+        {/* Rotation controls — for symbol placement or selected symbol */}
         {showRotCtrls && (
           <div className="flex items-center gap-1">
-            <span className="text-xs text-slate-500">OtoÄŤenĂ­:</span>
-            <button type="button" onClick={() => rotateBtn(-90)} title="OtoÄŤit doleva o 90Â°"
-              className="px-2 py-1 text-xs rounded border bg-white text-slate-700 border-slate-300 hover:border-slate-400">â†ş</button>
-            <span className="text-xs font-medium text-slate-700 w-8 text-center">{rotDisplay}Â°</span>
-            <button type="button" onClick={() => rotateBtn(90)} title="OtoÄŤit doprava o 90Â°"
-              className="px-2 py-1 text-xs rounded border bg-white text-slate-700 border-slate-300 hover:border-slate-400">â†»</button>
+            <span className="text-xs text-slate-500">Otočení:</span>
+            <button type="button" onClick={() => rotateBtn(-90)} title="Otočit doleva o 90°"
+              className="px-2 py-1 text-xs rounded border bg-white text-slate-700 border-slate-300 hover:border-slate-400">↺</button>
+            <span className="text-xs font-medium text-slate-700 w-8 text-center">{rotDisplay}°</span>
+            <button type="button" onClick={() => rotateBtn(90)} title="Otočit doprava o 90°"
+              className="px-2 py-1 text-xs rounded border bg-white text-slate-700 border-slate-300 hover:border-slate-400">↻</button>
             {tool === 'select' && selectedId && (
               <button type="button" onClick={deleteSelected}
                 className="px-2 py-1 text-xs rounded border bg-white text-red-600 border-red-200 hover:bg-red-50"
-                title="Smazat vybranĂ˝ symbol">âś• Smazat</button>
+                title="Smazat vybraný symbol">✕ Smazat</button>
             )}
           </div>
         )}
@@ -592,10 +592,10 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
         <div className="ml-auto flex gap-1">
           <button type="button" onClick={undo} disabled={historyCount <= 1}
             className="px-2.5 py-1.5 text-xs font-medium rounded border bg-white text-slate-700 border-slate-300 hover:border-slate-400 disabled:opacity-40 disabled:cursor-not-allowed"
-            title="ZpÄ›t">â†© ZpÄ›t</button>
+            title="Zpět">↩ Zpět</button>
           <button type="button" onClick={clearAll}
             className="px-2.5 py-1.5 text-xs font-medium rounded border bg-white text-red-600 border-red-200 hover:bg-red-50"
-            title="Smazat vĹˇe">đź—‘ Smazat vĹˇe</button>
+            title="Smazat vše">🗑 Smazat vše</button>
         </div>
       </div>
 
@@ -640,16 +640,16 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
 
       {/* Legend */}
       <div className="flex flex-wrap gap-4 p-2 bg-slate-50 rounded border border-slate-100 text-xs text-slate-500">
-        <span>Legenda LPS (ÄŚSN EN 62305):</span>
-        <span className="font-medium text-blue-800">J = JĂ­maÄŤ</span>
+        <span>Legenda LPS (ČSN EN 62305):</span>
+        <span className="font-medium text-blue-800">J = Jímač</span>
         <span className="font-medium text-green-800">S = Svod</span>
-        <span className="font-medium text-orange-900">E = UzemnÄ›nĂ­</span>
-        <span>â” = VedenĂ­</span>
-        {tool === 'select' && selectedId && <span className="text-blue-600 font-medium">Symbol vybrĂˇn â€“ tĂˇhnÄ›te nebo otoÄŤte â†şâ†», smaĹľte âś•</span>}
+        <span className="font-medium text-orange-900">E = Uzemnění</span>
+        <span>━ = Vedení</span>
+        {tool === 'select' && selectedId && <span className="text-blue-600 font-medium">Symbol vybrán – táhněte nebo otočte ↺↻, smažte ✕</span>}
       </div>
 
       <p className="text-xs text-slate-400">
-        SchĂ©ma se automaticky uklĂˇdĂˇ do revize a bude vytisknuto jako pĹ™Ă­loha zprĂˇvy.
+        Schéma se automaticky ukládá do revize a bude vytisknuto jako příloha zprávy.
       </p>
     </div>
   );
