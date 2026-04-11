@@ -2,8 +2,22 @@ import { useCallback } from 'react';
 import { db } from '../db';
 import type { PendingRequest } from '../db';
 
-// Přidání požadavku do fronty při offline stavu
+// Přidání požadavku do fronty při offline stavu.
+// Pro PUT provede upsert – pokud stejná URL + PUT už čeká, jen aktualizuje body.
 export async function addPendingRequest(req: Omit<PendingRequest, 'createdAt'>) {
+  if (req.method === 'PUT') {
+    const existing = await db.pendingRequests
+      .filter(r => r.method === 'PUT' && r.url === req.url)
+      .first();
+    if (existing?.id !== undefined) {
+      await db.pendingRequests.put({
+        ...existing,
+        body: req.body,
+        headers: req.headers,
+      });
+      return;
+    }
+  }
   await db.pendingRequests.add({ ...req, createdAt: Date.now() });
 }
 
@@ -17,12 +31,69 @@ export async function removePendingRequest(id: number) {
   await db.pendingRequests.delete(id);
 }
 
-// Hook pro synchronizaci fronty (automaticky i ručně)
+/**
+ * Po úspěšném POST přepíše všechna dočasná FK ve zbývající frontě + v cache tabulkách.
+ * Nahradí tempId → realId v:
+ *   - body polích: revizeId, rozvadecId, mistnostId, okruhId
+ *   - URL patternu: /${tempId} (pro navazující PUT/DELETE téhož záznamu)
+ */
+async function remapTempIdInQueue(tempId: number, realId: number): Promise<void> {
+  const FK_FIELDS = ['revizeId', 'rozvadecId', 'mistnostId', 'okruhId'] as const;
+  const remaining = await db.pendingRequests.toArray();
+
+  for (const req of remaining) {
+    let changed = false;
+    let newUrl = req.url;
+    let newBody = req.body;
+
+    // URL: /${tempId} → /${realId}  (PUT/DELETE na tentýž offline záznam)
+    const urlPattern = `/${tempId}`;
+    if (newUrl.includes(urlPattern)) {
+      newUrl = newUrl.split(urlPattern).join(`/${realId}`);
+      changed = true;
+    }
+
+    // Body FK pole
+    if (newBody && typeof newBody === 'object') {
+      for (const field of FK_FIELDS) {
+        if (newBody[field] === tempId) {
+          newBody = { ...newBody, [field]: realId };
+          changed = true;
+        }
+      }
+    }
+
+    if (changed) {
+      await db.pendingRequests.put({ ...req, url: newUrl, body: newBody });
+    }
+  }
+
+  // Přepsat ID i v cache (je-li záznam uložen s tempId)
+  const cacheTables = [
+    db.revizeCache, db.rozvadecCache, db.okruhCache, db.cranicCache,
+    db.mistnostCache, db.zarizeniCache, db.zavadaCache,
+  ];
+  for (const table of cacheTables) {
+    const tempRecord = await table.get(tempId);
+    if (tempRecord) {
+      await table.delete(tempId);
+      await table.put({ ...tempRecord, id: realId, data: { ...tempRecord.data, id: realId } });
+    }
+  }
+}
+
+// Hook pro synchronizaci fronty (automaticky i ručně).
+// Vrací syncedCount — počet requestů úspěšně odeslaných na server.
 export function useOfflineQueueSync() {
-  const sync = useCallback(async () => {
+  const sync = useCallback(async (): Promise<{ syncedCount: number }> => {
     const requests = await getAllPendingRequests();
+    let syncedCount = 0;
+
     for (const req of requests) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
         const response = await fetch(req.url, {
           method: req.method,
           headers: {
@@ -30,19 +101,33 @@ export function useOfflineQueueSync() {
             ...(req.headers || {}),
           },
           body: req.body ? JSON.stringify(req.body) : undefined,
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
+
         if (response.ok) {
+          // Temp ID remapping: po úspěšném POST přepsat FK v závislých requestech
+          if (req.method === 'POST' && req.tempId !== undefined) {
+            try {
+              const json = await response.clone().json();
+              if (typeof json?.id === 'number') {
+                await remapTempIdInQueue(req.tempId, json.id);
+              }
+            } catch { /* chyba parsování – remapping přeskočíme */ }
+          }
           await removePendingRequest(req.id!);
+          syncedCount++;
         }
-        // Při chybě necháme v frontě pro další pokus
+        // Při chybě odpovědi necháme v frontě pro další pokus
       } catch {
-        // Síťová chyba – necháme v frontě
+        // Síťová chyba nebo timeout – necháme v frontě
       }
     }
 
-    // Vyčistit temp záznamy (záporná ID) z cache po úspěšné synchronizaci
+    // Vyčistit zbývající temp záznamy (záporná ID) z cache po synchronizaci
     const tables = [
-      db.revizeCache, db.rozvadecCache, db.okruhCache,
+      db.revizeCache, db.rozvadecCache, db.okruhCache, db.cranicCache,
       db.mistnostCache, db.zarizeniCache, db.zavadaCache,
       db.firmaCache, db.zakazkaCache, db.pristrojCache,
       db.zakaznikCache, db.zavadaKatalogCache, db.predvolenyTextCache,
@@ -53,9 +138,9 @@ export function useOfflineQueueSync() {
         await table.bulkDelete(tempRecords);
       }
     }
+
+    return { syncedCount };
   }, []);
 
-  // Automatická synchronizace při návratu online
-  // (lze použít i v komponentě s useEffect)
   return { sync };
 }

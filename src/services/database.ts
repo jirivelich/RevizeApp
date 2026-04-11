@@ -101,7 +101,7 @@ export const revizeService = {
     }
     const tempId = Date.now() * -1;
     await db.revizeCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
-    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string> });
+    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string>, tempId });
     return tempId;
   },
 
@@ -203,7 +203,7 @@ export const rozvadecService = {
     }
     const tempId = Date.now() * -1;
     await db.rozvadecCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
-    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string> });
+    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string>, tempId });
     return tempId;
   },
 
@@ -282,7 +282,7 @@ export const okruhService = {
     }
     const tempId = Date.now() * -1;
     await db.okruhCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
-    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string> });
+    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string>, tempId });
     return tempId;
   },
 
@@ -361,7 +361,7 @@ export const cranicService = {
     }
     const tempId = Date.now() * -1;
     await db.cranicCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
-    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string> });
+    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string>, tempId });
     return tempId;
   },
 
@@ -451,7 +451,7 @@ export const mistnostService = {
     }
     const tempId = Date.now() * -1;
     await db.mistnostCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
-    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string> });
+    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string>, tempId });
     return tempId;
   },
 
@@ -536,7 +536,7 @@ export const zarizeniService = {
     }
     const tempId = Date.now() * -1;
     await db.zarizeniCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
-    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string> });
+    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string>, tempId });
     return tempId;
   },
 
@@ -625,7 +625,7 @@ export const zavadaService = {
     }
     const tempId = Date.now() * -1;
     await db.zavadaCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
-    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string> });
+    await safeApiRequest({ url, method: 'POST', body: data, headers: headers as Record<string, string>, tempId });
     return tempId;
   },
 

@@ -1,6 +1,6 @@
 // Service Worker pro RevizeApp – cache statických souborů a vybraných API odpovědí
 
-const CACHE_VERSION = 'revizeapp-v1';
+const CACHE_VERSION = 'revizeapp-v2';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 
@@ -17,10 +17,18 @@ const STATIC_ASSETS = [
 
 // API endpointy, které se mají cache-ovat (pouze GET)
 const CACHED_API_ENDPOINTS = [
-  '/api/zakaznici',
-  '/api/objekty',
   '/api/revize',
-  // Přidejte další klíčové endpointy
+  '/api/rozvadece',
+  '/api/okruhy',
+  '/api/chranice',
+  '/api/mistnosti',
+  '/api/zavady',
+  '/api/zarizeni',
+  '/api/firmy',
+  '/api/zakaznici',
+  '/api/pristroje',
+  '/api/predvolene-texty',
+  '/api/zavady-katalog',
 ];
 
 // Instalace SW – cache statických assetů

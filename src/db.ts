@@ -8,6 +8,9 @@ export type PendingRequest = {
   body: any;
   headers?: Record<string, string>;
   createdAt: number;
+  /** Dočasné ID záznamu vytvořeného offline (záporné číslo).
+   *  Po úspěšné synchronizaci se použije k přepsání FK závislostí ve frontě. */
+  tempId?: number;
 };
 
 export type CacheRecord = {

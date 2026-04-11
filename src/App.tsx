@@ -80,12 +80,16 @@ function App() {
   useEffect(() => {
     // Sync pending requests on mount (if any remain from previous session)
     if (navigator.onLine) {
-      sync().then(() => queryClient.invalidateQueries());
+      sync().then(({ syncedCount }) => {
+        if (syncedCount > 0) queryClient.refetchQueries({ type: 'active' });
+      });
     }
 
     // Sync pending requests whenever we come back online
     const handleOnline = () => {
-      sync().then(() => queryClient.invalidateQueries());
+      sync().then(({ syncedCount }) => {
+        if (syncedCount > 0) queryClient.refetchQueries({ type: 'active' });
+      });
     };
     window.addEventListener('online', handleOnline);
     return () => {
