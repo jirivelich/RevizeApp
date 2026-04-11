@@ -126,6 +126,9 @@ export interface Revize {
   // Rozdělovník – seznam příjemců revizní zprávy
   rozdelovnik?: string;                // volný text, jeden příjemce per řádek
 
+  // Náčrt LPS (base64 PNG z canvas editoru)
+  hromosvodNacrt?: string;
+
   // ═══ STROJNÍ ZAŘÍZENÍ - data formuláře (JSON) ═══
   strojniData?: string;                // JSON: StrojniFormData
 

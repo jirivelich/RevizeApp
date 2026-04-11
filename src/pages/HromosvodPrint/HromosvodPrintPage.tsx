@@ -536,6 +536,17 @@ export function HromosvodPrintPage() {
       </ReportSection>
       )}
 
+      {/* Příloha – náčrt LPS */}
+      {revize.hromosvodNacrt && (
+        <ReportSection title="Příloha – Schéma hromosvodu (LPS)">
+          <img
+            src={revize.hromosvodNacrt}
+            alt="Schéma hromosvodu LPS"
+            style={{ width: '100%', maxWidth: '700px', display: 'block', border: '1px solid #e2e8f0', borderRadius: '4px' }}
+          />
+        </ReportSection>
+      )}
+
       {/* p) ZÁVADY */}
       <ReportSection title="16. Přehled zjištěných závad">
         {zavady.length > 0 ? (

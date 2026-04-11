@@ -193,6 +193,8 @@ async function startServer() {
         'rtJmeno', 'rtCisloOpravneni', 'rtPlatnostOpravneni', 'rtCisloOsvedceni', 'rtPlatnostOsvedceni',
         // Rozdělovník – seznam příjemců zprávy
         'rozdelovnik',
+        // Náčrt LPS – base64 PNG
+        'hromosvodNacrt',
       ];
       
       const updates: Record<string, any> = { updatedAt: now };

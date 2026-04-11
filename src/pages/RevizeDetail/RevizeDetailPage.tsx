@@ -23,6 +23,7 @@ import { ZavadyTab } from './ZavadyTab';
 import { MistnostiTab } from './MistnostiTab';
 import { HromosvodInfoTab } from './HromosvodInfoTab';
 import { HromosvodZarizeniTab } from './HromosvodZarizeniTab';
+import { HromosvodNacrtTab } from './HromosvodNacrtTab';
 import { StrojniZarizeniTab } from './StrojniZarizeniTab';
 
 export function RevizeDetailPage() {
@@ -32,7 +33,7 @@ export function RevizeDetailPage() {
 
   // Core state (local)
   const [formData, setFormData] = useState<Partial<Revize>>({});
-  const [activeTab, setActiveTab] = useState<'info' | 'dokumentace' | 'rozvadece' | 'zavady' | 'mistnosti' | 'hromosvod_zarizeni' | 'strojni_zarizeni'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'dokumentace' | 'rozvadece' | 'zavady' | 'mistnosti' | 'hromosvod_zarizeni' | 'hromosvod_nacrt' | 'strojni_zarizeni'>('info');
   const [selectedFirmaId, setSelectedFirmaId] = useState<string>('');
   const [selectedZakaznikId, setSelectedZakaznikId] = useState<string>('');
 
@@ -180,6 +181,7 @@ export function RevizeDetailPage() {
     ? [
         { id: 'info', label: 'Základní údaje', icon: '' },
         { id: 'hromosvod_zarizeni', label: 'Revidované zařízení', icon: '' },
+        { id: 'hromosvod_nacrt', label: '✏️ Náčrt LPS', icon: '' },
         { id: 'zavady', label: `Závady (${zavady.length})`, icon: '' },
       ]
     : isStroje
@@ -268,6 +270,13 @@ export function RevizeDetailPage() {
         />
       )}
 
+      {activeTab === 'hromosvod_nacrt' && (
+        <HromosvodNacrtTab
+          formData={formData}
+          setFormData={setFormData}
+        />
+      )}
+
       {activeTab === 'strojni_zarizeni' && (
         <StrojniZarizeniTab
           revize={revize}
@@ -313,7 +322,7 @@ export function RevizeDetailPage() {
       )}
 
       {/* Fixed save bar */}
-      {(activeTab === 'info' || activeTab === 'dokumentace' || activeTab === 'hromosvod_zarizeni' || activeTab === 'strojni_zarizeni') && (
+      {(activeTab === 'info' || activeTab === 'dokumentace' || activeTab === 'hromosvod_zarizeni' || activeTab === 'hromosvod_nacrt' || activeTab === 'strojni_zarizeni') && (
         <div className="fixed bottom-0 left-0 lg:left-64 right-0 z-50 bg-slate-800/90 backdrop-blur border-t border-slate-600 shadow-[0_-2px_8px_rgba(0,0,0,0.15)]">
           <div className="max-w-4xl mx-auto px-4 py-1 flex items-center justify-between gap-4">
             <div className="text-sm min-w-[140px]">
