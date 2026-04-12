@@ -6,25 +6,25 @@
 // ── Tailwind class helpers ──
 export const TW = {
   /** Standardní input pole */
-  input: 'w-full px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none',
+  input: 'w-full px-2 py-1 rounded text-sm bg-white/[0.04] text-slate-200 border border-white/[0.09] focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none',
   /** Disabled input */
-  inputDisabled: 'w-full px-2 py-1 rounded text-sm border border-slate-300 bg-slate-100 cursor-not-allowed',
+  inputDisabled: 'w-full px-2 py-1 rounded text-sm bg-white/[0.03] text-slate-500 border border-white/[0.06] cursor-not-allowed',
   /** Input uvnitř tabulkové buňky (průhledné pozadí) */
-  tblInput: 'w-full border-0 bg-transparent text-sm px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded',
+  tblInput: 'w-full border-0 bg-transparent text-sm text-slate-200 px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded',
   /** Textarea rozšíření */
-  textarea: 'w-full px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-y',
+  textarea: 'w-full px-2 py-1 rounded text-sm bg-white/[0.04] text-slate-200 border border-white/[0.09] focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none resize-y',
   /** Select pole */
-  select: 'px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none',
+  select: 'px-2 py-1 rounded text-sm bg-white/[0.04] text-slate-200 border border-white/[0.09] focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none',
   /** Select na celou šířku */
-  selectFull: 'w-full px-2 py-1 rounded text-sm border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none',
+  selectFull: 'w-full px-2 py-1 rounded text-sm bg-white/[0.04] text-slate-200 border border-white/[0.09] focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none',
   /** Hlavička tabulky */
-  th: 'bg-slate-100 border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 text-left',
+  th: 'bg-[#0a0f1e] border border-white/[0.06] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400 text-left',
   /** Buňka tabulky */
-  td: 'border border-slate-200 px-2 py-1.5 align-middle',
+  td: 'border border-white/[0.06] px-2 py-1.5 align-middle text-slate-300',
   /** Popisek pole (nad inputem) */
-  label: 'text-xs font-semibold uppercase tracking-wide text-slate-500',
+  label: 'text-xs font-semibold uppercase tracking-wide text-slate-400',
   /** Wrapper pro jednu sekci (kartu) */
-  card: 'bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden',
+  card: 'bg-white/[0.03] border border-white/[0.07] rounded-lg shadow-sm overflow-hidden',
   /** Hlavní wrapper stránky */
   page: 'max-w-4xl mx-auto flex flex-col gap-4',
   /** Grid pro 2 sloupce */
