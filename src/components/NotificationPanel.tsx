@@ -9,11 +9,11 @@ interface Props {
 function severityStyles(s: NotificationSeverity): { border: string; badge: string; icon: string } {
   switch (s) {
     case 'critical':
-      return { border: 'border-l-red-500', badge: 'bg-red-100 text-red-700', icon: 'text-red-500' };
+      return { border: 'border-l-red-500/[0.7]', badge: 'bg-red-500/[0.12] text-red-400', icon: 'text-red-400' };
     case 'warning':
-      return { border: 'border-l-amber-500', badge: 'bg-amber-100 text-amber-700', icon: 'text-amber-500' };
+      return { border: 'border-l-amber-500/[0.7]', badge: 'bg-amber-500/[0.12] text-amber-400', icon: 'text-amber-400' };
     default:
-      return { border: 'border-l-blue-400', badge: 'bg-blue-100 text-blue-700', icon: 'text-blue-400' };
+      return { border: 'border-l-blue-500/[0.7]', badge: 'bg-blue-500/[0.12] text-blue-400', icon: 'text-blue-400' };
   }
 }
 
@@ -68,14 +68,14 @@ export function NotificationPanel({ notifications, onClose }: Props) {
   };
 
   return (
-    <div className="flex flex-col bg-white rounded-xl shadow-2xl border border-slate-200 w-80 max-h-[480px] overflow-hidden">
+    <div className="flex flex-col rounded-xl border w-80 max-h-[480px] overflow-hidden" style={{ background: '#0e1629', borderColor: 'rgba(255,255,255,0.08)', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}>
       {/* Hlavička */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
-          <span className="text-sm font-semibold text-slate-800">Upozornění</span>
+          <span className="text-sm font-semibold text-slate-200">Upozornění</span>
           {notifications.length > 0 && (
             <span className="text-[11px] font-bold bg-red-500 text-white rounded-full px-1.5 py-0.5 leading-none">
               {notifications.length}
@@ -84,7 +84,8 @@ export function NotificationPanel({ notifications, onClose }: Props) {
         </div>
         <button
           onClick={onClose}
-          className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
+          className="p-1 rounded text-slate-600 hover:text-slate-400 transition-colors"
+          style={{ background: 'rgba(255,255,255,0.04)' }}
           aria-label="Zavřít"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,7 +97,7 @@ export function NotificationPanel({ notifications, onClose }: Props) {
       {/* Obsah */}
       <div className="overflow-y-auto flex-1">
         {notifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 gap-2 text-slate-400">
+          <div className="flex flex-col items-center justify-center py-10 gap-2 text-slate-600">
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -110,13 +111,16 @@ export function NotificationPanel({ notifications, onClose }: Props) {
                 <li key={n.id}>
                   <button
                     onClick={() => handleClick(n.link)}
-                    className={`w-full text-left flex items-start gap-3 px-4 py-3 border-l-4 ${border} hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-b-0`}
+                    className={`w-full text-left flex items-start gap-3 px-4 py-3 border-l-4 ${border} transition-colors`}
+                    style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(59,130,246,0.04)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     <span className={`mt-0.5 ${icon}`}>
                       <TypeIcon type={n.type} />
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-slate-800 truncate">{n.title}</p>
+                      <p className="text-[13px] font-semibold text-slate-300 truncate">{n.title}</p>
                       <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{n.description}</p>
                     </div>
                     <DaysBadge days={n.daysUntil} sev={n.severity} />

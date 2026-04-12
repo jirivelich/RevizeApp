@@ -4,10 +4,9 @@ import { useNotifications } from '../hooks/useNotifications';
 import { NotificationPanel } from './NotificationPanel';
 
 interface Props {
-  light: boolean;
 }
 
-export function NotificationBell({ light }: Props) {
+export function NotificationBell({  }: Props) {
   const [open, setOpen] = useState(false);
   const { notifications, count } = useNotifications();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -58,11 +57,7 @@ export function NotificationBell({ light }: Props) {
         ref={buttonRef}
         onClick={() => setOpen(v => !v)}
         aria-label={`Upozornění${count > 0 ? ` (${count})` : ''}`}
-        className={
-          light
-            ? 'relative w-full flex items-center gap-2.5 px-3 py-2 rounded text-[13px] font-medium transition-colors text-slate-600 hover:bg-slate-100'
-            : 'relative w-full flex items-center gap-2.5 px-3 py-2 rounded text-[13px] font-medium transition-colors text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
-        }
+        className="relative w-full flex items-center gap-2.5 px-3 py-2 rounded text-[13px] font-medium transition-colors text-[#475569] hover:text-[#94a3b8] sidebar-nav-item"
       >
         <span className="relative flex-shrink-0">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

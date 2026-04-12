@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RevizeApp – Návrh A: Enterprise Split</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; display: flex; }
+
+  .left {
+    width: 45%;
+    background: #0f172a;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 48px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .left::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: rgba(59,130,246,0.12);
+    pointer-events: none;
+  }
+  .left::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -60px;
+    width: 240px; height: 240px;
+    border-radius: 50%;
+    background: rgba(59,130,246,0.08);
+    pointer-events: none;
+  }
+
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-icon {
+    width: 44px; height: 44px;
+    background: #3b82f6;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .brand-icon svg { width: 24px; height: 24px; stroke: white; fill: none; }
+  .brand-name { font-size: 22px; font-weight: 700; color: white; letter-spacing: -0.5px; }
+  .brand-sub { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+  .hero { position: relative; z-index: 1; }
+  .hero h2 { font-size: 32px; font-weight: 700; color: white; line-height: 1.2; margin-bottom: 16px; }
+  .hero h2 span { color: #3b82f6; }
+  .hero p { color: #94a3b8; font-size: 15px; line-height: 1.6; }
+
+  .features { display: flex; flex-direction: column; gap: 14px; position: relative; z-index: 1; }
+  .feature { display: flex; align-items: center; gap: 12px; }
+  .feature-dot {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(59,130,246,0.15);
+    border: 1px solid rgba(59,130,246,0.25);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .feature-dot svg { width: 15px; height: 15px; stroke: #60a5fa; fill: none; }
+  .feature-text { color: #cbd5e1; font-size: 14px; }
+
+  .left-footer { color: #334155; font-size: 12px; position: relative; z-index: 1; }
+
+  .right {
+    flex: 1;
+    background: #f8fafc;
+    display: flex; align-items: center; justify-content: center;
+    padding: 48px 40px;
+  }
+  .form-card {
+    width: 100%; max-width: 400px;
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    border: 1px solid #e2e8f0;
+  }
+  .form-title { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
+  .form-sub { font-size: 14px; color: #64748b; margin-bottom: 32px; }
+
+  .tabs {
+    display: flex; gap: 0; margin-bottom: 28px;
+    background: #f1f5f9; border-radius: 10px; padding: 4px;
+  }
+  .tab {
+    flex: 1; padding: 8px; border: none; border-radius: 8px;
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    background: transparent; color: #64748b; transition: all .15s;
+  }
+  .tab.active { background: white; color: #0f172a; box-shadow: 0 1px 4px rgba(0,0,0,0.10); }
+
+  .field { margin-bottom: 18px; }
+  label { display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px; }
+  input {
+    width: 100%; padding: 11px 14px;
+    border: 1.5px solid #e2e8f0; border-radius: 10px;
+    font-size: 14px; color: #0f172a;
+    background: #f8fafc; outline: none; transition: border-color .15s;
+  }
+  input:focus { border-color: #3b82f6; background: white; }
+  input::placeholder { color: #c1c9d7; }
+
+  .btn {
+    width: 100%; padding: 12px; margin-top: 6px;
+    background: #2563eb; color: white;
+    border: none; border-radius: 10px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: background .15s;
+  }
+  .btn:hover { background: #1d4ed8; }
+
+  .form-footer { text-align: center; font-size: 13px; color: #94a3b8; margin-top: 20px; }
+  .form-footer a { color: #3b82f6; text-decoration: none; font-weight: 500; }
+  .form-footer a:hover { text-decoration: underline; }
+
+  @media (max-width: 768px) {
+    body { flex-direction: column; }
+    .left { width: 100%; padding: 32px 24px; min-height: auto; }
+    .hero, .features { display: none; }
+    .right { padding: 32px 20px; }
+    .form-card { padding: 28px 24px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- LEFT: Branding panel -->
+  <div class="left">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">RevizeApp</div>
+        <div class="brand-sub">Správa elektro revizí</div>
+      </div>
+    </div>
+
+    <div class="hero">
+      <h2>Profesionální správa<br><span>elektro revizí</span></h2>
+      <p>Systém pro revizní techniky. Plánování, záznamy závad a tvorba protokolů na jednom místě.</p>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <div class="feature-dot">
+          <svg viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <span class="feature-text">Správa revizí a protokolů</span>
+      </div>
+      <div class="feature">
+        <div class="feature-dot">
+          <svg viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.999L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16.001C2.57 17.334 3.532 19 5.072 19z"/>
+          </svg>
+        </div>
+        <span class="feature-text">Sledování a evidence závad</span>
+      </div>
+      <div class="feature">
+        <div class="feature-dot">
+          <svg viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <span class="feature-text">Plánování termínů kontrol</span>
+      </div>
+      <div class="feature">
+        <div class="feature-dot">
+          <svg viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </div>
+        <span class="feature-text">Správa zákazníků a firem</span>
+      </div>
+    </div>
+
+    <div class="left-footer">© 2026 RevizeApp — v1.0</div>
+  </div>
+
+  <!-- RIGHT: Login form -->
+  <div class="right">
+    <div class="form-card">
+      <div class="form-title">Vítejte zpět</div>
+      <div class="form-sub">Přihlaste se ke svému účtu</div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this, 'login')">Přihlášení</button>
+        <button class="tab" onclick="switchTab(this, 'register')">Registrace</button>
+      </div>
+
+      <form id="login-form">
+        <div class="field">
+          <label>Uživatelské jméno</label>
+          <input type="text" placeholder="jan.novak">
+        </div>
+        <div class="field">
+          <label>Heslo</label>
+          <input type="password" placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn">Přihlásit se</button>
+      </form>
+
+      <form id="register-form" style="display:none">
+        <div class="field">
+          <label>Jméno</label>
+          <input type="text" placeholder="Jan Novák">
+        </div>
+        <div class="field">
+          <label>Uživatelské jméno</label>
+          <input type="text" placeholder="jan.novak">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" placeholder="jan@firma.cz">
+        </div>
+        <div class="field">
+          <label>Heslo</label>
+          <input type="password" placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn">Registrovat se</button>
+      </form>
+
+      <div class="form-footer" id="footer-text">
+        Nemáte účet? <a href="#" onclick="switchToRegister()">Zaregistrujte se</a>
+      </div>
+    </div>
+  </div>
+
+<script>
+  function switchTab(btn, mode) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('login-form').style.display = mode === 'login' ? 'block' : 'none';
+    document.getElementById('register-form').style.display = mode === 'register' ? 'block' : 'none';
+    document.getElementById('footer-text').innerHTML = mode === 'login'
+      ? 'Nemáte účet? <a href="#" onclick="switchToRegister()">Zaregistrujte se</a>'
+      : 'Již máte účet? <a href="#" onclick="switchToLogin()">Přihlaste se</a>';
+  }
+  function switchToRegister() { switchTab(document.querySelectorAll('.tab')[1], 'register'); }
+  function switchToLogin() { switchTab(document.querySelectorAll('.tab')[0], 'login'); }
+</script>
+
+</body>
+</html>
