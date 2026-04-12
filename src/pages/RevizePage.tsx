@@ -68,9 +68,11 @@ export function RevizePage() {
   const [isHistorieModalOpen, setIsHistorieModalOpen] = useState(false);
   const [isLoadingHistorie, setIsLoadingHistorie] = useState(false);
 
-  // Dropdown menu pro akce
+  // Dropdown menu pro akce (desktop)
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  // Action sheet pro mobil
+  const [actionSheetRevize, setActionSheetRevize] = useState<{ id: number; cisloRevize: string; nazev: string } | null>(null);
 
   // Potvrzení smazání (náhrada za window.confirm – nefunguje v iOS PWA)
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
@@ -303,7 +305,7 @@ export function RevizePage() {
         {filteredRevize.length > 0 ? (
           <>
           {/* Mobilní seznam karet */}
-          <div className="md:hidden px-4 pb-44 flex-1 min-h-0 overflow-auto space-y-2">
+          <div className="md:hidden px-4 pb-4 flex-1 min-h-0 overflow-auto space-y-2">
             {filteredRevize.map((r) => (
               <div key={r.id} className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm">
                 <Link to={`/revize/${r.id}`} className="block">
@@ -323,47 +325,16 @@ export function RevizePage() {
                       'bg-slate-100 text-slate-600'
                     }`}>{r.stav}</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <span className="text-xs text-slate-400">{new Date(r.datum).toLocaleDateString('cs-CZ')}</span>
-                    <div className="relative" ref={openMenuId === r.id ? menuRef : undefined}>
-                      <button
-                        onClick={() => setOpenMenuId(openMenuId === r.id ? null : r.id!)}
-                        className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
-                      >
-                        <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                        </svg>
-                      </button>
-                      {openMenuId === r.id && (
-                        <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
-                          <button
-                            onClick={() => { setOpenMenuId(null); navigate(`/revize/${r.id}`); }}
-                            className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                          >
-                            <span className="text-xs">✏️</span> Upravit
-                          </button>
-                          <button
-                            onClick={() => { setOpenMenuId(null); openDuplikatModal(r.id!, r.cisloRevize); }}
-                            className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                          >
-                            <span className="text-xs">📋</span> Kopírovat revizi
-                          </button>
-                          <button
-                            onClick={() => { setOpenMenuId(null); openHistorieModal(r.id!, r.cisloRevize); }}
-                            className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                          >
-                            <span className="text-xs">🕐</span> Historie
-                          </button>
-                          <div className="border-t border-slate-100 my-1"></div>
-                          <button
-                            onClick={() => { setOpenMenuId(null); handleDelete(r.id!); }}
-                            className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
-                          >
-                            <span className="text-xs">🗑️</span> Smazat
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    <button
+                      onClick={() => setActionSheetRevize({ id: r.id!, cisloRevize: r.cisloRevize, nazev: r.nazev })}
+                      className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
                 <p className="text-xs text-slate-400 mt-1.5">{r.cisloRevize}</p>
@@ -712,6 +683,54 @@ export function RevizePage() {
           Opravdu chcete smazat tuto revizi? Budou smazány i všechny související záznamy.
         </p>
       </Modal>
+
+      {/* Action sheet pro mobil – akce revize */}
+      {actionSheetRevize && (
+        <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setActionSheetRevize(null)} />
+          <div className="relative bg-white rounded-t-2xl shadow-xl pb-safe">
+            <div className="px-4 pt-4 pb-2 border-b border-slate-100">
+              <p className="font-semibold text-slate-800 text-sm truncate">{actionSheetRevize.nazev}</p>
+              <p className="text-xs text-slate-400">{actionSheetRevize.cisloRevize}</p>
+            </div>
+            <div className="py-1">
+              <button
+                onClick={() => { setActionSheetRevize(null); navigate(`/revize/${actionSheetRevize.id}`); }}
+                className="w-full text-left px-4 py-3.5 text-sm text-slate-700 active:bg-slate-50 flex items-center gap-3"
+              >
+                <span className="text-base">✏️</span> Upravit
+              </button>
+              <button
+                onClick={() => { const a = actionSheetRevize; setActionSheetRevize(null); openDuplikatModal(a.id, a.cisloRevize); }}
+                className="w-full text-left px-4 py-3.5 text-sm text-slate-700 active:bg-slate-50 flex items-center gap-3"
+              >
+                <span className="text-base">📋</span> Kopírovat revizi
+              </button>
+              <button
+                onClick={() => { const a = actionSheetRevize; setActionSheetRevize(null); openHistorieModal(a.id, a.cisloRevize); }}
+                className="w-full text-left px-4 py-3.5 text-sm text-slate-700 active:bg-slate-50 flex items-center gap-3"
+              >
+                <span className="text-base">🕐</span> Historie
+              </button>
+              <div className="border-t border-slate-100 mx-4 my-1" />
+              <button
+                onClick={() => { const a = actionSheetRevize; setActionSheetRevize(null); handleDelete(a.id); }}
+                className="w-full text-left px-4 py-3.5 text-sm text-red-600 active:bg-red-50 flex items-center gap-3"
+              >
+                <span className="text-base">🗑️</span> Smazat
+              </button>
+            </div>
+            <div className="px-4 pb-4 pt-1">
+              <button
+                onClick={() => setActionSheetRevize(null)}
+                className="w-full py-3 rounded-xl bg-slate-100 text-sm font-medium text-slate-700 active:bg-slate-200"
+              >
+                Zrušit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal pro duplikaci revize */}
       <Modal
