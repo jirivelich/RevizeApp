@@ -117,7 +117,7 @@ const ZakazniciPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-sm font-bold text-slate-800">Zákazníci</h1>
+          <h1 className="text-sm font-bold text-slate-200">Zákazníci</h1>
           <p className="text-xs text-slate-400">Správa zákazníků a jejich revizí</p>
         </div>
         <Button onClick={handleNewZakaznik}>
@@ -152,31 +152,31 @@ const ZakazniciPage: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Název</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">IČO</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Adresa</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Kontakt</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Telefon / Email</th>
-                  <th className="text-center py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Revizí</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Akce</th>
+                <tr className="border-b border-white/[0.06]">
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Název</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">ČO</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Adresa</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Kontakt</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Telefon / Email</th>
+                  <th className="text-center py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Revizí</th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Akce</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredZakaznici.map((zakaznik) => (
-                  <tr key={zakaznik.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="py-2 px-3 text-xs font-medium">{zakaznik.nazev}</td>
-                    <td className="py-2 px-3 font-mono text-xs">{zakaznik.ico || '-'}</td>
-                    <td className="py-2 px-3 text-xs text-slate-600 max-w-xs truncate">{zakaznik.adresa || '-'}</td>
-                    <td className="py-2 px-3 text-xs">{zakaznik.kontaktOsoba || '-'}</td>
-                    <td className="py-2 px-3 text-xs text-slate-600">
+                  <tr key={zakaznik.id} className="border-b border-white/[0.05] hover:bg-white/[0.04]">
+                    <td className="py-2 px-3 text-xs font-medium text-slate-300">{zakaznik.nazev}</td>
+                    <td className="py-2 px-3 font-mono text-xs text-slate-400">{zakaznik.ico || '-'}</td>
+                    <td className="py-2 px-3 text-xs text-slate-400 max-w-xs truncate">{zakaznik.adresa || '-'}</td>
+                    <td className="py-2 px-3 text-xs text-slate-300">{zakaznik.kontaktOsoba || '-'}</td>
+                    <td className="py-2 px-3 text-xs text-slate-400">
                       {zakaznik.telefon && <div>{zakaznik.telefon}</div>}
-                      {zakaznik.email && <div className="text-slate-600">{zakaznik.email}</div>}
+                      {zakaznik.email && <div className="text-slate-400">{zakaznik.email}</div>}
                       {!zakaznik.telefon && !zakaznik.email && '-'}
                     </td>
                     <td className="py-2 px-3 text-center">
                       <span 
-                        className="px-2 py-1 text-xs font-medium bg-slate-100 text-slate-600 rounded cursor-pointer hover:bg-slate-200"
+                        className="px-2 py-1 text-xs font-medium bg-white/[0.06] text-slate-400 rounded cursor-pointer hover:bg-white/[0.10]"
                         onClick={() => handleShowRevize(zakaznik)}
                         title="Zobrazit revize zákazníka"
                       >
@@ -258,11 +258,11 @@ const ZakazniciPage: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Poznámka</label>
+            <label className="block text-sm font-medium text-slate-400 mb-1">Poznámka</label>
             <textarea
               value={formData.poznamka}
               onChange={(e) => setFormData({ ...formData, poznamka: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-slate-400"
+              className="w-full px-3 py-2 border rounded-md bg-white/[0.04] text-slate-200 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5]"
               rows={3}
             />
           </div>

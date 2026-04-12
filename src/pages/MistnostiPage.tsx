@@ -79,7 +79,7 @@ export function MistnostiPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-slate-800">Místnosti</h1>
+          <h1 className="text-lg font-bold text-slate-200">Místnosti</h1>
           <p className="text-xs text-slate-400">Evidence místností</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
@@ -94,28 +94,28 @@ export function MistnostiPage() {
             {mistnosti.map((m) => (
               <div
                 key={m.id}
-                className="p-4 rounded-lg bg-slate-50 border border-slate-200"
+                className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.07]"
               >
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-medium">{m.nazev}</h3>
+                  <h3 className="font-medium text-slate-200">{m.nazev}</h3>
                   <div className="flex gap-1">
                     <button
                       onClick={() => handleEdit(m)}
-                      className="text-xs text-slate-400 hover:text-slate-600"
+                      className="text-xs text-slate-400 hover:text-slate-200"
                     >
                       Upravit
                     </button>
                     <button
                       onClick={() => handleDelete(m.id!)}
-                      className="text-xs text-slate-400 hover:text-red-600"
+                      className="text-xs text-slate-400 hover:text-red-400"
                     >
                       ×
                     </button>
                   </div>
                 </div>
                 <div className="space-y-1 text-sm">
-                  {m.patro && <p className="text-slate-500">Patro: {m.patro}</p>}
-                  <p className="text-xs text-slate-400 mt-2">{m.revizeNazev}</p>
+                  {m.patro && <p className="text-slate-400">Patro: {m.patro}</p>}
+                  <p className="text-xs text-slate-500 mt-2">{m.revizeNazev}</p>
                 </div>
               </div>
             ))}

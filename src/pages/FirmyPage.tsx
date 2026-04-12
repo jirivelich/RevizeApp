@@ -83,7 +83,7 @@ export function FirmyPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-sm font-bold text-slate-800">Firmy</h1>
+          <h1 className="text-sm font-bold text-slate-200">Firmy</h1>
           <p className="text-xs text-slate-400 mt-1">
             Seznam firem, pro které provádíte revize. Tyto firmy můžete vybírat při vytváření revize.
           </p>
@@ -113,25 +113,25 @@ export function FirmyPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Název</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">IČO</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Adresa</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Kontakt</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Telefon / Email</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Akce</th>
+                <tr className="border-b border-white/[0.06]">
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Název</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">ČO</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Adresa</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Kontakt</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Telefon / Email</th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Akce</th>
                 </tr>
               </thead>
               <tbody>
                 {firmy.map((firma) => (
-                  <tr key={firma.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="py-2 px-3 text-xs font-medium">{firma.nazev}</td>
-                    <td className="py-2 px-3 font-mono text-xs">{firma.ico || '-'}</td>
-                    <td className="py-2 px-3 text-xs text-slate-600 max-w-xs truncate">{firma.adresa || '-'}</td>
-                    <td className="py-2 px-3 text-xs">{firma.kontaktOsoba || '-'}</td>
-                    <td className="py-2 px-3 text-xs text-slate-600">
+                  <tr key={firma.id} className="border-b border-white/[0.05] hover:bg-white/[0.04]">
+                    <td className="py-2 px-3 text-xs font-medium text-slate-300">{firma.nazev}</td>
+                    <td className="py-2 px-3 font-mono text-xs text-slate-400">{firma.ico || '-'}</td>
+                    <td className="py-2 px-3 text-xs text-slate-400 max-w-xs truncate">{firma.adresa || '-'}</td>
+                    <td className="py-2 px-3 text-xs text-slate-300">{firma.kontaktOsoba || '-'}</td>
+                    <td className="py-2 px-3 text-xs text-slate-400">
                       {firma.telefon && <div>{firma.telefon}</div>}
-                      {firma.email && <div className="text-slate-600">{firma.email}</div>}
+                      {firma.email && <div className="text-slate-400">{firma.email}</div>}
                       {!firma.telefon && !firma.email && '-'}
                     </td>
                     <td className="py-2 px-3">
@@ -196,8 +196,8 @@ export function FirmyPage() {
             />
           </div>
 
-          <div className="border-t border-slate-200 pt-4">
-            <h4 className="text-sm font-medium text-slate-700 mb-3">Kontaktní údaje</h4>
+          <div className="border-t border-white/[0.06] pt-4">
+            <h4 className="text-sm font-medium text-slate-300 mb-3">Kontaktní údaje</h4>
             <Input
               label="Kontaktní osoba"
               value={formData.kontaktOsoba}
@@ -222,19 +222,19 @@ export function FirmyPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-slate-400 mb-1">
               Poznámka
             </label>
             <textarea
               value={formData.poznamka}
               onChange={(e) => setFormData({ ...formData, poznamka: e.target.value })}
               placeholder="Interní poznámky k firmě..."
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="w-full px-3 py-2 border rounded-lg bg-white/[0.04] text-slate-200 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5] text-sm"
               rows={3}
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+          <div className="flex justify-end gap-3 pt-4 border-t border-white/[0.06]">
             <Button variant="secondary" onClick={handleCloseModal}>
               Zrušit
             </Button>

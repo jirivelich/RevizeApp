@@ -19,26 +19,26 @@ function StatCard({ title, value, subtitle, accent, link }: {
   accent: string; link: string;
 }) {
   return (
-    <Link to={link} className={`group block rounded-lg border border-slate-200 bg-white p-3 transition-all hover:shadow-sm hover:border-slate-300 active:scale-[0.98] border-l-[3px] ${accent}`}>
-      <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">{title}</p>
-      <p className="mt-1 text-2xl font-bold text-slate-800 tracking-tight">{value}</p>
-      {subtitle && <p className="mt-0.5 text-[10px] text-slate-400">{subtitle}</p>}
+    <Link to={link} className={`group block rounded-lg border border-white/[0.07] bg-white/[0.03] p-3 transition-all hover:border-white/[0.12] active:scale-[0.98] border-l-[3px] ${accent}`}>
+      <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide">{title}</p>
+      <p className="mt-1 text-2xl font-bold text-slate-200 tracking-tight">{value}</p>
+      {subtitle && <p className="mt-0.5 text-[10px] text-slate-500">{subtitle}</p>}
     </Link>
   );
 }
 
 function RevizeRow({ r }: { r: Revize }) {
   const stavConfig = {
-    'dokončeno':    { dot: 'bg-emerald-500', bg: 'bg-emerald-50 text-emerald-700' },
-    'rozpracováno': { dot: 'bg-amber-500',   bg: 'bg-amber-50 text-amber-700' },
-    'schváleno':    { dot: 'bg-blue-500',    bg: 'bg-blue-50 text-blue-700' },
+    'dokončeno':    { dot: 'bg-emerald-500', bg: 'bg-emerald-500/[0.15] text-emerald-300' },
+    'rozpracováno': { dot: 'bg-amber-500',   bg: 'bg-amber-500/[0.15] text-amber-300' },
+    'schváleno':    { dot: 'bg-blue-500',    bg: 'bg-blue-500/[0.15] text-blue-300' },
   } as const;
-  const cfg = stavConfig[r.stav] ?? { dot: 'bg-slate-400', bg: 'bg-slate-100 text-slate-600' };
+  const cfg = stavConfig[r.stav] ?? { dot: 'bg-slate-400', bg: 'bg-white/[0.06] text-slate-400' };
 
   return (
-    <Link to={`/revize/${r.id}`} className="group flex items-center gap-2.5 rounded-lg border border-slate-100 bg-white px-2.5 py-2 transition-all hover:border-slate-300 hover:shadow-sm">
+    <Link to={`/revize/${r.id}`} className="group flex items-center gap-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-2 transition-all hover:border-white/[0.12]">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-medium text-slate-700 group-hover:text-slate-900 transition-colors">{r.nazev}</p>
+        <p className="truncate text-[13px] font-medium text-slate-300 group-hover:text-slate-100 transition-colors">{r.nazev}</p>
         <p className="text-[11px] text-slate-400">{r.cisloRevize} · {formatDate(r.datum)}</p>
       </div>
       <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded px-2 py-0.5 text-[10px] font-medium ${cfg.bg}`}>
@@ -51,17 +51,17 @@ function RevizeRow({ r }: { r: Revize }) {
 
 function ZakazkaRow({ z }: { z: Zakazka }) {
   const days = daysUntil(z.datumPlanovany);
-  const urgency = days < 0 ? 'text-red-600 bg-red-50' : days <= 3 ? 'text-amber-600 bg-amber-50' : 'text-slate-600 bg-slate-50';
+  const urgency = days < 0 ? 'text-red-300 bg-red-500/[0.15]' : days <= 3 ? 'text-amber-300 bg-amber-500/[0.15]' : 'text-slate-400 bg-white/[0.04]';
   const prioritaColor = {
     'vysoká': 'border-l-red-500',
     'střední': 'border-l-amber-400',
     'nizká': 'border-l-blue-400',
-  }[z.priorita] ?? 'border-l-slate-300';
+  }[z.priorita] ?? 'border-l-slate-600';
 
   return (
-    <Link to={`/planovani`} className={`group flex items-center gap-2.5 rounded-lg border border-slate-100 border-l-[3px] ${prioritaColor} bg-white px-2.5 py-2 transition-all hover:border-slate-300 hover:shadow-sm`}>
+    <Link to={`/planovani`} className={`group flex items-center gap-2.5 rounded-lg border border-white/[0.06] border-l-[3px] ${prioritaColor} bg-white/[0.02] px-2.5 py-2 transition-all hover:border-white/[0.12]`}>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-medium text-slate-700 group-hover:text-slate-900 transition-colors">{z.nazev}</p>
+        <p className="truncate text-[13px] font-medium text-slate-300 group-hover:text-slate-100 transition-colors">{z.nazev}</p>
         <p className="text-[11px] text-slate-400">{z.klient}</p>
       </div>
       <span className={`whitespace-nowrap rounded px-2 py-0.5 text-[11px] font-medium ${urgency}`}>
@@ -75,13 +75,13 @@ function PristrojRow({ p }: { p: MericiPristroj }) {
   const expired = new Date(p.platnostKalibrace) < new Date();
   const days = daysUntil(p.platnostKalibrace);
   return (
-    <Link to="/pristroje" className="group flex items-center gap-2.5 rounded-lg border border-slate-100 bg-white px-2.5 py-2 transition-all hover:border-slate-300 hover:shadow-sm">
+    <Link to="/pristroje" className="group flex items-center gap-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-2 transition-all hover:border-white/[0.12]">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-medium text-slate-700 group-hover:text-slate-900 transition-colors">{p.nazev}</p>
+        <p className="truncate text-[13px] font-medium text-slate-300 group-hover:text-slate-100 transition-colors">{p.nazev}</p>
         <p className="text-[11px] text-slate-400">{p.vyrobce} {p.model} · {p.vyrobniCislo}</p>
       </div>
       <div className="text-right shrink-0">
-        <span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium ${expired ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-600'}`}>
+        <span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium ${expired ? 'bg-red-500/[0.15] text-red-300' : 'bg-white/[0.06] text-slate-400'}`}>
           {expired ? `${Math.abs(days)}d po termu00ednu` : `za ${days}d`}
         </span>
         <p className="text-[10px] text-slate-400">{formatDate(p.platnostKalibrace)}</p>
@@ -97,14 +97,14 @@ function SectionCard({ title, icon: _icon, count, viewAllLink, viewAllLabel, emp
   children: React.ReactNode[];
 }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white">
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100">
-        <h2 className="text-[13px] font-semibold text-slate-700">{title}</h2>
+    <div className="rounded-lg border border-white/[0.07] bg-white/[0.03]">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.05]">
+        <h2 className="text-[13px] font-semibold text-slate-200">{title}</h2>
         <div className="flex items-center gap-2">
           {count !== undefined && (
-            <span className="text-[10px] font-medium text-slate-400">{count}</span>
+            <span className="text-[10px] font-medium text-slate-500">{count}</span>
           )}
-          <Link to={viewAllLink} className="text-[11px] font-medium text-slate-500 hover:text-slate-700 transition-colors">
+          <Link to={viewAllLink} className="text-[11px] font-medium text-slate-400 hover:text-slate-200 transition-colors">
             {viewAllLabel ?? 'Vše →'}
           </Link>
         </div>
@@ -115,7 +115,7 @@ function SectionCard({ title, icon: _icon, count, viewAllLink, viewAllLabel, emp
         ) : (
           <div className="py-6 text-center">
             <p className="text-xs text-slate-400 mb-1.5">{empty}</p>
-            <Link to={emptyLink} className="text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors hover:underline">
+            <Link to={emptyLink} className="text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors hover:underline">
               {emptyLabel}
             </Link>
           </div>
@@ -147,32 +147,32 @@ function TodayPanel({ zakazky }: { zakazky: Zakazka[] }) {
   } as const;
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100">
-        <h2 className="text-[13px] font-semibold text-slate-700">Dnes</h2>
-        <Link to="/planovani" className="text-[11px] font-medium text-slate-500 hover:text-slate-700 transition-colors">
+    <div className="rounded-lg border border-white/[0.07] bg-white/[0.03]">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.05]">
+        <h2 className="text-[13px] font-semibold text-slate-200">Dnes</h2>
+        <Link to="/planovani" className="text-[11px] font-medium text-slate-400 hover:text-slate-200 transition-colors">
           Vše →
         </Link>
       </div>
       {todayZakazky.length > 0 ? (
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-white/[0.05]">
           {todayZakazky.map(z => (
             <Link
               key={z.id}
               to="/planovani"
-              className={`group flex items-center gap-3 px-4 py-2.5 border-l-[3px] ${prioritaBar[z.priorita] ?? 'border-l-slate-300'} hover:bg-slate-50 transition-colors`}
+              className={`group flex items-center gap-3 px-4 py-2.5 border-l-[3px] ${prioritaBar[z.priorita] ?? 'border-l-slate-600'} hover:bg-white/[0.04] transition-colors`}
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-medium text-slate-700 group-hover:text-slate-900">{z.nazev}</p>
+                <p className="truncate text-[13px] font-medium text-slate-300 group-hover:text-slate-100">{z.nazev}</p>
                 <p className="text-[11px] text-slate-400">{z.klient}</p>
               </div>
               {z.casPlanovany && (
-                <span className="shrink-0 text-[11px] font-medium text-slate-500 bg-slate-100 rounded px-2 py-0.5">
+                <span className="shrink-0 text-[11px] font-medium text-slate-400 bg-white/[0.06] rounded px-2 py-0.5">
                   {z.casPlanovany}
                 </span>
               )}
               {z.stav === 'v realizaci' && (
-                <span className="shrink-0 text-[10px] font-medium text-amber-600 bg-amber-50 rounded px-2 py-0.5">probíhá</span>
+                <span className="shrink-0 text-[10px] font-medium text-amber-300 bg-amber-500/[0.15] rounded px-2 py-0.5">provádí se</span>
               )}
             </Link>
           ))}
@@ -183,7 +183,7 @@ function TodayPanel({ zakazky }: { zakazky: Zakazka[] }) {
             <Link
               key={a.to}
               to={a.to}
-              className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-[12px] font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all"
+              className="flex items-center gap-2 rounded-lg border border-white/[0.07] px-3 py-2.5 text-[12px] font-medium text-slate-300 hover:bg-white/[0.04] hover:border-white/[0.12] transition-all"
             >
               <span className="text-base leading-none">{a.icon}</span>
               {a.label}
@@ -250,19 +250,19 @@ function WeatherWidget() {
   if (isError || (!isLoading && !data)) return null;
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100">
-        <h2 className="text-[13px] font-semibold text-slate-700">Počasí — Tachov</h2>
-        <span className="text-[10px] text-slate-400">Open-Meteo</span>
+    <div className="rounded-lg border border-white/[0.07] bg-white/[0.03]">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.05]">
+        <h2 className="text-[13px] font-semibold text-slate-200">Počasí — Tachov</h2>
+        <span className="text-[10px] text-slate-500">Open-Meteo</span>
       </div>
-      <div className="grid grid-cols-5 divide-x divide-slate-100">
+      <div className="grid grid-cols-5 divide-x divide-white/[0.05]">
         {isLoading
           ? Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex flex-col items-center gap-1 py-3 px-2">
-                <div className="h-3 w-6 rounded bg-slate-100 animate-pulse" />
-                <div className="h-6 w-6 rounded bg-slate-100 animate-pulse" />
-                <div className="h-3 w-10 rounded bg-slate-100 animate-pulse" />
-                <div className="h-3 w-8 rounded bg-slate-100 animate-pulse" />
+                <div className="h-3 w-6 rounded bg-white/[0.08] animate-pulse" />
+                <div className="h-6 w-6 rounded bg-white/[0.08] animate-pulse" />
+                <div className="h-3 w-10 rounded bg-white/[0.08] animate-pulse" />
+                <div className="h-3 w-8 rounded bg-white/[0.08] animate-pulse" />
               </div>
             ))
           : data!.map((day) => {
@@ -270,13 +270,13 @@ function WeatherWidget() {
               const dayName = CZ_DAYS[d.getDay()];
               const isToday = day.date === new Date().toISOString().slice(0, 10);
               return (
-                <div key={day.date} className={`flex flex-col items-center gap-0.5 py-3 px-2 ${isToday ? 'bg-slate-50' : ''}`}>
-                  <p className={`text-[11px] font-semibold ${isToday ? 'text-slate-800' : 'text-slate-500'}`}>
+                <div key={day.date} className={`flex flex-col items-center gap-0.5 py-3 px-2 ${isToday ? 'bg-white/[0.05]' : ''}`}>
+                  <p className={`text-[11px] font-semibold ${isToday ? 'text-slate-200' : 'text-slate-400'}`}>
                     {isToday ? 'Dnes' : dayName}
                   </p>
                   <span className="text-xl leading-none">{wmoToEmoji(day.code)}</span>
-                  <p className="text-[12px] font-medium text-slate-700">
-                    {day.max}° <span className="text-slate-400 font-normal">{day.min}°</span>
+                  <p className="text-[12px] font-medium text-slate-300">
+                    {day.max}° <span className="text-slate-500 font-normal">{day.min}°</span>
                   </p>
                   {day.precip > 0 && (
                     <p className="text-[10px] text-blue-500">💧 {day.precip}%</p>
@@ -310,27 +310,27 @@ function DayPopup({ day, zakazky, onClose }: { day: Date; zakazky: Zakazka[]; on
   const label = day.toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' });
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/20" />
+      <div className="absolute inset-0 bg-black/60" />
       <div
-        className="relative z-10 w-full max-w-sm rounded-xl border border-slate-200 bg-white shadow-xl"
+        className="relative z-10 w-full max-w-sm rounded-xl border border-white/[0.08] bg-[#0e1629] shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-          <p className="text-[13px] font-semibold text-slate-700 capitalize">{label}</p>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors text-lg leading-none">×</button>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+          <p className="text-[13px] font-semibold text-slate-200 capitalize">{label}</p>
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-200 transition-colors text-lg leading-none">×</button>
         </div>
         <div className="p-3 space-y-1.5 max-h-72 overflow-y-auto">
           {zakazky.map((z) => {
             const priorityBorder = z.priorita === 'vysoká' ? 'border-l-red-500' : z.priorita === 'střední' ? 'border-l-amber-400' : 'border-l-blue-400';
-            const stavColor = z.stav === 'dokončeno' ? 'text-slate-400' : z.stav === 'v realizaci' ? 'text-amber-600' : 'text-blue-600';
+            const stavColor = z.stav === 'dokončeno' ? 'text-slate-500' : z.stav === 'v realizaci' ? 'text-amber-400' : 'text-blue-400';
             return (
               <Link
                 key={z.id}
                 to="/planovani"
                 onClick={onClose}
-                className={`block rounded-lg border border-slate-100 border-l-[3px] ${priorityBorder} bg-slate-50 px-3 py-2 hover:bg-slate-100 transition-colors`}
+                className={`block rounded-lg border border-white/[0.06] border-l-[3px] ${priorityBorder} bg-white/[0.03] px-3 py-2 hover:bg-white/[0.07] transition-colors`}
               >
-                <p className="text-[13px] font-medium text-slate-700 truncate">{z.nazev}</p>
+                <p className="text-[13px] font-medium text-slate-200 truncate">{z.nazev}</p>
                 <div className="flex items-center justify-between mt-0.5">
                   <p className="text-[11px] text-slate-400 truncate">{z.klient}</p>
                   <span className={`text-[10px] font-medium capitalize ${stavColor}`}>{z.stav}</span>
@@ -371,18 +371,18 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
 
   return (
     <>
-    <div className="rounded-lg border border-slate-200 bg-white">
+    <div className="rounded-lg border border-white/[0.07] bg-white/[0.03]">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100">
-        <h2 className="text-[13px] font-semibold text-slate-700 capitalize">{monthLabel}</h2>
+      <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.05]">
+        <h2 className="text-[13px] font-semibold text-slate-200 capitalize">{monthLabel}</h2>
         <div className="flex items-center gap-1">
-          <button onClick={() => setOffset(o => o - 1)} className="h-6 w-6 flex items-center justify-center rounded hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-colors text-xs">‹</button>
-          <button onClick={() => setOffset(0)} className="px-2 py-0.5 rounded text-[10px] font-medium text-slate-500 hover:bg-slate-50 transition-colors">Dnes</button>
-          <button onClick={() => setOffset(o => o + 1)} className="h-6 w-6 flex items-center justify-center rounded hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-colors text-xs">›</button>
+          <button onClick={() => setOffset(o => o - 1)} className="h-6 w-6 flex items-center justify-center rounded hover:bg-white/[0.06] text-slate-500 hover:text-slate-200 transition-colors text-xs">‹</button>
+          <button onClick={() => setOffset(0)} className="px-2 py-0.5 rounded text-[10px] font-medium text-slate-400 hover:bg-white/[0.06] transition-colors">Dnes</button>
+          <button onClick={() => setOffset(o => o + 1)} className="h-6 w-6 flex items-center justify-center rounded hover:bg-white/[0.06] text-slate-500 hover:text-slate-200 transition-colors text-xs">›</button>
         </div>
       </div>
       {/* Day headers */}
-      <div className="grid grid-cols-7 border-b border-slate-100">
+      <div className="grid grid-cols-7 border-b border-white/[0.05]">
         {DAY_HEADERS.map((d, i) => (
           <div key={d} className={`py-1 text-center text-[9px] font-semibold uppercase tracking-wider ${i >= 5 ? 'text-slate-300' : 'text-slate-400'}`}>{d}</div>
         ))}
@@ -390,7 +390,7 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
       {/* Cells */}
       <div className="grid grid-cols-7">
         {cells.map((day, i) => {
-          if (!day) return <div key={`e${i}`} className="min-h-[36px] bg-slate-50/30" />;
+          if (!day) return <div key={`e${i}`} className="min-h-[36px] bg-white/[0.01]" />;
           const isToday = isSameDay(day, today);
           const isPast = day < today && !isToday;
           const dow = i % 7;
@@ -401,14 +401,14 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
             <div
               key={i}
               onClick={() => hasEvents && setSelectedDay({ day, zakazky: dayZ })}
-              className={`relative min-h-[36px] border-t border-r border-slate-100/70 px-0.5 py-1 flex flex-col items-center ${
-                isToday ? 'bg-slate-50' : ''
-              } ${isPast && !hasEvents ? 'opacity-30' : isPast ? 'opacity-60' : ''} ${hasEvents ? 'cursor-pointer hover:bg-blue-50/60 transition-colors' : ''}`}
+              className={`relative min-h-[36px] border-t border-r border-white/[0.05] px-0.5 py-1 flex flex-col items-center ${
+                isToday ? 'bg-white/[0.05]' : ''
+              } ${isPast && !hasEvents ? 'opacity-30' : isPast ? 'opacity-60' : ''} ${hasEvents ? 'cursor-pointer hover:bg-blue-500/[0.10] transition-colors' : ''}`}
             >
               <p className={`text-center text-[11px] font-medium leading-none ${
                 isToday
-                  ? 'flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-white text-[10px]'
-                  : isWeekend ? 'text-slate-300' : 'text-slate-500'
+                  ? 'flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white text-[10px]'
+                  : isWeekend ? 'text-slate-400' : 'text-slate-400'
               }`}>{day.getDate()}</p>
               {hasEvents && (
                 <div className="mt-1 flex items-center justify-center gap-0.5 flex-wrap">
@@ -506,14 +506,14 @@ export function Dashboard() {
       {/* ═══ Header ═══ */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-slate-800">{greeting}</h1>
+          <h1 className="text-lg font-bold text-slate-200">{greeting}</h1>
           <p className="text-xs text-slate-400 capitalize">{todayLabel}</p>
         </div>
         <div className="flex gap-1.5">
-          <Link to="/revize" className="inline-flex items-center rounded border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+          <Link to="/revize" className="inline-flex items-center rounded border border-white/[0.10] bg-white/[0.05] px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:bg-white/[0.09] transition-colors">
             + Revize
           </Link>
-          <Link to="/planovani" className="inline-flex items-center rounded border border-slate-800 bg-slate-800 px-2.5 py-1 text-[11px] font-medium text-white hover:bg-slate-700 transition-colors">
+          <Link to="/planovani" className="inline-flex items-center rounded border border-blue-600 bg-blue-600 px-2.5 py-1 text-[11px] font-medium text-white hover:bg-blue-500 transition-colors">
             + Zakázka
           </Link>
         </div>

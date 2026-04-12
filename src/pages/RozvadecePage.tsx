@@ -22,25 +22,25 @@ function EditableSelect({ label, value, onChange, options }: {
 
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-sm font-medium text-slate-700">{label}</label>
+      <label className="text-sm font-medium text-slate-400">{label}</label>
       {showCustom ? (
         <div className="relative">
           <input
-            className="w-full px-3 py-2 pr-8 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 text-xs"
+            className="w-full px-3 py-2 pr-8 border rounded-lg bg-white/[0.04] text-slate-200 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5] text-xs"
             value={value}
             onChange={(e) => onChange(e.target.value)}
             autoFocus
           />
           <button
             type="button"
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-200 text-xs"
             onClick={() => { setShowCustom(false); }}
             title="Zpět na seznam"
           >↩</button>
         </div>
       ) : (
         <select
-          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 text-xs"
+          className="w-full px-3 py-2 border rounded-lg bg-white/[0.04] text-slate-200 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5] text-xs"
           value={options.includes(value) ? value : '__custom__'}
           onChange={(e) => {
             if (e.target.value === '__custom__') {
@@ -238,7 +238,7 @@ export function RozvadecDetailPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-slate-800">{rozvadec.nazev}</h1>
+          <h1 className="text-lg font-bold text-slate-200">{rozvadec.nazev}</h1>
           <p className="text-xs text-slate-400">{rozvadec.oznaceni} • {rozvadec.umisteni}</p>
         </div>
         <Button variant="secondary" onClick={() => navigate(`/revize/${revizeId}`)}>
@@ -248,16 +248,16 @@ export function RozvadecDetailPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <p className="text-sm text-slate-500">Typ rozvaděče</p>
-          <p className="font-medium">{rozvadec.typRozvadece || '—'}</p>
+          <p className="text-sm text-slate-400">Typ rozváděče</p>
+          <p className="font-medium text-slate-200">{rozvadec.typRozvadece || '—'}</p>
         </Card>
         <Card>
-          <p className="text-sm text-slate-500">Stupeň krytí</p>
-          <p className="font-medium">{rozvadec.stupenKryti}</p>
+          <p className="text-sm text-slate-400">Stupeň krytí</p>
+          <p className="font-medium text-slate-200">{rozvadec.stupenKryti}</p>
         </Card>
         <Card>
-          <p className="text-sm text-slate-500">Počet okruhů</p>
-          <p className="font-medium">{okruhy.length}</p>
+          <p className="text-sm text-slate-400">Počet okruhů</p>
+          <p className="font-medium text-slate-200">{okruhy.length}</p>
         </Card>
       </div>
 
@@ -274,31 +274,31 @@ export function RozvadecDetailPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Č.</th>
-                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Název</th>
-                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Jistič</th>
-                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Vodič</th>
-                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Iz. odpor</th>
-                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Imp. smyčky</th>
-                  <th className="text-right py-2 px-3 font-medium text-slate-600 text-sm">Akce</th>
+                <tr className="border-b border-white/[0.06]">
+                  <th className="text-left py-2 px-3 font-medium text-slate-400 text-sm">Č.</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-400 text-sm">Název</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-400 text-sm">Jistič</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-400 text-sm">Vodič</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-400 text-sm">Iz. odpor</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-400 text-sm">Imp. smyčky</th>
+                  <th className="text-right py-2 px-3 font-medium text-slate-400 text-sm">Akce</th>
                 </tr>
               </thead>
               <tbody>
                 {[...okruhy].sort((a, b) => a.cislo - b.cislo).map((o) => (
-                  <tr key={o.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="py-2 px-3 font-medium">{o.cislo}</td>
-                    <td className="py-2 px-3">{o.nazev}</td>
+                  <tr key={o.id} className="border-b border-white/[0.05] hover:bg-white/[0.04]">
+                    <td className="py-2 px-3 font-medium text-slate-300">{o.cislo}</td>
+                    <td className="py-2 px-3 text-slate-300">{o.nazev}</td>
                     <td className="py-2 px-3">
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-slate-100">
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-white/[0.06] text-slate-400">
                         {o.jisticTyp}{o.jisticProud}
                       </span>
                     </td>
-                    <td className="py-2 px-3 text-slate-600">{o.vodic}</td>
-                    <td className="py-2 px-3 text-slate-600">
+                    <td className="py-2 px-3 text-slate-400">{o.vodic}</td>
+                    <td className="py-2 px-3 text-slate-400">
                       {o.izolacniOdpor || '—'}
                     </td>
-                    <td className="py-2 px-3 text-slate-600">
+                    <td className="py-2 px-3 text-slate-400">
                       {o.impedanceSmycky || '—'}
                     </td>
                     <td className="py-2 px-3 text-right">
@@ -406,8 +406,8 @@ export function RozvadecDetailPage() {
                 />
               </div>
               <label className="flex items-center gap-1.5 pb-2 cursor-pointer select-none">
-                <input type="checkbox" checked={okruhFormData.impedanceSmyckyMax} onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmyckyMax: e.target.checked })} className="rounded border-slate-300" />
-                <span className="text-xs text-slate-600 whitespace-nowrap">max.</span>
+                <input type="checkbox" checked={okruhFormData.impedanceSmyckyMax} onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmyckyMax: e.target.checked })} className="rounded border-white/[0.20]" />
+                <span className="text-xs text-slate-400 whitespace-nowrap">max.</span>
               </label>
             </div>
           </div>
@@ -433,33 +433,33 @@ export function RozvadecDetailPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Č.</th>
-                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Název</th>
-                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Typ</th>
-                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Proud</th>
-                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">IΔn [mA]</th>
-                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Pólů</th>
-                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">IΔ [mA]</th>
-                  <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">tA 1× [ms]</th>
-                  <th className="text-right py-2 px-3 font-medium text-slate-600 text-sm">Akce</th>
+                <tr className="border-b border-white/[0.06]">
+                  <th className="text-left py-2 px-3 font-medium text-slate-400 text-sm">Č.</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-400 text-sm">Název</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-400 text-sm">Typ</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-400 text-sm">Proud</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-400 text-sm">IΔn [mA]</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-400 text-sm">Pólů</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-400 text-sm">IΔ [mA]</th>
+                  <th className="text-left py-2 px-3 font-medium text-slate-400 text-sm">tA 1× [ms]</th>
+                  <th className="text-right py-2 px-3 font-medium text-slate-400 text-sm">Akce</th>
                 </tr>
               </thead>
               <tbody>
                 {[...chranice].sort((a, b) => a.cislo - b.cislo).map((c) => (
-                  <tr key={c.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="py-2 px-3 font-medium">{c.cislo}</td>
-                    <td className="py-2 px-3">{c.nazev}</td>
+                  <tr key={c.id} className="border-b border-white/[0.05] hover:bg-white/[0.04]">
+                    <td className="py-2 px-3 font-medium text-slate-300">{c.cislo}</td>
+                    <td className="py-2 px-3 text-slate-300">{c.nazev}</td>
                     <td className="py-2 px-3">
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-blue-500/[0.15] text-blue-300">
                         {c.typ}
                       </span>
                     </td>
-                    <td className="py-2 px-3 text-slate-600">{c.proud}</td>
-                    <td className="py-2 px-3 text-slate-600">{c.citlivostMa}</td>
-                    <td className="py-2 px-3 text-slate-600">{c.pocetPolu}</td>
-                    <td className="py-2 px-3 text-slate-600">{c.vybavovacProud != null ? c.vybavovacProud : '—'}</td>
-                    <td className="py-2 px-3 text-slate-600">{c.casOdpojeni1x != null ? c.casOdpojeni1x : '—'}</td>
+                    <td className="py-2 px-3 text-slate-400">{c.proud}</td>
+                    <td className="py-2 px-3 text-slate-400">{c.citlivostMa}</td>
+                    <td className="py-2 px-3 text-slate-400">{c.pocetPolu}</td>
+                    <td className="py-2 px-3 text-slate-400">{c.vybavovacProud != null ? c.vybavovacProud : '—'}</td>
+                    <td className="py-2 px-3 text-slate-400">{c.casOdpojeni1x != null ? c.casOdpojeni1x : '—'}</td>
                     <td className="py-2 px-3 text-right">
                       <div className="flex justify-end gap-1">
                         <Button variant="secondary" size="sm" onClick={() => handleEditChranic(c)}>Upravit</Button>
@@ -549,21 +549,21 @@ export function RozvadecDetailPage() {
           </div>
 
           {/* Měřené hodnoty – společné pro všechny typy */}
-          <div className="border-t border-slate-200 pt-3">
-            <p className="text-xs font-medium text-slate-500 mb-3">Měřené hodnoty</p>
+          <div className="border-t border-white/[0.06] pt-3">
+            <p className="text-xs font-medium text-slate-400 mb-3">Měřené hodnoty</p>
             <div className="grid grid-cols-2 gap-3">
               <label className="flex items-center gap-2 text-xs">
                 <input type="checkbox"
                   checked={!!cranicFormData.testovacitlacitko}
                   onChange={(e) => setCranicFormData({ ...cranicFormData, testovacitlacitko: e.target.checked || undefined })}
-                  className="rounded border-slate-300" />
+                  className="rounded border-white/[0.20]" />
                 <span>Testovací tlačítko ✓</span>
               </label>
               <label className="flex items-center gap-2 text-xs">
                 <input type="checkbox"
                   checked={!!cranicFormData.nevybavovaci}
                   onChange={(e) => setCranicFormData({ ...cranicFormData, nevybavovaci: e.target.checked || undefined })}
-                  className="rounded border-slate-300" />
+                  className="rounded border-white/[0.20]" />
                 <span>Nevybavení při 0,5×IΔn ✓</span>
               </label>
             </div>
@@ -598,7 +598,7 @@ export function RozvadecDetailPage() {
                     <input type="checkbox"
                       checked={!!cranicFormData.zkouskaVypnuti2x}
                       onChange={(e) => setCranicFormData({ ...cranicFormData, zkouskaVypnuti2x: e.target.checked || undefined })}
-                      className="rounded border-slate-300" />
+                      className="rounded border-white/[0.20]" />
                     <span>Zkouška vypnutí 2×IΔn nárůstem proudu ✓</span>
                   </label>
                 </>
@@ -609,7 +609,7 @@ export function RozvadecDetailPage() {
                 <input type="checkbox"
                   checked={!!cranicFormData.selektivita}
                   onChange={(e) => setCranicFormData({ ...cranicFormData, selektivita: e.target.checked || undefined })}
-                  className="rounded border-slate-300" />
+                  className="rounded border-white/[0.20]" />
                 <span>Selektivita (typ S/G) ✓</span>
               </label>
             </div>

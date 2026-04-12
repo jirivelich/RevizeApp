@@ -258,7 +258,7 @@ export function RevizePage() {
     <div className="flex flex-col gap-4 h-full">
       <div className="flex items-center justify-between flex-shrink-0">
         <div>
-          <h1 className="text-lg font-bold text-slate-800">Revize</h1>
+          <h1 className="text-lg font-bold text-slate-200">Revize</h1>
           <p className="text-xs text-slate-400">Správa revizí elektrických instalací, hromosvodů a strojních zařízení</p>
         </div>
         <Button onClick={openModal}>
@@ -267,7 +267,7 @@ export function RevizePage() {
         </Button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex-1 min-h-0 flex flex-col overflow-hidden">
+      <div className="bg-white/[0.03] rounded-xl border border-white/[0.07] flex-1 min-h-0 flex flex-col overflow-hidden">
         <div className="px-6 pt-5 pb-3 flex-shrink-0">
           <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:gap-4">
           <div className="w-full md:flex-1 md:min-w-[200px]">
@@ -307,29 +307,29 @@ export function RevizePage() {
           {/* Mobilní seznam karet */}
           <div className="md:hidden px-4 pb-4 flex-1 min-h-0 overflow-auto space-y-2">
             {filteredRevize.map((r) => (
-              <div key={r.id} className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm">
+              <div key={r.id} className="bg-white/[0.03] rounded-lg border border-white/[0.07] p-3">
                 <Link to={`/revize/${r.id}`} className="block">
-                  <p className="font-semibold text-slate-800 text-sm leading-snug">{r.nazev}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{r.adresa}</p>
+                  <p className="font-semibold text-slate-200 text-sm leading-snug">{r.nazev}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{r.adresa}</p>
                 </Link>
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700">
+                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-white/[0.06] text-slate-400">
                       {r.kategorieRevize === 'elektro' ? 'Elektro' :
                        r.kategorieRevize === 'hromosvod' ? 'Hromosvod' :
                        r.kategorieRevize === 'stroje' ? 'Stroje' : r.kategorieRevize}
                     </span>
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                      r.stav === 'dokončeno' ? 'bg-emerald-50 text-emerald-600' :
-                      r.stav === 'rozpracováno' ? 'bg-amber-50 text-amber-600' :
-                      'bg-slate-100 text-slate-600'
+                      r.stav === 'dokončeno' ? 'bg-emerald-500/[0.15] text-emerald-300' :
+                      r.stav === 'rozpracováno' ? 'bg-amber-500/[0.15] text-amber-300' :
+                      'bg-white/[0.06] text-slate-400'
                     }`}>{r.stav}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs text-slate-400">{new Date(r.datum).toLocaleDateString('cs-CZ')}</span>
                     <button
                       onClick={() => setActionSheetRevize({ id: r.id!, cisloRevize: r.cisloRevize, nazev: r.nazev })}
-                      className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+                      className="p-1 rounded-lg hover:bg-white/[0.06] text-slate-500 hover:text-slate-300 transition-colors"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
@@ -344,53 +344,53 @@ export function RevizePage() {
           {/* Desktopová tabulka */}
           <div className="hidden md:block px-6 pb-4 flex-1 min-h-0 overflow-auto">
             <table className="w-full">
-              <thead className="sticky top-0 bg-white z-10">
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700" onClick={() => toggleSort('cisloRevize')}>Číslo<SortIcon col="cisloRevize" /></th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700" onClick={() => toggleSort('kategorieRevize')}>Kategorie<SortIcon col="kategorieRevize" /></th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700" onClick={() => toggleSort('nazev')}>Název<SortIcon col="nazev" /></th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700" onClick={() => toggleSort('adresa')}>Adresa<SortIcon col="adresa" /></th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700" onClick={() => toggleSort('datum')}>Datum<SortIcon col="datum" /></th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700" onClick={() => toggleSort('typRevize')}>Typ<SortIcon col="typRevize" /></th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer select-none hover:text-slate-700" onClick={() => toggleSort('stav')}>Stav<SortIcon col="stav" /></th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-slate-500 uppercase tracking-wider"></th>
+              <thead className="sticky top-0 bg-[#0a0f1e] z-10">
+                <tr className="border-b border-white/[0.06]">
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-200" onClick={() => toggleSort('cisloRevize')}>Číslo<SortIcon col="cisloRevize" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-200" onClick={() => toggleSort('kategorieRevize')}>Kategorie<SortIcon col="kategorieRevize" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-200" onClick={() => toggleSort('nazev')}>Název<SortIcon col="nazev" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-200" onClick={() => toggleSort('adresa')}>Adresa<SortIcon col="adresa" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-200" onClick={() => toggleSort('datum')}>Datum<SortIcon col="datum" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-200" onClick={() => toggleSort('typRevize')}>Typ<SortIcon col="typRevize" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-200" onClick={() => toggleSort('stav')}>Stav<SortIcon col="stav" /></th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider"></th>
                 </tr>
               </thead>
               <tbody>
                 {filteredRevize.map((r) => (
-                  <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
+                  <tr key={r.id} className="border-b border-white/[0.05] hover:bg-white/[0.04]">
                     <td className="py-2 px-3">
-                      <Link to={`/revize/${r.id}`} className="text-xs text-slate-700 hover:text-slate-900 font-medium hover:underline">
+                      <Link to={`/revize/${r.id}`} className="text-xs text-slate-300 hover:text-slate-100 font-medium hover:underline">
                         {r.cisloRevize}
                       </Link>
                     </td>
                     <td className="py-2 px-3">
                       <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                        r.kategorieRevize === 'elektro' ? 'bg-slate-100 text-slate-700' :
-                        r.kategorieRevize === 'hromosvod' ? 'bg-slate-100 text-slate-700' :
-                        r.kategorieRevize === 'stroje' ? 'bg-slate-100 text-slate-700' :
-                        'bg-slate-100 text-slate-700'
+                        r.kategorieRevize === 'elektro' ? 'bg-white/[0.06] text-slate-400' :
+                        r.kategorieRevize === 'hromosvod' ? 'bg-white/[0.06] text-slate-400' :
+                        r.kategorieRevize === 'stroje' ? 'bg-white/[0.06] text-slate-400' :
+                        'bg-white/[0.06] text-slate-400'
                       }`}>
                         {r.kategorieRevize === 'elektro' ? 'Elektro' :
                          r.kategorieRevize === 'hromosvod' ? 'Hromosvod' :
                          r.kategorieRevize === 'stroje' ? 'Stroje' : 'Elektro'}
                       </span>
                     </td>
-                    <td className="py-2 px-3 text-xs font-medium text-slate-800">{r.nazev}</td>
-                    <td className="py-2 px-3 text-xs text-slate-500">{r.adresa}</td>
-                    <td className="py-2 px-3 text-xs text-slate-500">
+                    <td className="py-2 px-3 text-xs font-medium text-slate-300">{r.nazev}</td>
+                    <td className="py-2 px-3 text-xs text-slate-400">{r.adresa}</td>
+                    <td className="py-2 px-3 text-xs text-slate-400">
                       {new Date(r.datum).toLocaleDateString('cs-CZ')}
                     </td>
                     <td className="py-2 px-3">
-                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700">
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-white/[0.06] text-slate-400">
                         {r.typRevize}
                       </span>
                     </td>
                     <td className="py-2 px-3">
                       <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                        r.stav === 'dokončeno' ? 'bg-emerald-50 text-emerald-600' :
-                        r.stav === 'rozpracováno' ? 'bg-amber-50 text-amber-600' :
-                        'bg-slate-100 text-slate-600'
+                        r.stav === 'dokončeno' ? 'bg-emerald-500/[0.15] text-emerald-300' :
+                        r.stav === 'rozpracováno' ? 'bg-amber-500/[0.15] text-amber-300' :
+                        'bg-white/[0.06] text-slate-400'
                       }`}>
                         {r.stav}
                       </span>
@@ -399,7 +399,7 @@ export function RevizePage() {
                       <div className="relative" ref={openMenuId === r.id ? menuRef : undefined}>
                         <button
                           onClick={() => setOpenMenuId(openMenuId === r.id ? null : r.id!)}
-                          className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+                          className="p-1 rounded-lg hover:bg-white/[0.06] text-slate-500 hover:text-slate-300 transition-colors"
                           title="Akce"
                         >
                           <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
@@ -407,29 +407,29 @@ export function RevizePage() {
                           </svg>
                         </button>
                         {openMenuId === r.id && (
-                          <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
+                          <div className="absolute right-0 top-full mt-1 w-44 bg-[#0e1629] rounded-lg shadow-lg border border-white/[0.08] py-1 z-50">
                             <button
                               onClick={() => { setOpenMenuId(null); navigate(`/revize/${r.id}`); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                              className="w-full text-left px-3 py-1.5 text-xs text-slate-300 hover:bg-white/[0.06] flex items-center gap-2"
                             >
                               <span className="text-xs">✏️</span> Upravit
                             </button>
                             <button
                               onClick={() => { setOpenMenuId(null); openDuplikatModal(r.id!, r.cisloRevize); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                              className="w-full text-left px-3 py-1.5 text-xs text-slate-300 hover:bg-white/[0.06] flex items-center gap-2"
                             >
                               <span className="text-xs">📋</span> Kopírovat revizi
                             </button>
                             <button
                               onClick={() => { setOpenMenuId(null); openHistorieModal(r.id!, r.cisloRevize); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                              className="w-full text-left px-3 py-1.5 text-xs text-slate-300 hover:bg-white/[0.06] flex items-center gap-2"
                             >
                               <span className="text-xs">🕐</span> Historie
                             </button>
-                            <div className="border-t border-slate-100 my-1"></div>
+                            <div className="border-t border-white/[0.06] my-1"></div>
                             <button
                               onClick={() => { setOpenMenuId(null); handleDelete(r.id!); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
+                              className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/[0.08] flex items-center gap-2"
                             >
                               <span className="text-xs">🗑️</span> Smazat
                             </button>
@@ -488,16 +488,16 @@ export function RevizePage() {
                   key={kat.value}
                   type="button"
                   onClick={() => selectKategorie(kat.value)}
-                  className="flex items-center gap-4 p-4 rounded-lg border-2 border-slate-200 hover:border-slate-500 hover:bg-slate-50 transition-all text-left group"
+                  className="flex items-center gap-4 p-4 rounded-lg border-2 border-white/[0.08] hover:border-white/[0.20] hover:bg-white/[0.04] transition-all text-left group"
                 >
-                  <div className="flex-shrink-0 text-slate-400 group-hover:text-slate-700 transition-colors">
+                  <div className="flex-shrink-0 text-slate-500 group-hover:text-slate-200 transition-colors">
                     {kat.icon}
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-800 group-hover:text-slate-900">{kat.label}</p>
+                    <p className="font-semibold text-slate-200 group-hover:text-white">{kat.label}</p>
                     <p className="text-xs text-slate-400 mt-0.5">{kat.popis}</p>
                   </div>
-                  <div className="flex-shrink-0 ml-auto text-slate-300 group-hover:text-slate-500">
+                  <div className="flex-shrink-0 ml-auto text-slate-600 group-hover:text-slate-300">
                     <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                     </svg>
@@ -510,12 +510,12 @@ export function RevizePage() {
           /* ═══ KROK 2: Formulář ═══ */
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Zobrazení vybrané kategorie */}
-            <div className="flex items-center gap-3 px-3 py-2 bg-slate-100 rounded-lg border border-slate-200">
-              <div className="text-slate-500">
+            <div className="flex items-center gap-3 px-3 py-2 bg-white/[0.05] rounded-lg border border-white/[0.08]">
+              <div className="text-slate-400">
                 {KATEGORIE_REVIZE.find(k => k.value === formData.kategorieRevize)?.icon}
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-700">
+                <p className="text-sm font-medium text-slate-200">
                   {KATEGORIE_REVIZE.find(k => k.value === formData.kategorieRevize)?.label}
                 </p>
                 <p className="text-xs text-slate-400">Kategorie revize</p>
@@ -588,7 +588,7 @@ export function RevizePage() {
                 ]}
               />
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Platnost do</label>
+                <label className="block text-sm font-medium text-slate-400 mb-1">Platnost do</label>
                 <p className="text-sm text-slate-500 py-2">
                   Vypočítá se automaticky při dokončení revize
                 </p>
