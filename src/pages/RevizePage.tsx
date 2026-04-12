@@ -72,6 +72,9 @@ export function RevizePage() {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Potvrzení smazání (náhrada za window.confirm – nefunguje v iOS PWA)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+
   // Řazení
   type SortKey = 'cisloRevize' | 'kategorieRevize' | 'nazev' | 'adresa' | 'datum' | 'typRevize' | 'stav';
   const [sortKey, setSortKey] = useState<SortKey>('datum');
@@ -92,13 +95,17 @@ export function RevizePage() {
   };
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setOpenMenuId(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
 
   const openHistorieModal = async (revizeId: number, cisloRevize: string) => {
@@ -178,9 +185,14 @@ export function RevizePage() {
     setModalStep(1);
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Opravdu chcete smazat tuto revizi? Budou smazány i všechny související záznamy.')) {
-      deleteRevize.mutate(id);
+  const handleDelete = (id: number) => {
+    setConfirmDeleteId(id);
+  };
+
+  const executeDelete = () => {
+    if (confirmDeleteId !== null) {
+      deleteRevize.mutate(confirmDeleteId);
+      setConfirmDeleteId(null);
     }
   };
 
@@ -291,7 +303,7 @@ export function RevizePage() {
         {filteredRevize.length > 0 ? (
           <>
           {/* Mobilní seznam karet */}
-          <div className="md:hidden px-4 pb-4 flex-1 min-h-0 overflow-auto space-y-2">
+          <div className="md:hidden px-4 pb-44 flex-1 min-h-0 overflow-auto space-y-2">
             {filteredRevize.map((r) => (
               <div key={r.id} className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm">
                 <Link to={`/revize/${r.id}`} className="block">
@@ -682,6 +694,23 @@ export function RevizePage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Modal pro potvrzení smazání */}
+      <Modal
+        isOpen={confirmDeleteId !== null}
+        onClose={() => setConfirmDeleteId(null)}
+        title="Smazat revizi"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setConfirmDeleteId(null)}>Zrušit</Button>
+            <Button variant="danger" onClick={executeDelete}>Smazat</Button>
+          </>
+        }
+      >
+        <p className="text-sm text-slate-600">
+          Opravdu chcete smazat tuto revizi? Budou smazány i všechny související záznamy.
+        </p>
       </Modal>
 
       {/* Modal pro duplikaci revize */}
