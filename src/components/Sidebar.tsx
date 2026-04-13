@@ -55,7 +55,7 @@ const sectionLabelStyle: CSSProperties = {
   fontWeight: 600,
   letterSpacing: '0.1em',
   textTransform: 'uppercase',
-  color: '#1e3a5f',
+  color: '#64748b',
   padding: '10px 10px 4px',
   marginTop: 4,
 };
