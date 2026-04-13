@@ -302,14 +302,14 @@ export function WeekView({ zakazky, onZakazkaClick, onSlotClick, onMove }: WeekV
         <div className="overflow-auto max-h-[calc(100vh-220px)]">
           <div className="grid" style={{ gridTemplateColumns: '60px repeat(7, 1fr)' }}>
             {/* Header row */}
-            <div className="sticky top-0 z-10 bg-[#0a0f1e] border-b border-r border-[var(--border-table)] p-2" />
+            <div className="sticky top-0 z-10 bg-[var(--bg-page)] border-b border-r border-[var(--border-table)] p-2" />
             {weekDays.map((day, i) => {
               const isToday_ = isSameDay(day, today);
               return (
                 <div
                   key={i}
                   className={`sticky top-0 z-10 p-2 text-center border-b border-r border-[var(--border-table)] ${
-                    isToday_ ? 'bg-[var(--bg-accent-badge)]' : 'bg-[#0a0f1e]'
+                    isToday_ ? 'bg-[var(--bg-accent-badge)]' : 'bg-[var(--bg-page)]'
                   }`}
                 >
                   <div className="text-xs text-[var(--text-muted)]">{DAY_NAMES_SHORT[i]}</div>

@@ -18,7 +18,7 @@ export const TW = {
   /** Select na celou šířku */
   selectFull: 'w-full px-2 py-1 rounded text-sm bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-input)] focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none',
   /** Hlavička tabulky */
-  th: 'bg-[#0a0f1e] border border-[var(--border-table)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)] text-left',
+  th: 'bg-[var(--bg-page)] border border-[var(--border-table)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)] text-left',
   /** Buňka tabulky */
   td: 'border border-[var(--border-table)] px-2 py-1.5 align-middle text-[var(--text-primary)]',
   /** Popisek pole (nad inputem) */

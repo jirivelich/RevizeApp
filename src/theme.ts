@@ -34,6 +34,7 @@ export const themes: Record<ThemeName, ThemeVars> = {
     '--bg-faint':          'rgba(255,255,255,0.02)',
     '--checkbox-border':   'rgba(255,255,255,0.20)',
     '--border-strong':     'rgba(255,255,255,0.12)',
+    '--bg-page':           '#0a0f1e',
   },
   light: {
     '--background':        '#f1f5f9',
@@ -67,5 +68,6 @@ export const themes: Record<ThemeName, ThemeVars> = {
     '--bg-faint':          'rgba(0,0,0,0.02)',
     '--checkbox-border':   'rgba(0,0,0,0.25)',
     '--border-strong':     'rgba(0,0,0,0.18)',
+    '--bg-page':           '#e8edf5',
   },
 }

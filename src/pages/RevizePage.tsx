@@ -369,7 +369,7 @@ export function RevizePage() {
           {/* Desktopová tabulka */}
           <div className="hidden md:block px-6 pb-4 flex-1 min-h-0 overflow-auto">
             <table className="w-full">
-              <thead className="sticky top-0 bg-[#0a0f1e] z-10">
+              <thead className="sticky top-0 bg-[var(--bg-page)] z-10">
                 <tr className="border-b border-[var(--border-table)]">
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer select-none hover:text-[var(--text-primary)]" onClick={() => toggleSort('cisloRevize')}>Číslo<SortIcon col="cisloRevize" /></th>
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer select-none hover:text-[var(--text-primary)]" onClick={() => toggleSort('kategorieRevize')}>Kategorie<SortIcon col="kategorieRevize" /></th>
