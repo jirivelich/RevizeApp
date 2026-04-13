@@ -513,16 +513,16 @@ export function RevizePage() {
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                          r.kategorieRevize === 'elektro' ? 'bg-blue-500/[0.15] text-blue-300' :
-                          r.kategorieRevize === 'hromosvod' ? 'bg-yellow-500/[0.15] text-yellow-300' :
-                          'bg-purple-500/[0.15] text-purple-300'
+                          r.kategorieRevize === 'elektro' ? 'bg-blue-500/20 text-blue-600 dark:text-blue-300' :
+                          r.kategorieRevize === 'hromosvod' ? 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300' :
+                          'bg-purple-500/20 text-purple-700 dark:text-purple-300'
                         }`}>
                           {r.kategorieRevize === 'elektro' ? 'Elektro' :
                            r.kategorieRevize === 'hromosvod' ? 'Hromosvod' : 'Stroje'}
                         </span>
                         <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                          r.stav === 'dokončeno' ? 'bg-emerald-500/[0.15] text-emerald-300' :
-                          r.stav === 'rozpracováno' ? 'bg-amber-500/[0.15] text-amber-300' :
+                          r.stav === 'dokončeno' ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' :
+                          r.stav === 'rozpracováno' ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300' :
                           'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
                         }`}>{r.stav}</span>
                       </div>
