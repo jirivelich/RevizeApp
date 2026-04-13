@@ -43,8 +43,8 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
         className="absolute inset-0 bg-black/[0.8] backdrop-blur-sm" 
         onClick={onClose}
       />
-      <div className={`relative bg-[#0e1629] border border-white/[0.08] rounded-xl shadow-2xl ${sizeClasses[size]} w-full mx-4 max-h-[90vh] flex flex-col`}>
-        <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.06]">
+      <div className={`relative bg-[var(--surface)] border border-[var(--border-medium)] rounded-xl shadow-2xl ${sizeClasses[size]} w-full mx-4 max-h-[90vh] flex flex-col`}>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-table)]">
           <h2 className="text-sm font-semibold text-slate-100">{title}</h2>
           <Button variant="secondary" size="sm" onClick={onClose}>
             ✕
@@ -54,7 +54,7 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
           {children}
         </div>
         {footer && (
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 px-5 py-3 border-t border-white/[0.06] [&>button]:w-full [&>button]:sm:w-auto">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 px-5 py-3 border-t border-[var(--border-table)] [&>button]:w-full [&>button]:sm:w-auto">
             {footer}
           </div>
         )}

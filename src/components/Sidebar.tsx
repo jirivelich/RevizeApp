@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import React from 'react';
 import { logoutApi } from '../services/api';
 import { NotificationBell } from './NotificationBell';
+import { useTheme } from '../context/ThemeContext';
 
 type NavSection = 'Práce' | 'Vybavení' | 'Správa' | null;
 
@@ -42,8 +43,8 @@ interface SidebarProps {
 const sidebarStyle: CSSProperties = {
   width: 224,
   minHeight: '100vh',
-  background: '#080d1a',
-  borderRight: '1px solid rgba(255,255,255,0.06)',
+  background: 'var(--bg-sidebar)',
+  borderRight: '1px solid var(--border-table)',
   display: 'flex',
   flexDirection: 'column',
   position: 'relative',
@@ -63,6 +64,7 @@ const sectionLabelStyle: CSSProperties = {
 export function Sidebar({ onClose }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { themeName, setTheme } = useTheme();
 
   const handleLogout = async () => {
     await logoutApi();
@@ -82,9 +84,9 @@ export function Sidebar({ onClose }: SidebarProps) {
       display: 'flex', alignItems: 'center', gap: 9,
       padding: '8px 10px', borderRadius: 8,
       fontSize: 13, fontWeight: 500,
-      background: 'rgba(59,130,246,0.12)',
-      color: '#93c5fd',
-      border: '1px solid rgba(59,130,246,0.18)',
+      background: 'var(--active-bg)',
+      color: 'var(--nav-text-active)',
+      border: '1px solid var(--active-border)',
       textDecoration: 'none',
       position: 'relative',
       marginBottom: 2,
@@ -93,7 +95,7 @@ export function Sidebar({ onClose }: SidebarProps) {
       display: 'flex', alignItems: 'center', gap: 9,
       padding: '8px 10px', borderRadius: 8,
       fontSize: 13, fontWeight: 500,
-      color: '#94a3b8',
+      color: 'var(--nav-text)',
       textDecoration: 'none',
       marginBottom: 2,
       border: '1px solid transparent',
@@ -111,7 +113,7 @@ export function Sidebar({ onClose }: SidebarProps) {
           <span style={{
             position: 'absolute', left: -1, top: '50%', transform: 'translateY(-50%)',
             width: 3, height: 18, background: '#3b82f6', borderRadius: '0 2px 2px 0',
-            boxShadow: '0 0 8px rgba(59,130,246,0.6)',
+            boxShadow: '0 0 8px var(--active-glow)',
           }} />
         )}
         <span style={{ flexShrink: 0 }}>{item.icon}</span>
@@ -127,13 +129,13 @@ export function Sidebar({ onClose }: SidebarProps) {
     <>
       <style>{`
         .sidebar-nav-item:hover {
-          background: rgba(255,255,255,0.04) !important;
-          color: #94a3b8 !important;
+          background: var(--bg-hover) !important;
+          color: var(--nav-text) !important;
         }
         .sidebar-logout:hover {
-          background: rgba(255,255,255,0.06) !important;
-          border-color: rgba(255,255,255,0.10) !important;
-          color: #94a3b8 !important;
+          background: var(--bg-hover) !important;
+          border-color: var(--border-hover) !important;
+          color: var(--text-secondary) !important;
         }
       `}</style>
       <aside style={sidebarStyle}>
@@ -159,7 +161,7 @@ export function Sidebar({ onClose }: SidebarProps) {
           <button
             onClick={onClose}
             className="lg:hidden"
-            style={{ padding: 6, color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 6 }}
+            style={{ padding: 6, color: 'var(--nav-text)', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 6 }}
             aria-label="Zavřít menu"
           >
             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -202,11 +204,25 @@ export function Sidebar({ onClose }: SidebarProps) {
                 {initials}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.username}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--nav-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.username}</div>
                 <div style={{ fontSize: 10, color: '#334155', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
               </div>
             </div>
           )}
+          <button
+            onClick={() => setTheme(themeName === 'dark' ? 'light' : 'dark')}
+            className="sidebar-logout"
+            style={{
+              width: '100%', padding: '7px 12px', borderRadius: 8,
+              background: 'var(--bg-surface)', border: '1px solid var(--border)',
+              color: 'var(--text-secondary)', fontSize: 12, fontWeight: 500,
+              cursor: 'pointer', textAlign: 'center', transition: 'all .15s',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              marginBottom: 6,
+            }}
+          >
+            {themeName === 'dark' ? '☀️ Světlý motiv' : '🌙 Tmavý motiv'}
+          </button>
           <button
             onClick={handleLogout}
             className="sidebar-logout"

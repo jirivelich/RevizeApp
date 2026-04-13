@@ -68,7 +68,7 @@ export function NotificationPanel({ notifications, onClose }: Props) {
   };
 
   return (
-    <div className="flex flex-col rounded-xl border w-80 max-h-[480px] overflow-hidden" style={{ background: '#0e1629', borderColor: 'rgba(255,255,255,0.08)', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}>
+    <div className="flex flex-col rounded-xl border w-80 max-h-[480px] overflow-hidden" style={{ background: 'var(--surface)', borderColor: 'var(--border-medium)', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}>
       {/* Hlavička */}
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="flex items-center gap-2">
@@ -113,7 +113,7 @@ export function NotificationPanel({ notifications, onClose }: Props) {
                     onClick={() => handleClick(n.link)}
                     className={`w-full text-left flex items-start gap-3 px-4 py-3 border-l-4 ${border} transition-colors`}
                     style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(59,130,246,0.04)')}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--active-bg)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     <span className={`mt-0.5 ${icon}`}>

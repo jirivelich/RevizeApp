@@ -37,7 +37,7 @@ export function Layout() {
       {/* Main content - s paddingem pro sidebar na velkých obrazovkách */}
       <main className="lg:ml-56 h-screen flex flex-col" style={{ background: '#0a0f1e' }}>
         {/* Mobilní header s menu tlačítkem */}
-        <div className="lg:hidden px-4 py-3 flex items-center justify-between sticky top-0 z-30 flex-shrink-0" style={{ background: '#080d1a', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="lg:hidden px-4 py-3 flex items-center justify-between sticky top-0 z-30 flex-shrink-0" style={{ background: 'var(--bg-sidebar)', borderBottom: '1px solid var(--border-table)' }}>
           <h1 className="text-lg font-bold" style={{ color: '#f1f5f9' }}>RevizeApp</h1>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}

@@ -6,25 +6,25 @@
 // ── Tailwind class helpers ──
 export const TW = {
   /** Standardní input pole */
-  input: 'w-full px-2 py-1 rounded text-sm bg-white/[0.04] text-slate-300 border border-white/[0.09] focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none',
+  input: 'w-full px-2 py-1 rounded text-sm bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-input)] focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none',
   /** Disabled input */
-  inputDisabled: 'w-full px-2 py-1 rounded text-sm bg-white/[0.03] text-slate-500 border border-white/[0.06] cursor-not-allowed',
+  inputDisabled: 'w-full px-2 py-1 rounded text-sm bg-[var(--bg-surface)] text-[var(--text-muted)] border border-[var(--border-table)] cursor-not-allowed',
   /** Input uvnitř tabulkové buňky (průhledné pozadí) */
-  tblInput: 'w-full border-0 bg-transparent text-sm text-slate-300 px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded',
+  tblInput: 'w-full border-0 bg-transparent text-sm text-[var(--text-primary)] px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] rounded',
   /** Textarea rozšíření */
-  textarea: 'w-full px-2 py-1 rounded text-sm bg-white/[0.04] text-slate-300 border border-white/[0.09] focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none resize-y',
+  textarea: 'w-full px-2 py-1 rounded text-sm bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-input)] focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none resize-y',
   /** Select pole */
-  select: 'px-2 py-1 rounded text-sm bg-white/[0.04] text-slate-300 border border-white/[0.09] focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none',
+  select: 'px-2 py-1 rounded text-sm bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-input)] focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none',
   /** Select na celou šířku */
-  selectFull: 'w-full px-2 py-1 rounded text-sm bg-white/[0.04] text-slate-300 border border-white/[0.09] focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none',
+  selectFull: 'w-full px-2 py-1 rounded text-sm bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-input)] focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none',
   /** Hlavička tabulky */
-  th: 'bg-[#0a0f1e] border border-white/[0.06] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400 text-left',
+  th: 'bg-[#0a0f1e] border border-[var(--border-table)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)] text-left',
   /** Buňka tabulky */
-  td: 'border border-white/[0.06] px-2 py-1.5 align-middle text-slate-300',
+  td: 'border border-[var(--border-table)] px-2 py-1.5 align-middle text-[var(--text-primary)]',
   /** Popisek pole (nad inputem) */
-  label: 'text-xs font-semibold uppercase tracking-wide text-slate-400',
+  label: 'text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]',
   /** Wrapper pro jednu sekci (kartu) */
-  card: 'bg-white/[0.03] border border-white/[0.07] rounded-lg shadow-sm overflow-hidden',
+  card: 'bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg shadow-sm overflow-hidden',
   /** Hlavní wrapper stránky */
   page: 'max-w-4xl mx-auto flex flex-col gap-4',
   /** Grid pro 2 sloupce */

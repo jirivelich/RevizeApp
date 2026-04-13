@@ -20,6 +20,7 @@ import {
   NahledRouter,
 } from './pages';
 import { useOfflineQueueSync } from './hooks/useOfflineQueue';
+import { ThemeProvider } from './context/ThemeContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -98,6 +99,7 @@ function App() {
   }, [sync]);
 
   return (
+    <ThemeProvider>
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
         <BrowserRouter>
@@ -132,6 +134,7 @@ function App() {
         </BrowserRouter>
       </ErrorBoundary>
     </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 
