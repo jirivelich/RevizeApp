@@ -880,31 +880,31 @@ export function RevizePage() {
       {actionSheetRevize && (
         <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/40" onClick={() => setActionSheetRevize(null)} />
-          <div className="relative bg-white rounded-t-2xl shadow-xl pb-safe">
-            <div className="px-4 pt-4 pb-2 border-b border-slate-100">
-              <p className="font-semibold text-slate-800 text-sm truncate">{actionSheetRevize.nazev}</p>
+          <div className="relative bg-[var(--surface)] rounded-t-2xl shadow-xl pb-safe">
+            <div className="px-4 pt-4 pb-2 border-b border-[var(--border-subtle)]">
+              <p className="font-semibold text-[var(--text-primary)] text-sm truncate">{actionSheetRevize.nazev}</p>
               <p className="text-xs text-[var(--text-secondary)]">{actionSheetRevize.cisloRevize}</p>
             </div>
             <div className="py-1">
               <button
                 onClick={() => { setActionSheetRevize(null); navigate(`/revize/${actionSheetRevize.id}`); }}
-                className="w-full text-left px-4 py-3.5 text-sm text-slate-700 active:bg-slate-50 flex items-center gap-3"
+                className="w-full text-left px-4 py-3.5 text-sm text-[var(--text-primary)] active:bg-[var(--bg-hover)] flex items-center gap-3"
               >
                 <span className="text-base">✏️</span> Upravit
               </button>
               <button
                 onClick={() => { const a = actionSheetRevize; setActionSheetRevize(null); openDuplikatModal(a.id, a.cisloRevize); }}
-                className="w-full text-left px-4 py-3.5 text-sm text-slate-700 active:bg-slate-50 flex items-center gap-3"
+                className="w-full text-left px-4 py-3.5 text-sm text-[var(--text-primary)] active:bg-[var(--bg-hover)] flex items-center gap-3"
               >
                 <span className="text-base">📋</span> Kopírovat revizi
               </button>
               <button
                 onClick={() => { const a = actionSheetRevize; setActionSheetRevize(null); openHistorieModal(a.id, a.cisloRevize); }}
-                className="w-full text-left px-4 py-3.5 text-sm text-slate-700 active:bg-slate-50 flex items-center gap-3"
+                className="w-full text-left px-4 py-3.5 text-sm text-[var(--text-primary)] active:bg-[var(--bg-hover)] flex items-center gap-3"
               >
                 <span className="text-base">🕐</span> Historie
               </button>
-              <div className="border-t border-slate-100 mx-4 my-1" />
+              <div className="border-t border-[var(--border-subtle)] mx-4 my-1" />
               <button
                 onClick={() => { const a = actionSheetRevize; setActionSheetRevize(null); handleDelete(a.id); }}
                 className="w-full text-left px-4 py-3.5 text-sm text-red-600 active:bg-red-50 flex items-center gap-3"
@@ -915,7 +915,7 @@ export function RevizePage() {
             <div className="px-4 pb-4 pt-1">
               <button
                 onClick={() => setActionSheetRevize(null)}
-                className="w-full py-3 rounded-xl bg-slate-100 text-sm font-medium text-slate-700 active:bg-slate-200"
+                className="w-full py-3 rounded-xl bg-[var(--bg-surface)] text-sm font-medium text-[var(--text-primary)] active:bg-[var(--bg-hover)]"
               >
                 Zrušit
               </button>

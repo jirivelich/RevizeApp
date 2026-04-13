@@ -89,16 +89,16 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
         Předvolby
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-slate-300 rounded-lg shadow-xl min-w-[340px] max-w-[440px] py-1 max-h-96 overflow-y-auto">
+        <div className="absolute right-0 top-full mt-1 z-50 bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-xl min-w-[340px] max-w-[440px] py-1 max-h-96 overflow-y-auto">
           {/* Výchozí předvolby */}
           {builtIn.length > 0 && (
             <>
-              <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold border-b border-slate-100">Výchozí předvolby</div>
+              <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold border-b border-[var(--border-subtle)]">Výchozí předvolby</div>
               {builtIn.map((t, i) => (
                 <button
                   key={`b-${i}`}
                   type="button"
-                  className="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors cursor-pointer border-b border-slate-50"
+                  className="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors cursor-pointer border-b border-[var(--border-subtle)]"
                   onClick={() => applyText(t.text)}
                 >
                   <div className="text-xs font-semibold text-blue-700">{t.label}</div>
@@ -110,12 +110,12 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
           {/* Vlastní předvolby */}
           {custom.length > 0 && (
             <>
-              <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-emerald-600 font-semibold border-b border-slate-100 mt-1">Vlastní předvolby</div>
+              <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-emerald-600 font-semibold border-b border-[var(--border-subtle)] mt-1">Vlastní předvolby</div>
               {custom.map((t) => (
                 <div key={`c-${t.id}`} className="flex items-start group">
                   <button
                     type="button"
-                    className="flex-1 text-left px-3 py-2 hover:bg-emerald-50 transition-colors cursor-pointer border-b border-slate-50"
+                    className="flex-1 text-left px-3 py-2 hover:bg-emerald-50 transition-colors cursor-pointer border-b border-[var(--border-subtle)]"
                     onClick={() => applyText(t.text)}
                   >
                     <div className="text-xs font-semibold text-emerald-700">{t.nazev}</div>
@@ -132,7 +132,7 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
             </>
           )}
           {/* Přidat novou */}
-          <div className="border-t border-slate-200 mt-1">
+          <div className="border-t border-[var(--border-table)] mt-1">
             {!adding ? (
               <button
                 type="button"
@@ -148,7 +148,7 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
                   placeholder="Název předvolby"
                   value={newNazev}
                   onChange={(e) => setNewNazev(e.target.value)}
-                  className="w-full text-xs px-2 py-1 border border-slate-300 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none"
+                  className="w-full text-xs px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none"
                   autoFocus
                 />
                 <textarea
@@ -156,11 +156,11 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
                   value={newText}
                   onChange={(e) => setNewText(e.target.value)}
                   rows={3}
-                  className="w-full text-xs px-2 py-1 border border-slate-300 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none resize-none"
+                  className="w-full text-xs px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none resize-none"
                 />
                 <div className="flex gap-1 justify-end">
-                  <button type="button" onClick={() => setAdding(false)} className="px-2 py-0.5 text-xs text-[var(--text-muted)] hover:bg-slate-100 rounded cursor-pointer">Zrušit</button>
-                  <button type="button" onClick={handleAdd} className="px-2 py-0.5 text-xs bg-slate-800 text-white rounded hover:bg-slate-900 cursor-pointer" disabled={!newNazev.trim() || !newText.trim()}>Uložit</button>
+                  <button type="button" onClick={() => setAdding(false)} className="px-2 py-0.5 text-xs text-[var(--text-muted)] hover:bg-[var(--bg-hover)] rounded cursor-pointer">Zrušit</button>
+                  <button type="button" onClick={handleAdd} className="px-2 py-0.5 text-xs bg-[var(--primary)] text-white rounded hover:bg-[var(--primary-hover)] cursor-pointer" disabled={!newNazev.trim() || !newText.trim()}>Uložit</button>
                 </div>
               </div>
             )}

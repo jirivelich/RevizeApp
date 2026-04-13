@@ -250,8 +250,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       </div>
 
       {/* ═══ 01 – IDENTIFIKACE STROJE ═══ */}
-      <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
           <span className="text-blue-400">01</span> Identifikace strojního zařízení – štítek
         </div>
         <div className="p-4">
@@ -297,8 +297,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       </div>
 
       {/* ═══ 02 – JIŠTĚNÍ ═══ */}
-      <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
           <span className="text-blue-400">02</span> Jištění strojního zařízení
         </div>
         <div className="p-4">
@@ -313,7 +313,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
             </tr></thead>
             <tbody>
               {fd.jisteni.map((r, i) => (
-                <tr key={i} className="even:bg-slate-50/50">
+                <tr key={i} className="even:bg-[var(--bg-surface)]">
                   <td className={TW.td}><input className={TW.tblInput} value={r.nazev} onChange={e => updRow('jisteni', i, 'nazev', e.target.value)} /></td>
                   <td className={TW.td}><input className={TW.tblInput} value={r.typ} onChange={e => updRow('jisteni', i, 'typ', e.target.value)} /></td>
                   <td className={TW.td}><input className={TW.tblInput} value={r.hodnota} onChange={e => updRow('jisteni', i, 'hodnota', e.target.value)} /></td>
@@ -332,8 +332,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       </div>
 
       {/* ═══ 03 – IZOLAČNÍ ODPOR ═══ */}
-      <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
           <span className="text-blue-400">03</span> Měření izolačního odporu (ČSN EN 60204-1)
         </div>
         <div className="p-4">
@@ -348,7 +348,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
             </tr></thead>
             <tbody>
               {fd.izolace.map((r, i) => (
-                <tr key={i} className="even:bg-slate-50/50">
+                <tr key={i} className="even:bg-[var(--bg-surface)]">
                   <td className={TW.td}><input className={TW.tblInput} value={r.misto} onChange={e => updRow('izolace', i, 'misto', e.target.value)} /></td>
                   <td className={TW.td}><input className={TW.tblInput} value={r.napeti} onChange={e => updRow('izolace', i, 'napeti', e.target.value)} /></td>
                   <td className={TW.td}><input className={TW.tblInput} value={r.hodnota} onChange={e => updRow('izolace', i, 'hodnota', e.target.value)} /></td>
@@ -368,8 +368,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       </div>
 
       {/* ═══ 04 – SPOJITOST PE ═══ */}
-      <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
           <span className="text-blue-400">04</span> Měření spojitosti ochranných vodičů (PE)
         </div>
         <div className="p-4">
@@ -384,7 +384,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
             </tr></thead>
             <tbody>
               {fd.spojitost.map((r, i) => (
-                <tr key={i} className="even:bg-slate-50/50">
+                <tr key={i} className="even:bg-[var(--bg-surface)]">
                   <td className={TW.td}><input className={TW.tblInput} value={r.misto} onChange={e => updRow('spojitost', i, 'misto', e.target.value)} /></td>
                   <td className={TW.td}><input className={TW.tblInput} value={r.proud} onChange={e => updRow('spojitost', i, 'proud', e.target.value)} /></td>
                   <td className={TW.td}><input className={TW.tblInput} value={r.hodnota} onChange={e => updRow('spojitost', i, 'hodnota', e.target.value)} /></td>
@@ -404,8 +404,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       </div>
 
       {/* ═══ 05 – IMPEDANCE PORUCHOVÉ SMYČKY ═══ */}
-      <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
           <span className="text-blue-400">05</span> Měření impedance poruchové smyčky
         </div>
         <div className="p-4">
@@ -419,7 +419,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
             </tr></thead>
             <tbody>
               {fd.impedance.map((r, i) => (
-                <tr key={i} className="even:bg-slate-50/50">
+                <tr key={i} className="even:bg-[var(--bg-surface)]">
                   <td className={TW.td}><input className={TW.tblInput} value={r.misto} onChange={e => updRow('impedance', i, 'misto', e.target.value)} /></td>
                   <td className={TW.td}><input className={TW.tblInput} value={r.hodnota} onChange={e => updRow('impedance', i, 'hodnota', e.target.value)} /></td>
                   <td className={TW.td}><input className={TW.tblInput} value={r.pozadavek} onChange={e => updRow('impedance', i, 'pozadavek', e.target.value)} /></td>
@@ -438,8 +438,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       </div>
 
       {/* ═══ 06 – RCD ═══ */}
-      <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
           <span className="text-blue-400">06</span> Měření proudových chráničů (RCD)
         </div>
         <div className="p-4">
@@ -450,7 +450,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
             </tr></thead>
             <tbody>
               {fd.rcd.map((r, i) => (
-                <tr key={i} className="even:bg-slate-50/50">
+                <tr key={i} className="even:bg-[var(--bg-surface)]">
                   <td className={TW.td}><input className={TW.tblInput} value={r.nazev} onChange={e => updRow('rcd', i, 'nazev', e.target.value)} /></td>
                   <td className={TW.td}><input className={TW.tblInput} value={r.idn} onChange={e => updRow('rcd', i, 'idn', e.target.value)} /></td>
                   <td className={TW.td}><input className={TW.tblInput} value={r.typ} onChange={e => updRow('rcd', i, 'typ', e.target.value)} /></td>
@@ -471,8 +471,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       </div>
 
       {/* ═══ 07 – FUNKČNÍ KONTROLY ═══ */}
-      <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
           <span className="text-blue-400">07</span> Funkční kontroly
         </div>
         <div className="p-4">
@@ -484,7 +484,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
             </tr></thead>
             <tbody>
               {fd.kontroly.map((r, i) => (
-                <tr key={i} className="even:bg-slate-50/50">
+                <tr key={i} className="even:bg-[var(--bg-surface)]">
                   <td className={TW.td}>{r.editable
                     ? <input className={TW.tblInput} value={r.nazev} onChange={e => updRow('kontroly', i, 'nazev', e.target.value)} />
                     : <span className="text-sm text-slate-700">{r.nazev}</span>
@@ -503,8 +503,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       </div>
 
       {/* ═══ 08 – MĚŘICÍ PŘÍSTROJE ═══ */}
-      <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
           <span className="text-blue-400">08</span> Použité měřicí přístroje
           <button
             type="button"
@@ -529,7 +529,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
                 </tr></thead>
                 <tbody>
                   {pouzitePristroje.map(p => (
-                    <tr key={p.id} className="even:bg-slate-50/50">
+                    <tr key={p.id} className="even:bg-[var(--bg-surface)]">
                       <td className={TW.td}>{p.nazev}</td>
                       <td className={TW.td}>{p.vyrobce} {p.model}</td>
                       <td className={TW.td}>{p.vyrobniCislo}</td>
@@ -558,7 +558,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
             </tr></thead>
             <tbody>
               {fd.pristroje.map((r, i) => (
-                <tr key={i} className="even:bg-slate-50/50">
+                <tr key={i} className="even:bg-[var(--bg-surface)]">
                   <td className={TW.td}><input className={TW.tblInput} value={r.typ} onChange={e => updRow('pristroje', i, 'typ', e.target.value)} /></td>
                   <td className={TW.td}><input className={TW.tblInput} value={r.sn} onChange={e => updRow('pristroje', i, 'sn', e.target.value)} /></td>
                   <td className={TW.td}><input className={TW.tblInput} value={r.kalibrace} onChange={e => updRow('pristroje', i, 'kalibrace', e.target.value)} placeholder="dd.mm.rrrr" /></td>
@@ -605,7 +605,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
                       });
                     }
                   }}
-                  className="px-3.5 py-2.5 border-b border-slate-200 cursor-pointer flex justify-between items-center hover:bg-slate-50 transition-colors"
+                  className="px-3.5 py-2.5 border-b border-slate-200 cursor-pointer flex justify-between items-center hover:bg-[var(--bg-surface)] transition-colors"
                 >
                   <div>
                     <div className="font-semibold text-sm text-slate-800 mb-0.5">{p.nazev}</div>
@@ -627,8 +627,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       </Modal>
 
       {/* ═══ 09 – POSUDEK ═══ */}
-      <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-slate-800 text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
           <span className="text-blue-400">09</span> Posudek
         </div>
         <div className="p-4">

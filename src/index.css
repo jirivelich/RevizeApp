@@ -41,6 +41,8 @@
   --checkbox-border: rgba(255,255,255,0.20);
   --border-strong: rgba(255,255,255,0.12);
   --bg-page: #0a0f1e;
+  --section-header-bg: #1e293b;
+  --section-header-text: #ffffff;
 }
 
 * {

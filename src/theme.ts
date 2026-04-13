@@ -35,6 +35,8 @@ export const themes: Record<ThemeName, ThemeVars> = {
     '--checkbox-border':   'rgba(255,255,255,0.20)',
     '--border-strong':     'rgba(255,255,255,0.12)',
     '--bg-page':           '#0a0f1e',
+    '--section-header-bg': '#1e293b',
+    '--section-header-text': '#ffffff',
   },
   light: {
     '--background':        '#f1f5f9',
@@ -69,5 +71,7 @@ export const themes: Record<ThemeName, ThemeVars> = {
     '--checkbox-border':   'rgba(0,0,0,0.25)',
     '--border-strong':     'rgba(0,0,0,0.18)',
     '--bg-page':           '#e8edf5',
+    '--section-header-bg': '#1e3a5f',
+    '--section-header-text': '#ffffff',
   },
 }

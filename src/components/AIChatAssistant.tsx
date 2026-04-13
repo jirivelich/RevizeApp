@@ -81,7 +81,7 @@ export function AIChatAssistant() {
 
       {/* Chat panel */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-96 h-[520px] bg-white rounded-xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
+        <div className="fixed bottom-6 right-6 z-50 w-96 h-[520px] bg-[var(--surface)] rounded-xl shadow-2xl border border-[var(--border-medium)] flex flex-col overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-violet-600 text-white">
             <div className="flex items-center gap-2">
@@ -120,7 +120,7 @@ export function AIChatAssistant() {
                     <button
                       key={q}
                       onClick={() => { setInput(q); inputRef.current?.focus(); }}
-                      className="block w-full text-left px-3 py-2 text-xs bg-slate-50 hover:bg-violet-50 rounded-lg border border-slate-200 hover:border-violet-200 text-slate-600 transition-colors"
+                      className="block w-full text-left px-3 py-2 text-xs bg-[var(--bg-surface)] hover:bg-[var(--bg-input)] rounded-lg border border-[var(--border)] hover:border-violet-200 text-[var(--text-secondary)] transition-colors"
                     >
                       {q}
                     </button>
@@ -137,7 +137,7 @@ export function AIChatAssistant() {
                   className={`max-w-[80%] px-3 py-2 rounded-lg text-sm whitespace-pre-wrap ${
                     msg.role === 'user'
                       ? 'bg-violet-600 text-white'
-                      : 'bg-slate-100 text-slate-800'
+                      : 'bg-[var(--bg-input)] text-[var(--text-primary)]'
                   }`}
                 >
                   {msg.content}
@@ -146,11 +146,11 @@ export function AIChatAssistant() {
             ))}
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-slate-100 px-3 py-2 rounded-lg">
+                <div className="bg-[var(--bg-input)] px-3 py-2 rounded-lg">
                   <div className="flex gap-1">
-                    <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                    <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                    <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" />
+                    <span className="w-2 h-2 bg-[var(--text-secondary)] rounded-full animate-bounce [animation-delay:-0.3s]" />
+                    <span className="w-2 h-2 bg-[var(--text-secondary)] rounded-full animate-bounce [animation-delay:-0.15s]" />
+                    <span className="w-2 h-2 bg-[var(--text-secondary)] rounded-full animate-bounce" />
                   </div>
                 </div>
               </div>
@@ -159,7 +159,7 @@ export function AIChatAssistant() {
           </div>
 
           {/* Input */}
-          <div className="border-t border-slate-200 px-3 py-2">
+          <div className="border-t border-[var(--border-table)] px-3 py-2">
             <div className="flex gap-2">
               <input
                 ref={inputRef}
@@ -169,12 +169,12 @@ export function AIChatAssistant() {
                 onKeyDown={handleKeyDown}
                 placeholder="Napsat zprávu..."
                 disabled={loading}
-                className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-violet-400 disabled:bg-slate-50"
+                className="flex-1 px-3 py-2 text-sm border border-[var(--border-input)] rounded-lg focus:outline-none focus:ring-1 focus:ring-violet-400 bg-[var(--bg-input)] text-[var(--text-primary)] disabled:bg-[var(--bg-surface)]"
               />
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || loading}
-                className="px-3 py-2 bg-violet-600 hover:bg-violet-700 disabled:bg-slate-300 text-white rounded-lg transition-colors"
+                className="px-3 py-2 bg-violet-600 hover:bg-violet-700 disabled:bg-[var(--bg-badge)] text-white rounded-lg transition-colors"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 2L11 13M22 2l-7 20-4-9-9-4z" />
