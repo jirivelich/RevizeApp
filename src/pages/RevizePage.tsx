@@ -413,7 +413,7 @@ export function RevizePage() {
               </thead>
               <tbody>
                 {paginatedRevize.map((r) => (
-                  <tr key={r.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)]">
+                  <tr key={r.id} className="border-b border-[var(--border-subtle)] hover:bg-blue-500/[0.06] dark:hover:bg-blue-500/[0.08]">
                     <td className="py-2 px-3">
                       <Link to={`/revize/${r.id}`} className="text-xs text-[var(--text-primary)] hover:text-slate-100 font-medium hover:underline">
                         {r.cisloRevize}
