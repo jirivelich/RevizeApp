@@ -365,8 +365,8 @@ export function RevizePage() {
                        r.kategorieRevize === 'stroje' ? 'Stroje' : r.kategorieRevize}
                     </span>
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                      r.stav === 'dokončeno' ? 'bg-emerald-500/[0.15] text-emerald-300' :
-                      r.stav === 'rozpracováno' ? 'bg-amber-500/[0.15] text-amber-300' :
+                      r.stav === 'dokončeno' ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' :
+                      r.stav === 'rozpracováno' ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300' :
                       'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
                     }`}>{r.stav}</span>
                   </div>
@@ -443,8 +443,8 @@ export function RevizePage() {
                     </td>
                     <td className="py-2 px-3">
                       <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                        r.stav === 'dokončeno' ? 'bg-emerald-500/[0.15] text-emerald-300' :
-                        r.stav === 'rozpracováno' ? 'bg-amber-500/[0.15] text-amber-300' :
+                        r.stav === 'dokončeno' ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' :
+                        r.stav === 'rozpracováno' ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300' :
                         'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
                       }`}>
                         {r.stav}
