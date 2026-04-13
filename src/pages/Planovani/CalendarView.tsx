@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import type { Zakazka } from '../../types';
 import { Card } from '../../components/ui';
 import { getPriorityColor, getRealizaceDays, getReportDeadline, isOverdue } from './utils';
@@ -60,7 +60,7 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
 
   // Empty cells before first day
   for (let i = 0; i < startingDay; i++) {
-    days.push(<div key={`empty-${i}`} className="p-2 bg-slate-50/50"></div>);
+    days.push(<div key={`empty-${i}`} className="p-2 bg-white/[0.02]"></div>);
   }
 
   // Day cells
@@ -84,16 +84,16 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
     days.push(
       <div
         key={day}
-        className={`p-2 min-h-[90px] border border-slate-200 cursor-pointer hover:bg-blue-50/50 transition-colors ${
-          todayClass ? 'bg-blue-50 ring-2 ring-blue-400 ring-inset' : 'bg-white'
+        className={`p-2 min-h-[90px] border border-white/[0.06] cursor-pointer hover:bg-blue-500/[0.06] transition-colors ${
+          todayClass ? 'bg-blue-500/[0.12] ring-2 ring-blue-500/[0.40] ring-inset' : 'bg-white/[0.02]'
         }`}
         onClick={() => onDayClick(dateStr)}
       >
         <span
           className={`text-sm font-medium inline-flex items-center justify-center w-7 h-7 rounded-full ${
             todayClass
-              ? 'bg-slate-800 text-white'
-              : 'text-slate-600'
+              ? 'bg-blue-500 text-white'
+              : 'text-slate-400'
           }`}
         >
           {day}
@@ -151,25 +151,25 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={goToPreviousMonth}
-          className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
+          className="p-2 rounded-lg hover:bg-white/[0.06] text-slate-400 transition-colors"
           title="Předchozí měsíc"
         >
           ◀
         </button>
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-slate-800 capitalize">
+          <h2 className="text-lg font-semibold text-slate-200 capitalize">
             {monthLabel}
           </h2>
           <button
             onClick={goToToday}
-            className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+            className="text-xs px-2 py-1 rounded bg-blue-500/[0.15] text-blue-300 hover:bg-blue-500/[0.25] transition-colors"
           >
             Dnes
           </button>
         </div>
         <button
           onClick={goToNextMonth}
-          className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
+          className="p-2 rounded-lg hover:bg-white/[0.06] text-slate-400 transition-colors"
           title="Další měsíc"
         >
           ▶
@@ -180,7 +180,7 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
         {DAY_NAMES.map((den) => (
           <div
             key={den}
-            className="p-2 text-center text-sm font-medium text-slate-600 bg-slate-50 border-b border-slate-200"
+            className="p-2 text-center text-sm font-medium text-slate-400 bg-white/[0.04] border-b border-white/[0.06]"
           >
             {den}
           </div>

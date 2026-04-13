@@ -55,11 +55,11 @@ function GanttRow({ zakazka: z, days, onClick, onAddDay, onRemoveDay, isDragging
 
   return (
     <div
-      className={`flex border-b border-slate-100 hover:bg-slate-50/50 transition-colors ${isDragging ? 'opacity-40' : ''}`}
+      className={`flex border-b border-white/[0.05] hover:bg-white/[0.04] transition-colors ${isDragging ? 'opacity-40' : ''}`}
     >
       {/* Název zakázky */}
       <div
-        className="flex-shrink-0 w-40 px-3 py-2 text-sm font-medium text-slate-700 truncate border-r border-slate-200 cursor-pointer hover:text-slate-900"
+        className="flex-shrink-0 w-40 px-3 py-2 text-sm font-medium text-slate-300 truncate border-r border-white/[0.06] cursor-pointer hover:text-white"
         title={`${z.nazev} — ${z.klient}`}
         onClick={() => onClick(z)}
       >
@@ -83,8 +83,8 @@ function GanttRow({ zakazka: z, days, onClick, onAddDay, onRemoveDay, isDragging
           return (
             <div
               key={day}
-              className={`relative flex-1 min-w-[36px] h-12 border-r border-slate-100 flex items-center justify-center
-                ${isToday ? 'bg-blue-50/40' : ''}
+              className={`relative flex-1 min-w-[36px] h-12 border-r border-white/[0.05] flex items-center justify-center
+                ${isToday ? 'bg-blue-500/[0.08]' : ''}
               `}
             >
               {/* Realizační blok */}
@@ -259,18 +259,18 @@ export function GanttView({ zakazky, onZakazkaClick, onMove, onAddDay, onRemoveD
     <Card>
       {/* Navigace */}
       <div className="flex items-center justify-between mb-4">
-        <button onClick={goPrev} className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors" title="Předchozí 2 týdny">◀</button>
+        <button onClick={goPrev} className="p-2 rounded-lg hover:bg-white/[0.06] text-slate-400 transition-colors" title="Předchozí 2 týdny">◀</button>
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-slate-800">{rangeLabel}</h2>
-          <button onClick={goToday} className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors">
+          <h2 className="text-lg font-semibold text-slate-200">{rangeLabel}</h2>
+          <button onClick={goToday} className="text-xs px-2 py-1 rounded bg-blue-500/[0.15] text-blue-300 hover:bg-blue-500/[0.25] transition-colors">
             Dnes
           </button>
         </div>
-        <button onClick={goNext} className="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors" title="Další 2 týdny">▶</button>
+        <button onClick={goNext} className="p-2 rounded-lg hover:bg-white/[0.06] text-slate-400 transition-colors" title="Další 2 týdny">▶</button>
       </div>
 
       {/* Legenda */}
-      <div className="flex gap-4 mb-3 text-xs text-slate-500 flex-wrap">
+      <div className="flex gap-4 mb-3 text-xs text-slate-400 flex-wrap">
         <span className="flex items-center gap-1.5"><span className="inline-block w-4 h-3 rounded bg-blue-500"></span>Realizace</span>
         <span className="flex items-center gap-1.5"><span className="inline-block w-4 h-3 rounded bg-amber-400"></span>Deadline zprávy</span>
         <span className="flex items-center gap-1.5"><span className="inline-block w-1.5 h-4 rounded-full bg-green-500"></span>Odevzdání</span>
@@ -280,8 +280,8 @@ export function GanttView({ zakazky, onZakazkaClick, onMove, onAddDay, onRemoveD
       <div className="overflow-x-auto">
         <div className="min-w-[600px]">
           {/* Hlavička — dny */}
-          <div className="flex border-b-2 border-slate-200">
-            <div className="flex-shrink-0 w-40 px-3 py-2 text-xs font-medium text-slate-500 border-r border-slate-200">
+          <div className="flex border-b-2 border-white/[0.08]">
+            <div className="flex-shrink-0 w-40 px-3 py-2 text-xs font-medium text-slate-400 border-r border-white/[0.06]">
               Zakázka
             </div>
             <div className="flex flex-1">
@@ -293,12 +293,12 @@ export function GanttView({ zakazky, onZakazkaClick, onMove, onAddDay, onRemoveD
                 return (
                   <div
                     key={day}
-                    className={`flex-1 min-w-[36px] py-1 text-center border-r border-slate-100 ${isWeekend ? 'bg-slate-50' : ''} ${isToday ? 'bg-blue-100' : ''}`}
+                    className={`flex-1 min-w-[36px] py-1 text-center border-r border-white/[0.05] ${isWeekend ? 'bg-white/[0.03]' : ''} ${isToday ? 'bg-blue-500/[0.15]' : ''}`}
                   >
-                    <div className={`text-[9px] font-medium ${isToday ? 'text-blue-700' : 'text-slate-400'}`}>
+                    <div className={`text-[9px] font-medium ${isToday ? 'text-blue-400' : 'text-slate-500'}`}>
                       {DAY_NAMES_SHORT[dayOfWeek]}
                     </div>
-                    <div className={`text-xs font-semibold ${isToday ? 'text-blue-700' : isWeekend ? 'text-slate-400' : 'text-slate-600'}`}>
+                    <div className={`text-xs font-semibold ${isToday ? 'text-blue-400' : isWeekend ? 'text-slate-500' : 'text-slate-400'}`}>
                       {d.getDate()}
                     </div>
                   </div>

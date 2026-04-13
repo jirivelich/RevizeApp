@@ -217,17 +217,17 @@ export function PlanovaniPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-slate-800">Plánování</h1>
+          <h1 className="text-lg font-bold text-slate-200">Plánování</h1>
           <p className="text-xs text-slate-400">Správa zakázek a plánování revizí</p>
         </div>
         <div className="flex gap-2">
-          <div className="flex rounded-lg overflow-hidden border border-slate-200">
+          <div className="flex rounded-lg overflow-hidden border border-white/[0.09]">
             <button
               onClick={() => setViewMode('list')}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'list'
-                  ? 'bg-slate-800 text-white'
-                  : 'bg-white text-slate-600 hover:bg-slate-50'
+                  ? 'bg-slate-700 text-white'
+                  : 'bg-transparent text-slate-400 hover:bg-white/[0.05]'
               }`}
             >
               Seznam
@@ -236,8 +236,8 @@ export function PlanovaniPage() {
               onClick={() => setViewMode('week')}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'week'
-                  ? 'bg-slate-800 text-white'
-                  : 'bg-white text-slate-600 hover:bg-slate-50'
+                  ? 'bg-slate-700 text-white'
+                  : 'bg-transparent text-slate-400 hover:bg-white/[0.05]'
               }`}
             >
               Týden
@@ -246,8 +246,8 @@ export function PlanovaniPage() {
               onClick={() => setViewMode('calendar')}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'calendar'
-                  ? 'bg-slate-800 text-white'
-                  : 'bg-white text-slate-600 hover:bg-slate-50'
+                  ? 'bg-slate-700 text-white'
+                  : 'bg-transparent text-slate-400 hover:bg-white/[0.05]'
               }`}
             >
               Měsíc
@@ -256,8 +256,8 @@ export function PlanovaniPage() {
               onClick={() => setViewMode('gantt')}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'gantt'
-                  ? 'bg-slate-800 text-white'
-                  : 'bg-white text-slate-600 hover:bg-slate-50'
+                  ? 'bg-slate-700 text-white'
+                  : 'bg-transparent text-slate-400 hover:bg-white/[0.05]'
               }`}
             >
               Gantt
@@ -341,13 +341,13 @@ export function PlanovaniPage() {
                 key={kat.value}
                 type="button"
                 onClick={() => handleKategorieSelected(kat.value)}
-                className="flex items-center gap-4 p-4 rounded-lg border-2 border-slate-200 hover:border-slate-500 hover:bg-slate-50 transition-all text-left group"
+                className="flex items-center gap-4 p-4 rounded-lg border-2 border-white/[0.08] hover:border-white/[0.20] hover:bg-white/[0.04] transition-all text-left group"
               >
-                <div className="flex-shrink-0 text-slate-400 group-hover:text-slate-700 transition-colors">
+                <div className="flex-shrink-0 text-slate-400 group-hover:text-slate-200 transition-colors">
                   {kat.icon}
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-800 group-hover:text-slate-900">{kat.label}</p>
+                  <p className="font-semibold text-slate-200 group-hover:text-white">{kat.label}</p>
                   <p className="text-xs text-slate-400 mt-0.5">{kat.popis}</p>
                 </div>
                 <div className="flex-shrink-0 ml-auto text-slate-300 group-hover:text-slate-500">
