@@ -81,6 +81,15 @@ export function RevizePage() {
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState(0);
 
+  // Režim zobrazení desktop (tabulka / karty)
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>(() =>
+    (localStorage.getItem('revize-view') as 'table' | 'grid') || 'table'
+  );
+  const setView = (mode: 'table' | 'grid') => {
+    setViewMode(mode);
+    localStorage.setItem('revize-view', mode);
+  };
+
   // Řazení
   type SortKey = 'cisloRevize' | 'kategorieRevize' | 'nazev' | 'adresa' | 'datum' | 'typRevize' | 'stav';
   const [sortKey, setSortKey] = useState<SortKey>('datum');
@@ -314,6 +323,27 @@ export function RevizePage() {
             ]}
           />
           </div>
+          {/* Přepínač tabulka / karty — jen desktop */}
+          <div className="hidden md:flex items-center self-center gap-0.5 border border-[var(--border-medium)] rounded-lg p-0.5 flex-shrink-0">
+            <button
+              onClick={() => setView('table')}
+              title="Tabulka"
+              className={`p-1.5 rounded transition-colors ${viewMode === 'table' ? 'bg-[var(--bg-hover)] text-[var(--text-primary)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5 4a2 2 0 00-2 2v8a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2H5zm0 2h10v2H5V6zm0 4h4v4H5v-4zm6 0h4v4h-4v-4z" clipRule="evenodd" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setView('grid')}
+              title="Karty"
+              className={`p-1.5 rounded transition-colors ${viewMode === 'grid' ? 'bg-[var(--bg-hover)] text-[var(--text-primary)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              </svg>
+            </button>
+          </div>
           </div>
         </div>
 
@@ -367,7 +397,7 @@ export function RevizePage() {
             ))}
           </div>
           {/* Desktopová tabulka */}
-          <div className="hidden md:block px-6 pb-4 flex-1 min-h-0 overflow-auto">
+          <div className={`${viewMode === 'table' ? 'hidden md:block' : 'hidden'} px-6 pb-4 flex-1 min-h-0 overflow-auto`}>
             <table className="w-full">
               <thead className="sticky top-0 bg-[var(--bg-page)] z-10">
                 <tr className="border-b border-[var(--border-table)]">
@@ -473,6 +503,95 @@ export function RevizePage() {
                 ))}
               </tbody>
             </table>
+          </div>
+          {/* Desktopový grid karet */}
+          <div className={`${viewMode === 'grid' ? 'hidden md:block' : 'hidden'} px-6 pb-4 flex-1 min-h-0 overflow-auto`}>
+            <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 py-2">
+              {paginatedRevize.map((r) => (
+                <div key={r.id} className="bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] flex flex-col hover:border-[var(--border-medium)] transition-colors">
+                  <Link to={`/revize/${r.id}`} className="flex-1 p-4 block">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                          r.kategorieRevize === 'elektro' ? 'bg-blue-500/[0.15] text-blue-300' :
+                          r.kategorieRevize === 'hromosvod' ? 'bg-yellow-500/[0.15] text-yellow-300' :
+                          'bg-purple-500/[0.15] text-purple-300'
+                        }`}>
+                          {r.kategorieRevize === 'elektro' ? 'Elektro' :
+                           r.kategorieRevize === 'hromosvod' ? 'Hromosvod' : 'Stroje'}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                          r.stav === 'dokončeno' ? 'bg-emerald-500/[0.15] text-emerald-300' :
+                          r.stav === 'rozpracováno' ? 'bg-amber-500/[0.15] text-amber-300' :
+                          'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
+                        }`}>{r.stav}</span>
+                      </div>
+                    </div>
+                    <p className="font-semibold text-[var(--text-primary)] text-sm leading-snug mb-1">{r.nazev}</p>
+                    <p className="text-xs text-[var(--text-secondary)] mb-3">{r.adresa}</p>
+                    <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
+                      <span>{r.cisloRevize}</span>
+                      <span>{new Date(r.datum).toLocaleDateString('cs-CZ')}</span>
+                    </div>
+                  </Link>
+                  <div className="border-t border-[var(--border-subtle)] px-4 py-2 flex items-center justify-between gap-2">
+                    <span className="text-xs text-[var(--text-muted)] truncate">{r.typRevize}</span>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => navigate(`/revize/${r.id}/nahled`)}
+                        className="p-1 rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                        title="Náhled tisku"
+                      >
+                        <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                      <div className="relative" ref={openMenuId === r.id ? menuRef : undefined}>
+                        <button
+                          onClick={() => setOpenMenuId(openMenuId === r.id ? null : r.id!)}
+                          className="p-1 rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                          title="Akce"
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                          </svg>
+                        </button>
+                        {openMenuId === r.id && (
+                          <div className="absolute right-0 top-full mt-1 w-44 bg-[var(--surface)] rounded-lg shadow-lg border border-[var(--border-medium)] py-1 z-50">
+                            <button
+                              onClick={() => { setOpenMenuId(null); navigate(`/revize/${r.id}`); }}
+                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+                            >
+                              <span>✏️</span> Upravit
+                            </button>
+                            <button
+                              onClick={() => { setOpenMenuId(null); openDuplikatModal(r.id!, r.cisloRevize); }}
+                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+                            >
+                              <span>📋</span> Kopírovat revizi
+                            </button>
+                            <button
+                              onClick={() => { setOpenMenuId(null); openHistorieModal(r.id!, r.cisloRevize); }}
+                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+                            >
+                              <span>🕐</span> Historie
+                            </button>
+                            <div className="border-t border-[var(--border-table)] my-1"></div>
+                            <button
+                              onClick={() => { setOpenMenuId(null); handleDelete(r.id!); }}
+                              className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/[0.08] flex items-center gap-2"
+                            >
+                              <span>🗑️</span> Smazat
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
           {/* Pagination footer */}
           <div className="flex-shrink-0 flex items-center justify-between px-6 py-2.5 border-t border-[var(--border-table)] text-xs text-[var(--text-secondary)]">
