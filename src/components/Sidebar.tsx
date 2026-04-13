@@ -93,7 +93,7 @@ export function Sidebar({ onClose }: SidebarProps) {
       display: 'flex', alignItems: 'center', gap: 9,
       padding: '8px 10px', borderRadius: 8,
       fontSize: 13, fontWeight: 500,
-      color: '#475569',
+      color: '#94a3b8',
       textDecoration: 'none',
       marginBottom: 2,
       border: '1px solid transparent',
@@ -159,7 +159,7 @@ export function Sidebar({ onClose }: SidebarProps) {
           <button
             onClick={onClose}
             className="lg:hidden"
-            style={{ padding: 6, color: '#475569', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 6 }}
+            style={{ padding: 6, color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 6 }}
             aria-label="Zavřít menu"
           >
             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
