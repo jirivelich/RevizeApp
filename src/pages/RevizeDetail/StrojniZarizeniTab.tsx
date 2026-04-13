@@ -126,7 +126,7 @@ function CB({ val, active, label, onClick }: { val: string; active: boolean; lab
     ? val === 'V' ? `${base} bg-emerald-50 border-emerald-500 text-emerald-600`
     : val === 'N' ? `${base} bg-red-50 border-red-500 text-red-600`
     : `${base} bg-slate-100 border-slate-400 text-[var(--text-muted)]`
-    : `${base} border-slate-300 bg-white text-[var(--text-secondary)] hover:border-slate-400 hover:text-slate-600`;
+    : `${base} border-[var(--border-input)] bg-[var(--bg-input)] text-[var(--text-secondary)] hover:border-[var(--border-hover)] hover:text-[var(--text-primary)]`;
   return <button className={cls} onClick={onClick} type="button">{label}</button>;
 }
 

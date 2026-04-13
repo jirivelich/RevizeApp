@@ -812,7 +812,7 @@ export function RevizePage() {
           </div>
         ) : (
           <div className="relative">
-            <div className="absolute left-3 top-2 bottom-2 w-0.5 bg-slate-200"></div>
+            <div className="absolute left-3 top-2 bottom-2 w-0.5 bg-[var(--border-medium)]"></div>
             <div className="space-y-3">
               {historieData.map((h, idx) => {
                 const isCurrent = h.id === historieSourceId;
@@ -823,20 +823,20 @@ export function RevizePage() {
                         ? 'bg-blue-500 border-blue-600 text-white'
                         : h.stav === 'dokončeno' || h.stav === 'schváleno'
                           ? 'bg-emerald-100 border-emerald-400 text-emerald-600'
-                          : 'bg-white border-slate-300 text-[var(--text-muted)]'
+                          : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text-muted)]'
                     }`}>
                       {idx + 1}
                     </div>
-                    <div className={`flex-1 rounded border px-3 py-2 text-sm ${isCurrent ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-200'}`}>
+                    <div className={`flex-1 rounded border px-3 py-2 text-sm ${isCurrent ? 'bg-blue-50 border-blue-200' : 'bg-[var(--surface)] border-[var(--border-medium)]'}`}>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-semibold text-slate-800">
+                        <span className="font-semibold text-[var(--text-primary)]">
                           {h.cisloRevize}
                           {isCurrent && <span className="ml-2 text-xs text-blue-600">(aktuální)</span>}
                         </span>
                         <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                           h.stav === 'dokončeno' ? 'bg-emerald-50 text-emerald-600' :
                           h.stav === 'rozpracováno' ? 'bg-amber-50 text-amber-600' :
-                          'bg-slate-100 text-slate-600'
+                          'bg-[var(--bg-surface)] text-[var(--text-secondary)]'
                         }`}>{h.stav}</span>
                       </div>
                       <div className="text-xs text-[var(--text-muted)] mt-0.5">
@@ -871,7 +871,7 @@ export function RevizePage() {
           </>
         }
       >
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-[var(--text-secondary)]">
           Opravdu chcete smazat tuto revizi? Budou smazány i všechny související záznamy.
         </p>
       </Modal>
@@ -939,13 +939,13 @@ export function RevizePage() {
         }
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-[var(--text-secondary)]">
             Kopie revize <strong>{duplikatSourceCislo}</strong>. Budou zkopírovány všechny údaje (rozvaděče, okruhy, místnosti, přístroje), ale ne závady.
           </p>
 
           {/* Výběr typu */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Typ kopie</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Typ kopie</label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"

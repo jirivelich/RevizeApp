@@ -746,7 +746,7 @@ export function RevizeDetailPage() {
             <span>/</span>
             <span>{revize.cisloRevize}</span>
           </div>
-          <h1 className="text-2xl font-bold text-slate-800">{revize.nazev}</h1>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">{revize.nazev}</h1>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button variant="secondary" onClick={() => navigate('/revize')}>
@@ -781,7 +781,7 @@ export function RevizeDetailPage() {
             ) : (
             <div className="relative">
               {/* Vertikální čára */}
-              <div className="absolute left-3 top-2 bottom-2 w-0.5 bg-slate-200"></div>
+              <div className="absolute left-3 top-2 bottom-2 w-0.5 bg-[var(--border-medium)]"></div>
               <div className="space-y-3">
                 {historie.map((h, idx) => {
                   const isCurrent = h.id === revize?.id;
@@ -807,7 +807,7 @@ export function RevizeDetailPage() {
                           <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                             h.stav === 'dokončeno' ? 'bg-emerald-50 text-emerald-600' :
                             h.stav === 'rozpracováno' ? 'bg-amber-50 text-amber-600' :
-                            'bg-slate-100 text-slate-600'
+                            'bg-[var(--bg-surface)] text-[var(--text-secondary)]'
                           }`}>{h.stav}</span>
                         </div>
                         <div className="text-xs text-[var(--text-muted)] mt-0.5">
@@ -835,7 +835,7 @@ export function RevizeDetailPage() {
       {/* Modal pro duplikaci revize */}
       <Modal isOpen={isDuplikatModalOpen} onClose={() => setIsDuplikatModalOpen(false)} title="Kopie revize">
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-[var(--text-secondary)]">
             Kopie této revize s novým číslem zprávy. Budou zkopírovány všechny údaje (rozvaděče, okruhy, místnosti, přístroje), ale ne závady.
           </p>
 
@@ -893,7 +893,7 @@ export function RevizeDetailPage() {
             className={`px-4 py-3 font-medium transition-colors border-b-2 whitespace-nowrap flex-shrink-0 ${
               activeTab === tab.id
                 ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-slate-600 hover:text-slate-800'
+                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             <span className="mr-2">{tab.icon}</span>
@@ -1673,13 +1673,13 @@ export function RevizeDetailPage() {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-slate-200">
-                          <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Č.</th>
-                          <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Jistič</th>
-                          <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Název</th>
-                          <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Vodič</th>
-                          <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Iz. odpor</th>
-                          <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Imp. smyčky</th>
-                          <th className="text-right py-2 px-3 font-medium text-slate-600 text-sm">Akce</th>
+                          <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Č.</th>
+                          <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Jistič</th>
+                          <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Název</th>
+                          <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Vodič</th>
+                          <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Iz. odpor</th>
+                          <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Imp. smyčky</th>
+                          <th className="text-right py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Akce</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1707,11 +1707,11 @@ export function RevizeDetailPage() {
                               </span>
                             </td>
                             <td className="py-2 px-3">{o.nazev}</td>
-                            <td className="py-2 px-3 text-slate-600">{computeVodic(o.typKabelu, o.pocetZil, o.prurez) || o.vodic}</td>
-                            <td className="py-2 px-3 text-slate-600">
+                            <td className="py-2 px-3 text-[var(--text-secondary)]">{computeVodic(o.typKabelu, o.pocetZil, o.prurez) || o.vodic}</td>
+                            <td className="py-2 px-3 text-[var(--text-secondary)]">
                               {o.izolacniOdpor || '—'}
                             </td>
-                            <td className="py-2 px-3 text-slate-600">
+                            <td className="py-2 px-3 text-[var(--text-secondary)]">
                               {o.impedanceSmycky || '—'}
                             </td>
                             <td className="py-2 px-3 text-right">
@@ -1818,7 +1818,7 @@ export function RevizeDetailPage() {
                           />
                         ))}
                         {Array.isArray(z.fotky) && z.fotky.length > 4 && (
-                          <span className="w-12 h-12 flex items-center justify-center bg-slate-200 rounded text-sm font-medium text-slate-600">
+                          <span className="w-12 h-12 flex items-center justify-center bg-[var(--bg-surface)] rounded text-sm font-medium text-[var(--text-secondary)]">
                             +{z.fotky.length - 4}
                           </span>
                         )}
@@ -1940,13 +1940,13 @@ export function RevizeDetailPage() {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-slate-200">
-                          <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Název</th>
-                          <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Ks</th>
-                          <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Třída</th>
-                          <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Příkon</th>
-                          <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Ochrana před dotykem</th>
-                          <th className="text-left py-2 px-3 font-medium text-slate-600 text-sm">Stav</th>
-                          <th className="text-right py-2 px-3 font-medium text-slate-600 text-sm">Akce</th>
+                          <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Název</th>
+                          <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Ks</th>
+                          <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Třída</th>
+                          <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Příkon</th>
+                          <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Ochrana před dotykem</th>
+                          <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Stav</th>
+                          <th className="text-right py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Akce</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1956,7 +1956,7 @@ export function RevizeDetailPage() {
                               <p className="font-medium">{z.nazev}</p>
                               {z.oznaceni && <p className="text-xs text-[var(--text-secondary)]">{z.oznaceni}</p>}
                             </td>
-                            <td className="py-2 px-3 text-slate-600">
+                            <td className="py-2 px-3 text-[var(--text-secondary)]">
                               {z.pocetKs || 1}
                             </td>
                             <td className="py-2 px-3">
@@ -1964,17 +1964,17 @@ export function RevizeDetailPage() {
                                 {z.trida || 'I'}
                               </span>
                             </td>
-                            <td className="py-2 px-3 text-slate-600">
+                            <td className="py-2 px-3 text-[var(--text-secondary)]">
                               {z.prikonW ? `${z.prikonW} W` : '—'}
                             </td>
-                            <td className="py-2 px-3 text-slate-600">
+                            <td className="py-2 px-3 text-[var(--text-secondary)]">
                               {z.ochranaPredDotykem || '—'}
                             </td>
                             <td className="py-2 px-3">
                               <span className={`px-2 py-1 rounded text-xs font-medium ${
                                 z.stav === 'OK' ? 'bg-green-100 text-green-700' :
                                 z.stav === 'závada' ? 'bg-red-100 text-red-700' :
-                                'bg-slate-100 text-slate-600'
+                                'bg-[var(--bg-surface)] text-[var(--text-secondary)]'
                               }`}>
                                 {z.stav}
                               </span>

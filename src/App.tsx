@@ -50,11 +50,11 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+        <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center p-4">
+          <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-lg p-8 max-w-md w-full text-center">
             <div className="text-red-500 text-6xl mb-4">⚠️</div>
-            <h1 className="text-2xl font-bold text-slate-800 mb-2">Něco se pokazilo</h1>
-            <p className="text-slate-600 mb-4">
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Něco se pokazilo</h1>
+            <p className="text-[var(--text-secondary)] mb-4">
               {this.state.error?.message || 'Neočekávaná chyba aplikace'}
             </p>
             <button
@@ -62,7 +62,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
                 this.setState({ hasError: false, error: null });
                 window.location.href = '/';
               }}
-              className="bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-900"
+              className="bg-[var(--primary)] text-white px-4 py-2 rounded-lg hover:bg-[var(--primary-hover)]"
             >
               Zpět na úvodní stránku
             </button>

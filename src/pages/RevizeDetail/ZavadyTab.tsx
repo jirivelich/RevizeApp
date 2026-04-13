@@ -203,7 +203,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                         type="button"
                         title="Upravit (vč. fotek)"
                         onClick={() => handleEditZavada(z)}
-                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-[var(--text-muted)] hover:text-slate-800"
+                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                       >✎</button>
                       <button
                         type="button"
@@ -225,7 +225,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                     onChange={(e) => setInlineDraft(d => ({ ...d, popis: e.target.value }))}
                     onKeyDown={(e) => handleInlineKeyDown(e, 'popis')}
                     placeholder="Popis nové závady..."
-                    className="w-full px-2 py-1 border border-slate-300 rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="w-full px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                   />
                 </td>
                 <td className="py-1.5 pr-3">
@@ -234,7 +234,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                     value={inlineDraft.zavaznost}
                     onChange={(e) => setInlineDraft(d => ({ ...d, zavaznost: e.target.value as Zavada['zavaznost'] }))}
                     onKeyDown={(e) => handleInlineKeyDown(e, 'zavaznost')}
-                    className="w-full px-1.5 py-1 border border-slate-300 rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                   >
                     <option value="C1">C1</option>
                     <option value="C2">C2</option>
@@ -247,7 +247,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                     value={inlineDraft.stav}
                     onChange={(e) => setInlineDraft(d => ({ ...d, stav: e.target.value as Zavada['stav'] }))}
                     onKeyDown={(e) => handleInlineKeyDown(e, 'stav')}
-                    className="w-full px-1.5 py-1 border border-slate-300 rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                   >
                     <option value="otevřená">Otevřená</option>
                     <option value="v řešení">V řešení</option>
@@ -262,7 +262,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                     onChange={(e) => setInlineDraft(d => ({ ...d, poznamka: e.target.value }))}
                     onKeyDown={(e) => handleInlineKeyDown(e, 'poznamka')}
                     placeholder="Norma, poznámka..."
-                    className="w-full px-2 py-1 border border-slate-300 rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="w-full px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                   />
                 </td>
                 <td className="py-1.5">
@@ -426,7 +426,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
       <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setLightboxImage(null)}>
         <div className="relative max-w-4xl max-h-[90vh]">
           <img src={lightboxImage} alt="Zvětšená fotka" className="max-w-full max-h-[90vh] object-contain rounded-lg" onClick={(e) => e.stopPropagation()} />
-          <button onClick={() => setLightboxImage(null)} className="absolute -top-3 -right-3 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100">✕</button>
+          <button onClick={() => setLightboxImage(null)} className="absolute -top-3 -right-3 w-8 h-8 bg-[var(--surface)] rounded-full shadow-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]">✕</button>
         </div>
       </div>
     )}

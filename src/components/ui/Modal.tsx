@@ -45,7 +45,7 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
       />
       <div className={`relative bg-[var(--surface)] border border-[var(--border-medium)] rounded-xl shadow-2xl ${sizeClasses[size]} w-full mx-4 max-h-[90vh] flex flex-col`}>
         <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-table)]">
-          <h2 className="text-sm font-semibold text-slate-100">{title}</h2>
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">{title}</h2>
           <Button variant="secondary" size="sm" onClick={onClose}>
             ✕
           </Button>
