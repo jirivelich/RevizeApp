@@ -291,7 +291,7 @@ export function DokumentaceTab({
               </thead>
               <tbody>
                 {pouzitePristroje.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50">
+                  <tr key={p.id} className="hover:bg-[var(--bg-hover)]">
                     <td className={TW.td + ' font-medium'}>{p.nazev}</td>
                     <td className={TW.td}>{p.vyrobce} {p.model}</td>
                     <td className={TW.td + ' font-mono'}>{p.vyrobniCislo}</td>
@@ -502,7 +502,7 @@ export function DokumentaceTab({
             .map((p) => (
               <div
                 key={p.id}
-                className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 hover:border-blue-300 cursor-pointer"
+                className="flex items-center justify-between p-3 bg-[var(--bg-surface)] rounded-lg border border-[var(--border-medium)] hover:border-[var(--border-hover)] cursor-pointer"
                 onClick={() => {
                   if (p.id) {
                     addPristroj.mutate({ revizeId, pristrojId: p.id }, {

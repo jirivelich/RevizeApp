@@ -209,11 +209,11 @@ export function RevizeDetailPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm mb-1">
-            <Link to="/revize" className="hover:text-blue-600">Revize</Link>
+              <Link to="/revize" className="hover:text-[var(--primary)]">Revize</Link>
             <span>/</span>
             <span>{revize.cisloRevize}</span>
           </div>
-          <h1 className="text-2xl font-bold text-slate-800">{revize.nazev}</h1>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">{revize.nazev}</h1>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => navigate('/revize')}>← Zpět</Button>
@@ -222,15 +222,15 @@ export function RevizeDetailPage() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-slate-200 overflow-x-auto scrollbar-thin">
+      <div className="flex gap-1 border-b border-[var(--border-table)] overflow-x-auto scrollbar-thin">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => { flush(); setActiveTab(tab.id as any); }}
             className={`px-3 py-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap flex-shrink-0 cursor-pointer ${
               activeTab === tab.id
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-slate-600 hover:text-slate-800'
+                ? 'border-[var(--primary)] text-[var(--primary)]'
+                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             }`}
           >
             <span className="mr-1.5">{tab.icon}</span>
@@ -323,12 +323,12 @@ export function RevizeDetailPage() {
 
       {/* Fixed save bar */}
       {(activeTab === 'info' || activeTab === 'dokumentace' || activeTab === 'hromosvod_zarizeni' || activeTab === 'hromosvod_nacrt' || activeTab === 'strojni_zarizeni') && (
-        <div className="fixed bottom-0 left-0 lg:left-64 right-0 z-50 bg-slate-800/90 backdrop-blur border-t border-slate-600 shadow-[0_-2px_8px_rgba(0,0,0,0.15)]">
+        <div className="fixed bottom-0 left-0 lg:left-64 right-0 z-50 bg-[var(--surface)]/90 backdrop-blur border-t border-[var(--border-medium)] shadow-[0_-2px_8px_rgba(0,0,0,0.15)]">
           <div className="max-w-4xl mx-auto px-4 py-1 flex items-center justify-between gap-4">
             <div className="text-sm min-w-[140px]">
               {displayStatus === 'saving' && (
                 <span className="flex items-center gap-1.5 text-[var(--text-primary)]">
-                  <span className="inline-block w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                  <span className="inline-block w-3 h-3 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
                   Ukládání...
                 </span>
               )}
@@ -342,7 +342,7 @@ export function RevizeDetailPage() {
                 <span className="text-red-400">Chyba ukládání</span>
               )}
             </div>
-            <button onClick={handleSave} className="px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors cursor-pointer">Uložit</button>
+            <button onClick={handleSave} className="px-4 py-1 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-sm font-medium rounded transition-colors cursor-pointer">Uložit</button>
           </div>
         </div>
       )}

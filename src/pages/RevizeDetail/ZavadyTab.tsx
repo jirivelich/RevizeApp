@@ -170,7 +170,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="border-b border-slate-200 text-xs text-[var(--text-muted)] uppercase tracking-wide">
+              <tr className="border-b border-[var(--border-medium)] text-xs text-[var(--text-muted)] uppercase tracking-wide">
                 <th className="text-left py-2 pr-3 font-medium">Popis závady</th>
                 <th className="text-left py-2 pr-3 font-medium w-20">Závažnost</th>
                 <th className="text-left py-2 pr-3 font-medium w-28">Stav</th>
@@ -180,20 +180,20 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
             </thead>
             <tbody>
               {zavady.map((z) => (
-                <tr key={z.id} className="border-b border-slate-100 hover:bg-slate-50 group">
+                <tr key={z.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-hover)] group">
                   <td className="py-2 pr-3 font-medium">{z.popis}</td>
                   <td className="py-2 pr-3">
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                       z.zavaznost === 'C1' ? 'bg-red-100 text-red-700' :
-                      z.zavaznost === 'C2' ? 'bg-orange-100 text-orange-700' :
-                      'bg-amber-100 text-amber-700'
+                      z.zavaznost === 'C2' ? 'bg-orange-500/10 text-orange-400' :
+                      'bg-amber-500/10 text-amber-400'
                     }`}>{z.zavaznost}</span>
                   </td>
                   <td className="py-2 pr-3">
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                       z.stav === 'vyřešená' ? 'bg-green-100 text-green-700' :
-                      z.stav === 'v řešení' ? 'bg-blue-100 text-blue-700' :
-                      'bg-slate-100 text-slate-700'
+                      z.stav === 'v řešení' ? 'bg-[var(--bg-accent)] text-[var(--nav-text-active)]' :
+                      'bg-[var(--bg-hover)] text-[var(--text-muted)]'
                     }`}>{z.stav}</span>
                   </td>
                   <td className="py-2 pr-3 text-xs text-[var(--text-muted)] italic truncate max-w-[200px]">{z.poznamka || '—'}</td>
@@ -216,7 +216,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                 </tr>
               ))}
               {/* Draft row */}
-              <tr className="bg-blue-50/60 border-b border-blue-100">
+              <tr className="bg-[var(--bg-accent-soft)] border-b border-[var(--border)]">
                 <td className="py-1.5 pr-3">
                   <input
                     ref={inlinePopisRef}
@@ -225,7 +225,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                     onChange={(e) => setInlineDraft(d => ({ ...d, popis: e.target.value }))}
                     onKeyDown={(e) => handleInlineKeyDown(e, 'popis')}
                     placeholder="Popis nové závady..."
-                    className="w-full px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="w-full px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
                   />
                 </td>
                 <td className="py-1.5 pr-3">
@@ -234,7 +234,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                     value={inlineDraft.zavaznost}
                     onChange={(e) => setInlineDraft(d => ({ ...d, zavaznost: e.target.value as Zavada['zavaznost'] }))}
                     onKeyDown={(e) => handleInlineKeyDown(e, 'zavaznost')}
-                    className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
                   >
                     <option value="C1">C1</option>
                     <option value="C2">C2</option>
@@ -247,7 +247,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                     value={inlineDraft.stav}
                     onChange={(e) => setInlineDraft(d => ({ ...d, stav: e.target.value as Zavada['stav'] }))}
                     onKeyDown={(e) => handleInlineKeyDown(e, 'stav')}
-                    className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
                   >
                     <option value="otevřená">Otevřená</option>
                     <option value="v řešení">V řešení</option>
@@ -262,7 +262,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                     onChange={(e) => setInlineDraft(d => ({ ...d, poznamka: e.target.value }))}
                     onKeyDown={(e) => handleInlineKeyDown(e, 'poznamka')}
                     placeholder="Norma, poznámka..."
-                    className="w-full px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="w-full px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
                   />
                 </td>
                 <td className="py-1.5">
@@ -271,29 +271,29 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                     title="Uložit (Enter)"
                     disabled={!inlineDraft.popis.trim() || createZavada.isPending}
                     onClick={handleInlineSave}
-                    className="w-7 h-7 flex items-center justify-center rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-base"
+                    className="w-7 h-7 flex items-center justify-center rounded bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-40 disabled:cursor-not-allowed text-base"
                   >↵</button>
                 </td>
               </tr>
             </tbody>
           </table>
           <p className="text-xs text-[var(--text-secondary)] mt-2 select-none">
-            <kbd className="px-1 bg-slate-100 rounded border border-slate-200 text-[10px]">Tab</kbd> přechod &nbsp;·&nbsp;
-            <kbd className="px-1 bg-slate-100 rounded border border-slate-200 text-[10px]">Enter</kbd> uložit řádek &nbsp;·&nbsp;
+            <kbd className="px-1 bg-[var(--bg-hover)] rounded border border-[var(--border-medium)] text-[10px]">Tab</kbd> přechod &nbsp;·&nbsp;
+            <kbd className="px-1 bg-[var(--bg-hover)] rounded border border-[var(--border-medium)] text-[10px]">Enter</kbd> uložit řádek &nbsp;·&nbsp;
             ✎ upravit vč. fotek
           </p>
         </div>
       ) : zavady.length > 0 ? (
         <div className="space-y-4">
           {zavady.map((z) => (
-            <div key={z.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200">
+            <div key={z.id} className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-medium)]">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <p className="font-medium text-sm">{z.popis}</p>
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                     z.stav === 'vyřešená' ? 'bg-green-100 text-green-700' :
-                    z.stav === 'v řešení' ? 'bg-blue-100 text-blue-700' :
-                    'bg-slate-100 text-slate-700'
+                      z.stav === 'v řešení' ? 'bg-[var(--bg-accent)] text-[var(--nav-text-active)]' :
+                    'bg-[var(--bg-hover)] text-[var(--text-muted)]'
                   }`}>{z.stav}</span>
                 </div>
                 <p className="text-xs text-[var(--text-muted)]">
@@ -308,11 +308,11 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                   <div className="flex gap-2 mt-2">
                     {z.fotky.slice(0, 4).map((foto, index) => (
                       <img key={index} src={foto} alt={`Foto ${index + 1}`}
-                        className="w-12 h-12 object-cover rounded border border-slate-200 cursor-pointer hover:opacity-80 transition-opacity"
+                        className="w-12 h-12 object-cover rounded border border-[var(--border-medium)] cursor-pointer hover:opacity-80 transition-opacity"
                         onClick={() => setLightboxImage(foto)} />
                     ))}
                     {Array.isArray(z.fotky) && z.fotky.length > 4 && (
-                      <span className="w-12 h-12 flex items-center justify-center bg-slate-200 rounded text-sm font-medium text-slate-600">+{z.fotky.length - 4}</span>
+                      <span className="w-12 h-12 flex items-center justify-center bg-[var(--bg-hover)] rounded text-sm font-medium text-[var(--text-secondary)]">+{z.fotky.length - 4}</span>
                     )}
                   </div>
                 )}
@@ -320,8 +320,8 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
               <div className="flex items-center gap-3">
                 <span className={`px-2 py-1 rounded text-xs font-medium ${
                   z.zavaznost === 'C1' ? 'bg-red-100 text-red-700' :
-                  z.zavaznost === 'C2' ? 'bg-orange-100 text-orange-700' :
-                  'bg-amber-100 text-amber-700'
+                  z.zavaznost === 'C2' ? 'bg-orange-500/10 text-orange-400' :
+                  'bg-amber-500/10 text-amber-400'
                 }`}>{z.zavaznost}</span>
                 <div className="flex gap-1">
                   <Button size="sm" variant="secondary" onClick={() => handleEditZavada(z)}>Upravit</Button>
@@ -351,8 +351,8 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
     >
       <form onSubmit={handleAddZavada} className="space-y-3">
         {!editingZavada && katalogZavad.length > 0 && (
-          <div className="p-2 bg-blue-50 rounded-lg border border-blue-200">
-            <label className="block text-xs font-medium text-slate-700 mb-1">Vybrat z katalogu závad</label>
+          <div className="p-2 bg-[var(--bg-accent-soft)] rounded-lg border border-[var(--border-medium)]">
+            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Vybrat z katalogu závad</label>
             <Select
               value={selectedKatalogZavada}
               onChange={(e) => handleSelectFromKatalog(e.target.value)}
@@ -361,13 +361,13 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                 ...katalogZavad.map(z => ({ value: z.id!.toString(), label: `[${z.zavaznost}] ${z.popis}${z.norma ? ` (${z.norma})` : ''}` }))
               ]}
             />
-            {selectedKatalogZavada && <p className="text-xs text-blue-600 mt-1">Popis a závažnost budou předvyplněny z katalogu. Můžete je upravit.</p>}
+            {selectedKatalogZavada && <p className="text-xs text-[var(--primary)] mt-1">Popis a závažnost budou předvyplněny z katalogu. Můžete je upravit.</p>}
           </div>
         )}
         <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">Popis závady *</label>
+          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Popis závady *</label>
           <textarea value={zavadaFormData.popis} onChange={(e) => setZavadaFormData({ ...zavadaFormData, popis: e.target.value })}
-            className="w-full px-2 py-1.5 border rounded-lg border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" rows={2} placeholder="Popište zjištěnou závadu..." required />
+            className="w-full px-2 py-1.5 border rounded-lg border-[var(--border-input)] bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] text-sm" rows={2} placeholder="Popešte zjištěnou závadu..." required />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <Select label="Závažnost" value={zavadaFormData.zavaznost} onChange={(e) => setZavadaFormData({ ...zavadaFormData, zavaznost: e.target.value as any })}
@@ -384,12 +384,12 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
             options={[{ value: '', label: '-- Nevybráno --' }, ...mistnosti.map(m => ({ value: m.id!.toString(), label: m.nazev }))]} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">Poznámka / Odkaz na normu</label>
+          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Poznámka / Odkaz na normu</label>
           <textarea value={zavadaFormData.poznamka} onChange={(e) => setZavadaFormData({ ...zavadaFormData, poznamka: e.target.value })}
-            className="w-full px-2 py-1.5 border rounded-lg border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs" rows={3} placeholder="Volitelná poznámka nebo odkaz na normu/zákon..." />
+            className="w-full px-2 py-1.5 border rounded-lg border-[var(--border-input)] bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] text-xs" rows={3} placeholder="Volitelná poznámka nebo odkaz na normu/zákon..." />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-700 mb-1">Fotky</label>
+          <label className="block text-xs font-medium text-[var(--text-primary)] mb-1">Fotky</label>
           <input type="file" accept="image/*" multiple
             onChange={(e) => {
               const files = e.target.files;
@@ -401,14 +401,14 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                 });
               }
             }}
-            className="w-full text-sm text-[var(--text-muted)] file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            className="w-full text-sm text-[var(--text-muted)] file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-[var(--bg-accent-soft)] file:text-[var(--primary)] hover:file:bg-[var(--bg-accent)]"
           />
           {zavadaFormData.fotky.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
               {zavadaFormData.fotky.map((foto, i) => (
                 <div key={i} className="relative group">
                   <img src={foto} alt={`Foto ${i + 1}`}
-                    className="w-16 h-16 object-cover rounded border border-slate-200 cursor-pointer hover:opacity-80 transition-opacity"
+                    className="w-16 h-16 object-cover rounded border border-[var(--border-medium)] cursor-pointer hover:opacity-80 transition-opacity"
                     onClick={() => setLightboxImage(foto)} />
                   <button type="button"
                     onClick={(e) => { e.stopPropagation(); setZavadaFormData(prev => ({ ...prev, fotky: prev.fotky.filter((_, idx) => idx !== i) })); }}

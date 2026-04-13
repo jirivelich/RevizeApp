@@ -283,7 +283,7 @@ export function ZavadyPage() {
             <textarea
               value={formData.popis}
               onChange={(e) => setFormData({ ...formData, popis: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-blue-500/[0.5]"
+              className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]/[0.5]"
               rows={2}
               placeholder="Stručný popis typické závady..."
               required
@@ -308,7 +308,7 @@ export function ZavadyPage() {
                 list="kategorie-list"
                 value={formData.kategorie}
                 onChange={(e) => setFormData({ ...formData, kategorie: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-blue-500/[0.5]"
+                className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]/[0.5]"
                 placeholder="Rozvaděče, Vedení, Uzemnění..."
               />
               <datalist id="kategorie-list">
@@ -342,7 +342,7 @@ export function ZavadyPage() {
               <textarea
                 value={formData.zneniClanku}
                 onChange={(e) => setFormData({ ...formData, zneniClanku: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-blue-500/[0.5]"
+                className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]/[0.5]"
                 rows={4}
                 placeholder="Úplné nebo zkrácené znění článku normy či paragrafu zákona..."
               />

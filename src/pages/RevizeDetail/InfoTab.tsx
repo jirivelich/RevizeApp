@@ -41,7 +41,7 @@ export function InfoTab({
               </select>
             </Field>
             <Field label="Kategorie">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-slate-100 text-slate-700 border border-slate-200">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-[var(--bg-hover)] text-[var(--text-primary)] border border-[var(--border-medium)]">
                 {formData.kategorieRevize === 'elektro' ? 'Elektrické instalace' :
                  formData.kategorieRevize === 'hromosvod' ? 'Hromosvody' :
                  formData.kategorieRevize === 'stroje' ? 'Strojní zařízení' : 'Elektro'}

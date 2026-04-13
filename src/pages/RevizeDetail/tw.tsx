@@ -50,8 +50,8 @@ export function SectionHeader({
   right?: React.ReactNode;
 }) {
   return (
-    <div className={`${className || 'bg-slate-800'} text-white px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2`}>
-      {num && <span className="text-blue-400">{num}</span>}
+    <div className={`${className || 'bg-[var(--section-header-bg)]'} text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2`}>
+      {num && <span className="text-[var(--primary)]">{num}</span>}
       <span className="flex-1">{children}</span>
       {right}
     </div>
@@ -78,7 +78,7 @@ export function ToggleSectionHeader({
 }) {
   return (
     <div className={`${className || 'bg-[var(--section-header-bg)]'} text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2`}>
-      {num && <span className="text-blue-400">{num}</span>}
+      {num && <span className="text-[var(--primary)]">{num}</span>}
       <span className={`flex-1 ${!visible ? 'opacity-50 line-through' : ''}`}>{children}</span>
       {right}
       <button
