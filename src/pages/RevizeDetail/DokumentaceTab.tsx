@@ -212,7 +212,7 @@ export function DokumentaceTab({
           {/* 2.2 Ochrana */}
           <div>
             <label className={TW.label}>2.2 Ochrana před úrazem elektrickým proudem</label>
-            <p className="text-xs text-slate-500 mt-1 mb-2">Zaškrtněte opatření použitá v objektu:</p>
+            <p className="text-xs text-slate-400 mt-1 mb-2">Zaškrtněte opatření použitá v objektu:</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
               {[
                 { id: 'zakladni-izolace', label: 'Základní izolace živých částí' },
@@ -230,7 +230,7 @@ export function DokumentaceTab({
               ].map((opatreni) => {
                 const isChecked = ochranaOpatreni.includes(opatreni.id);
                 return (
-                  <label key={opatreni.id} className="flex items-center gap-2 px-2 py-1.5 bg-slate-50 rounded hover:bg-slate-100 cursor-pointer">
+                  <label key={opatreni.id} className="flex items-center gap-2 px-2 py-1.5 bg-white/[0.03] rounded hover:bg-white/[0.06] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={isChecked}
@@ -244,9 +244,9 @@ export function DokumentaceTab({
                         setFormData({ ...formData, ochranaOpatreni: JSON.stringify(updated) });
                         saveNow?.();
                       }}
-                      className="w-4 h-4 text-blue-600 rounded"
+                      className="w-4 h-4 text-blue-600 rounded border-white/[0.20]"
                     />
-                    <span className="text-sm">{opatreni.label}</span>
+                    <span className="text-sm text-slate-300">{opatreni.label}</span>
                   </label>
                 );
               })}
