@@ -1,48 +1,48 @@
 @import "tailwindcss";
 
 :root {
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --secondary: #64748b;
+  --primary: #F00807;
+  --primary-hover: #CC0706;
+  --secondary: #5A5A72;
   --success: #22c55e;
   --warning: #f59e0b;
-  --danger: #ef4444;
-  --background: #020817;
-  --surface: #0e1629;
-  --text: #cbd5e1;
-  --text-muted: #64748b;
-  --border: rgba(255,255,255,0.07);
+  --danger: #f97316;
+  --background: #141420;
+  --surface: #1E1E2E;
+  --text: #E2E1E9;
+  --text-muted: #5A5A72;
+  --border: rgba(226,225,233,0.07);
 
   /* === Granulární design tokeny === */
-  --bg-surface: rgba(255,255,255,0.03);
-  --bg-input: rgba(255,255,255,0.04);
-  --bg-hover: rgba(255,255,255,0.06);
-  --bg-hover-strong: rgba(255,255,255,0.10);
-  --bg-badge: rgba(255,255,255,0.08);
-  --bg-accent: rgba(59,130,246,0.10);
-  --bg-accent-soft: rgba(59,130,246,0.08);
-  --bg-accent-badge: rgba(59,130,246,0.15);
-  --border-input: rgba(255,255,255,0.09);
-  --border-table: rgba(255,255,255,0.06);
-  --border-subtle: rgba(255,255,255,0.05);
-  --border-medium: rgba(255,255,255,0.08);
-  --border-hover: rgba(255,255,255,0.10);
-  --text-primary: #cbd5e1;
-  --text-secondary: #94a3b8;
-  --focus-ring-color: rgba(59,130,246,0.4);
-  --bg-sidebar: #080d1a;
-  --active-bg: rgba(59,130,246,0.12);
-  --active-border: rgba(59,130,246,0.18);
-  --active-glow: rgba(59,130,246,0.6);
-  --nav-text: #94a3b8;
-  --nav-text-active: #93c5fd;
-  --bg-subtle: rgba(255,255,255,0.05);
-  --bg-faint: rgba(255,255,255,0.02);
-  --checkbox-border: rgba(255,255,255,0.20);
-  --border-strong: rgba(255,255,255,0.12);
-  --bg-page: #0a0f1e;
-  --section-header-bg: #1e293b;
-  --section-header-text: #ffffff;
+  --bg-surface: rgba(226,225,233,0.04);
+  --bg-input: rgba(226,225,233,0.06);
+  --bg-hover: rgba(226,225,233,0.07);
+  --bg-hover-strong: rgba(226,225,233,0.12);
+  --bg-badge: rgba(226,225,233,0.09);
+  --bg-accent: rgba(240,8,7,0.10);
+  --bg-accent-soft: rgba(240,8,7,0.08);
+  --bg-accent-badge: rgba(240,8,7,0.15);
+  --border-input: rgba(226,225,233,0.10);
+  --border-table: rgba(226,225,233,0.07);
+  --border-subtle: rgba(226,225,233,0.05);
+  --border-medium: rgba(226,225,233,0.09);
+  --border-hover: rgba(226,225,233,0.12);
+  --text-primary: #E2E1E9;
+  --text-secondary: #A4ABBF;
+  --focus-ring-color: rgba(240,8,7,0.4);
+  --bg-sidebar: #0F0F1A;
+  --active-bg: rgba(240,8,7,0.12);
+  --active-border: rgba(240,8,7,0.20);
+  --active-glow: rgba(240,8,7,0.6);
+  --nav-text: #5A5A72;
+  --nav-text-active: #FF6B6B;
+  --bg-subtle: rgba(226,225,233,0.05);
+  --bg-faint: rgba(226,225,233,0.02);
+  --checkbox-border: rgba(226,225,233,0.25);
+  --border-strong: rgba(226,225,233,0.14);
+  --bg-page: #141420;
+  --section-header-bg: #1E1E2E;
+  --section-header-text: #E2E1E9;
 }
 
 * {
@@ -109,7 +109,7 @@ body {
   position: absolute;
   width: 12px;
   height: 12px;
-  background: #3b82f6;
+  background: #F00807;
   border: 2px solid white;
   border-radius: 50%;
   z-index: 50;
@@ -117,7 +117,7 @@ body {
 }
 
 .react-resizable-handle:hover {
-  background: #2563eb;
+  background: #CC0706;
   transform: scale(1.2);
 }
 

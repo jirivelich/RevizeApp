@@ -76,7 +76,7 @@ function drawAllSymbols(ctx: CanvasRenderingContext2D, syms: LpsSymbol[], selId:
     drawSym(ctx, s);
     if (s.id === selId) {
       ctx.save(); ctx.translate(s.x, s.y);
-      ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#F00807'; ctx.lineWidth = 1.5;
       ctx.setLineDash([4, 3]);
       ctx.strokeRect(-26, -34, 52, 76);
       ctx.setLineDash([]);

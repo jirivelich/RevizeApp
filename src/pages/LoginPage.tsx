@@ -75,15 +75,15 @@ export default function LoginPage() {
   };
   const inputFocusStyle: React.CSSProperties = {
     ...inputStyle,
-    borderColor: 'rgba(59,130,246,0.5)',
-    background: 'rgba(59,130,246,0.06)',
-    boxShadow: '0 0 0 3px rgba(59,130,246,0.10)',
+    borderColor: 'rgba(240,8,7,0.5)',
+    background: 'rgba(240,8,7,0.06)',
+    boxShadow: '0 0 0 3px rgba(240,8,7,0.10)',
   };
 
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#020817',
+      background: '#141420',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -95,50 +95,50 @@ export default function LoginPage() {
       {/* Grid pattern */}
       <div style={{
         position: 'fixed', inset: 0, pointerEvents: 'none',
-        backgroundImage: 'linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px)',
+        backgroundImage: 'linear-gradient(rgba(240,8,7,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(240,8,7,0.04) 1px, transparent 1px)',
         backgroundSize: '40px 40px',
       }} />
       {/* Glow orb top-left */}
       <div style={{
         position: 'fixed', top: '15%', left: '10%',
         width: 500, height: 500, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 65%)',
+        background: 'radial-gradient(circle, rgba(240,8,7,0.12) 0%, transparent 65%)',
         pointerEvents: 'none',
       }} />
       {/* Glow orb bottom-right */}
       <div style={{
         position: 'fixed', bottom: '5%', right: '5%',
         width: 450, height: 450, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(99,102,241,0.10) 0%, transparent 65%)',
+        background: 'radial-gradient(circle, rgba(240,8,7,0.10) 0%, transparent 65%)',
         pointerEvents: 'none',
       }} />
       {/* Circuit SVG decoration */}
       <svg style={{ position: 'fixed', inset: 0, pointerEvents: 'none', opacity: 0.20, width: '100%', height: '100%' }}
         viewBox="0 0 1440 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-        <g stroke="#3b82f6" strokeWidth="1" fill="none">
+        <g stroke="#F00807" strokeWidth="1" fill="none">
           <polyline points="80,80 80,200 200,200 200,120 360,120"/>
-          <circle cx="80" cy="80" r="5" fill="#3b82f6"/>
-          <circle cx="200" cy="200" r="4" fill="#3b82f6" opacity="0.6"/>
-          <circle cx="360" cy="120" r="5" fill="#3b82f6"/>
-          <rect x="355" y="115" width="10" height="10" fill="none" stroke="#3b82f6"/>
+          <circle cx="80" cy="80" r="5" fill="#F00807"/>
+          <circle cx="200" cy="200" r="4" fill="#F00807" opacity="0.6"/>
+          <circle cx="360" cy="120" r="5" fill="#F00807"/>
+          <rect x="355" y="115" width="10" height="10" fill="none" stroke="#F00807"/>
           <polyline points="1360,60 1360,180 1200,180 1200,300 1100,300"/>
-          <circle cx="1360" cy="60" r="5" fill="#3b82f6"/>
-          <circle cx="1200" cy="180" r="4" fill="#3b82f6" opacity="0.6"/>
-          <circle cx="1100" cy="300" r="5" fill="#3b82f6"/>
+          <circle cx="1360" cy="60" r="5" fill="#F00807"/>
+          <circle cx="1200" cy="180" r="4" fill="#F00807" opacity="0.6"/>
+          <circle cx="1100" cy="300" r="5" fill="#F00807"/>
           <polyline points="60,820 60,680 220,680 220,780 420,780"/>
-          <circle cx="60" cy="820" r="5" fill="#3b82f6"/>
-          <circle cx="220" cy="680" r="4" fill="#3b82f6" opacity="0.6"/>
-          <circle cx="420" cy="780" r="5" fill="#3b82f6"/>
+          <circle cx="60" cy="820" r="5" fill="#F00807"/>
+          <circle cx="220" cy="680" r="4" fill="#F00807" opacity="0.6"/>
+          <circle cx="420" cy="780" r="5" fill="#F00807"/>
           <polyline points="1380,840 1380,720 1240,720 1240,620 1060,620"/>
-          <circle cx="1380" cy="840" r="5" fill="#3b82f6"/>
-          <circle cx="1060" cy="620" r="5" fill="#3b82f6"/>
+          <circle cx="1380" cy="840" r="5" fill="#F00807"/>
+          <circle cx="1060" cy="620" r="5" fill="#F00807"/>
           <polyline points="120,420 260,420 260,500"/>
-          <circle cx="120" cy="420" r="3" fill="#3b82f6" opacity="0.5"/>
+          <circle cx="120" cy="420" r="3" fill="#F00807" opacity="0.5"/>
           <polyline points="1320,450 1180,450 1180,380"/>
-          <circle cx="1320" cy="450" r="3" fill="#3b82f6" opacity="0.5"/>
-          <rect x="195" y="116" width="10" height="8" fill="rgba(59,130,246,0.15)" stroke="#3b82f6"/>
-          <rect x="1095" y="296" width="10" height="8" fill="rgba(59,130,246,0.15)" stroke="#3b82f6"/>
-          <rect x="415" y="776" width="10" height="8" fill="rgba(59,130,246,0.15)" stroke="#3b82f6"/>
+          <circle cx="1320" cy="450" r="3" fill="#F00807" opacity="0.5"/>
+          <rect x="195" y="116" width="10" height="8" fill="rgba(240,8,7,0.15)" stroke="#F00807"/>
+          <rect x="1095" y="296" width="10" height="8" fill="rgba(240,8,7,0.15)" stroke="#F00807"/>
+          <rect x="415" y="776" width="10" height="8" fill="rgba(240,8,7,0.15)" stroke="#F00807"/>
         </g>
       </svg>
 
@@ -148,7 +148,7 @@ export default function LoginPage() {
         <div style={{
           position: 'absolute', inset: -30, zIndex: -1,
           borderRadius: 32,
-          background: 'radial-gradient(ellipse at center, rgba(59,130,246,0.18) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse at center, rgba(240,8,7,0.18) 0%, transparent 70%)',
           filter: 'blur(24px)',
         }} />
 
@@ -165,10 +165,10 @@ export default function LoginPage() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 32 }}>
             <div style={{
               width: 52, height: 52,
-              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+              background: 'linear-gradient(135deg, #F00807 0%, #CC0706 100%)',
               borderRadius: 14,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 0 28px rgba(59,130,246,0.55), 0 0 60px rgba(59,130,246,0.15)',
+              boxShadow: '0 0 28px rgba(240,8,7,0.55), 0 0 60px rgba(240,8,7,0.15)',
               marginBottom: 14,
             }}>
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
@@ -203,10 +203,10 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => switchMode(mode === 'login')}
                   style={{
-                    flex: 1, padding: '9px 0', border: active ? '1px solid rgba(59,130,246,0.28)' : 'none',
+                    flex: 1, padding: '9px 0', border: active ? '1px solid rgba(240,8,7,0.28)' : 'none',
                     borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: 'pointer',
-                    background: active ? 'rgba(59,130,246,0.18)' : 'transparent',
-                    color: active ? '#93c5fd' : '#475569',
+                    background: active ? 'rgba(240,8,7,0.18)' : 'transparent',
+                    color: active ? '#FF6B6B' : '#5F6273',
                     transition: 'all .2s',
                     boxShadow: active ? 'inset 0 1px 0 rgba(255,255,255,0.05)' : 'none',
                   }}
@@ -283,11 +283,11 @@ export default function LoginPage() {
               disabled={loading}
               style={{
                 width: '100%', padding: 13, marginTop: 4,
-                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                background: 'linear-gradient(135deg, #F00807 0%, #CC0706 100%)',
                 color: 'white', border: 'none', borderRadius: 10,
                 fontSize: 15, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
                 opacity: loading ? 0.6 : 1,
-                boxShadow: '0 4px 18px rgba(59,130,246,0.40)',
+                boxShadow: '0 4px 18px rgba(240,8,7,0.40)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 transition: 'all .2s',
               }}

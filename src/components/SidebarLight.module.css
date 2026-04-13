@@ -4,19 +4,19 @@
   border-right: 1px solid #e2e8f0;
 }
 .sidebar-light .active {
-  background: #e8eef7;
-  color: #2563eb;
+  background: rgba(240,8,7,0.10);
+  color: #F00807;
 }
 .sidebar-light .sidebar-header {
-  background: #e8eef7;
-  color: #2563eb;
+  background: rgba(240,8,7,0.08);
+  color: #F00807;
 }
 .sidebar-light .sidebar-link {
   color: #444;
 }
 .sidebar-light .sidebar-link:hover {
-  background: #e8eef7;
-  color: #2563eb;
+  background: rgba(240,8,7,0.06);
+  color: #F00807;
 }
 .sidebar-light .sidebar-footer {
   border-top: 1px solid #e2e8f0;

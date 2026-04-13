@@ -112,7 +112,7 @@ export function Sidebar({ onClose }: SidebarProps) {
         {isActive && (
           <span style={{
             position: 'absolute', left: -1, top: '50%', transform: 'translateY(-50%)',
-            width: 3, height: 18, background: '#3b82f6', borderRadius: '0 2px 2px 0',
+            width: 3, height: 18, background: '#F00807', borderRadius: '0 2px 2px 0',
             boxShadow: '0 0 8px var(--active-glow)',
           }} />
         )}
@@ -144,9 +144,9 @@ export function Sidebar({ onClose }: SidebarProps) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
               width: 34, height: 34,
-              background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+              background: 'linear-gradient(135deg, #F00807, #CC0706)',
               borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 0 16px rgba(59,130,246,0.45)', flexShrink: 0,
+              boxShadow: '0 0 16px rgba(240,8,7,0.45)', flexShrink: 0,
             }}>
               <svg width="18" height="18" fill="none" stroke="white" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -197,7 +197,7 @@ export function Sidebar({ onClose }: SidebarProps) {
             }}>
               <div style={{
                 width: 28, height: 28, borderRadius: 8,
-                background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+                background: 'linear-gradient(135deg, #F00807, #FF6B6B)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 11, fontWeight: 700, color: 'white', flexShrink: 0,
               }}>
