@@ -117,7 +117,7 @@ const ZakazniciPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-sm font-bold text-slate-200">Zákazníci</h1>
+          <h1 className="text-sm font-bold text-slate-300">Zákazníci</h1>
           <p className="text-xs text-slate-400">Správa zákazníků a jejich revizí</p>
         </div>
         <Button onClick={handleNewZakaznik}>
@@ -262,7 +262,7 @@ const ZakazniciPage: React.FC = () => {
             <textarea
               value={formData.poznamka}
               onChange={(e) => setFormData({ ...formData, poznamka: e.target.value })}
-              className="w-full px-3 py-2 border rounded-md bg-white/[0.04] text-slate-200 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5]"
+              className="w-full px-3 py-2 border rounded-md bg-white/[0.04] text-slate-300 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5]"
               rows={3}
             />
           </div>

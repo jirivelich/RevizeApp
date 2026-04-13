@@ -258,7 +258,7 @@ export function RevizePage() {
     <div className="flex flex-col gap-4 h-full">
       <div className="flex items-center justify-between flex-shrink-0">
         <div>
-          <h1 className="text-lg font-bold text-slate-200">Revize</h1>
+          <h1 className="text-lg font-bold text-slate-300">Revize</h1>
           <p className="text-xs text-slate-400">Správa revizí elektrických instalací, hromosvodů a strojních zařízení</p>
         </div>
         <Button onClick={openModal}>
@@ -309,7 +309,7 @@ export function RevizePage() {
             {filteredRevize.map((r) => (
               <div key={r.id} className="bg-white/[0.03] rounded-lg border border-white/[0.07] p-3">
                 <Link to={`/revize/${r.id}`} className="block">
-                  <p className="font-semibold text-slate-200 text-sm leading-snug">{r.nazev}</p>
+                  <p className="font-semibold text-slate-300 text-sm leading-snug">{r.nazev}</p>
                   <p className="text-xs text-slate-400 mt-0.5">{r.adresa}</p>
                 </Link>
                 <div className="flex items-center justify-between mt-2">
@@ -346,13 +346,13 @@ export function RevizePage() {
             <table className="w-full">
               <thead className="sticky top-0 bg-[#0a0f1e] z-10">
                 <tr className="border-b border-white/[0.06]">
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-200" onClick={() => toggleSort('cisloRevize')}>Číslo<SortIcon col="cisloRevize" /></th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-200" onClick={() => toggleSort('kategorieRevize')}>Kategorie<SortIcon col="kategorieRevize" /></th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-200" onClick={() => toggleSort('nazev')}>Název<SortIcon col="nazev" /></th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-200" onClick={() => toggleSort('adresa')}>Adresa<SortIcon col="adresa" /></th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-200" onClick={() => toggleSort('datum')}>Datum<SortIcon col="datum" /></th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-200" onClick={() => toggleSort('typRevize')}>Typ<SortIcon col="typRevize" /></th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-200" onClick={() => toggleSort('stav')}>Stav<SortIcon col="stav" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-300" onClick={() => toggleSort('cisloRevize')}>Číslo<SortIcon col="cisloRevize" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-300" onClick={() => toggleSort('kategorieRevize')}>Kategorie<SortIcon col="kategorieRevize" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-300" onClick={() => toggleSort('nazev')}>Název<SortIcon col="nazev" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-300" onClick={() => toggleSort('adresa')}>Adresa<SortIcon col="adresa" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-300" onClick={() => toggleSort('datum')}>Datum<SortIcon col="datum" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-300" onClick={() => toggleSort('typRevize')}>Typ<SortIcon col="typRevize" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-300" onClick={() => toggleSort('stav')}>Stav<SortIcon col="stav" /></th>
                   <th className="text-right py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider"></th>
                 </tr>
               </thead>
@@ -490,11 +490,11 @@ export function RevizePage() {
                   onClick={() => selectKategorie(kat.value)}
                   className="flex items-center gap-4 p-4 rounded-lg border-2 border-white/[0.08] hover:border-white/[0.20] hover:bg-white/[0.04] transition-all text-left group"
                 >
-                  <div className="flex-shrink-0 text-slate-500 group-hover:text-slate-200 transition-colors">
+                  <div className="flex-shrink-0 text-slate-500 group-hover:text-slate-300 transition-colors">
                     {kat.icon}
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-200 group-hover:text-white">{kat.label}</p>
+                    <p className="font-semibold text-slate-300 group-hover:text-white">{kat.label}</p>
                     <p className="text-xs text-slate-400 mt-0.5">{kat.popis}</p>
                   </div>
                   <div className="flex-shrink-0 ml-auto text-slate-600 group-hover:text-slate-300">
@@ -515,7 +515,7 @@ export function RevizePage() {
                 {KATEGORIE_REVIZE.find(k => k.value === formData.kategorieRevize)?.icon}
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-200">
+                <p className="text-sm font-medium text-slate-300">
                   {KATEGORIE_REVIZE.find(k => k.value === formData.kategorieRevize)?.label}
                 </p>
                 <p className="text-xs text-slate-400">Kategorie revize</p>

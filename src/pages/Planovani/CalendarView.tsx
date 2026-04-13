@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import type { Zakazka } from '../../types';
 import { Card } from '../../components/ui';
 import { getPriorityColor, getRealizaceDays, getReportDeadline, isOverdue } from './utils';
@@ -157,7 +157,7 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
           ◀
         </button>
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-slate-200 capitalize">
+          <h2 className="text-lg font-semibold text-slate-300 capitalize">
             {monthLabel}
           </h2>
           <button

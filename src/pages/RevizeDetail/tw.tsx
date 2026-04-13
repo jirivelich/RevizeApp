@@ -6,17 +6,17 @@
 // ── Tailwind class helpers ──
 export const TW = {
   /** Standardní input pole */
-  input: 'w-full px-2 py-1 rounded text-sm bg-white/[0.04] text-slate-200 border border-white/[0.09] focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none',
+  input: 'w-full px-2 py-1 rounded text-sm bg-white/[0.04] text-slate-300 border border-white/[0.09] focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none',
   /** Disabled input */
   inputDisabled: 'w-full px-2 py-1 rounded text-sm bg-white/[0.03] text-slate-500 border border-white/[0.06] cursor-not-allowed',
   /** Input uvnitř tabulkové buňky (průhledné pozadí) */
-  tblInput: 'w-full border-0 bg-transparent text-sm text-slate-200 px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded',
+  tblInput: 'w-full border-0 bg-transparent text-sm text-slate-300 px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded',
   /** Textarea rozšíření */
-  textarea: 'w-full px-2 py-1 rounded text-sm bg-white/[0.04] text-slate-200 border border-white/[0.09] focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none resize-y',
+  textarea: 'w-full px-2 py-1 rounded text-sm bg-white/[0.04] text-slate-300 border border-white/[0.09] focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none resize-y',
   /** Select pole */
-  select: 'px-2 py-1 rounded text-sm bg-white/[0.04] text-slate-200 border border-white/[0.09] focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none',
+  select: 'px-2 py-1 rounded text-sm bg-white/[0.04] text-slate-300 border border-white/[0.09] focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none',
   /** Select na celou šířku */
-  selectFull: 'w-full px-2 py-1 rounded text-sm bg-white/[0.04] text-slate-200 border border-white/[0.09] focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none',
+  selectFull: 'w-full px-2 py-1 rounded text-sm bg-white/[0.04] text-slate-300 border border-white/[0.09] focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none',
   /** Hlavička tabulky */
   th: 'bg-[#0a0f1e] border border-white/[0.06] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400 text-left',
   /** Buňka tabulky */

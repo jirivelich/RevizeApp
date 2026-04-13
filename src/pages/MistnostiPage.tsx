@@ -79,7 +79,7 @@ export function MistnostiPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-slate-200">Místnosti</h1>
+          <h1 className="text-lg font-bold text-slate-300">Místnosti</h1>
           <p className="text-xs text-slate-400">Evidence místností</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
@@ -97,11 +97,11 @@ export function MistnostiPage() {
                 className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.07]"
               >
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-medium text-slate-200">{m.nazev}</h3>
+                  <h3 className="font-medium text-slate-300">{m.nazev}</h3>
                   <div className="flex gap-1">
                     <button
                       onClick={() => handleEdit(m)}
-                      className="text-xs text-slate-400 hover:text-slate-200"
+                      className="text-xs text-slate-400 hover:text-slate-300"
                     >
                       Upravit
                     </button>

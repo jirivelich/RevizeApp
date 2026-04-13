@@ -269,7 +269,7 @@ export function NastaveniPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-lg font-bold text-slate-200">Nastavení</h1>
+        <h1 className="text-lg font-bold text-slate-300">Nastavení</h1>
         <p className="text-xs text-slate-400">Konfigurace aplikace a údaje o firmě</p>
       </div>
 
@@ -287,8 +287,8 @@ export function NastaveniPage() {
           onClick={() => setActiveTab('obecne')}
           className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors cursor-pointer ${
             activeTab === 'obecne'
-              ? 'bg-white/[0.08] text-slate-200 border border-white/[0.10] border-b-transparent -mb-px'
-              : 'text-slate-500 hover:text-slate-200 hover:bg-white/[0.04]'
+              ? 'bg-white/[0.08] text-slate-300 border border-white/[0.10] border-b-transparent -mb-px'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.04]'
           }`}
         >
           Obecné
@@ -297,8 +297,8 @@ export function NastaveniPage() {
           onClick={() => setActiveTab('technik')}
           className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors cursor-pointer ${
             activeTab === 'technik'
-              ? 'bg-white/[0.08] text-slate-200 border border-white/[0.10] border-b-transparent -mb-px'
-              : 'text-slate-500 hover:text-slate-200 hover:bg-white/[0.04]'
+              ? 'bg-white/[0.08] text-slate-300 border border-white/[0.10] border-b-transparent -mb-px'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.04]'
           }`}
         >
           Revizní technik
@@ -307,8 +307,8 @@ export function NastaveniPage() {
           onClick={() => setActiveTab('texty')}
           className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors cursor-pointer ${
             activeTab === 'texty'
-              ? 'bg-white/[0.08] text-slate-200 border border-white/[0.10] border-b-transparent -mb-px'
-              : 'text-slate-500 hover:text-slate-200 hover:bg-white/[0.04]'
+              ? 'bg-white/[0.08] text-slate-300 border border-white/[0.10] border-b-transparent -mb-px'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.04]'
           }`}
         >
           Předvolené texty
@@ -320,8 +320,8 @@ export function NastaveniPage() {
           onClick={() => setActiveTab('zalohy')}
           className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors cursor-pointer ${
             activeTab === 'zalohy'
-              ? 'bg-white/[0.08] text-slate-200 border border-white/[0.10] border-b-transparent -mb-px'
-              : 'text-slate-500 hover:text-slate-200 hover:bg-white/[0.04]'
+              ? 'bg-white/[0.08] text-slate-300 border border-white/[0.10] border-b-transparent -mb-px'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.04]'
           }`}
         >
           Zálohy
@@ -330,8 +330,8 @@ export function NastaveniPage() {
           onClick={() => setActiveTab('notifikace')}
           className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors cursor-pointer ${
             activeTab === 'notifikace'
-              ? 'bg-white/[0.08] text-slate-200 border border-white/[0.10] border-b-transparent -mb-px'
-              : 'text-slate-500 hover:text-slate-200 hover:bg-white/[0.04]'
+              ? 'bg-white/[0.08] text-slate-300 border border-white/[0.10] border-b-transparent -mb-px'
+              : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.04]'
           }`}
         >
           Notifikace
@@ -547,7 +547,7 @@ export function NastaveniPage() {
             ) : (
               <button
                 onClick={() => { setNewDoklad(emptyDoklad()); setShowNewDoklad(true); }}
-                className="text-sm text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] px-3 py-1.5 rounded transition-colors cursor-pointer font-medium"
+                className="text-sm text-slate-400 hover:text-slate-300 hover:bg-white/[0.04] px-3 py-1.5 rounded transition-colors cursor-pointer font-medium"
               >
                 + Přidat doklad
               </button>
@@ -581,7 +581,7 @@ export function NastaveniPage() {
                       <p className="text-xs text-slate-400 truncate" title={table}>
                         {TABLE_LABELS[table] || table}
                       </p>
-                      <p className="text-xl font-bold text-slate-200">{count}</p>
+                      <p className="text-xl font-bold text-slate-300">{count}</p>
                     </div>
                   ))}
                 </div>
@@ -722,7 +722,7 @@ export function NastaveniPage() {
                   max={365}
                   value={nastaveni.upozorneniZakazkaDni ?? 7}
                   onChange={(e) => setNastaveni({ ...nastaveni, upozorneniZakazkaDni: Number(e.target.value) })}
-                  className="w-full bg-white/[0.04] text-slate-200 border border-white/[0.09] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]"
+                  className="w-full bg-white/[0.04] text-slate-300 border border-white/[0.09] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]"
                 />
                 <p className="text-[11px] text-slate-400 mt-1">Výchozí: 7 dní</p>
               </div>
@@ -736,7 +736,7 @@ export function NastaveniPage() {
                   max={365}
                   value={nastaveni.upozorneniRevizeDni ?? 14}
                   onChange={(e) => setNastaveni({ ...nastaveni, upozorneniRevizeDni: Number(e.target.value) })}
-                  className="w-full bg-white/[0.04] text-slate-200 border border-white/[0.09] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]"
+                  className="w-full bg-white/[0.04] text-slate-300 border border-white/[0.09] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]"
                 />
                 <p className="text-[11px] text-slate-400 mt-1">Výchozí: 14 dní</p>
               </div>
@@ -750,7 +750,7 @@ export function NastaveniPage() {
                   max={30}
                   value={nastaveni.upozorneniZpravaDni ?? 3}
                   onChange={(e) => setNastaveni({ ...nastaveni, upozorneniZpravaDni: Number(e.target.value) })}
-                  className="w-full bg-white/[0.04] text-slate-200 border border-white/[0.09] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]"
+                  className="w-full bg-white/[0.04] text-slate-300 border border-white/[0.09] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]"
                 />
                 <p className="text-[11px] text-slate-400 mt-1">Výchozí: 3 dny</p>
               </div>
@@ -764,7 +764,7 @@ export function NastaveniPage() {
                   max={365}
                   value={nastaveni.upozorneniKalibraceDni ?? 30}
                   onChange={(e) => setNastaveni({ ...nastaveni, upozorneniKalibraceDni: Number(e.target.value) })}
-                  className="w-full bg-white/[0.04] text-slate-200 border border-white/[0.09] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]"
+                  className="w-full bg-white/[0.04] text-slate-300 border border-white/[0.09] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]"
                 />
                 <p className="text-[11px] text-slate-400 mt-1">Výchozí: 30 dní</p>
               </div>
@@ -778,7 +778,7 @@ export function NastaveniPage() {
                   max={365}
                   value={nastaveni.upozorneniTechnikDni ?? 60}
                   onChange={(e) => setNastaveni({ ...nastaveni, upozorneniTechnikDni: Number(e.target.value) })}
-                  className="w-full bg-white/[0.04] text-slate-200 border border-white/[0.09] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]"
+                  className="w-full bg-white/[0.04] text-slate-300 border border-white/[0.09] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]"
                 />
                 <p className="text-[11px] text-slate-400 mt-1">Výchozí: 60 dní</p>
               </div>
@@ -830,8 +830,8 @@ export function NastaveniPage() {
                       }}
                       className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between gap-2 border-b border-white/[0.05] last:border-b-0 transition-colors cursor-pointer ${
                         isActive
-                          ? 'bg-white/[0.06] text-slate-200 font-semibold border-l-2 border-l-blue-500'
-                          : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200'
+                          ? 'bg-white/[0.06] text-slate-300 font-semibold border-l-2 border-l-blue-500'
+                          : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-300'
                       }`}
                     >
                       <span className="truncate">{label}</span>
@@ -851,14 +851,14 @@ export function NastaveniPage() {
                   return (
                     <>
                       <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-semibold text-slate-200">{katLabel}</h3>
+                        <h3 className="text-sm font-semibold text-slate-300">{katLabel}</h3>
                         {newText?.pole !== selectedKategorie && (
                           <button
                             onClick={() => {
                               setNewText({ pole: selectedKategorie, nazev: '', text: '' });
                               setEditingText(null);
                             }}
-                            className="text-xs text-slate-500 hover:text-slate-200 hover:bg-white/[0.06] px-2.5 py-1 rounded transition-colors cursor-pointer font-medium"
+                            className="text-xs text-slate-500 hover:text-slate-300 hover:bg-white/[0.06] px-2.5 py-1 rounded transition-colors cursor-pointer font-medium"
                           >
                             + Přidat předvolbu
                           </button>
@@ -878,14 +878,14 @@ export function NastaveniPage() {
                                   type="text"
                                   value={editingText.nazev}
                                   onChange={(e) => setEditingText({ ...editingText, nazev: e.target.value })}
-                                  className="w-full px-3 py-1.5 text-sm bg-white/[0.04] text-slate-200 border border-white/[0.09] rounded focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none"
+                                  className="w-full px-3 py-1.5 text-sm bg-white/[0.04] text-slate-300 border border-white/[0.09] rounded focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none"
                                   placeholder="Název předvolby"
                                 />
                                 <textarea
                                   value={editingText.text}
                                   onChange={(e) => setEditingText({ ...editingText, text: e.target.value })}
                                   rows={4}
-                                  className="w-full px-3 py-1.5 text-sm bg-white/[0.04] text-slate-200 border border-white/[0.09] rounded focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none resize-y"
+                                  className="w-full px-3 py-1.5 text-sm bg-white/[0.04] text-slate-300 border border-white/[0.09] rounded focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none resize-y"
                                   placeholder="Text předvolby"
                                 />
                                 <div className="flex gap-2 justify-end">
@@ -896,13 +896,13 @@ export function NastaveniPage() {
                             ) : (
                               <div className="flex items-start">
                                 <div className="flex-1 p-3">
-                                  <div className="text-sm font-semibold text-slate-200">{t.nazev}</div>
+                                  <div className="text-sm font-semibold text-slate-300">{t.nazev}</div>
                                   <div className="text-xs text-slate-400 mt-1 whitespace-pre-wrap line-clamp-3">{t.text}</div>
                                 </div>
                                 <div className="flex items-center gap-1 p-2">
                                   <button
                                     onClick={() => setEditingText({ ...t })}
-                                    className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-white/[0.06] rounded transition-colors cursor-pointer text-xs"
+                                    className="p-1.5 text-slate-400 hover:text-slate-300 hover:bg-white/[0.06] rounded transition-colors cursor-pointer text-xs"
                                     title="Upravit"
                                   >Upravit</button>
                                   <button
@@ -924,7 +924,7 @@ export function NastaveniPage() {
                             type="text"
                             value={newText.nazev}
                             onChange={(e) => setNewText({ ...newText, nazev: e.target.value })}
-                            className="w-full px-3 py-1.5 text-sm bg-white/[0.04] text-slate-200 border border-white/[0.09] rounded focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none"
+                            className="w-full px-3 py-1.5 text-sm bg-white/[0.04] text-slate-300 border border-white/[0.09] rounded focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none"
                             placeholder="Název předvolby"
                             autoFocus
                           />
@@ -932,7 +932,7 @@ export function NastaveniPage() {
                             value={newText.text}
                             onChange={(e) => setNewText({ ...newText, text: e.target.value })}
                             rows={4}
-                            className="w-full px-3 py-1.5 text-sm bg-white/[0.04] text-slate-200 border border-white/[0.09] rounded focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none resize-y"
+                            className="w-full px-3 py-1.5 text-sm bg-white/[0.04] text-slate-300 border border-white/[0.09] rounded focus:ring-1 focus:ring-blue-500/[0.4] focus:outline-none resize-y"
                             placeholder="Text předvolby"
                           />
                           <div className="flex gap-2 justify-end">

@@ -217,7 +217,7 @@ export function PlanovaniPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-slate-200">Plánování</h1>
+          <h1 className="text-lg font-bold text-slate-300">Plánování</h1>
           <p className="text-xs text-slate-400">Správa zakázek a plánování revizí</p>
         </div>
         <div className="flex gap-2">
@@ -343,11 +343,11 @@ export function PlanovaniPage() {
                 onClick={() => handleKategorieSelected(kat.value)}
                 className="flex items-center gap-4 p-4 rounded-lg border-2 border-white/[0.08] hover:border-white/[0.20] hover:bg-white/[0.04] transition-all text-left group"
               >
-                <div className="flex-shrink-0 text-slate-400 group-hover:text-slate-200 transition-colors">
+                <div className="flex-shrink-0 text-slate-400 group-hover:text-slate-300 transition-colors">
                   {kat.icon}
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-200 group-hover:text-white">{kat.label}</p>
+                  <p className="font-semibold text-slate-300 group-hover:text-white">{kat.label}</p>
                   <p className="text-xs text-slate-400 mt-0.5">{kat.popis}</p>
                 </div>
                 <div className="flex-shrink-0 ml-auto text-slate-300 group-hover:text-slate-500">

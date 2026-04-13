@@ -117,7 +117,7 @@ export function PristrojePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-sm font-bold text-slate-200">Přístroje a kalibrace</h1>
+          <h1 className="text-sm font-bold text-slate-300">Přístroje a kalibrace</h1>
           <p className="text-xs text-slate-400">Správa měřících přístrojů a jejich kalibračních termínů</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
@@ -130,7 +130,7 @@ export function PristrojePage() {
       <div className="lg:hidden">
         <button
           onClick={() => setShowStats(!showStats)}
-          className="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-200"
+          className="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-300"
         >
           <span>{showStats ? '▼' : '▶'}</span>
           <span>{showStats ? 'Skrýt statistiky' : 'Zobrazit statistiky'}</span>
@@ -139,13 +139,13 @@ export function PristrojePage() {
       <div className={`grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 ${showStats ? '' : 'hidden lg:grid'}`}>
         <Card>
           <div className="text-center p-1">
-            <p className="text-lg sm:text-xl font-bold text-slate-200">{pristroje.length}</p>
+            <p className="text-lg sm:text-xl font-bold text-slate-300">{pristroje.length}</p>
             <p className="text-xs text-slate-400">Celkem přístrojů</p>
           </div>
         </Card>
         <Card>
           <div className="text-center p-1">
-            <p className="text-lg sm:text-xl font-bold text-slate-200">
+            <p className="text-lg sm:text-xl font-bold text-slate-300">
               {pristroje.filter(p => !isExpiring(p.platnostKalibrace)).length}
             </p>
             <p className="text-xs text-slate-400">Platná kalibrace</p>
@@ -153,7 +153,7 @@ export function PristrojePage() {
         </Card>
         <Card>
           <div className="text-center p-1">
-            <p className="text-lg sm:text-xl font-bold text-slate-200">
+            <p className="text-lg sm:text-xl font-bold text-slate-300">
               {pristroje.filter(p => isExpiring(p.platnostKalibrace) && !isExpired(p.platnostKalibrace)).length}
             </p>
             <p className="text-xs text-slate-400">Brzy expiruje</p>
@@ -161,7 +161,7 @@ export function PristrojePage() {
         </Card>
         <Card>
           <div className="text-center p-1">
-            <p className="text-lg sm:text-xl font-bold text-slate-200">
+            <p className="text-lg sm:text-xl font-bold text-slate-300">
               {pristroje.filter(p => isExpired(p.platnostKalibrace)).length}
             </p>
             <p className="text-xs text-slate-400">Prošlá kalibrace</p>

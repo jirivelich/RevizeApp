@@ -220,7 +220,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
             }
           >
             <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="p-2 bg-white/[0.04] rounded-lg"><p className="text-[10px] text-slate-400">Patro</p><p className="font-medium text-xs text-slate-200">{selectedMistnost.patro || '—'}</p></div>
+              <div className="p-2 bg-white/[0.04] rounded-lg"><p className="text-[10px] text-slate-400">Patro</p><p className="font-medium text-xs text-slate-300">{selectedMistnost.patro || '—'}</p></div>
             </div>
 
             <h4 className="font-medium text-sm text-slate-300 mb-2">Zařízení ({zarizeni.length})</h4>

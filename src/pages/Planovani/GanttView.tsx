@@ -261,7 +261,7 @@ export function GanttView({ zakazky, onZakazkaClick, onMove, onAddDay, onRemoveD
       <div className="flex items-center justify-between mb-4">
         <button onClick={goPrev} className="p-2 rounded-lg hover:bg-white/[0.06] text-slate-400 transition-colors" title="Předchozí 2 týdny">◀</button>
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-slate-200">{rangeLabel}</h2>
+          <h2 className="text-lg font-semibold text-slate-300">{rangeLabel}</h2>
           <button onClick={goToday} className="text-xs px-2 py-1 rounded bg-blue-500/[0.15] text-blue-300 hover:bg-blue-500/[0.25] transition-colors">
             Dnes
           </button>

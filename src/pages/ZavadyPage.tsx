@@ -109,7 +109,7 @@ export function ZavadyPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-sm font-bold text-slate-200">Katalog závad</h1>
+          <h1 className="text-sm font-bold text-slate-300">Katalog závad</h1>
           <p className="text-xs text-slate-400">Databáze typických závad s odkazy na normy a zákony</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
@@ -122,7 +122,7 @@ export function ZavadyPage() {
       <div className="lg:hidden">
         <button
           onClick={() => setShowStats(!showStats)}
-          className="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-200"
+          className="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-300"
         >
           <span>{showStats ? '▼' : '▶'}</span>
           <span>{showStats ? 'Skrýt statistiky' : 'Zobrazit statistiky'}</span>
@@ -131,19 +131,19 @@ export function ZavadyPage() {
       <div className={`grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 ${showStats ? '' : 'hidden lg:grid'}`}>
         <div className="bg-white/[0.03] rounded-lg p-3 sm:p-4 border border-white/[0.07]">
           <p className="text-xs text-slate-400">Celkem v katalogu</p>
-          <p className="text-lg sm:text-xl font-bold text-slate-200">{stats.celkem}</p>
+          <p className="text-lg sm:text-xl font-bold text-slate-300">{stats.celkem}</p>
         </div>
         <div className="bg-white/[0.03] rounded-lg p-3 sm:p-4 border border-white/[0.07]">
           <p className="text-xs text-slate-400">C1 - Kritické</p>
-          <p className="text-lg sm:text-xl font-bold text-slate-200">{stats.kriticke}</p>
+          <p className="text-lg sm:text-xl font-bold text-slate-300">{stats.kriticke}</p>
         </div>
         <div className="bg-white/[0.03] rounded-lg p-3 sm:p-4 border border-white/[0.07]">
           <p className="text-xs text-slate-400">C2 - Vážné</p>
-          <p className="text-lg sm:text-xl font-bold text-slate-200">{stats.vazne}</p>
+          <p className="text-lg sm:text-xl font-bold text-slate-300">{stats.vazne}</p>
         </div>
         <div className="bg-white/[0.03] rounded-lg p-3 sm:p-4 border border-white/[0.07]">
           <p className="text-xs text-slate-400">C3 - Drobné</p>
-          <p className="text-lg sm:text-xl font-bold text-slate-200">{stats.drobne}</p>
+          <p className="text-lg sm:text-xl font-bold text-slate-300">{stats.drobne}</p>
         </div>
       </div>
 
@@ -283,7 +283,7 @@ export function ZavadyPage() {
             <textarea
               value={formData.popis}
               onChange={(e) => setFormData({ ...formData, popis: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg bg-white/[0.04] text-slate-200 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5]"
+              className="w-full px-3 py-2 border rounded-lg bg-white/[0.04] text-slate-300 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5]"
               rows={2}
               placeholder="Stručný popis typické závady..."
               required
@@ -308,7 +308,7 @@ export function ZavadyPage() {
                 list="kategorie-list"
                 value={formData.kategorie}
                 onChange={(e) => setFormData({ ...formData, kategorie: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg bg-white/[0.04] text-slate-200 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5]"
+                className="w-full px-3 py-2 border rounded-lg bg-white/[0.04] text-slate-300 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5]"
                 placeholder="Rozvaděče, Vedení, Uzemnění..."
               />
               <datalist id="kategorie-list">
@@ -342,7 +342,7 @@ export function ZavadyPage() {
               <textarea
                 value={formData.zneniClanku}
                 onChange={(e) => setFormData({ ...formData, zneniClanku: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg bg-white/[0.04] text-slate-200 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5]"
+                className="w-full px-3 py-2 border rounded-lg bg-white/[0.04] text-slate-300 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5]"
                 rows={4}
                 placeholder="Úplné nebo zkrácené znění článku normy či paragrafu zákona..."
               />

@@ -26,21 +26,21 @@ function EditableSelect({ label, value, onChange, options }: {
       {showCustom ? (
         <div className="relative">
           <input
-            className="w-full px-3 py-2 pr-8 border rounded-lg bg-white/[0.04] text-slate-200 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5] text-xs"
+            className="w-full px-3 py-2 pr-8 border rounded-lg bg-white/[0.04] text-slate-300 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5] text-xs"
             value={value}
             onChange={(e) => onChange(e.target.value)}
             autoFocus
           />
           <button
             type="button"
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-200 text-xs"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-xs"
             onClick={() => { setShowCustom(false); }}
             title="Zpět na seznam"
           >↩</button>
         </div>
       ) : (
         <select
-          className="w-full px-3 py-2 border rounded-lg bg-white/[0.04] text-slate-200 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5] text-xs"
+          className="w-full px-3 py-2 border rounded-lg bg-white/[0.04] text-slate-300 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5] text-xs"
           value={options.includes(value) ? value : '__custom__'}
           onChange={(e) => {
             if (e.target.value === '__custom__') {
@@ -238,7 +238,7 @@ export function RozvadecDetailPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-slate-200">{rozvadec.nazev}</h1>
+          <h1 className="text-lg font-bold text-slate-300">{rozvadec.nazev}</h1>
           <p className="text-xs text-slate-400">{rozvadec.oznaceni} • {rozvadec.umisteni}</p>
         </div>
         <Button variant="secondary" onClick={() => navigate(`/revize/${revizeId}`)}>
@@ -249,15 +249,15 @@ export function RozvadecDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <p className="text-sm text-slate-400">Typ rozváděče</p>
-          <p className="font-medium text-slate-200">{rozvadec.typRozvadece || '—'}</p>
+          <p className="font-medium text-slate-300">{rozvadec.typRozvadece || '—'}</p>
         </Card>
         <Card>
           <p className="text-sm text-slate-400">Stupeň krytí</p>
-          <p className="font-medium text-slate-200">{rozvadec.stupenKryti}</p>
+          <p className="font-medium text-slate-300">{rozvadec.stupenKryti}</p>
         </Card>
         <Card>
           <p className="text-sm text-slate-400">Počet okruhů</p>
-          <p className="font-medium text-slate-200">{okruhy.length}</p>
+          <p className="font-medium text-slate-300">{okruhy.length}</p>
         </Card>
       </div>
 

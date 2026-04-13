@@ -83,7 +83,7 @@ export function FirmyPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-sm font-bold text-slate-200">Firmy</h1>
+          <h1 className="text-sm font-bold text-slate-300">Firmy</h1>
           <p className="text-xs text-slate-400 mt-1">
             Seznam firem, pro které provádíte revize. Tyto firmy můžete vybírat při vytváření revize.
           </p>
@@ -229,7 +229,7 @@ export function FirmyPage() {
               value={formData.poznamka}
               onChange={(e) => setFormData({ ...formData, poznamka: e.target.value })}
               placeholder="Interní poznámky k firmě..."
-              className="w-full px-3 py-2 border rounded-lg bg-white/[0.04] text-slate-200 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5] text-sm"
+              className="w-full px-3 py-2 border rounded-lg bg-white/[0.04] text-slate-300 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5] text-sm"
               rows={3}
             />
           </div>

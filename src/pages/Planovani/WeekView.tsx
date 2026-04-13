@@ -136,7 +136,7 @@ function WeekDropZone({ id, label, direction, visible }: WeekDropZoneProps) {
         transition-all duration-200 cursor-default
         ${isOver
           ? 'bg-slate-700 text-white shadow-2xl w-24'
-          : 'bg-white/[0.08] text-slate-200 shadow-lg border border-white/[0.12]'
+          : 'bg-white/[0.08] text-slate-300 shadow-lg border border-white/[0.12]'
         }
       `}
     >
@@ -280,7 +280,7 @@ export function WeekView({ zakazky, onZakazkaClick, onSlotClick, onMove }: WeekV
           ◀
         </button>
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-slate-200">{weekLabel}</h2>
+          <h2 className="text-lg font-semibold text-slate-300">{weekLabel}</h2>
           <button
             onClick={goToToday}
             className="text-xs px-2 py-1 rounded bg-blue-500/[0.15] text-blue-300 hover:bg-blue-500/[0.25] transition-colors"

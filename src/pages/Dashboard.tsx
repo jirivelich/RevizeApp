@@ -21,7 +21,7 @@ function StatCard({ title, value, subtitle, accent, link }: {
   return (
     <Link to={link} className={`group block rounded-lg border border-white/[0.07] bg-white/[0.03] p-3 transition-all hover:border-white/[0.12] active:scale-[0.98] border-l-[3px] ${accent}`}>
       <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide">{title}</p>
-      <p className="mt-1 text-2xl font-bold text-slate-200 tracking-tight">{value}</p>
+      <p className="mt-1 text-2xl font-bold text-slate-300 tracking-tight">{value}</p>
       {subtitle && <p className="mt-0.5 text-[10px] text-slate-500">{subtitle}</p>}
     </Link>
   );
@@ -99,12 +99,12 @@ function SectionCard({ title, icon: _icon, count, viewAllLink, viewAllLabel, emp
   return (
     <div className="rounded-lg border border-white/[0.07] bg-white/[0.03]">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.05]">
-        <h2 className="text-[13px] font-semibold text-slate-200">{title}</h2>
+        <h2 className="text-[13px] font-semibold text-slate-300">{title}</h2>
         <div className="flex items-center gap-2">
           {count !== undefined && (
             <span className="text-[10px] font-medium text-slate-500">{count}</span>
           )}
-          <Link to={viewAllLink} className="text-[11px] font-medium text-slate-400 hover:text-slate-200 transition-colors">
+          <Link to={viewAllLink} className="text-[11px] font-medium text-slate-400 hover:text-slate-300 transition-colors">
             {viewAllLabel ?? 'Vše →'}
           </Link>
         </div>
@@ -115,7 +115,7 @@ function SectionCard({ title, icon: _icon, count, viewAllLink, viewAllLabel, emp
         ) : (
           <div className="py-6 text-center">
             <p className="text-xs text-slate-400 mb-1.5">{empty}</p>
-            <Link to={emptyLink} className="text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors hover:underline">
+            <Link to={emptyLink} className="text-xs font-medium text-slate-400 hover:text-slate-300 transition-colors hover:underline">
               {emptyLabel}
             </Link>
           </div>
@@ -149,8 +149,8 @@ function TodayPanel({ zakazky }: { zakazky: Zakazka[] }) {
   return (
     <div className="rounded-lg border border-white/[0.07] bg-white/[0.03]">
       <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.05]">
-        <h2 className="text-[13px] font-semibold text-slate-200">Dnes</h2>
-        <Link to="/planovani" className="text-[11px] font-medium text-slate-400 hover:text-slate-200 transition-colors">
+        <h2 className="text-[13px] font-semibold text-slate-300">Dnes</h2>
+        <Link to="/planovani" className="text-[11px] font-medium text-slate-400 hover:text-slate-300 transition-colors">
           Vše →
         </Link>
       </div>
@@ -252,7 +252,7 @@ function WeatherWidget() {
   return (
     <div className="rounded-lg border border-white/[0.07] bg-white/[0.03]">
       <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.05]">
-        <h2 className="text-[13px] font-semibold text-slate-200">Počasí — Tachov</h2>
+        <h2 className="text-[13px] font-semibold text-slate-300">Počasí — Tachov</h2>
         <span className="text-[10px] text-slate-500">Open-Meteo</span>
       </div>
       <div className="grid grid-cols-5 divide-x divide-white/[0.05]">
@@ -271,7 +271,7 @@ function WeatherWidget() {
               const isToday = day.date === new Date().toISOString().slice(0, 10);
               return (
                 <div key={day.date} className={`flex flex-col items-center gap-0.5 py-3 px-2 ${isToday ? 'bg-white/[0.05]' : ''}`}>
-                  <p className={`text-[11px] font-semibold ${isToday ? 'text-slate-200' : 'text-slate-400'}`}>
+                  <p className={`text-[11px] font-semibold ${isToday ? 'text-slate-300' : 'text-slate-400'}`}>
                     {isToday ? 'Dnes' : dayName}
                   </p>
                   <span className="text-xl leading-none">{wmoToEmoji(day.code)}</span>
@@ -316,8 +316,8 @@ function DayPopup({ day, zakazky, onClose }: { day: Date; zakazky: Zakazka[]; on
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
-          <p className="text-[13px] font-semibold text-slate-200 capitalize">{label}</p>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-200 transition-colors text-lg leading-none">×</button>
+          <p className="text-[13px] font-semibold text-slate-300 capitalize">{label}</p>
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-300 transition-colors text-lg leading-none">×</button>
         </div>
         <div className="p-3 space-y-1.5 max-h-72 overflow-y-auto">
           {zakazky.map((z) => {
@@ -330,7 +330,7 @@ function DayPopup({ day, zakazky, onClose }: { day: Date; zakazky: Zakazka[]; on
                 onClick={onClose}
                 className={`block rounded-lg border border-white/[0.06] border-l-[3px] ${priorityBorder} bg-white/[0.03] px-3 py-2 hover:bg-white/[0.07] transition-colors`}
               >
-                <p className="text-[13px] font-medium text-slate-200 truncate">{z.nazev}</p>
+                <p className="text-[13px] font-medium text-slate-300 truncate">{z.nazev}</p>
                 <div className="flex items-center justify-between mt-0.5">
                   <p className="text-[11px] text-slate-400 truncate">{z.klient}</p>
                   <span className={`text-[10px] font-medium capitalize ${stavColor}`}>{z.stav}</span>
@@ -374,11 +374,11 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
     <div className="rounded-lg border border-white/[0.07] bg-white/[0.03]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.05]">
-        <h2 className="text-[13px] font-semibold text-slate-200 capitalize">{monthLabel}</h2>
+        <h2 className="text-[13px] font-semibold text-slate-300 capitalize">{monthLabel}</h2>
         <div className="flex items-center gap-1">
-          <button onClick={() => setOffset(o => o - 1)} className="h-6 w-6 flex items-center justify-center rounded hover:bg-white/[0.06] text-slate-500 hover:text-slate-200 transition-colors text-xs">‹</button>
+          <button onClick={() => setOffset(o => o - 1)} className="h-6 w-6 flex items-center justify-center rounded hover:bg-white/[0.06] text-slate-500 hover:text-slate-300 transition-colors text-xs">‹</button>
           <button onClick={() => setOffset(0)} className="px-2 py-0.5 rounded text-[10px] font-medium text-slate-400 hover:bg-white/[0.06] transition-colors">Dnes</button>
-          <button onClick={() => setOffset(o => o + 1)} className="h-6 w-6 flex items-center justify-center rounded hover:bg-white/[0.06] text-slate-500 hover:text-slate-200 transition-colors text-xs">›</button>
+          <button onClick={() => setOffset(o => o + 1)} className="h-6 w-6 flex items-center justify-center rounded hover:bg-white/[0.06] text-slate-500 hover:text-slate-300 transition-colors text-xs">›</button>
         </div>
       </div>
       {/* Day headers */}
@@ -506,7 +506,7 @@ export function Dashboard() {
       {/* ═══ Header ═══ */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-slate-200">{greeting}</h1>
+          <h1 className="text-lg font-bold text-slate-300">{greeting}</h1>
           <p className="text-xs text-slate-400 capitalize">{todayLabel}</p>
         </div>
         <div className="flex gap-1.5">
