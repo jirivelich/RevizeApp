@@ -77,6 +77,13 @@ export function RevizePage() {
   // Potvrzení smazání (náhrada za window.confirm – nefunguje v iOS PWA)
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
+  // Paginace
+  const [pageSize, setPageSize] = useState<number>(25);
+  const [currentPage, setCurrentPage] = useState(0);
+
+  // Rychlý náhled revize
+  const [nahledRevize, setNahledRevize] = useState<Revize | null>(null);
+
   // Řazení
   type SortKey = 'cisloRevize' | 'kategorieRevize' | 'nazev' | 'adresa' | 'datum' | 'typRevize' | 'stav';
   const [sortKey, setSortKey] = useState<SortKey>('datum');
@@ -109,6 +116,11 @@ export function RevizePage() {
       document.removeEventListener('touchstart', handleClickOutside);
     };
   }, []);
+
+  // Reset na první stránku při změně filtrů nebo řazení
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchTerm, filterStav, filterKategorie, sortKey, sortDir]);
 
   const openHistorieModal = async (revizeId: number, cisloRevize: string) => {
     setHistorieSourceId(revizeId);
@@ -234,6 +246,12 @@ export function RevizePage() {
     return sortDir === 'asc' ? cmp : -cmp;
   });
 
+  const totalCount = filteredRevize.length;
+  const totalPages = pageSize === -1 ? 1 : Math.ceil(totalCount / pageSize);
+  const paginatedRevize = pageSize === -1
+    ? filteredRevize
+    : filteredRevize.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+
   if (loading) {
     return (
       <div className="text-center py-12">
@@ -306,7 +324,7 @@ export function RevizePage() {
           <>
           {/* Mobilní seznam karet */}
           <div className="md:hidden px-4 pb-4 flex-1 min-h-0 overflow-auto space-y-2">
-            {filteredRevize.map((r) => (
+            {paginatedRevize.map((r) => (
               <div key={r.id} className="bg-white/[0.03] rounded-lg border border-white/[0.07] p-3">
                 <Link to={`/revize/${r.id}`} className="block">
                   <p className="font-semibold text-slate-300 text-sm leading-snug">{r.nazev}</p>
@@ -335,6 +353,16 @@ export function RevizePage() {
                         <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                       </svg>
                     </button>
+                    <button
+                      onClick={() => setNahledRevize(r)}
+                      className="p-1 rounded-lg hover:bg-white/[0.06] text-slate-500 hover:text-slate-300 transition-colors"
+                      title="Náhled"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                        <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
                 <p className="text-xs text-slate-400 mt-1.5">{r.cisloRevize}</p>
@@ -357,7 +385,7 @@ export function RevizePage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredRevize.map((r) => (
+                {paginatedRevize.map((r) => (
                   <tr key={r.id} className="border-b border-white/[0.05] hover:bg-white/[0.04]">
                     <td className="py-2 px-3">
                       <Link to={`/revize/${r.id}`} className="text-xs text-slate-300 hover:text-slate-100 font-medium hover:underline">
@@ -409,6 +437,13 @@ export function RevizePage() {
                         {openMenuId === r.id && (
                           <div className="absolute right-0 top-full mt-1 w-44 bg-[#0e1629] rounded-lg shadow-lg border border-white/[0.08] py-1 z-50">
                             <button
+                              onClick={() => { setOpenMenuId(null); setNahledRevize(r); }}
+                              className="w-full text-left px-3 py-1.5 text-xs text-slate-300 hover:bg-white/[0.06] flex items-center gap-2"
+                            >
+                              <span className="text-xs">👁️</span> Náhled
+                            </button>
+                            <div className="border-t border-white/[0.06] my-1"></div>
+                            <button
                               onClick={() => { setOpenMenuId(null); navigate(`/revize/${r.id}`); }}
                               className="w-full text-left px-3 py-1.5 text-xs text-slate-300 hover:bg-white/[0.06] flex items-center gap-2"
                             >
@@ -442,6 +477,47 @@ export function RevizePage() {
               </tbody>
             </table>
           </div>
+          {/* Pagination footer */}
+          <div className="flex-shrink-0 flex items-center justify-between px-6 py-2.5 border-t border-white/[0.06] text-xs text-slate-400">
+            <span>
+              {totalCount === 0 ? '0 záznamů' : pageSize === -1
+                ? `${totalCount} záznamů`
+                : `${Math.min(currentPage * pageSize + 1, totalCount)}–${Math.min((currentPage + 1) * pageSize, totalCount)} z ${totalCount}`}
+            </span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <span className="hidden sm:inline">Řádků:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(0); }}
+                  className="bg-white/[0.04] border border-white/[0.08] rounded px-2 py-0.5 text-xs text-slate-300 focus:outline-none focus:border-white/[0.20]"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={-1}>Vše</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  disabled={currentPage === 0}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                  className="px-2 py-0.5 rounded hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  ‹ Předchozí
+                </button>
+                <span className="px-2 text-slate-500">{totalPages > 0 ? `${currentPage + 1} / ${totalPages}` : '—'}</span>
+                <button
+                  disabled={currentPage >= totalPages - 1}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                  className="px-2 py-0.5 rounded hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  Další ›
+                </button>
+              </div>
+            </div>
+          </div>
           </>
         ) : (
           <p className="text-center text-slate-500 py-8 px-6">
@@ -451,6 +527,121 @@ export function RevizePage() {
           </p>
         )}
       </div>
+
+      {/* Modal: Rychlý náhled revize */}
+      <Modal
+        isOpen={nahledRevize !== null}
+        onClose={() => setNahledRevize(null)}
+        title={nahledRevize ? `Náhled — ${nahledRevize.cisloRevize}` : 'Náhled'}
+        size="lg"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setNahledRevize(null)}>
+              Zavřít
+            </Button>
+            <Button onClick={() => { setNahledRevize(null); navigate(`/revize/${nahledRevize?.id}`); }}>
+              Otevřít detail
+            </Button>
+          </>
+        }
+      >
+        {nahledRevize && (
+          <div className="space-y-4 text-sm">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+              <div>
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Číslo revize</p>
+                <p className="text-slate-200 font-medium">{nahledRevize.cisloRevize}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Kategorie</p>
+                <p className="text-slate-200">
+                  {nahledRevize.kategorieRevize === 'elektro' ? 'Elektrické instalace' :
+                   nahledRevize.kategorieRevize === 'hromosvod' ? 'Hromosvod' :
+                   nahledRevize.kategorieRevize === 'stroje' ? 'Strojní zařízení' : nahledRevize.kategorieRevize}
+                </p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Název</p>
+                <p className="text-slate-200 font-medium">{nahledRevize.nazev}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Adresa</p>
+                <p className="text-slate-300">{nahledRevize.adresa}</p>
+              </div>
+              {nahledRevize.objednatel && (
+                <div className="col-span-2">
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Objednatel</p>
+                  <p className="text-slate-300">{nahledRevize.objednatel}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Datum revize</p>
+                <p className="text-slate-300">{new Date(nahledRevize.datum).toLocaleDateString('cs-CZ')}</p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Typ</p>
+                <p className="text-slate-300">{nahledRevize.typRevize}</p>
+              </div>
+              {nahledRevize.datumPlatnosti && (
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Platnost do</p>
+                  <p className="text-slate-300">{new Date(nahledRevize.datumPlatnosti).toLocaleDateString('cs-CZ')}</p>
+                </div>
+              )}
+              {nahledRevize.termin ? (
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Termín (měs.)</p>
+                  <p className="text-slate-300">{nahledRevize.termin}</p>
+                </div>
+              ) : null}
+              <div>
+                <p className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Stav</p>
+                <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                  nahledRevize.stav === 'dokončeno' ? 'bg-emerald-500/[0.15] text-emerald-300' :
+                  nahledRevize.stav === 'rozpracováno' ? 'bg-amber-500/[0.15] text-amber-300' :
+                  'bg-white/[0.06] text-slate-400'
+                }`}>{nahledRevize.stav}</span>
+              </div>
+              {nahledRevize.vysledek && (
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Výsledek</p>
+                  <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                    nahledRevize.vysledek === 'schopno' ? 'bg-emerald-500/[0.15] text-emerald-300' : 'bg-red-500/[0.15] text-red-300'
+                  }`}>{nahledRevize.vysledek}</span>
+                </div>
+              )}
+              {nahledRevize.rtJmeno && (
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Revizní technik</p>
+                  <p className="text-slate-300">{nahledRevize.rtJmeno}</p>
+                </div>
+              )}
+              {nahledRevize.firmaJmeno && (
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Firma</p>
+                  <p className="text-slate-300">{nahledRevize.firmaJmeno}</p>
+                </div>
+              )}
+            </div>
+            {(nahledRevize.poznamka || nahledRevize.zaver) && (
+              <div className="border-t border-white/[0.06] pt-3 space-y-3">
+                {nahledRevize.poznamka && (
+                  <div>
+                    <p className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Poznámka</p>
+                    <p className="text-slate-400 text-xs leading-relaxed">{nahledRevize.poznamka}</p>
+                  </div>
+                )}
+                {nahledRevize.zaver && (
+                  <div>
+                    <p className="text-xs text-slate-500 uppercase tracking-wider mb-0.5">Závěr</p>
+                    <p className="text-slate-400 text-xs leading-relaxed">{nahledRevize.zaver}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
 
       <Modal
         isOpen={isModalOpen}
