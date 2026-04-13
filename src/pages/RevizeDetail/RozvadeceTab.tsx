@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { Button, Card, Input, Select, Modal, BottomSheet } from '../../components/ui';
 import { TW } from './tw';
 import { okruhService, cranicService } from '../../services/database';
@@ -30,25 +30,25 @@ export function EditableSelect({ label, value, onChange, options }: {
 
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs font-medium text-slate-400">{label}</label>
+      <label className="text-xs font-medium text-[var(--text-secondary)]">{label}</label>
       {showCustom ? (
         <div className="relative">
           <input
-            className="w-full px-3 py-2 pr-8 border rounded-lg bg-white/[0.04] text-slate-300 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5] text-xs"
+            className="w-full px-3 py-2 pr-8 border rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-blue-500/[0.5] text-xs"
             value={value}
             onChange={(e) => onChange(e.target.value)}
             autoFocus
           />
           <button
             type="button"
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 text-xs"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs"
             onClick={() => { setShowCustom(false); }}
             title="Zpět na seznam"
           >↩</button>
         </div>
       ) : (
         <select
-          className="w-full px-3 py-2 border rounded-lg bg-white/[0.04] text-slate-300 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5] text-xs"
+          className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-blue-500/[0.5] text-xs"
           value={options.includes(value) ? value : '__custom__'}
           onChange={(e) => {
             if (e.target.value === '__custom__') {
@@ -543,28 +543,28 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                   onDragEnd={handleRozvadecDragEnd}
                   className={`rounded-lg border transition-colors cursor-grab active:cursor-grabbing ${
                     selectedRozvadec?.id === r.id
-                      ? 'border-blue-500 bg-blue-500/[0.10]'
+                      ? 'border-blue-500 bg-[var(--bg-accent)]'
                       : draggedRozvadec?.id === r.id
-                        ? 'opacity-50 bg-blue-500/[0.10] border-white/[0.07]'
-                        : 'border-white/[0.07] bg-white/[0.03] hover:border-white/[0.14]'
+                        ? 'opacity-50 bg-[var(--bg-accent)] border-[var(--border)]'
+                        : 'border-[var(--border)] bg-[var(--bg-surface)] hover:border-white/[0.14]'
                   }`}
                   onClick={() => handleSelectRozvadec(r)}
                 >
                   <div className="p-3">
                     <div className="flex items-center justify-between mb-1">
                       <p className="font-medium text-xs">{r.nazev}</p>
-                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-white/[0.06] text-slate-400">
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
                         {okruhyCounts[r.id!] || 0}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400">{r.oznaceni} • {r.stupenKryti}</p>
-                    <p className="text-xs text-slate-500">{r.umisteni}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{r.oznaceni} • {r.stupenKryti}</p>
+                    <p className="text-xs text-[var(--text-muted)]">{r.umisteni}</p>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-center text-slate-500 py-6 text-xs">Zatím žádné rozvaděče.</p>
+            <p className="text-center text-[var(--text-muted)] py-6 text-xs">Zatím žádné rozvaděče.</p>
           )}
         </Card>
       </div>
@@ -634,19 +634,19 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
             }
           >
             <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="p-2 bg-white/[0.04] rounded-lg"><p className="text-[10px] text-slate-400">Označení</p><p className="font-medium text-xs text-slate-300">{selectedRozvadec.oznaceni}</p></div>
-              <div className="p-2 bg-white/[0.04] rounded-lg"><p className="text-[10px] text-slate-400">Umístění</p><p className="font-medium text-xs text-slate-300">{selectedRozvadec.umisteni}</p></div>
-              <div className="p-2 bg-white/[0.04] rounded-lg"><p className="text-[10px] text-slate-400">Typ</p><p className="font-medium text-xs text-slate-300">{selectedRozvadec.typRozvadece || '—'}</p></div>
-              <div className="p-2 bg-white/[0.04] rounded-lg"><p className="text-[10px] text-slate-400">Krytí</p><p className="font-medium text-xs text-slate-300">{selectedRozvadec.stupenKryti}</p></div>
+              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-[10px] text-[var(--text-secondary)]">Označení</p><p className="font-medium text-xs text-[var(--text-primary)]">{selectedRozvadec.oznaceni}</p></div>
+              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-[10px] text-[var(--text-secondary)]">Umístění</p><p className="font-medium text-xs text-[var(--text-primary)]">{selectedRozvadec.umisteni}</p></div>
+              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-[10px] text-[var(--text-secondary)]">Typ</p><p className="font-medium text-xs text-[var(--text-primary)]">{selectedRozvadec.typRozvadece || '—'}</p></div>
+              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-[10px] text-[var(--text-secondary)]">Krytí</p><p className="font-medium text-xs text-[var(--text-primary)]">{selectedRozvadec.stupenKryti}</p></div>
             </div>
 
-            <h4 className="font-medium text-sm text-slate-300 mb-2">Okruhy ({okruhy.length})</h4>
+            <h4 className="font-medium text-sm text-[var(--text-primary)] mb-2">Okruhy ({okruhy.length})</h4>
             {inlineModeRozvadecId === selectedRozvadec.id ? (
               // ─── HROMADNÝ VSTUP – inline tabulka ─────────────────────────
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border-collapse">
                   <thead>
-                    <tr className="border-b border-white/[0.06] text-xs text-slate-400 uppercase tracking-wide">
+                    <tr className="border-b border-[var(--border-table)] text-xs text-[var(--text-secondary)] uppercase tracking-wide">
                       <th className="text-left py-2 pr-2 font-medium w-8">Č.</th>
                       <th className="text-left py-2 pr-2 font-medium">Název</th>
                       <th className="text-left py-2 pr-2 font-medium w-16">Typ</th>
@@ -662,44 +662,44 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                   </thead>
                   <tbody>
                     {okruhy.sort((a, b) => a.cislo - b.cislo).map((o) => (
-                      <tr key={o.id} className="border-b border-white/[0.05] hover:bg-white/[0.04] group">
-                        <td className="py-1.5 pr-2 text-xs font-medium text-slate-400">{o.cislo}</td>
-                        <td className="py-1.5 pr-2 text-xs font-medium text-slate-300">{o.nazev}</td>
+                      <tr key={o.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)] group">
+                        <td className="py-1.5 pr-2 text-xs font-medium text-[var(--text-secondary)]">{o.cislo}</td>
+                        <td className="py-1.5 pr-2 text-xs font-medium text-[var(--text-primary)]">{o.nazev}</td>
                         <td className="py-1.5 pr-2">
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.06] text-slate-400">{o.jisticTyp}</span>
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">{o.jisticTyp}</span>
                         </td>
-                        <td className="py-1.5 pr-2 text-xs text-slate-400">{o.jisticProud}</td>
-                        <td className="py-1.5 pr-2 text-xs text-slate-400">{o.pocetFazi}P</td>
-                        <td className="py-1.5 pr-2 text-xs text-slate-400">{o.typKabelu || '—'}</td>
-                        <td className="py-1.5 pr-2 text-xs text-slate-400">{o.pocetZil || '—'}</td>
-                        <td className="py-1.5 pr-2 text-xs text-slate-400">{o.prurez ? `${o.prurez} mm²` : '—'}</td>
-                        <td className="py-1.5 pr-2 text-xs text-slate-400">{o.izolacniOdpor || '—'}</td>
-                        <td className="py-1.5 pr-2 text-xs text-slate-400">{o.impedanceSmycky || '—'}</td>
+                        <td className="py-1.5 pr-2 text-xs text-[var(--text-secondary)]">{o.jisticProud}</td>
+                        <td className="py-1.5 pr-2 text-xs text-[var(--text-secondary)]">{o.pocetFazi}P</td>
+                        <td className="py-1.5 pr-2 text-xs text-[var(--text-secondary)]">{o.typKabelu || '—'}</td>
+                        <td className="py-1.5 pr-2 text-xs text-[var(--text-secondary)]">{o.pocetZil || '—'}</td>
+                        <td className="py-1.5 pr-2 text-xs text-[var(--text-secondary)]">{o.prurez ? `${o.prurez} mm²` : '—'}</td>
+                        <td className="py-1.5 pr-2 text-xs text-[var(--text-secondary)]">{o.izolacniOdpor || '—'}</td>
+                        <td className="py-1.5 pr-2 text-xs text-[var(--text-secondary)]">{o.impedanceSmycky || '—'}</td>
                         <td className="py-1.5">
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button type="button" title="Upravit" onClick={() => handleEditOkruh(o)}
-                              className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/[0.06] text-slate-500 hover:text-slate-300 text-xs">✎</button>
+                              className="w-6 h-6 flex items-center justify-center rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs">✎</button>
                             <button type="button" title="Smazat" onClick={() => handleDeleteOkruh(o.id!)}
-                              className="w-6 h-6 flex items-center justify-center rounded hover:bg-red-500/[0.08] text-slate-400 hover:text-red-400 text-xs">✕</button>
+                              className="w-6 h-6 flex items-center justify-center rounded hover:bg-red-500/[0.08] text-[var(--text-secondary)] hover:text-red-400 text-xs">✕</button>
                           </div>
                         </td>
                       </tr>
                     ))}
                     {/* Draft řádek */}
-                    <tr className="bg-blue-500/[0.08] border-b border-blue-500/[0.20]">
-                      <td className="py-1 pr-2 text-xs font-medium text-slate-400 pl-1">{inlineOkruhDraft.cislo}</td>
+                    <tr className="bg-[var(--bg-accent-soft)] border-b border-blue-500/[0.20]">
+                      <td className="py-1 pr-2 text-xs font-medium text-[var(--text-secondary)] pl-1">{inlineOkruhDraft.cislo}</td>
                       <td className="py-1 pr-2">
                         <input ref={inlineNazevRef} type="text" value={inlineOkruhDraft.nazev}
                           onChange={(e) => setInlineOkruhDraft(d => ({ ...d, nazev: e.target.value }))}
                           onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'nazev', selectedRozvadec.id!)}
                           placeholder="Název okruhu..." autoComplete="off"
-                          className="w-full px-2 py-1 border border-white/[0.09] rounded bg-white/[0.04] text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]" />
+                          className="w-full px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]" />
                       </td>
                       <td className="py-1 pr-2">
                         <select ref={inlineJisticTypRef} value={inlineOkruhDraft.jisticTyp}
                           onChange={(e) => setInlineOkruhDraft(d => ({ ...d, jisticTyp: e.target.value }))}
                           onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'jisticTyp', selectedRozvadec.id!)}
-                          className="w-full px-1.5 py-1 border border-white/[0.09] rounded bg-white/[0.04] text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]">
+                          className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]">
                           {['B','C','D','gG','aM','IT','IJ','IJV','ITM'].map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
                       </td>
@@ -707,7 +707,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                         <select ref={inlineJisticProudRef} value={inlineOkruhDraft.jisticProud}
                           onChange={(e) => setInlineOkruhDraft(d => ({ ...d, jisticProud: e.target.value }))}
                           onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'jisticProud', selectedRozvadec.id!)}
-                          className="w-full px-1.5 py-1 border border-white/[0.09] rounded bg-white/[0.04] text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]">
+                          className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]">
                           {['2A','4A','6A','10A','13A','16A','20A','25A','32A','40A','50A','63A','80A','100A','125A','160A'].map(p => <option key={p} value={p}>{p}</option>)}
                         </select>
                       </td>
@@ -715,7 +715,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                         <select ref={inlinePocetFaziRef} value={inlineOkruhDraft.pocetFazi}
                           onChange={(e) => setInlineOkruhDraft(d => ({ ...d, pocetFazi: Number(e.target.value) }))}
                           onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'pocetFazi', selectedRozvadec.id!)}
-                          className="w-full px-1.5 py-1 border border-white/[0.09] rounded bg-white/[0.04] text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]">
+                          className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]">
                           <option value={1}>1P</option>
                           <option value={2}>2P</option>
                           <option value={3}>3P</option>
@@ -725,7 +725,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                         <select ref={inlineTypKabeluRef} value={inlineOkruhDraft.typKabelu}
                           onChange={(e) => setInlineOkruhDraft(d => ({ ...d, typKabelu: e.target.value }))}
                           onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'typKabelu', selectedRozvadec.id!)}
-                          className="w-full px-1.5 py-1 border border-white/[0.09] rounded bg-white/[0.04] text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]">
+                          className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]">
                           {TYPY_KABELU.map(k => <option key={k} value={k}>{k}</option>)}
                         </select>
                       </td>
@@ -733,7 +733,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                         <select ref={inlinePocetZilRef} value={inlineOkruhDraft.pocetZil}
                           onChange={(e) => setInlineOkruhDraft(d => ({ ...d, pocetZil: e.target.value }))}
                           onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'pocetZil', selectedRozvadec.id!)}
-                          className="w-full px-1.5 py-1 border border-white/[0.09] rounded bg-white/[0.04] text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]">
+                          className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]">
                           {['1','2','3','4','5'].map(z => <option key={z} value={z}>{z}</option>)}
                         </select>
                       </td>
@@ -741,7 +741,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                         <select ref={inlinePrurezRef} value={inlineOkruhDraft.prurez}
                           onChange={(e) => setInlineOkruhDraft(d => ({ ...d, prurez: e.target.value }))}
                           onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'prurez', selectedRozvadec.id!)}
-                          className="w-full px-1.5 py-1 border border-white/[0.09] rounded bg-white/[0.04] text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]">
+                          className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]">
                           {PRUREZY.map(p => <option key={p} value={p}>{p}</option>)}
                         </select>
                       </td>
@@ -750,14 +750,14 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                           onChange={(e) => setInlineOkruhDraft(d => ({ ...d, izolacniOdpor: e.target.value }))}
                           onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'izolacniOdpor', selectedRozvadec.id!)}
                           placeholder="MΩ" autoComplete="off"
-                          className="w-full px-2 py-1 border border-white/[0.09] rounded bg-white/[0.04] text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]" />
+                          className="w-full px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]" />
                       </td>
                       <td className="py-1 pr-2">
                         <input ref={inlineImpedanceSmyckyRef} type="text" value={inlineOkruhDraft.impedanceSmycky}
                           onChange={(e) => setInlineOkruhDraft(d => ({ ...d, impedanceSmycky: e.target.value }))}
                           onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'impedanceSmycky', selectedRozvadec.id!)}
                           placeholder="Ω" autoComplete="off"
-                          className="w-full px-2 py-1 border border-white/[0.09] rounded bg-white/[0.04] text-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4]" />
+                          className="w-full px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]" />
                       </td>
                       <td className="py-1">
                         <button type="button" title="Uložit (Enter)" onClick={() => handleInlineOkruhSave(selectedRozvadec.id!)}
@@ -767,10 +767,10 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                     </tr>
                   </tbody>
                 </table>
-                <p className="text-xs text-slate-400 mt-2 select-none">
-                  <kbd className="px-1 bg-white/[0.06] rounded border border-white/[0.08] text-[10px]">Tab</kbd> přechod &nbsp;·&nbsp;
-                  <kbd className="px-1 bg-white/[0.06] rounded border border-white/[0.08] text-[10px]">Enter</kbd> uložit řádek &nbsp;·&nbsp;
-                  <kbd className="px-1 bg-white/[0.06] rounded border border-white/[0.08] text-[10px]">Shift+Enter</kbd> uložit + zkopírovat celý řádek &nbsp;·&nbsp;
+                <p className="text-xs text-[var(--text-secondary)] mt-2 select-none">
+                  <kbd className="px-1 bg-[var(--bg-hover)] rounded border border-[var(--border-medium)] text-[10px]">Tab</kbd> přechod &nbsp;·&nbsp;
+                  <kbd className="px-1 bg-[var(--bg-hover)] rounded border border-[var(--border-medium)] text-[10px]">Enter</kbd> uložit řádek &nbsp;·&nbsp;
+                  <kbd className="px-1 bg-[var(--bg-hover)] rounded border border-[var(--border-medium)] text-[10px]">Shift+Enter</kbd> uložit + zkopírovat celý řádek &nbsp;·&nbsp;
                   ✎ upravit vč. poznámky
                 </p>
               </div>
@@ -797,18 +797,18 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                         onDragOver={handleDragOver}
                         onDrop={() => handleDrop(o)}
                         onDragEnd={handleDragEnd}
-                        className={`border-b border-white/[0.05] hover:bg-white/[0.04] cursor-grab active:cursor-grabbing ${
-                          draggedOkruh?.id === o.id ? 'opacity-50 bg-blue-500/[0.10]' : ''
+                        className={`border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)] cursor-grab active:cursor-grabbing ${
+                          draggedOkruh?.id === o.id ? 'opacity-50 bg-[var(--bg-accent)]' : ''
                         }`}
                       >
-                        <td className="py-1 px-2 text-xs font-medium text-slate-300">
+                        <td className="py-1 px-2 text-xs font-medium text-[var(--text-primary)]">
                           <span className="flex items-center gap-1">
-                            <span className="text-slate-500">⋮⋮</span>
+                            <span className="text-[var(--text-muted)]">⋮⋮</span>
                             {o.cislo}
                           </span>
                         </td>
                         <td className="py-1 px-2 text-xs">
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.06] text-slate-400">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
                             {[
                               o.jisticTyp,
                               o.jisticProud ? `/${o.jisticProud}` : '',
@@ -816,10 +816,10 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                             ].join('').replace(/\/\//g, '/').replace(/\/$/, '')}
                           </span>
                         </td>
-                        <td className="py-1 px-2 text-xs text-slate-300">{o.nazev}</td>
-                        <td className="py-1 px-2 text-xs text-slate-400">{computeVodic(o.typKabelu, o.pocetZil, o.prurez) || o.vodic}</td>
-                        <td className="py-1 px-2 text-xs text-slate-400">{o.izolacniOdpor || '—'}</td>
-                        <td className="py-1 px-2 text-xs text-slate-400">{o.impedanceSmycky || '—'}</td>
+                        <td className="py-1 px-2 text-xs text-[var(--text-primary)]">{o.nazev}</td>
+                        <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{computeVodic(o.typKabelu, o.pocetZil, o.prurez) || o.vodic}</td>
+                        <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{o.izolacniOdpor || '—'}</td>
+                        <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{o.impedanceSmycky || '—'}</td>
                         <td className="py-1 px-2 text-xs text-right">
                           <div className="flex justify-end gap-1">
                             <Button variant="secondary" size="sm" onClick={() => handleDuplicateOkruh(o)} title="Duplikovat">
@@ -839,12 +839,12 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                 </table>
               </div>
             ) : (
-              <p className="text-center text-slate-400 py-6 bg-white/[0.04] rounded-lg">
+              <p className="text-center text-[var(--text-secondary)] py-6 bg-[var(--bg-input)] rounded-lg">
                 Zatím žádné okruhy. Přidejte první kliknutím na tlačítko výše.
               </p>
             )}
 
-            <h4 className="font-medium text-sm text-slate-300 mt-4 mb-2">Proudové chraniče ({chranice.length})</h4>
+            <h4 className="font-medium text-sm text-[var(--text-primary)] mt-4 mb-2">Proudové chraniče ({chranice.length})</h4>
             {chranice.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -863,17 +863,17 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                   </thead>
                   <tbody>
                     {[...chranice].sort((a, b) => a.cislo - b.cislo).map((c) => (
-                      <tr key={c.id} className="border-b border-white/[0.05] hover:bg-white/[0.04]">
-                        <td className="py-1 px-2 text-xs font-medium text-slate-300">{c.cislo}</td>
-                        <td className="py-1 px-2 text-xs text-slate-300">{c.nazev}</td>
+                      <tr key={c.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)]">
+                        <td className="py-1 px-2 text-xs font-medium text-[var(--text-primary)]">{c.cislo}</td>
+                        <td className="py-1 px-2 text-xs text-[var(--text-primary)]">{c.nazev}</td>
                         <td className="py-1 px-2 text-xs">
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-500/[0.15] text-blue-300">{c.typ}</span>
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--bg-accent-badge)] text-blue-300">{c.typ}</span>
                         </td>
-                        <td className="py-1 px-2 text-xs text-slate-400">{c.proud}</td>
-                        <td className="py-1 px-2 text-xs text-slate-400">{c.citlivostMa}</td>
-                        <td className="py-1 px-2 text-xs text-slate-400">{c.pocetPolu}</td>
-                        <td className="py-1 px-2 text-xs text-slate-400">{c.vybavovacProud != null ? c.vybavovacProud : '—'}</td>
-                        <td className="py-1 px-2 text-xs text-slate-400">{c.casOdpojeni1x != null ? c.casOdpojeni1x : '—'}</td>
+                        <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{c.proud}</td>
+                        <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{c.citlivostMa}</td>
+                        <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{c.pocetPolu}</td>
+                        <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{c.vybavovacProud != null ? c.vybavovacProud : '—'}</td>
+                        <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{c.casOdpojeni1x != null ? c.casOdpojeni1x : '—'}</td>
                         <td className="py-1 px-2 text-xs text-right">
                           <div className="flex justify-end gap-1">
                             <Button variant="secondary" size="sm" onClick={() => handleEditChranic(c)} title="Upravit">
@@ -890,15 +890,15 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                 </table>
               </div>
             ) : (
-              <p className="text-center text-slate-400 py-4 bg-white/[0.04] rounded-lg text-xs">
+              <p className="text-center text-[var(--text-secondary)] py-4 bg-[var(--bg-input)] rounded-lg text-xs">
                 Zatím žádné chraniče.
               </p>
             )}
           </Card>
         ) : (
           <Card>
-            <div className="text-center py-12 text-slate-500">
-              <p className="text-xs text-slate-400 mb-4">Zatím žádné rozvaděče</p>
+            <div className="text-center py-12 text-[var(--text-muted)]">
+              <p className="text-xs text-[var(--text-secondary)] mb-4">Zatím žádné rozvaděče</p>
               <p className="text-sm">Vyberte rozvaděč ze seznamu vlevo</p>
               <p className="text-xs mt-1">pro zobrazení detailu a okruhů</p>
             </div>
@@ -964,8 +964,8 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
               <Input label="Impedance smyčky (Ω)" value={okruhFormData.impedanceSmycky} onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmycky: e.target.value })} />
             </div>
             <label className="flex items-center gap-1.5 pb-2 cursor-pointer select-none">
-              <input type="checkbox" checked={okruhFormData.impedanceSmyckyMax} onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmyckyMax: e.target.checked })} className="rounded border-white/[0.20]" />
-              <span className="text-xs text-slate-400 whitespace-nowrap">max.</span>
+              <input type="checkbox" checked={okruhFormData.impedanceSmyckyMax} onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmyckyMax: e.target.checked })} className="rounded border-[var(--checkbox-border)]" />
+              <span className="text-xs text-[var(--text-secondary)] whitespace-nowrap">max.</span>
             </label>
           </div>
         </div>
@@ -999,21 +999,21 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
           <Select label="Počet pólů" value={String(cranicFormData.pocetPolu)} onChange={(e) => setCranicFormData({ ...cranicFormData, pocetPolu: parseInt(e.target.value) })} options={[{ value: '2', label: '2' }, { value: '4', label: '4' }]} />
         </div>
         {/* Měřené hodnoty */}
-        <div className="border-t border-white/[0.06] pt-3">
-          <p className="text-xs font-medium text-slate-400 mb-3">Měřené hodnoty</p>
+        <div className="border-t border-[var(--border-table)] pt-3">
+          <p className="text-xs font-medium text-[var(--text-secondary)] mb-3">Měřené hodnoty</p>
           <div className="grid grid-cols-2 gap-3">
             <label className="flex items-center gap-2 text-xs">
               <input type="checkbox"
                 checked={!!cranicFormData.testovacitlacitko}
                 onChange={(e) => setCranicFormData({ ...cranicFormData, testovacitlacitko: e.target.checked || undefined })}
-                className="rounded border-white/[0.20]" />
+                className="rounded border-[var(--checkbox-border)]" />
               <span>Testovací tlačítko ✓</span>
             </label>
             <label className="flex items-center gap-2 text-xs">
               <input type="checkbox"
                 checked={!!cranicFormData.nevybavovaci}
                 onChange={(e) => setCranicFormData({ ...cranicFormData, nevybavovaci: e.target.checked || undefined })}
-                className="rounded border-white/[0.20]" />
+                className="rounded border-[var(--checkbox-border)]" />
               <span>Nevybavení při 0,5×IΔn ✓</span>
             </label>
           </div>
@@ -1046,7 +1046,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                   <input type="checkbox"
                     checked={!!cranicFormData.zkouskaVypnuti2x}
                     onChange={(e) => setCranicFormData({ ...cranicFormData, zkouskaVypnuti2x: e.target.checked || undefined })}
-                    className="rounded border-white/[0.20]" />
+                    className="rounded border-[var(--checkbox-border)]" />
                   <span>Zkouška vypnutí 2×IΔn nárůstem proudu ✓</span>
                 </label>
               </>
@@ -1057,7 +1057,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
               <input type="checkbox"
                 checked={!!cranicFormData.selektivita}
                 onChange={(e) => setCranicFormData({ ...cranicFormData, selektivita: e.target.checked || undefined })}
-                className="rounded border-white/[0.20]" />
+                className="rounded border-[var(--checkbox-border)]" />
               <span>Selektivita (typ S/G) ✓</span>
             </label>
           </div>
@@ -1102,8 +1102,8 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
               <Input label="Impedance smyčky (Ω)" value={okruhFormData.impedanceSmycky} onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmycky: e.target.value })} />
             </div>
             <label className="flex items-center gap-1.5 pb-2 cursor-pointer select-none">
-              <input type="checkbox" checked={okruhFormData.impedanceSmyckyMax} onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmyckyMax: e.target.checked })} className="rounded border-white/[0.20]" />
-              <span className="text-xs text-slate-400 whitespace-nowrap">max.</span>
+              <input type="checkbox" checked={okruhFormData.impedanceSmyckyMax} onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmyckyMax: e.target.checked })} className="rounded border-[var(--checkbox-border)]" />
+              <span className="text-xs text-[var(--text-secondary)] whitespace-nowrap">max.</span>
             </label>
           </div>
         </div>
@@ -1135,15 +1135,15 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
           <Select label="Citlivost Iδn (mA)" value={String(cranicFormData.citlivostMa)} onChange={(e) => setCranicFormData({ ...cranicFormData, citlivostMa: parseFloat(e.target.value) })} options={[{ value: '10', label: '10 mA' }, { value: '30', label: '30 mA' }, { value: '100', label: '100 mA' }, { value: '300', label: '300 mA' }, { value: '500', label: '500 mA' }]} />
           <Select label="Počet pólů" value={String(cranicFormData.pocetPolu)} onChange={(e) => setCranicFormData({ ...cranicFormData, pocetPolu: parseInt(e.target.value) })} options={[{ value: '2', label: '2' }, { value: '4', label: '4' }]} />
         </div>
-        <div className="border-t border-white/[0.06] pt-3">
-          <p className="text-xs font-medium text-slate-400 mb-3">Měřené hodnoty</p>
+        <div className="border-t border-[var(--border-table)] pt-3">
+          <p className="text-xs font-medium text-[var(--text-secondary)] mb-3">Měřené hodnoty</p>
           <div className="grid grid-cols-2 gap-3">
             <label className="flex items-center gap-2 text-xs">
-              <input type="checkbox" checked={!!cranicFormData.testovacitlacitko} onChange={(e) => setCranicFormData({ ...cranicFormData, testovacitlacitko: e.target.checked || undefined })} className="rounded border-white/[0.20]" />
+              <input type="checkbox" checked={!!cranicFormData.testovacitlacitko} onChange={(e) => setCranicFormData({ ...cranicFormData, testovacitlacitko: e.target.checked || undefined })} className="rounded border-[var(--checkbox-border)]" />
               <span>Testovací tlačítko ✓</span>
             </label>
             <label className="flex items-center gap-2 text-xs">
-              <input type="checkbox" checked={!!cranicFormData.nevybavovaci} onChange={(e) => setCranicFormData({ ...cranicFormData, nevybavovaci: e.target.checked || undefined })} className="rounded border-white/[0.20]" />
+              <input type="checkbox" checked={!!cranicFormData.nevybavovaci} onChange={(e) => setCranicFormData({ ...cranicFormData, nevybavovaci: e.target.checked || undefined })} className="rounded border-[var(--checkbox-border)]" />
               <span>Nevybavení při 0,5×Iδn ✓</span>
             </label>
           </div>
@@ -1161,7 +1161,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                 <Input type="number" step="1" label="Čas odpojení tA při 1,4×Iδn [ms]" value={cranicFormData.casOdpojeni1_4x ?? ''} onChange={(e) => setCranicFormData({ ...cranicFormData, casOdpojeni1_4x: e.target.value ? parseFloat(e.target.value) : undefined })} />
                 <Input type="number" step="1" label="Čas odpojení tA při 2×Iδn [ms]" value={cranicFormData.casOdpojeni2x ?? ''} onChange={(e) => setCranicFormData({ ...cranicFormData, casOdpojeni2x: e.target.value ? parseFloat(e.target.value) : undefined })} />
                 <label className="flex items-center gap-2 text-xs col-span-2">
-                  <input type="checkbox" checked={!!cranicFormData.zkouskaVypnuti2x} onChange={(e) => setCranicFormData({ ...cranicFormData, zkouskaVypnuti2x: e.target.checked || undefined })} className="rounded border-white/[0.20]" />
+                  <input type="checkbox" checked={!!cranicFormData.zkouskaVypnuti2x} onChange={(e) => setCranicFormData({ ...cranicFormData, zkouskaVypnuti2x: e.target.checked || undefined })} className="rounded border-[var(--checkbox-border)]" />
                   <span>Zkouška vypnutí 2×Iδn nárůstem proudu ✓</span>
                 </label>
               </>
@@ -1169,7 +1169,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
           </div>
           <div className="mt-3">
             <label className="flex items-center gap-2 text-xs">
-              <input type="checkbox" checked={!!cranicFormData.selektivita} onChange={(e) => setCranicFormData({ ...cranicFormData, selektivita: e.target.checked || undefined })} className="rounded border-white/[0.20]" />
+              <input type="checkbox" checked={!!cranicFormData.selektivita} onChange={(e) => setCranicFormData({ ...cranicFormData, selektivita: e.target.checked || undefined })} className="rounded border-[var(--checkbox-border)]" />
               <span>Selektivita (typ S/G) ✓</span>
             </label>
           </div>

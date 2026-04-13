@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
 import { useRevize } from '../hooks/useQueries';
 import { mistnostService } from '../services/database';
@@ -79,8 +79,8 @@ export function MistnostiPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-slate-300">Místnosti</h1>
-          <p className="text-xs text-slate-400">Evidence místností</p>
+          <h1 className="text-lg font-bold text-[var(--text-primary)]">Místnosti</h1>
+          <p className="text-xs text-[var(--text-secondary)]">Evidence místností</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
           <span className="sm:hidden text-lg leading-none">+</span>
@@ -94,34 +94,34 @@ export function MistnostiPage() {
             {mistnosti.map((m) => (
               <div
                 key={m.id}
-                className="p-4 rounded-lg bg-white/[0.03] border border-white/[0.07]"
+                className="p-4 rounded-lg bg-[var(--bg-surface)] border border-[var(--border)]"
               >
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-medium text-slate-300">{m.nazev}</h3>
+                  <h3 className="font-medium text-[var(--text-primary)]">{m.nazev}</h3>
                   <div className="flex gap-1">
                     <button
                       onClick={() => handleEdit(m)}
-                      className="text-xs text-slate-400 hover:text-slate-300"
+                      className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                     >
                       Upravit
                     </button>
                     <button
                       onClick={() => handleDelete(m.id!)}
-                      className="text-xs text-slate-400 hover:text-red-400"
+                      className="text-xs text-[var(--text-secondary)] hover:text-red-400"
                     >
                       ×
                     </button>
                   </div>
                 </div>
                 <div className="space-y-1 text-sm">
-                  {m.patro && <p className="text-slate-400">Patro: {m.patro}</p>}
-                  <p className="text-xs text-slate-500 mt-2">{m.revizeNazev}</p>
+                  {m.patro && <p className="text-[var(--text-secondary)]">Patro: {m.patro}</p>}
+                  <p className="text-xs text-[var(--text-muted)] mt-2">{m.revizeNazev}</p>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-center text-slate-500 py-8">
+          <p className="text-center text-[var(--text-muted)] py-8">
             Žádné místnosti. Přidejte první kliknutím na tlačítko výše.
           </p>
         )}

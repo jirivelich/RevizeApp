@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+﻿import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
 import { EditableSelect, computeVodic } from './RevizeDetail/RozvadeceTab';
@@ -701,7 +701,7 @@ export function RevizeDetailPage() {
     return (
       <div className="text-center py-12">
         <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-        <p className="text-slate-500">Načítání revize...</p>
+        <p className="text-[var(--text-muted)]">Načítání revize...</p>
       </div>
     );
   }
@@ -721,7 +721,7 @@ export function RevizeDetailPage() {
   if (!revize) {
     return (
       <div className="text-center py-12">
-        <p className="text-slate-500">Revize nebyla nalezena</p>
+        <p className="text-[var(--text-muted)]">Revize nebyla nalezena</p>
         <Button variant="secondary" onClick={() => navigate('/revize')} className="mt-4">
           ← Zpět na seznam revizí
         </Button>
@@ -741,7 +741,7 @@ export function RevizeDetailPage() {
     <div className="space-y-6 pb-20">
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
+          <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm mb-1">
             <Link to="/revize" className="hover:text-blue-600">Revize</Link>
             <span>/</span>
             <span>{revize.cisloRevize}</span>
@@ -769,14 +769,14 @@ export function RevizeDetailPage() {
         <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden">
           <div className="bg-slate-800 text-white px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center justify-between">
             <span>🕐 Historie revizí tohoto objektu</span>
-            <button onClick={() => setShowHistorie(false)} className="text-slate-300 hover:text-white">✕</button>
+            <button onClick={() => setShowHistorie(false)} className="text-[var(--text-primary)] hover:text-white">✕</button>
           </div>
           <div className="p-4">
             {historie.length === 0 ? (
-              <div className="text-sm text-slate-500 text-center py-4">
+              <div className="text-sm text-[var(--text-muted)] text-center py-4">
                 <div className="text-2xl mb-2">📭</div>
                 <p>Tato revize nemá žádné navazující ani předchozí revize.</p>
-                <p className="text-xs mt-1 text-slate-400">Použijte tlačítko „📋 Kopírovat revizi" s typem „Navazující" pro vytvoření propojené revize.</p>
+                <p className="text-xs mt-1 text-[var(--text-secondary)]">Použijte tlačítko „📋 Kopírovat revizi" s typem „Navazující" pro vytvoření propojené revize.</p>
               </div>
             ) : (
             <div className="relative">
@@ -793,7 +793,7 @@ export function RevizeDetailPage() {
                           ? 'bg-blue-500 border-blue-600 text-white'
                           : h.stav === 'dokončeno' || h.stav === 'schváleno'
                             ? 'bg-emerald-100 border-emerald-400 text-emerald-600'
-                            : 'bg-white border-slate-300 text-slate-500'
+                            : 'bg-white border-slate-300 text-[var(--text-muted)]'
                       }`}>
                         {idx + 1}
                       </div>
@@ -810,7 +810,7 @@ export function RevizeDetailPage() {
                             'bg-slate-100 text-slate-600'
                           }`}>{h.stav}</span>
                         </div>
-                        <div className="text-xs text-slate-500 mt-0.5">
+                        <div className="text-xs text-[var(--text-muted)] mt-0.5">
                           {h.datum} · {h.typRevize || '–'} · {h.vysledek || 'nevyplněno'}
                         </div>
                         {!isCurrent && h.id && (
@@ -853,7 +853,7 @@ export function RevizeDetailPage() {
                 }`}
               >
                 <p className="font-semibold text-sm">🔗 Navazující revize</p>
-                <p className="text-xs text-slate-500 mt-1">Propojena s historií. Pro periodické revize stejného objektu.</p>
+                <p className="text-xs text-[var(--text-muted)] mt-1">Propojena s historií. Pro periodické revize stejného objektu.</p>
               </button>
               <button
                 type="button"
@@ -865,7 +865,7 @@ export function RevizeDetailPage() {
                 }`}
               >
                 <p className="font-semibold text-sm">📋 Nezávislý duplikát</p>
-                <p className="text-xs text-slate-500 mt-1">Samostatná kopie bez vazby na historii.</p>
+                <p className="text-xs text-[var(--text-muted)] mt-1">Samostatná kopie bez vazby na historii.</p>
               </button>
             </div>
           </div>
@@ -907,7 +907,7 @@ export function RevizeDetailPage() {
 
           {/* Záhlaví */}
           <div className="flex items-center px-4 py-2 bg-slate-50 border-b border-slate-200">
-            <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">Revizní zpráva č. {revize.cisloRevize}</span>
+            <span className="text-xs text-[var(--text-muted)] font-medium uppercase tracking-wide">Revizní zpráva č. {revize.cisloRevize}</span>
           </div>
 
           {/* ═══ SEKCE 1: IDENTIFIKACE ═══ */}
@@ -980,7 +980,7 @@ export function RevizeDetailPage() {
                   {selectedZakaznikId && (() => {
                     const zakaznik = zakaznici.find(z => z.id === parseInt(selectedZakaznikId));
                     return zakaznik ? (
-                      <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-slate-500 bg-blue-50 rounded p-2">
+                      <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-[var(--text-muted)] bg-blue-50 rounded p-2">
                         {zakaznik.adresa && <span>Adresa: {zakaznik.adresa}</span>}
                         {zakaznik.ico && <span>IČO: {zakaznik.ico}</span>}
                         {zakaznik.kontaktOsoba && <span>Kontakt: {zakaznik.kontaktOsoba}</span>}
@@ -1019,7 +1019,7 @@ export function RevizeDetailPage() {
               </tr>
               <tr className="border-b border-slate-200">
                 <td className="px-4 py-2 bg-slate-50 font-semibold text-slate-600 border-r border-slate-200">Platnost do</td>
-                <td className="px-4 py-2"><span className={`font-medium ${formData.datumPlatnosti ? '' : 'text-slate-400'}`}>{formData.datumPlatnosti ? new Date(formData.datumPlatnosti).toLocaleDateString('cs-CZ') : 'Vypočítá se při dokončení'}</span></td>
+                <td className="px-4 py-2"><span className={`font-medium ${formData.datumPlatnosti ? '' : 'text-[var(--text-secondary)]'}`}>{formData.datumPlatnosti ? new Date(formData.datumPlatnosti).toLocaleDateString('cs-CZ') : 'Vypočítá se při dokončení'}</span></td>
               </tr>
             </tbody>
           </table>
@@ -1230,7 +1230,7 @@ export function RevizeDetailPage() {
                   {/* Výchozí předvolby */}
                   {builtIn.length > 0 && (
                     <>
-                      <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold border-b border-slate-100">Výchozí předvolby</div>
+                      <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold border-b border-slate-100">Výchozí předvolby</div>
                       {builtIn.map((t, i) => (
                         <button
                           key={`b-${i}`}
@@ -1239,7 +1239,7 @@ export function RevizeDetailPage() {
                           onClick={() => applyText(t.text)}
                         >
                           <div className="text-xs font-semibold text-blue-700">{t.label}</div>
-                          <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">{t.text}</div>
+                          <div className="text-xs text-[var(--text-muted)] mt-0.5 line-clamp-2">{t.text}</div>
                         </button>
                       ))}
                     </>
@@ -1256,7 +1256,7 @@ export function RevizeDetailPage() {
                             onClick={() => applyText(t.text)}
                           >
                             <div className="text-xs font-semibold text-emerald-700">{t.nazev}</div>
-                            <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">{t.text}</div>
+                            <div className="text-xs text-[var(--text-muted)] mt-0.5 line-clamp-2">{t.text}</div>
                           </button>
                           <button
                             type="button"
@@ -1296,7 +1296,7 @@ export function RevizeDetailPage() {
                           className="w-full text-xs px-2 py-1 border border-slate-300 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none resize-none"
                         />
                         <div className="flex gap-1 justify-end">
-                          <button type="button" onClick={() => setAdding(false)} className="px-2 py-0.5 text-xs text-slate-500 hover:bg-slate-100 rounded cursor-pointer">Zrušit</button>
+                          <button type="button" onClick={() => setAdding(false)} className="px-2 py-0.5 text-xs text-[var(--text-muted)] hover:bg-slate-100 rounded cursor-pointer">Zrušit</button>
                           <button type="button" onClick={handleAdd} className="px-2 py-0.5 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer" disabled={!newNazev.trim() || !newText.trim()}>Uložit</button>
                         </div>
                       </div>
@@ -1312,7 +1312,7 @@ export function RevizeDetailPage() {
 
           {/* Záhlaví */}
           <div className="flex items-center px-4 py-2 bg-slate-50 border-b border-slate-200">
-            <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">Revidované zařízení</span>
+            <span className="text-xs text-[var(--text-muted)] font-medium uppercase tracking-wide">Revidované zařízení</span>
           </div>
 
           {/* ═══ DŮVOD MIMOŘÁDNÉ ═══ */}
@@ -1384,11 +1384,11 @@ export function RevizeDetailPage() {
           </table>
 
           {/* 2.2 Ochrana - tabulka checkboxů */}
-          <div className="px-4 py-2 bg-white/[0.04] border-b border-t border-white/[0.06]">
-            <span className="text-xs font-semibold text-slate-300 uppercase tracking-wide">2.2 Ochrana před úrazem elektrickým proudem</span>
+          <div className="px-4 py-2 bg-[var(--bg-input)] border-b border-t border-[var(--border-table)]">
+            <span className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wide">2.2 Ochrana před úrazem elektrickým proudem</span>
           </div>
-          <div className="px-4 py-3 border-b border-white/[0.06]">
-            <p className="text-xs text-slate-400 mb-2">Zaškrtněte opatření použitá v objektu:</p>
+          <div className="px-4 py-3 border-b border-[var(--border-table)]">
+            <p className="text-xs text-[var(--text-secondary)] mb-2">Zaškrtněte opatření použitá v objektu:</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
               {[
                 { id: 'zakladni-izolace', label: 'Základní izolace živých částí' },
@@ -1407,13 +1407,13 @@ export function RevizeDetailPage() {
                 const currentOpatreni = formData.ochranaOpatreni ? JSON.parse(formData.ochranaOpatreni) : [];
                 const isChecked = currentOpatreni.includes(opatreni.id);
                 return (
-                  <label key={opatreni.id} className="flex items-center gap-2 px-2 py-1.5 bg-white/[0.03] rounded hover:bg-white/[0.06] cursor-pointer">
+                  <label key={opatreni.id} className="flex items-center gap-2 px-2 py-1.5 bg-[var(--bg-surface)] rounded hover:bg-[var(--bg-hover)] cursor-pointer">
                     <input type="checkbox" checked={isChecked} onChange={(e) => {
                       let updated = [...currentOpatreni];
                       if (e.target.checked) { updated.push(opatreni.id); } else { updated = updated.filter((id: string) => id !== opatreni.id); }
                       setFormData({ ...formData, ochranaOpatreni: JSON.stringify(updated) });
-                    }} className="w-4 h-4 text-blue-600 rounded border-white/[0.20]" />
-                    <span className="text-sm text-slate-300">{opatreni.label}</span>
+                    }} className="w-4 h-4 text-blue-600 rounded border-[var(--checkbox-border)]" />
+                    <span className="text-sm text-[var(--text-primary)]">{opatreni.label}</span>
                   </label>
                 );
               })}
@@ -1463,7 +1463,7 @@ export function RevizeDetailPage() {
                 </tbody>
               </table>
             ) : (
-              <p className="px-4 py-4 text-center text-slate-500">Zatím nejsou přiřazeny žádné měřící přístroje.</p>
+              <p className="px-4 py-4 text-center text-[var(--text-muted)]">Zatím nejsou přiřazeny žádné měřící přístroje.</p>
             )}
           </div>
           </>)}
@@ -1555,10 +1555,10 @@ export function RevizeDetailPage() {
                 >
                   <div className="flex-1">
                     <p className="font-medium">{p.nazev}</p>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-[var(--text-muted)]">
                       {p.vyrobce} {p.model} • V.č.: {p.vyrobniCislo}
                     </p>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-[var(--text-secondary)]">
                       Platnost kalibrace: {new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}
                     </p>
                   </div>
@@ -1567,7 +1567,7 @@ export function RevizeDetailPage() {
               ))
           ) : (
             <div className="text-center py-4">
-              <p className="text-slate-500 mb-2">
+              <p className="text-[var(--text-muted)] mb-2">
                 {vsechnyPristroje.length === 0 
                   ? 'Nemáte žádné měřící přístroje.' 
                   : 'Všechny přístroje jsou již přiřazeny.'}
@@ -1611,16 +1611,16 @@ export function RevizeDetailPage() {
                             {okruhyCounts[r.id!] || 0}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-[var(--text-muted)]">
                           {r.oznaceni} • {r.stupenKryti}
                         </p>
-                        <p className="text-xs text-slate-400">{r.umisteni}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">{r.umisteni}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-slate-500 py-6 text-sm">
+                <p className="text-center text-[var(--text-muted)] py-6 text-sm">
                   Zatím žádné rozvaděče.
                 </p>
               )}
@@ -1650,19 +1650,19 @@ export function RevizeDetailPage() {
               >
                 <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="p-3 bg-slate-50 rounded-lg">
-                    <p className="text-xs text-slate-500">Označení</p>
+                    <p className="text-xs text-[var(--text-muted)]">Označení</p>
                     <p className="font-medium">{selectedRozvadec.oznaceni}</p>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-lg">
-                    <p className="text-xs text-slate-500">Umístění</p>
+                    <p className="text-xs text-[var(--text-muted)]">Umístění</p>
                     <p className="font-medium">{selectedRozvadec.umisteni}</p>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-lg">
-                    <p className="text-xs text-slate-500">Typ</p>
+                    <p className="text-xs text-[var(--text-muted)]">Typ</p>
                     <p className="font-medium">{selectedRozvadec.typRozvadece || '—'}</p>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-lg">
-                    <p className="text-xs text-slate-500">Krytí</p>
+                    <p className="text-xs text-[var(--text-muted)]">Krytí</p>
                     <p className="font-medium">{selectedRozvadec.stupenKryti}</p>
                   </div>
                 </div>
@@ -1697,7 +1697,7 @@ export function RevizeDetailPage() {
                           >
                             <td className="py-2 px-3 font-medium">
                               <span className="flex items-center gap-2">
-                                <span className="text-slate-400">⋮⋮</span>
+                                <span className="text-[var(--text-secondary)]">⋮⋮</span>
                                 {o.cislo}
                               </span>
                             </td>
@@ -1748,14 +1748,14 @@ export function RevizeDetailPage() {
                     </table>
                   </div>
                 ) : (
-                  <p className="text-center text-slate-500 py-6 bg-slate-50 rounded-lg">
+                  <p className="text-center text-[var(--text-muted)] py-6 bg-slate-50 rounded-lg">
                     Zatím žádné okruhy. Přidejte první kliknutím na tlačítko výše.
                   </p>
                 )}
               </Card>
             ) : (
               <Card>
-                <div className="text-center py-12 text-slate-500">
+                <div className="text-center py-12 text-[var(--text-muted)]">
                   <p className="text-4xl mb-4">⚡</p>
                   <p>Vyberte rozvaděč ze seznamu vlevo</p>
                   <p className="text-sm mt-1">pro zobrazení detailu a okruhů</p>
@@ -1794,17 +1794,17 @@ export function RevizeDetailPage() {
                         {z.stav}
                       </span>
                     </div>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-[var(--text-muted)]">
                       Zjištěno: {new Date(z.datumZjisteni).toLocaleDateString('cs-CZ')}
                       {z.datumVyreseni && ` • Vyřešeno: ${new Date(z.datumVyreseni).toLocaleDateString('cs-CZ')}`}
                     </p>
                     {z.rozvadecId && (
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-[var(--text-secondary)]">
                         Rozvaděč: {rozvadece.find(r => r.id === z.rozvadecId)?.nazev || 'Neznámý'}
                       </p>
                     )}
                     {z.poznamka && (
-                      <p className="text-sm text-slate-500 mt-1 italic">{z.poznamka}</p>
+                      <p className="text-sm text-[var(--text-muted)] mt-1 italic">{z.poznamka}</p>
                     )}
                     {Array.isArray(z.fotky) && z.fotky.length > 0 && (
                       <div className="flex gap-2 mt-2">
@@ -1846,7 +1846,7 @@ export function RevizeDetailPage() {
               ))}
             </div>
           ) : (
-            <p className="text-center text-slate-500 py-8">
+            <p className="text-center text-[var(--text-muted)] py-8">
               Žádné závady nebyly zaznamenány. Přidejte první kliknutím na tlačítko výše.
             </p>
           )}
@@ -1884,7 +1884,7 @@ export function RevizeDetailPage() {
                             {zarizeniCounts[m.id!] || 0}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-[var(--text-secondary)]">
                           {m.patro && `${m.patro}`}
                         </p>
                       </div>
@@ -1892,7 +1892,7 @@ export function RevizeDetailPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-slate-500 py-6 text-sm">
+                <p className="text-center text-[var(--text-muted)] py-6 text-sm">
                   Zatím žádné místnosti.
                 </p>
               )}
@@ -1929,7 +1929,7 @@ export function RevizeDetailPage() {
               >
                 <div className="mb-6">
                   <div className="p-3 bg-slate-50 rounded-lg inline-block">
-                    <p className="text-xs text-slate-500">Patro</p>
+                    <p className="text-xs text-[var(--text-muted)]">Patro</p>
                     <p className="font-medium">{selectedMistnost.patro || '—'}</p>
                   </div>
                 </div>
@@ -1954,7 +1954,7 @@ export function RevizeDetailPage() {
                           <tr key={z.id} className="border-b border-slate-100 hover:bg-slate-50">
                             <td className="py-2 px-3">
                               <p className="font-medium">{z.nazev}</p>
-                              {z.oznaceni && <p className="text-xs text-slate-400">{z.oznaceni}</p>}
+                              {z.oznaceni && <p className="text-xs text-[var(--text-secondary)]">{z.oznaceni}</p>}
                             </td>
                             <td className="py-2 px-3 text-slate-600">
                               {z.pocetKs || 1}
@@ -2003,14 +2003,14 @@ export function RevizeDetailPage() {
                     </table>
                   </div>
                 ) : (
-                  <p className="text-center text-slate-500 py-6 text-sm">
+                  <p className="text-center text-[var(--text-muted)] py-6 text-sm">
                     Zatím žádná zařízení. Přidejte první kliknutím na tlačítko výše.
                   </p>
                 )}
               </Card>
             ) : (
               <Card title="Detail místnosti">
-                <p className="text-center text-slate-500 py-12">
+                <p className="text-center text-[var(--text-muted)] py-12">
                   Vyberte místnost ze seznamu vlevo pro zobrazení detailu a správu zařízení.
                 </p>
               </Card>
@@ -2292,7 +2292,7 @@ export function RevizeDetailPage() {
                   });
                 }
               }}
-              className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="w-full text-sm text-[var(--text-muted)] file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
             {zavadaFormData.fotky.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">

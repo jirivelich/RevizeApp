@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Button, Card, Input, Select, Modal, BottomSheet } from '../../components/ui';
 import { TW } from './tw';
 import { zarizeniService } from '../../services/database';
@@ -177,24 +177,24 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
               {mistnosti.map((m) => (
                 <div key={m.id}
                   className={`rounded-lg border transition-colors cursor-pointer ${
-                    selectedMistnost?.id === m.id ? 'border-blue-500 bg-blue-500/[0.10]' : 'border-white/[0.07] bg-white/[0.03] hover:border-white/[0.14]'
+                    selectedMistnost?.id === m.id ? 'border-blue-500 bg-[var(--bg-accent)]' : 'border-[var(--border)] bg-[var(--bg-surface)] hover:border-white/[0.14]'
                   }`}
                   onClick={() => handleSelectMistnost(m)}
                 >
                   <div className="p-3">
                     <div className="flex items-center justify-between mb-1">
                       <p className="font-medium text-xs">{m.nazev}</p>
-                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-white/[0.06] text-slate-400">
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
                         {zarizeniCounts[m.id!] || 0}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400">{m.patro && `${m.patro}`}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{m.patro && `${m.patro}`}</p>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-center text-slate-400 py-6 text-xs">Zatím žádné místnosti.</p>
+            <p className="text-center text-[var(--text-secondary)] py-6 text-xs">Zatím žádné místnosti.</p>
           )}
         </Card>
       </div>
@@ -220,10 +220,10 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
             }
           >
             <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="p-2 bg-white/[0.04] rounded-lg"><p className="text-[10px] text-slate-400">Patro</p><p className="font-medium text-xs text-slate-300">{selectedMistnost.patro || '—'}</p></div>
+              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-[10px] text-[var(--text-secondary)]">Patro</p><p className="font-medium text-xs text-[var(--text-primary)]">{selectedMistnost.patro || '—'}</p></div>
             </div>
 
-            <h4 className="font-medium text-sm text-slate-300 mb-2">Zařízení ({zarizeni.length})</h4>
+            <h4 className="font-medium text-sm text-[var(--text-primary)] mb-2">Zařízení ({zarizeni.length})</h4>
             {zarizeni.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -240,20 +240,20 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
                   </thead>
                   <tbody>
                     {zarizeni.map((z) => (
-                      <tr key={z.id} className="border-b border-white/[0.05] hover:bg-white/[0.04]">
+                      <tr key={z.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)]">
                         <td className="py-1 px-2 text-xs">
                           <p className="font-medium">{z.nazev}</p>
-                          {z.oznaceni && <p className="text-[10px] text-slate-400">{z.oznaceni}</p>}
+                          {z.oznaceni && <p className="text-[10px] text-[var(--text-secondary)]">{z.oznaceni}</p>}
                         </td>
-                        <td className="py-1 px-2 text-xs text-slate-400">{z.pocetKs || 1}</td>
-                        <td className="py-1 px-2 text-xs"><span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.06] text-slate-400">{z.trida || 'I'}</span></td>
-                        <td className="py-1 px-2 text-xs text-slate-400">{z.prikonW ? `${z.prikonW} W` : '—'}</td>
-                        <td className="py-1 px-2 text-xs text-slate-400">{z.ochranaPredDotykem || '—'}</td>
+                        <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{z.pocetKs || 1}</td>
+                        <td className="py-1 px-2 text-xs"><span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">{z.trida || 'I'}</span></td>
+                        <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{z.prikonW ? `${z.prikonW} W` : '—'}</td>
+                        <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{z.ochranaPredDotykem || '—'}</td>
                         <td className="py-1 px-2 text-xs">
                           <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
                             z.stav === 'OK' ? 'bg-green-100 text-green-700' :
                             z.stav === 'závada' ? 'bg-red-100 text-red-700' :
-                            'bg-white/[0.06] text-slate-400'
+                            'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
                           }`}>{z.stav}</span>
                         </td>
                         <td className="py-1 px-2 text-xs text-right">
@@ -268,12 +268,12 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
                 </table>
               </div>
             ) : (
-              <p className="text-center text-slate-400 py-6 text-xs">Zatím žádná zařízení. Přidejte první kliknutím na tlačítko výše.</p>
+              <p className="text-center text-[var(--text-secondary)] py-6 text-xs">Zatím žádná zařízení. Přidejte první kliknutím na tlačítko výše.</p>
             )}
           </Card>
         ) : (
           <Card title="Detail místnosti">
-            <p className="text-center text-slate-400 py-12 text-sm">Vyberte místnost ze seznamu vlevo pro zobrazení detailu a správu zařízení.</p>
+            <p className="text-center text-[var(--text-secondary)] py-12 text-sm">Vyberte místnost ze seznamu vlevo pro zobrazení detailu a správu zařízení.</p>
           </Card>
         )}
       </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Modal } from '../../components/ui';
 import { useRevize, useZakazky, useCreateZakazka, useUpdateZakazka, useDeleteZakazka, useCreateRevize } from '../../hooks/useQueries';
@@ -217,17 +217,17 @@ export function PlanovaniPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-slate-300">Plánování</h1>
-          <p className="text-xs text-slate-400">Správa zakázek a plánování revizí</p>
+          <h1 className="text-lg font-bold text-[var(--text-primary)]">Plánování</h1>
+          <p className="text-xs text-[var(--text-secondary)]">Správa zakázek a plánování revizí</p>
         </div>
         <div className="flex gap-2">
-          <div className="flex rounded-lg overflow-hidden border border-white/[0.09]">
+          <div className="flex rounded-lg overflow-hidden border border-[var(--border-input)]">
             <button
               onClick={() => setViewMode('list')}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'list'
                   ? 'bg-slate-700 text-white'
-                  : 'bg-transparent text-slate-400 hover:bg-white/[0.05]'
+                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)]'
               }`}
             >
               Seznam
@@ -237,7 +237,7 @@ export function PlanovaniPage() {
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'week'
                   ? 'bg-slate-700 text-white'
-                  : 'bg-transparent text-slate-400 hover:bg-white/[0.05]'
+                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)]'
               }`}
             >
               Týden
@@ -247,7 +247,7 @@ export function PlanovaniPage() {
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'calendar'
                   ? 'bg-slate-700 text-white'
-                  : 'bg-transparent text-slate-400 hover:bg-white/[0.05]'
+                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)]'
               }`}
             >
               Měsíc
@@ -257,7 +257,7 @@ export function PlanovaniPage() {
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'gantt'
                   ? 'bg-slate-700 text-white'
-                  : 'bg-transparent text-slate-400 hover:bg-white/[0.05]'
+                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)]'
               }`}
             >
               Gantt
@@ -332,7 +332,7 @@ export function PlanovaniPage() {
         }
       >
         <div className="space-y-3">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-[var(--text-muted)]">
             Zvolte typ revize pro zakázku <strong>{pendingZakazka?.nazev}</strong>. Kategorie určuje strukturu formuláře i výsledné zprávy.
           </p>
           <div className="grid grid-cols-1 gap-3">
@@ -341,16 +341,16 @@ export function PlanovaniPage() {
                 key={kat.value}
                 type="button"
                 onClick={() => handleKategorieSelected(kat.value)}
-                className="flex items-center gap-4 p-4 rounded-lg border-2 border-white/[0.08] hover:border-white/[0.20] hover:bg-white/[0.04] transition-all text-left group"
+                className="flex items-center gap-4 p-4 rounded-lg border-2 border-[var(--border-medium)] hover:border-[var(--checkbox-border)] hover:bg-[var(--bg-input)] transition-all text-left group"
               >
-                <div className="flex-shrink-0 text-slate-400 group-hover:text-slate-300 transition-colors">
+                <div className="flex-shrink-0 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
                   {kat.icon}
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-300 group-hover:text-white">{kat.label}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{kat.popis}</p>
+                  <p className="font-semibold text-[var(--text-primary)] group-hover:text-white">{kat.label}</p>
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5">{kat.popis}</p>
                 </div>
-                <div className="flex-shrink-0 ml-auto text-slate-300 group-hover:text-slate-500">
+                <div className="flex-shrink-0 ml-auto text-[var(--text-primary)] group-hover:text-[var(--text-muted)]">
                   <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                   </svg>

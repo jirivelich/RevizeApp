@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+﻿import { useNavigate } from 'react-router-dom';
 import type { AppNotification, NotificationSeverity } from '../types';
 
 interface Props {
@@ -72,10 +72,10 @@ export function NotificationPanel({ notifications, onClose }: Props) {
       {/* Hlavička */}
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
-          <span className="text-sm font-semibold text-slate-300">Upozornění</span>
+          <span className="text-sm font-semibold text-[var(--text-primary)]">Upozornění</span>
           {notifications.length > 0 && (
             <span className="text-[11px] font-bold bg-red-500 text-white rounded-full px-1.5 py-0.5 leading-none">
               {notifications.length}
@@ -84,7 +84,7 @@ export function NotificationPanel({ notifications, onClose }: Props) {
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded text-slate-600 hover:text-slate-400 transition-colors"
+          className="p-1 rounded text-slate-600 hover:text-[var(--text-secondary)] transition-colors"
           style={{ background: 'rgba(255,255,255,0.04)' }}
           aria-label="Zavřít"
         >
@@ -120,8 +120,8 @@ export function NotificationPanel({ notifications, onClose }: Props) {
                       <TypeIcon type={n.type} />
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-slate-300 truncate">{n.title}</p>
-                      <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{n.description}</p>
+                      <p className="text-[13px] font-semibold text-[var(--text-primary)] truncate">{n.title}</p>
+                      <p className="text-[11px] text-[var(--text-muted)] mt-0.5 leading-snug">{n.description}</p>
                     </div>
                     <DaysBadge days={n.daysUntil} sev={n.severity} />
                   </button>

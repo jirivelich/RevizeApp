@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import type { PredvolenyText } from '../../types';
 import { useCreatePredvolenyText, useDeletePredvolenyText, usePredvoleneTexty } from '../../hooks/useQueries';
 import { PREDVOLENE_TEXTY } from './constants';
@@ -83,7 +83,7 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
       <button
         type="button"
         onClick={() => { setOpen(!open); setAdding(false); }}
-        className="text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-50 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+        className="text-xs text-[var(--text-muted)] hover:text-slate-700 hover:bg-slate-50 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
         title="Předvolené texty"
       >
         Předvolby
@@ -93,7 +93,7 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
           {/* Výchozí předvolby */}
           {builtIn.length > 0 && (
             <>
-              <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold border-b border-slate-100">Výchozí předvolby</div>
+              <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold border-b border-slate-100">Výchozí předvolby</div>
               {builtIn.map((t, i) => (
                 <button
                   key={`b-${i}`}
@@ -102,7 +102,7 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
                   onClick={() => applyText(t.text)}
                 >
                   <div className="text-xs font-semibold text-blue-700">{t.label}</div>
-                  <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">{t.text}</div>
+                  <div className="text-xs text-[var(--text-muted)] mt-0.5 line-clamp-2">{t.text}</div>
                 </button>
               ))}
             </>
@@ -119,7 +119,7 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
                     onClick={() => applyText(t.text)}
                   >
                     <div className="text-xs font-semibold text-emerald-700">{t.nazev}</div>
-                    <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">{t.text}</div>
+                    <div className="text-xs text-[var(--text-muted)] mt-0.5 line-clamp-2">{t.text}</div>
                   </button>
                   <button
                     type="button"
@@ -159,7 +159,7 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
                   className="w-full text-xs px-2 py-1 border border-slate-300 rounded focus:ring-1 focus:ring-blue-400 focus:outline-none resize-none"
                 />
                 <div className="flex gap-1 justify-end">
-                  <button type="button" onClick={() => setAdding(false)} className="px-2 py-0.5 text-xs text-slate-500 hover:bg-slate-100 rounded cursor-pointer">Zrušit</button>
+                  <button type="button" onClick={() => setAdding(false)} className="px-2 py-0.5 text-xs text-[var(--text-muted)] hover:bg-slate-100 rounded cursor-pointer">Zrušit</button>
                   <button type="button" onClick={handleAdd} className="px-2 py-0.5 text-xs bg-slate-800 text-white rounded hover:bg-slate-900 cursor-pointer" disabled={!newNazev.trim() || !newText.trim()}>Uložit</button>
                 </div>
               </div>

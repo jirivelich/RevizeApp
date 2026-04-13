@@ -1,4 +1,4 @@
-/**
+﻿/**
  * StrojniZarizeniTab – Formulář protokolu ověření strojního zařízení
  * Integrovaný přímo v RevizeDetailPage jako tab pro kategorii 'stroje'.
  * 
@@ -125,8 +125,8 @@ function CB({ val, active, label, onClick }: { val: string; active: boolean; lab
   const cls = active
     ? val === 'V' ? `${base} bg-emerald-50 border-emerald-500 text-emerald-600`
     : val === 'N' ? `${base} bg-red-50 border-red-500 text-red-600`
-    : `${base} bg-slate-100 border-slate-400 text-slate-500`
-    : `${base} border-slate-300 bg-white text-slate-400 hover:border-slate-400 hover:text-slate-600`;
+    : `${base} bg-slate-100 border-slate-400 text-[var(--text-muted)]`
+    : `${base} border-slate-300 bg-white text-[var(--text-secondary)] hover:border-slate-400 hover:text-slate-600`;
   return <button className={cls} onClick={onClick} type="button">{label}</button>;
 }
 
@@ -363,7 +363,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
               ))}
             </tbody>
           </table>
-          <p className="text-xs text-slate-400 italic mt-1.5">V = Vyhovuje &nbsp;|&nbsp; N = Nevyhovuje &nbsp;|&nbsp; NA = Neaplikováno</p>
+          <p className="text-xs text-[var(--text-secondary)] italic mt-1.5">V = Vyhovuje &nbsp;|&nbsp; N = Nevyhovuje &nbsp;|&nbsp; NA = Neaplikováno</p>
         </div>
       </div>
 
@@ -399,7 +399,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
               ))}
             </tbody>
           </table>
-          <p className="text-xs text-slate-400 italic mt-1.5">V = Vyhovuje &nbsp;|&nbsp; N = Nevyhovuje &nbsp;|&nbsp; NA = Neaplikováno</p>
+          <p className="text-xs text-[var(--text-secondary)] italic mt-1.5">V = Vyhovuje &nbsp;|&nbsp; N = Nevyhovuje &nbsp;|&nbsp; NA = Neaplikováno</p>
         </div>
       </div>
 
@@ -433,7 +433,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
               ))}
             </tbody>
           </table>
-          <p className="text-xs text-slate-400 italic mt-1.5">V = Vyhovuje &nbsp;|&nbsp; N = Nevyhovuje &nbsp;|&nbsp; NA = Neaplikováno</p>
+          <p className="text-xs text-[var(--text-secondary)] italic mt-1.5">V = Vyhovuje &nbsp;|&nbsp; N = Nevyhovuje &nbsp;|&nbsp; NA = Neaplikováno</p>
         </div>
       </div>
 
@@ -466,7 +466,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
               ))}
             </tbody>
           </table>
-          <p className="text-xs text-slate-400 italic mt-1.5">V = Vyhovuje &nbsp;|&nbsp; N = Nevyhovuje &nbsp;|&nbsp; NA = Neaplikováno</p>
+          <p className="text-xs text-[var(--text-secondary)] italic mt-1.5">V = Vyhovuje &nbsp;|&nbsp; N = Nevyhovuje &nbsp;|&nbsp; NA = Neaplikováno</p>
         </div>
       </div>
 
@@ -518,7 +518,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
           {/* Přiřazené přístroje z DB */}
           {pouzitePristroje.length > 0 && (
             <div className="mb-3">
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Přiřazené přístroje (z databáze)</div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-1">Přiřazené přístroje (z databáze)</div>
               <table className="w-full text-sm border-collapse mt-1">
                 <thead><tr>
                   <th className={TW.th}>Název</th>
@@ -547,7 +547,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
           )}
 
           {/* Ruční tabulka přístrojů (do protokolu) */}
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Přístroje v protokolu (ruční editace)</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-1">Přístroje v protokolu (ruční editace)</div>
           <table className="w-full text-sm border-collapse mt-1">
             <thead><tr>
               <th className={TW.th} style={{ width: '30%' }}>Přístroj / typ</th>
@@ -609,7 +609,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
                 >
                   <div>
                     <div className="font-semibold text-sm text-slate-800 mb-0.5">{p.nazev}</div>
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-[var(--text-muted)]">
                       {p.vyrobce} {p.model} • V.č.: {p.vyrobniCislo}
                       {p.platnostKalibrace && ` • Kalibrace: ${new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}`}
                     </div>
@@ -618,7 +618,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
                 </div>
               ))
           ) : (
-            <div className="p-5 text-center text-slate-500">
+            <div className="p-5 text-center text-[var(--text-muted)]">
               <p className="mb-2 text-sm">{vsechnyPristroje.length === 0 ? 'Nemáte žádné měřicí přístroje v systému.' : 'Všechny přístroje jsou již přiřazeny k této revizi.'}</p>
               <Link to="/pristroje" className="text-blue-600 underline text-sm">Přejít na správu přístrojů</Link>
             </div>
@@ -633,20 +633,20 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
         </div>
         <div className="p-4">
           <div className="mb-3.5">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">
               Celkový výsledek ověření
             </div>
             <div className="flex gap-3 mb-3.5">
               <button
                 className={`flex-1 py-3 px-4 border-2 rounded-lg cursor-pointer text-xs font-bold text-center transition-all tracking-wide ${
-                  fd.verdikt === 'pass' ? 'bg-emerald-50 border-emerald-500 text-emerald-600' : 'border-slate-300 bg-white text-slate-500 hover:border-slate-400'
+                  fd.verdikt === 'pass' ? 'bg-emerald-50 border-emerald-500 text-emerald-600' : 'border-slate-300 bg-white text-[var(--text-muted)] hover:border-slate-400'
                 }`}
                 onClick={() => upd('verdikt', fd.verdikt === 'pass' ? '' : 'pass')} type="button">
                 ✓ &nbsp; VYHOVUJE
               </button>
               <button
                 className={`flex-1 py-3 px-4 border-2 rounded-lg cursor-pointer text-xs font-bold text-center transition-all tracking-wide ${
-                  fd.verdikt === 'fail' ? 'bg-red-50 border-red-500 text-red-600' : 'border-slate-300 bg-white text-slate-500 hover:border-slate-400'
+                  fd.verdikt === 'fail' ? 'bg-red-50 border-red-500 text-red-600' : 'border-slate-300 bg-white text-[var(--text-muted)] hover:border-slate-400'
                 }`}
                 onClick={() => upd('verdikt', fd.verdikt === 'fail' ? '' : 'fail')} type="button">
                 ✗ &nbsp; NEVYHOVUJE – vyžadována nápravná opatření
@@ -664,8 +664,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
 
           </div>
           <div className="grid grid-cols-2 gap-8 pt-5 pb-1">
-            <div className="flex flex-col gap-1"><div className="border-b-2 border-slate-400 h-10" /><div className="text-xs uppercase tracking-wide text-slate-500 text-center mt-1">Revizní technik – jméno, podpis, razítko</div></div>
-            <div className="flex flex-col gap-1"><div className="border-b-2 border-slate-400 h-10" /><div className="text-xs uppercase tracking-wide text-slate-500 text-center mt-1">Zástupce objednatele – jméno, podpis</div></div>
+            <div className="flex flex-col gap-1"><div className="border-b-2 border-slate-400 h-10" /><div className="text-xs uppercase tracking-wide text-[var(--text-muted)] text-center mt-1">Revizní technik – jméno, podpis, razítko</div></div>
+            <div className="flex flex-col gap-1"><div className="border-b-2 border-slate-400 h-10" /><div className="text-xs uppercase tracking-wide text-[var(--text-muted)] text-center mt-1">Zástupce objednatele – jméno, podpis</div></div>
           </div>
         </div>
       </div>

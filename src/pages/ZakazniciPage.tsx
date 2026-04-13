@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Button, Card, Input, Modal } from '../components/ui';
 import { zakazniciService } from '../services/database';
 import { useZakaznici, useCreateZakaznik, useUpdateZakaznik, useDeleteZakaznik } from '../hooks/useQueries';
@@ -117,8 +117,8 @@ const ZakazniciPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-sm font-bold text-slate-300">Zákazníci</h1>
-          <p className="text-xs text-slate-400">Správa zákazníků a jejich revizí</p>
+          <h1 className="text-sm font-bold text-[var(--text-primary)]">Zákazníci</h1>
+          <p className="text-xs text-[var(--text-secondary)]">Správa zákazníků a jejich revizí</p>
         </div>
         <Button onClick={handleNewZakaznik}>
           <span className="sm:hidden text-lg leading-none">+</span>
@@ -138,7 +138,7 @@ const ZakazniciPage: React.FC = () => {
       {/* Seznam zákazníků */}
       {filteredZakaznici.length === 0 ? (
         <Card className="p-8 text-center">
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-[var(--text-secondary)]">
             {searchTerm ? 'Žádní zákazníci nenalezeni' : 'Zatím nemáte žádné zákazníky'}
           </p>
           {!searchTerm && (
@@ -152,31 +152,31 @@ const ZakazniciPage: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/[0.06]">
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Název</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">ČO</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Adresa</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Kontakt</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Telefon / Email</th>
-                  <th className="text-center py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Revizí</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Akce</th>
+                <tr className="border-b border-[var(--border-table)]">
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Název</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">ČO</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Adresa</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Kontakt</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Telefon / Email</th>
+                  <th className="text-center py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Revizí</th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Akce</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredZakaznici.map((zakaznik) => (
-                  <tr key={zakaznik.id} className="border-b border-white/[0.05] hover:bg-white/[0.04]">
-                    <td className="py-2 px-3 text-xs font-medium text-slate-300">{zakaznik.nazev}</td>
-                    <td className="py-2 px-3 font-mono text-xs text-slate-400">{zakaznik.ico || '-'}</td>
-                    <td className="py-2 px-3 text-xs text-slate-400 max-w-xs truncate">{zakaznik.adresa || '-'}</td>
-                    <td className="py-2 px-3 text-xs text-slate-300">{zakaznik.kontaktOsoba || '-'}</td>
-                    <td className="py-2 px-3 text-xs text-slate-400">
+                  <tr key={zakaznik.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)]">
+                    <td className="py-2 px-3 text-xs font-medium text-[var(--text-primary)]">{zakaznik.nazev}</td>
+                    <td className="py-2 px-3 font-mono text-xs text-[var(--text-secondary)]">{zakaznik.ico || '-'}</td>
+                    <td className="py-2 px-3 text-xs text-[var(--text-secondary)] max-w-xs truncate">{zakaznik.adresa || '-'}</td>
+                    <td className="py-2 px-3 text-xs text-[var(--text-primary)]">{zakaznik.kontaktOsoba || '-'}</td>
+                    <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">
                       {zakaznik.telefon && <div>{zakaznik.telefon}</div>}
-                      {zakaznik.email && <div className="text-slate-400">{zakaznik.email}</div>}
+                      {zakaznik.email && <div className="text-[var(--text-secondary)]">{zakaznik.email}</div>}
                       {!zakaznik.telefon && !zakaznik.email && '-'}
                     </td>
                     <td className="py-2 px-3 text-center">
                       <span 
-                        className="px-2 py-1 text-xs font-medium bg-white/[0.06] text-slate-400 rounded cursor-pointer hover:bg-white/[0.10]"
+                        className="px-2 py-1 text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)] rounded cursor-pointer hover:bg-[var(--bg-hover-strong)]"
                         onClick={() => handleShowRevize(zakaznik)}
                         title="Zobrazit revize zákazníka"
                       >
@@ -258,11 +258,11 @@ const ZakazniciPage: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">Poznámka</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Poznámka</label>
             <textarea
               value={formData.poznamka}
               onChange={(e) => setFormData({ ...formData, poznamka: e.target.value })}
-              className="w-full px-3 py-2 border rounded-md bg-white/[0.04] text-slate-300 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5]"
+              className="w-full px-3 py-2 border rounded-md bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-blue-500/[0.5]"
               rows={3}
             />
           </div>
@@ -286,14 +286,14 @@ const ZakazniciPage: React.FC = () => {
       >
         <div className="space-y-2">
           {selectedZakaznikRevize.length === 0 ? (
-            <p className="text-slate-400 text-center py-4">Žádné revize</p>
+            <p className="text-[var(--text-secondary)] text-center py-4">Žádné revize</p>
           ) : (
             selectedZakaznikRevize.map((revize) => (
               <div key={revize.id} className="p-3 border rounded-lg hover:bg-slate-50">
                 <div className="flex justify-between items-center">
                   <div>
                     <span className="font-medium">{revize.cisloRevize || `Revize #${revize.id}`}</span>
-                    <span className="text-slate-400 ml-2">
+                    <span className="text-[var(--text-secondary)] ml-2">
                       {revize.datum ? new Date(revize.datum).toLocaleDateString('cs-CZ') : 'Bez data'}
                     </span>
                   </div>
@@ -307,7 +307,7 @@ const ZakazniciPage: React.FC = () => {
                   </span>
                 </div>
                 {revize.nazev && (
-                  <p className="text-sm text-slate-500 mt-1">{revize.nazev}</p>
+                  <p className="text-sm text-[var(--text-muted)] mt-1">{revize.nazev}</p>
                 )}
               </div>
             ))

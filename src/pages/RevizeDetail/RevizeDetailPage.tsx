@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '../../components/ui';
 import {
@@ -150,7 +150,7 @@ export function RevizeDetailPage() {
     return (
       <div className="text-center py-12">
         <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-        <p className="text-slate-500">Načítání revize...</p>
+        <p className="text-[var(--text-muted)]">Načítání revize...</p>
       </div>
     );
   }
@@ -168,7 +168,7 @@ export function RevizeDetailPage() {
   if (!revize) {
     return (
       <div className="text-center py-12">
-        <p className="text-slate-500">Revize nebyla nalezena</p>
+        <p className="text-[var(--text-muted)]">Revize nebyla nalezena</p>
         <Button variant="secondary" onClick={() => navigate('/revize')} className="mt-4">← Zpět na seznam revizí</Button>
       </div>
     );
@@ -208,7 +208,7 @@ export function RevizeDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
+          <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm mb-1">
             <Link to="/revize" className="hover:text-blue-600">Revize</Link>
             <span>/</span>
             <span>{revize.cisloRevize}</span>
@@ -327,7 +327,7 @@ export function RevizeDetailPage() {
           <div className="max-w-4xl mx-auto px-4 py-1 flex items-center justify-between gap-4">
             <div className="text-sm min-w-[140px]">
               {displayStatus === 'saving' && (
-                <span className="flex items-center gap-1.5 text-slate-300">
+                <span className="flex items-center gap-1.5 text-[var(--text-primary)]">
                   <span className="inline-block w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
                   Ukládání...
                 </span>

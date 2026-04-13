@@ -1,4 +1,4 @@
-import type { Zakazka } from '../../types';
+﻿import type { Zakazka } from '../../types';
 import { Button, Select } from '../../components/ui';
 import { getStatusColor, getPriorityColor, getRealizaceDays, getReportDeadline, isOverdue, formatDayShort } from './utils';
 
@@ -36,8 +36,8 @@ export function ZakazkaCard({ zakazka: z, onEdit, onUpdateStav, onDelete, onCrea
             )}
           </div>
           <p className="font-medium mb-1">{z.nazev}</p>
-          <p className="text-sm text-slate-500">Klient: {z.klient} • {z.adresa}</p>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-[var(--text-muted)]">Klient: {z.klient} • {z.adresa}</p>
+          <p className="text-sm text-[var(--text-muted)]">
             Realizace: {daysLabel}
             {z.datumDokonceni && ` • Dokončeno: ${new Date(z.datumDokonceni).toLocaleDateString('cs-CZ')}`}
           </p>

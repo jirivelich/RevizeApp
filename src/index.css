@@ -36,6 +36,10 @@
   --active-glow: rgba(59,130,246,0.6);
   --nav-text: #94a3b8;
   --nav-text-active: #93c5fd;
+  --bg-subtle: rgba(255,255,255,0.05);
+  --bg-faint: rgba(255,255,255,0.02);
+  --checkbox-border: rgba(255,255,255,0.20);
+  --border-strong: rgba(255,255,255,0.12);
 }
 
 * {

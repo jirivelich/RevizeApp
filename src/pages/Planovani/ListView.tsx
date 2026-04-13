@@ -1,4 +1,4 @@
-import type { Zakazka } from '../../types';
+﻿import type { Zakazka } from '../../types';
 import { Card, Select } from '../../components/ui';
 import { ZakazkaCard } from './ZakazkaCard';
 import { STAV_OPTIONS } from './utils';
@@ -56,7 +56,7 @@ export function ListView({
           ))}
         </div>
       ) : (
-        <p className="text-center text-slate-500 py-8">
+        <p className="text-center text-[var(--text-muted)] py-8">
           {filterStav
             ? 'Žádné zakázky neodpovídají filtru.'
             : 'Zatím žádné zakázky. Přidejte první kliknutím na tlačítko výše.'}

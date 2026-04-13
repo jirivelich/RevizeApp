@@ -545,7 +545,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
 
         {/* Color */}
         <div className="flex items-center gap-1">
-          <span className="text-xs text-slate-500 hidden sm:inline">Barva:</span>
+          <span className="text-xs text-[var(--text-muted)] hidden sm:inline">Barva:</span>
           {['#1a1a1a', '#c00000', '#1d4ed8', '#166534'].map(c => (
             <button key={c} type="button" title={c} onClick={() => setColor(c)}
               style={{ backgroundColor: c }}
@@ -560,7 +560,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
 
         {/* Line width */}
         <div className="flex items-center gap-1">
-          <span className="text-xs text-slate-500 hidden sm:inline">Tloušťka:</span>
+          <span className="text-xs text-[var(--text-muted)] hidden sm:inline">Tloušťka:</span>
           {([1, 2, 4] as const).map(w => (
             <button key={w} type="button" onClick={() => setLineWidth(w)}
               className={`px-2 py-1 text-xs rounded border ${
@@ -575,7 +575,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
         {/* Rotation controls — for symbol placement or selected symbol */}
         {showRotCtrls && (
           <div className="flex items-center gap-1">
-            <span className="text-xs text-slate-500">Otočení:</span>
+            <span className="text-xs text-[var(--text-muted)]">Otočení:</span>
             <button type="button" onClick={() => rotateBtn(-90)} title="Otočit doleva o 90°"
               className="px-2 py-1 text-xs rounded border bg-white text-slate-700 border-slate-300 hover:border-slate-400">↺</button>
             <span className="text-xs font-medium text-slate-700 w-8 text-center">{rotDisplay}°</span>
@@ -639,7 +639,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-4 p-2 bg-slate-50 rounded border border-slate-100 text-xs text-slate-500">
+      <div className="flex flex-wrap gap-4 p-2 bg-slate-50 rounded border border-slate-100 text-xs text-[var(--text-muted)]">
         <span>Legenda LPS (ČSN EN 62305):</span>
         <span className="font-medium text-blue-800">J = Jímač</span>
         <span className="font-medium text-green-800">S = Svod</span>
@@ -648,7 +648,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
         {tool === 'select' && selectedId && <span className="text-blue-600 font-medium">Symbol vybrán – táhněte nebo otočte ↺↻, smažte ✕</span>}
       </div>
 
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-[var(--text-secondary)]">
         Schéma se automaticky ukládá do revize a bude vytisknuto jako příloha zprávy.
       </p>
     </div>

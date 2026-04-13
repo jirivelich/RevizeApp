@@ -30,6 +30,10 @@ export const themes: Record<ThemeName, ThemeVars> = {
     '--active-glow':       'rgba(59,130,246,0.6)',
     '--nav-text':          '#94a3b8',
     '--nav-text-active':   '#93c5fd',
+    '--bg-subtle':         'rgba(255,255,255,0.05)',
+    '--bg-faint':          'rgba(255,255,255,0.02)',
+    '--checkbox-border':   'rgba(255,255,255,0.20)',
+    '--border-strong':     'rgba(255,255,255,0.12)',
   },
   light: {
     '--background':        '#f1f5f9',
@@ -59,5 +63,9 @@ export const themes: Record<ThemeName, ThemeVars> = {
     '--active-glow':       'rgba(59,130,246,0.6)',
     '--nav-text':          '#94a3b8',
     '--nav-text-active':   '#3b82f6',
+    '--bg-subtle':         'rgba(0,0,0,0.04)',
+    '--bg-faint':          'rgba(0,0,0,0.02)',
+    '--checkbox-border':   'rgba(0,0,0,0.25)',
+    '--border-strong':     'rgba(0,0,0,0.18)',
   },
 }

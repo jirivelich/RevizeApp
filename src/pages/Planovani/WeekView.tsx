@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -101,7 +101,7 @@ function DroppableSlot({ id, children, onClick, isToday, isCurrentHour }: Droppa
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[60px] p-1 border-b border-r border-white/[0.06] transition-colors relative
+      className={`min-h-[60px] p-1 border-b border-r border-[var(--border-table)] transition-colors relative
         ${isOver ? 'bg-blue-500/[0.12] ring-2 ring-blue-500/[0.40] ring-inset' : ''}
         ${isToday ? 'bg-blue-500/[0.06]' : ''}
         ${isCurrentHour ? 'border-l-2 border-l-blue-500' : ''}
@@ -136,7 +136,7 @@ function WeekDropZone({ id, label, direction, visible }: WeekDropZoneProps) {
         transition-all duration-200 cursor-default
         ${isOver
           ? 'bg-slate-700 text-white shadow-2xl w-24'
-          : 'bg-white/[0.08] text-slate-300 shadow-lg border border-white/[0.12]'
+          : 'bg-[var(--bg-badge)] text-[var(--text-primary)] shadow-lg border border-[var(--border-strong)]'
         }
       `}
     >
@@ -274,23 +274,23 @@ export function WeekView({ zakazky, onZakazkaClick, onSlotClick, onMove }: WeekV
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={goToPreviousWeek}
-          className="p-2 rounded-lg hover:bg-white/[0.06] text-slate-400 transition-colors"
+          className="p-2 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
           title="Předchozí týden"
         >
           ◀
         </button>
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-slate-300">{weekLabel}</h2>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">{weekLabel}</h2>
           <button
             onClick={goToToday}
-            className="text-xs px-2 py-1 rounded bg-blue-500/[0.15] text-blue-300 hover:bg-blue-500/[0.25] transition-colors"
+            className="text-xs px-2 py-1 rounded bg-[var(--bg-accent-badge)] text-blue-300 hover:bg-blue-500/[0.25] transition-colors"
           >
             Tento týden
           </button>
         </div>
         <button
           onClick={goToNextWeek}
-          className="p-2 rounded-lg hover:bg-white/[0.06] text-slate-400 transition-colors"
+          className="p-2 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
           title="Další týden"
         >
           ▶
@@ -302,23 +302,23 @@ export function WeekView({ zakazky, onZakazkaClick, onSlotClick, onMove }: WeekV
         <div className="overflow-auto max-h-[calc(100vh-220px)]">
           <div className="grid" style={{ gridTemplateColumns: '60px repeat(7, 1fr)' }}>
             {/* Header row */}
-            <div className="sticky top-0 z-10 bg-[#0a0f1e] border-b border-r border-white/[0.06] p-2" />
+            <div className="sticky top-0 z-10 bg-[#0a0f1e] border-b border-r border-[var(--border-table)] p-2" />
             {weekDays.map((day, i) => {
               const isToday_ = isSameDay(day, today);
               return (
                 <div
                   key={i}
-                  className={`sticky top-0 z-10 p-2 text-center border-b border-r border-white/[0.06] ${
-                    isToday_ ? 'bg-blue-500/[0.15]' : 'bg-[#0a0f1e]'
+                  className={`sticky top-0 z-10 p-2 text-center border-b border-r border-[var(--border-table)] ${
+                    isToday_ ? 'bg-[var(--bg-accent-badge)]' : 'bg-[#0a0f1e]'
                   }`}
                 >
-                  <div className="text-xs text-slate-500">{DAY_NAMES_SHORT[i]}</div>
+                  <div className="text-xs text-[var(--text-muted)]">{DAY_NAMES_SHORT[i]}</div>
                   <div className={`text-sm font-semibold ${
-                    isToday_ ? 'text-blue-300 font-bold' : 'text-slate-300'
+                    isToday_ ? 'text-blue-300 font-bold' : 'text-[var(--text-primary)]'
                   }`}>
                     {day.getDate()}
                   </div>
-                  <div className="text-[10px] text-slate-400 hidden sm:block">{DAY_NAMES[i]}</div>
+                  <div className="text-[10px] text-[var(--text-secondary)] hidden sm:block">{DAY_NAMES[i]}</div>
                 </div>
               );
             })}
@@ -329,7 +329,7 @@ export function WeekView({ zakazky, onZakazkaClick, onSlotClick, onMove }: WeekV
                 {/* Time label */}
                 <div
                   key={`label-${hour}`}
-                  className="p-1 text-right text-xs text-slate-500 border-b border-r border-white/[0.06] bg-white/[0.03] sticky left-0"
+                  className="p-1 text-right text-xs text-[var(--text-muted)] border-b border-r border-[var(--border-table)] bg-[var(--bg-surface)] sticky left-0"
                 >
                   {String(hour).padStart(2, '0')}:00
                 </div>

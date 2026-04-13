@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { aiApi } from '../services/api';
 
 interface ChatMessage {
@@ -110,7 +110,7 @@ export function AIChatAssistant() {
                   </svg>
                 </div>
                 <p className="text-sm text-slate-600 font-medium mb-1">AI Asistent pro revize</p>
-                <p className="text-xs text-slate-400">Zeptejte se na normy ČSN, postupy měření, klasifikaci závad...</p>
+                <p className="text-xs text-[var(--text-secondary)]">Zeptejte se na normy ČSN, postupy měření, klasifikaci závad...</p>
                 <div className="mt-4 space-y-2">
                   {[
                     'Jaké jsou lhůty revizí dle ČSN 33 1500?',
@@ -181,7 +181,7 @@ export function AIChatAssistant() {
                 </svg>
               </button>
             </div>
-            <p className="text-[10px] text-slate-400 mt-1 text-center">AI může dělat chyby. Ověřte důležité informace.</p>
+            <p className="text-[10px] text-[var(--text-secondary)] mt-1 text-center">AI může dělat chyby. Ověřte důležité informace.</p>
           </div>
         </div>
       )}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
 import { usePristroje, useCreatePristroj, useUpdatePristroj, useDeletePristroj, useKalibrace, useCreateKalibrace, useDeleteKalibrace } from '../hooks/useQueries';
 import type { MericiPristroj } from '../types';
@@ -117,8 +117,8 @@ export function PristrojePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-sm font-bold text-slate-300">Přístroje a kalibrace</h1>
-          <p className="text-xs text-slate-400">Správa měřících přístrojů a jejich kalibračních termínů</p>
+          <h1 className="text-sm font-bold text-[var(--text-primary)]">Přístroje a kalibrace</h1>
+          <p className="text-xs text-[var(--text-secondary)]">Správa měřících přístrojů a jejich kalibračních termínů</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
           <span className="sm:hidden text-lg leading-none">+</span>
@@ -130,7 +130,7 @@ export function PristrojePage() {
       <div className="lg:hidden">
         <button
           onClick={() => setShowStats(!showStats)}
-          className="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-300"
+          className="flex items-center gap-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         >
           <span>{showStats ? '▼' : '▶'}</span>
           <span>{showStats ? 'Skrýt statistiky' : 'Zobrazit statistiky'}</span>
@@ -139,32 +139,32 @@ export function PristrojePage() {
       <div className={`grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 ${showStats ? '' : 'hidden lg:grid'}`}>
         <Card>
           <div className="text-center p-1">
-            <p className="text-lg sm:text-xl font-bold text-slate-300">{pristroje.length}</p>
-            <p className="text-xs text-slate-400">Celkem přístrojů</p>
+            <p className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">{pristroje.length}</p>
+            <p className="text-xs text-[var(--text-secondary)]">Celkem přístrojů</p>
           </div>
         </Card>
         <Card>
           <div className="text-center p-1">
-            <p className="text-lg sm:text-xl font-bold text-slate-300">
+            <p className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">
               {pristroje.filter(p => !isExpiring(p.platnostKalibrace)).length}
             </p>
-            <p className="text-xs text-slate-400">Platná kalibrace</p>
+            <p className="text-xs text-[var(--text-secondary)]">Platná kalibrace</p>
           </div>
         </Card>
         <Card>
           <div className="text-center p-1">
-            <p className="text-lg sm:text-xl font-bold text-slate-300">
+            <p className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">
               {pristroje.filter(p => isExpiring(p.platnostKalibrace) && !isExpired(p.platnostKalibrace)).length}
             </p>
-            <p className="text-xs text-slate-400">Brzy expiruje</p>
+            <p className="text-xs text-[var(--text-secondary)]">Brzy expiruje</p>
           </div>
         </Card>
         <Card>
           <div className="text-center p-1">
-            <p className="text-lg sm:text-xl font-bold text-slate-300">
+            <p className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">
               {pristroje.filter(p => isExpired(p.platnostKalibrace)).length}
             </p>
-            <p className="text-xs text-slate-400">Prošlá kalibrace</p>
+            <p className="text-xs text-[var(--text-secondary)]">Prošlá kalibrace</p>
           </div>
         </Card>
       </div>
@@ -188,9 +188,9 @@ export function PristrojePage() {
               type="checkbox"
               checked={showExpiring}
               onChange={(e) => setShowExpiring(e.target.checked)}
-            className="w-4 h-4 rounded border-white/[0.20]"
+            className="w-4 h-4 rounded border-[var(--checkbox-border)]"
             />
-            <span className="text-sm text-slate-300">Pouze s expirující kalibraci</span>
+            <span className="text-sm text-[var(--text-primary)]">Pouze s expirující kalibraci</span>
           </label>
         </div>
       </Card>
@@ -201,30 +201,30 @@ export function PristrojePage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/[0.06]">
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Název</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Typ</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Výrobce / Model</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Výr. číslo</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Kalibrace</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Platnost</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Akce</th>
+                <tr className="border-b border-[var(--border-table)]">
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Název</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Typ</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Výrobce / Model</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Výr. číslo</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Kalibrace</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Platnost</th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Akce</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredPristroje.map((p) => (
-                  <tr key={p.id} className="border-b border-white/[0.05] hover:bg-white/[0.04]">
-                    <td className="py-2 px-3 text-xs font-medium text-slate-300">{p.nazev}</td>
+                  <tr key={p.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)]">
+                    <td className="py-2 px-3 text-xs font-medium text-[var(--text-primary)]">{p.nazev}</td>
                     <td className="py-2 px-3">
-                      <span className="px-2 py-1 bg-white/[0.06] text-slate-400 rounded text-xs">
+                      <span className="px-2 py-1 bg-[var(--bg-hover)] text-[var(--text-secondary)] rounded text-xs">
                         {getTypLabel(p.typPristroje)}
                       </span>
                     </td>
-                    <td className="py-2 px-3 text-xs text-slate-400">
+                    <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">
                       {p.vyrobce} {p.model}
                     </td>
-                    <td className="py-2 px-3 font-mono text-xs text-slate-400">{p.vyrobniCislo}</td>
-                    <td className="py-2 px-3 text-xs text-slate-400">
+                    <td className="py-2 px-3 font-mono text-xs text-[var(--text-secondary)]">{p.vyrobniCislo}</td>
+                    <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">
                       {new Date(p.datumKalibrace).toLocaleDateString('cs-CZ')}
                     </td>
                     <td className="py-2 px-3">
@@ -233,7 +233,7 @@ export function PristrojePage() {
                           ? 'bg-red-500/[0.15] text-red-300'
                           : isExpiring(p.platnostKalibrace)
                             ? 'bg-amber-500/[0.15] text-amber-300'
-                            : 'bg-white/[0.06] text-slate-400'
+                            : 'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
                       }`}>
                         {new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}
                       </span>
@@ -269,7 +269,7 @@ export function PristrojePage() {
             </table>
           </div>
         ) : (
-          <p className="text-center text-slate-500 py-8">
+          <p className="text-center text-[var(--text-muted)] py-8">
             {filterTyp || showExpiring
               ? 'Žádné přístroje neodpovídají filtru.'
               : 'Zatím nemáte žádné měřící přístroje. Přidejte první kliknutím na tlačítko výše.'}
@@ -368,13 +368,13 @@ export function PristrojePage() {
       >
         <div className="space-y-4">
           {/* Info o přístroji */}
-          <div className="bg-white/[0.04] rounded-lg p-3 text-sm">
+          <div className="bg-[var(--bg-input)] rounded-lg p-3 text-sm">
             <div className="grid grid-cols-2 gap-2">
-              <span className="text-slate-400">Výrobce / Model:</span>
-              <span className="font-medium text-slate-300">{historyPristroj?.vyrobce} {historyPristroj?.model}</span>
-              <span className="text-slate-400">Výrobní číslo:</span>
-              <span className="font-mono text-slate-300">{historyPristroj?.vyrobniCislo}</span>
-              <span className="text-slate-400">Aktuální kalibrace:</span>
+              <span className="text-[var(--text-secondary)]">Výrobce / Model:</span>
+              <span className="font-medium text-[var(--text-primary)]">{historyPristroj?.vyrobce} {historyPristroj?.model}</span>
+              <span className="text-[var(--text-secondary)]">Výrobní číslo:</span>
+              <span className="font-mono text-[var(--text-primary)]">{historyPristroj?.vyrobniCislo}</span>
+              <span className="text-[var(--text-secondary)]">Aktuální kalibrace:</span>
               <span className="font-medium">
                 {historyPristroj?.datumKalibrace ? new Date(historyPristroj.datumKalibrace).toLocaleDateString('cs-CZ') : '—'}
                 {' → '}
@@ -466,31 +466,31 @@ export function PristrojePage() {
 
           {/* Seznam kalibrací */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Historie kalibrací</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">Historie kalibrací</h4>
             {kalibrace.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-white/[0.06]">
-                      <th className="text-left py-2 px-3 text-xs font-medium text-slate-400">Datum</th>
-                      <th className="text-left py-2 px-3 text-xs font-medium text-slate-400">Platnost do</th>
-                      <th className="text-left py-2 px-3 text-xs font-medium text-slate-400">Provedl</th>
-                      <th className="text-left py-2 px-3 text-xs font-medium text-slate-400">Certifikát</th>
-                      <th className="text-left py-2 px-3 text-xs font-medium text-slate-400">Poznámka</th>
+                    <tr className="border-b border-[var(--border-table)]">
+                      <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)]">Datum</th>
+                      <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)]">Platnost do</th>
+                      <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)]">Provedl</th>
+                      <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)]">Certifikát</th>
+                      <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)]">Poznámka</th>
                       <th className="py-2 px-3 w-10"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {kalibrace.map((k, idx) => (
-                      <tr key={k.id} className={`border-b border-white/[0.05] ${idx === 0 ? 'bg-emerald-500/[0.07]' : ''}`}>
-                        <td className="py-2 px-3 font-medium text-slate-300">
+                      <tr key={k.id} className={`border-b border-[var(--border-subtle)] ${idx === 0 ? 'bg-emerald-500/[0.07]' : ''}`}>
+                        <td className="py-2 px-3 font-medium text-[var(--text-primary)]">
                           {new Date(k.datumKalibrace).toLocaleDateString('cs-CZ')}
                           {idx === 0 && <span className="ml-1.5 text-[10px] px-1.5 py-0.5 bg-emerald-500/[0.15] text-emerald-300 rounded font-semibold">aktuální</span>}
                         </td>
-                        <td className="py-2 px-3 text-slate-300">{new Date(k.platnostKalibrace).toLocaleDateString('cs-CZ')}</td>
-                        <td className="py-2 px-3 text-slate-400">{k.provedl || '—'}</td>
-                        <td className="py-2 px-3 font-mono text-xs text-slate-400">{k.certifikat || '—'}</td>
-                        <td className="py-2 px-3 text-slate-500 text-xs">{k.poznamka || ''}</td>
+                        <td className="py-2 px-3 text-[var(--text-primary)]">{new Date(k.platnostKalibrace).toLocaleDateString('cs-CZ')}</td>
+                        <td className="py-2 px-3 text-[var(--text-secondary)]">{k.provedl || '—'}</td>
+                        <td className="py-2 px-3 font-mono text-xs text-[var(--text-secondary)]">{k.certifikat || '—'}</td>
+                        <td className="py-2 px-3 text-[var(--text-muted)] text-xs">{k.poznamka || ''}</td>
                         <td className="py-2 px-3 text-center">
                           <button
                             onClick={() => { if (k.id && historyPristroj?.id) deleteKalibrace.mutate({ id: k.id, pristrojId: historyPristroj.id }); }}
@@ -504,7 +504,7 @@ export function PristrojePage() {
                 </table>
               </div>
             ) : (
-              <p className="text-center text-slate-400 py-4 text-sm">Zatím žádné záznamy kalibrací.</p>
+              <p className="text-center text-[var(--text-secondary)] py-4 text-sm">Zatím žádné záznamy kalibrací.</p>
             )}
           </div>
         </div>

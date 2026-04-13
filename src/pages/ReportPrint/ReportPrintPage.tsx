@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+﻿import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Previewer } from 'pagedjs';
 import { revizeService, rozvadecService, okruhService, cranicService, zavadaService, mistnostService, zarizeniService, revizePristrojService, nastaveniService, zakazniciService } from '../../services/database';
@@ -863,7 +863,7 @@ export function ReportPrintPage() {
       <div className="report-print-bg">
         {paging && (
           <div className="flex items-center justify-center py-12">
-            <div className="text-slate-500 text-sm">Připravuji stránky...</div>
+            <div className="text-[var(--text-muted)] text-sm">Připravuji stránky...</div>
           </div>
         )}
         <div ref={previewRef} className="report-preview" />

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+﻿import { useState, useRef } from 'react';
 import {
   DndContext,
   PointerSensor,
@@ -55,16 +55,16 @@ function GanttRow({ zakazka: z, days, onClick, onAddDay, onRemoveDay, isDragging
 
   return (
     <div
-      className={`flex border-b border-white/[0.05] hover:bg-white/[0.04] transition-colors ${isDragging ? 'opacity-40' : ''}`}
+      className={`flex border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)] transition-colors ${isDragging ? 'opacity-40' : ''}`}
     >
       {/* Název zakázky */}
       <div
-        className="flex-shrink-0 w-40 px-3 py-2 text-sm font-medium text-slate-300 truncate border-r border-white/[0.06] cursor-pointer hover:text-white"
+        className="flex-shrink-0 w-40 px-3 py-2 text-sm font-medium text-[var(--text-primary)] truncate border-r border-[var(--border-table)] cursor-pointer hover:text-white"
         title={`${z.nazev} — ${z.klient}`}
         onClick={() => onClick(z)}
       >
         <div className="truncate">{z.nazev}</div>
-        <div className="text-xs text-slate-400 truncate">{z.klient}</div>
+        <div className="text-xs text-[var(--text-secondary)] truncate">{z.klient}</div>
       </div>
 
       {/* Buňky pro každý den */}
@@ -83,8 +83,8 @@ function GanttRow({ zakazka: z, days, onClick, onAddDay, onRemoveDay, isDragging
           return (
             <div
               key={day}
-              className={`relative flex-1 min-w-[36px] h-12 border-r border-white/[0.05] flex items-center justify-center
-                ${isToday ? 'bg-blue-500/[0.08]' : ''}
+              className={`relative flex-1 min-w-[36px] h-12 border-r border-[var(--border-subtle)] flex items-center justify-center
+                ${isToday ? 'bg-[var(--bg-accent-soft)]' : ''}
               `}
             >
               {/* Realizační blok */}
@@ -259,18 +259,18 @@ export function GanttView({ zakazky, onZakazkaClick, onMove, onAddDay, onRemoveD
     <Card>
       {/* Navigace */}
       <div className="flex items-center justify-between mb-4">
-        <button onClick={goPrev} className="p-2 rounded-lg hover:bg-white/[0.06] text-slate-400 transition-colors" title="Předchozí 2 týdny">◀</button>
+        <button onClick={goPrev} className="p-2 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors" title="Předchozí 2 týdny">◀</button>
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-slate-300">{rangeLabel}</h2>
-          <button onClick={goToday} className="text-xs px-2 py-1 rounded bg-blue-500/[0.15] text-blue-300 hover:bg-blue-500/[0.25] transition-colors">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">{rangeLabel}</h2>
+          <button onClick={goToday} className="text-xs px-2 py-1 rounded bg-[var(--bg-accent-badge)] text-blue-300 hover:bg-blue-500/[0.25] transition-colors">
             Dnes
           </button>
         </div>
-        <button onClick={goNext} className="p-2 rounded-lg hover:bg-white/[0.06] text-slate-400 transition-colors" title="Další 2 týdny">▶</button>
+        <button onClick={goNext} className="p-2 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors" title="Další 2 týdny">▶</button>
       </div>
 
       {/* Legenda */}
-      <div className="flex gap-4 mb-3 text-xs text-slate-400 flex-wrap">
+      <div className="flex gap-4 mb-3 text-xs text-[var(--text-secondary)] flex-wrap">
         <span className="flex items-center gap-1.5"><span className="inline-block w-4 h-3 rounded bg-blue-500"></span>Realizace</span>
         <span className="flex items-center gap-1.5"><span className="inline-block w-4 h-3 rounded bg-amber-400"></span>Deadline zprávy</span>
         <span className="flex items-center gap-1.5"><span className="inline-block w-1.5 h-4 rounded-full bg-green-500"></span>Odevzdání</span>
@@ -280,8 +280,8 @@ export function GanttView({ zakazky, onZakazkaClick, onMove, onAddDay, onRemoveD
       <div className="overflow-x-auto">
         <div className="min-w-[600px]">
           {/* Hlavička — dny */}
-          <div className="flex border-b-2 border-white/[0.08]">
-            <div className="flex-shrink-0 w-40 px-3 py-2 text-xs font-medium text-slate-400 border-r border-white/[0.06]">
+          <div className="flex border-b-2 border-[var(--border-medium)]">
+            <div className="flex-shrink-0 w-40 px-3 py-2 text-xs font-medium text-[var(--text-secondary)] border-r border-[var(--border-table)]">
               Zakázka
             </div>
             <div className="flex flex-1">
@@ -293,12 +293,12 @@ export function GanttView({ zakazky, onZakazkaClick, onMove, onAddDay, onRemoveD
                 return (
                   <div
                     key={day}
-                    className={`flex-1 min-w-[36px] py-1 text-center border-r border-white/[0.05] ${isWeekend ? 'bg-white/[0.03]' : ''} ${isToday ? 'bg-blue-500/[0.15]' : ''}`}
+                    className={`flex-1 min-w-[36px] py-1 text-center border-r border-[var(--border-subtle)] ${isWeekend ? 'bg-[var(--bg-surface)]' : ''} ${isToday ? 'bg-[var(--bg-accent-badge)]' : ''}`}
                   >
-                    <div className={`text-[9px] font-medium ${isToday ? 'text-blue-400' : 'text-slate-500'}`}>
+                    <div className={`text-[9px] font-medium ${isToday ? 'text-blue-400' : 'text-[var(--text-muted)]'}`}>
                       {DAY_NAMES_SHORT[dayOfWeek]}
                     </div>
-                    <div className={`text-xs font-semibold ${isToday ? 'text-blue-400' : isWeekend ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <div className={`text-xs font-semibold ${isToday ? 'text-blue-400' : isWeekend ? 'text-[var(--text-muted)]' : 'text-[var(--text-secondary)]'}`}>
                       {d.getDate()}
                     </div>
                   </div>
@@ -310,7 +310,7 @@ export function GanttView({ zakazky, onZakazkaClick, onMove, onAddDay, onRemoveD
           {/* Řádky */}
           <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             {visibleZakazky.length === 0 ? (
-              <div className="py-12 text-center text-slate-400 text-sm">
+              <div className="py-12 text-center text-[var(--text-secondary)] text-sm">
                 Žádné zakázky v tomto období
               </div>
             ) : (

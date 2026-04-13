@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
 import { useZavadyKatalog, useZavadyKategorie, useCreateZavadaKatalog, useUpdateZavadaKatalog, useDeleteZavadaKatalog } from '../hooks/useQueries';
@@ -109,8 +109,8 @@ export function ZavadyPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-sm font-bold text-slate-300">Katalog závad</h1>
-          <p className="text-xs text-slate-400">Databáze typických závad s odkazy na normy a zákony</p>
+          <h1 className="text-sm font-bold text-[var(--text-primary)]">Katalog závad</h1>
+          <p className="text-xs text-[var(--text-secondary)]">Databáze typických závad s odkazy na normy a zákony</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
           <span className="sm:hidden text-lg leading-none">+</span>
@@ -122,28 +122,28 @@ export function ZavadyPage() {
       <div className="lg:hidden">
         <button
           onClick={() => setShowStats(!showStats)}
-          className="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-300"
+          className="flex items-center gap-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         >
           <span>{showStats ? '▼' : '▶'}</span>
           <span>{showStats ? 'Skrýt statistiky' : 'Zobrazit statistiky'}</span>
         </button>
       </div>
       <div className={`grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 ${showStats ? '' : 'hidden lg:grid'}`}>
-        <div className="bg-white/[0.03] rounded-lg p-3 sm:p-4 border border-white/[0.07]">
-          <p className="text-xs text-slate-400">Celkem v katalogu</p>
-          <p className="text-lg sm:text-xl font-bold text-slate-300">{stats.celkem}</p>
+        <div className="bg-[var(--bg-surface)] rounded-lg p-3 sm:p-4 border border-[var(--border)]">
+          <p className="text-xs text-[var(--text-secondary)]">Celkem v katalogu</p>
+          <p className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">{stats.celkem}</p>
         </div>
-        <div className="bg-white/[0.03] rounded-lg p-3 sm:p-4 border border-white/[0.07]">
-          <p className="text-xs text-slate-400">C1 - Kritické</p>
-          <p className="text-lg sm:text-xl font-bold text-slate-300">{stats.kriticke}</p>
+        <div className="bg-[var(--bg-surface)] rounded-lg p-3 sm:p-4 border border-[var(--border)]">
+          <p className="text-xs text-[var(--text-secondary)]">C1 - Kritické</p>
+          <p className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">{stats.kriticke}</p>
         </div>
-        <div className="bg-white/[0.03] rounded-lg p-3 sm:p-4 border border-white/[0.07]">
-          <p className="text-xs text-slate-400">C2 - Vážné</p>
-          <p className="text-lg sm:text-xl font-bold text-slate-300">{stats.vazne}</p>
+        <div className="bg-[var(--bg-surface)] rounded-lg p-3 sm:p-4 border border-[var(--border)]">
+          <p className="text-xs text-[var(--text-secondary)]">C2 - Vážné</p>
+          <p className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">{stats.vazne}</p>
         </div>
-        <div className="bg-white/[0.03] rounded-lg p-3 sm:p-4 border border-white/[0.07]">
-          <p className="text-xs text-slate-400">C3 - Drobné</p>
-          <p className="text-lg sm:text-xl font-bold text-slate-300">{stats.drobne}</p>
+        <div className="bg-[var(--bg-surface)] rounded-lg p-3 sm:p-4 border border-[var(--border)]">
+          <p className="text-xs text-[var(--text-secondary)]">C3 - Drobné</p>
+          <p className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">{stats.drobne}</p>
         </div>
       </div>
 
@@ -181,23 +181,23 @@ export function ZavadyPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/[0.06]">
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Závažnost</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Kategorie</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Popis</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Norma</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Článek</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-slate-400 uppercase tracking-wider">Akce</th>
+                <tr className="border-b border-[var(--border-table)]">
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Závažnost</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Kategorie</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Popis</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Norma</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Článek</th>
+                  <th className="text-right py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Akce</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredZavady.map((z) => (
-                  <tr key={z.id} className="border-b border-white/[0.05] hover:bg-white/[0.04]">
+                  <tr key={z.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)]">
                     <td className="py-2 px-3">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         z.zavaznost === 'C1' ? 'bg-red-500/[0.15] text-red-300' :
                         z.zavaznost === 'C2' ? 'bg-amber-500/[0.15] text-amber-300' :
-                        'bg-white/[0.06] text-slate-400'
+                        'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
                       }`}>
                         {z.zavaznost}
                       </span>
@@ -209,13 +209,13 @@ export function ZavadyPage() {
                         {z.zneniClanku && (
                           <button
                             onClick={() => setExpandedId(expandedId === z.id ? null : z.id!)}
-                            className="text-xs text-slate-500 hover:text-slate-300 mt-1"
+                            className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] mt-1"
                           >
                             {expandedId === z.id ? '▼ Skrýt znění' : '▶ Zobrazit znění'}
                           </button>
                         )}
                         {expandedId === z.id && z.zneniClanku && (
-                          <div className="mt-2 p-2 bg-white/[0.04] rounded text-xs text-slate-400 italic">
+                          <div className="mt-2 p-2 bg-[var(--bg-input)] rounded text-xs text-[var(--text-secondary)] italic">
                             "{z.zneniClanku}"
                           </div>
                         )}
@@ -223,12 +223,12 @@ export function ZavadyPage() {
                     </td>
                     <td className="py-2 px-3">
                       {z.norma && (
-                        <span className="px-2 py-1 rounded text-xs font-medium bg-white/[0.06] text-slate-400">
+                        <span className="px-2 py-1 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
                           {z.norma}
                         </span>
                       )}
                     </td>
-                    <td className="py-2 px-3 text-xs text-slate-400">{z.clanek || '-'}</td>
+                    <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">{z.clanek || '-'}</td>
                     <td className="py-2 px-3">
                       <div className="flex justify-end gap-2">
                         <Button
@@ -253,7 +253,7 @@ export function ZavadyPage() {
             </table>
           </div>
         ) : (
-          <p className="text-center text-slate-500 py-8">
+          <p className="text-center text-[var(--text-muted)] py-8">
             {filterKategorie || filterZavaznost || searchTerm
               ? 'Žádné závady neodpovídají filtru.'
               : 'Katalog závad je prázdný. Přidejte první závadu kliknutím na tlačítko výše.'}
@@ -279,11 +279,11 @@ export function ZavadyPage() {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-slate-400 block mb-1">Popis závady *</label>
+            <label className="text-sm font-medium text-[var(--text-secondary)] block mb-1">Popis závady *</label>
             <textarea
               value={formData.popis}
               onChange={(e) => setFormData({ ...formData, popis: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg bg-white/[0.04] text-slate-300 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5]"
+              className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-blue-500/[0.5]"
               rows={2}
               placeholder="Stručný popis typické závady..."
               required
@@ -302,13 +302,13 @@ export function ZavadyPage() {
               ]}
             />
             <div>
-              <label className="text-sm font-medium text-slate-400 block mb-1">Kategorie</label>
+              <label className="text-sm font-medium text-[var(--text-secondary)] block mb-1">Kategorie</label>
               <input
                 type="text"
                 list="kategorie-list"
                 value={formData.kategorie}
                 onChange={(e) => setFormData({ ...formData, kategorie: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg bg-white/[0.04] text-slate-300 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5]"
+                className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-blue-500/[0.5]"
                 placeholder="Rozvaděče, Vedení, Uzemnění..."
               />
               <datalist id="kategorie-list">
@@ -319,8 +319,8 @@ export function ZavadyPage() {
             </div>
           </div>
 
-          <div className="border-t border-white/[0.06] pt-4 mt-4">
-            <h4 className="font-medium text-slate-300 mb-3">Odkaz na normu / zákon</h4>
+          <div className="border-t border-[var(--border-table)] pt-4 mt-4">
+            <h4 className="font-medium text-[var(--text-primary)] mb-3">Odkaz na normu / zákon</h4>
             
             <div className="grid grid-cols-2 gap-4">
               <Input
@@ -338,11 +338,11 @@ export function ZavadyPage() {
             </div>
 
             <div className="mt-4">
-              <label className="text-sm font-medium text-slate-400 block mb-1">Znění článku / paragrafu</label>
+              <label className="text-sm font-medium text-[var(--text-secondary)] block mb-1">Znění článku / paragrafu</label>
               <textarea
                 value={formData.zneniClanku}
                 onChange={(e) => setFormData({ ...formData, zneniClanku: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg bg-white/[0.04] text-slate-300 border-white/[0.09] focus:outline-none focus:ring-1 focus:ring-blue-500/[0.4] focus:border-blue-500/[0.5]"
+                className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-blue-500/[0.5]"
                 rows={4}
                 placeholder="Úplné nebo zkrácené znění článku normy či paragrafu zákona..."
               />

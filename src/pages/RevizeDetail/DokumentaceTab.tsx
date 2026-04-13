@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Modal } from '../../components/ui';
 import type { Revize, MericiPristroj, PredvolenyText } from '../../types';
@@ -212,7 +212,7 @@ export function DokumentaceTab({
           {/* 2.2 Ochrana */}
           <div>
             <label className={TW.label}>2.2 Ochrana před úrazem elektrickým proudem</label>
-            <p className="text-xs text-slate-400 mt-1 mb-2">Zaškrtněte opatření použitá v objektu:</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-1 mb-2">Zaškrtněte opatření použitá v objektu:</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
               {[
                 { id: 'zakladni-izolace', label: 'Základní izolace živých částí' },
@@ -230,7 +230,7 @@ export function DokumentaceTab({
               ].map((opatreni) => {
                 const isChecked = ochranaOpatreni.includes(opatreni.id);
                 return (
-                  <label key={opatreni.id} className="flex items-center gap-2 px-2 py-1.5 bg-white/[0.03] rounded hover:bg-white/[0.06] cursor-pointer">
+                  <label key={opatreni.id} className="flex items-center gap-2 px-2 py-1.5 bg-[var(--bg-surface)] rounded hover:bg-[var(--bg-hover)] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={isChecked}
@@ -244,9 +244,9 @@ export function DokumentaceTab({
                         setFormData({ ...formData, ochranaOpatreni: JSON.stringify(updated) });
                         saveNow?.();
                       }}
-                      className="w-4 h-4 text-blue-600 rounded border-white/[0.20]"
+                      className="w-4 h-4 text-blue-600 rounded border-[var(--checkbox-border)]"
                     />
-                    <span className="text-sm text-slate-300">{opatreni.label}</span>
+                    <span className="text-sm text-[var(--text-primary)]">{opatreni.label}</span>
                   </label>
                 );
               })}
@@ -304,7 +304,7 @@ export function DokumentaceTab({
               </tbody>
             </table>
           ) : (
-            <p className="px-4 py-4 text-center text-slate-500">Zatím nejsou přiřazeny žádné měřící přístroje.</p>
+            <p className="px-4 py-4 text-center text-[var(--text-muted)]">Zatím nejsou přiřazeny žádné měřící přístroje.</p>
           )}
         </div>
         )}
@@ -475,7 +475,7 @@ export function DokumentaceTab({
         </ToggleSectionHeader>
         {isSekceVisible('rozdelovnik') && (
         <div className="p-4">
-          <p className="text-xs text-slate-500 mb-2">Seznam příjemců zprávy – každý příjemce na nový řádek, např.:<br /><code>Revizní technik: 1ks</code><br /><code>Objednávatel: 2ks</code></p>
+          <p className="text-xs text-[var(--text-muted)] mb-2">Seznam příjemců zprávy – každý příjemce na nový řádek, např.:<br /><code>Revizní technik: 1ks</code><br /><code>Objednávatel: 2ks</code></p>
           <textarea
             className={TW.textarea}
             rows={4}
@@ -513,10 +513,10 @@ export function DokumentaceTab({
               >
                 <div className="flex-1">
                   <p className="font-medium">{p.nazev}</p>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-[var(--text-muted)]">
                     {p.vyrobce} {p.model} • V.č.: {p.vyrobniCislo}
                   </p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-[var(--text-secondary)]">
                     Platnost kalibrace: {new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}
                   </p>
                 </div>
@@ -525,7 +525,7 @@ export function DokumentaceTab({
             ))
         ) : (
           <div className="text-center py-4">
-            <p className="text-slate-500 mb-2">
+            <p className="text-[var(--text-muted)] mb-2">
               {vsechnyPristroje.length === 0
                 ? 'Nemáte žádné měřící přístroje.'
                 : 'Všechny přístroje jsou již přiřazeny.'}

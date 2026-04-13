@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+﻿import { useState, useRef } from 'react';
 import { Button, Card, Select, Modal } from '../../components/ui';
 import { zavadaService, revizeService } from '../../services/database';
 import { useCreateZavada, useUpdateZavada, useDeleteZavada } from '../../hooks/useQueries';
@@ -170,7 +170,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wide">
+              <tr className="border-b border-slate-200 text-xs text-[var(--text-muted)] uppercase tracking-wide">
                 <th className="text-left py-2 pr-3 font-medium">Popis závady</th>
                 <th className="text-left py-2 pr-3 font-medium w-20">Závažnost</th>
                 <th className="text-left py-2 pr-3 font-medium w-28">Stav</th>
@@ -196,20 +196,20 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                       'bg-slate-100 text-slate-700'
                     }`}>{z.stav}</span>
                   </td>
-                  <td className="py-2 pr-3 text-xs text-slate-500 italic truncate max-w-[200px]">{z.poznamka || '—'}</td>
+                  <td className="py-2 pr-3 text-xs text-[var(--text-muted)] italic truncate max-w-[200px]">{z.poznamka || '—'}</td>
                   <td className="py-2">
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         type="button"
                         title="Upravit (vč. fotek)"
                         onClick={() => handleEditZavada(z)}
-                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-500 hover:text-slate-800"
+                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-[var(--text-muted)] hover:text-slate-800"
                       >✎</button>
                       <button
                         type="button"
                         title="Smazat"
                         onClick={() => handleDeleteZavada(z.id!)}
-                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-red-100 text-slate-400 hover:text-red-600"
+                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-red-100 text-[var(--text-secondary)] hover:text-red-600"
                       >✕</button>
                     </div>
                   </td>
@@ -277,7 +277,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
               </tr>
             </tbody>
           </table>
-          <p className="text-xs text-slate-400 mt-2 select-none">
+          <p className="text-xs text-[var(--text-secondary)] mt-2 select-none">
             <kbd className="px-1 bg-slate-100 rounded border border-slate-200 text-[10px]">Tab</kbd> přechod &nbsp;·&nbsp;
             <kbd className="px-1 bg-slate-100 rounded border border-slate-200 text-[10px]">Enter</kbd> uložit řádek &nbsp;·&nbsp;
             ✎ upravit vč. fotek
@@ -296,14 +296,14 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                     'bg-slate-100 text-slate-700'
                   }`}>{z.stav}</span>
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-[var(--text-muted)]">
                   Zjištěno: {new Date(z.datumZjisteni).toLocaleDateString('cs-CZ')}
                   {z.datumVyreseni && ` • Vyřešeno: ${new Date(z.datumVyreseni).toLocaleDateString('cs-CZ')}`}
                 </p>
                 {z.rozvadecId && (
-                  <p className="text-[10px] text-slate-400">Rozvaděč: {rozvadece.find(r => r.id === z.rozvadecId)?.nazev || 'Neznámý'}</p>
+                  <p className="text-[10px] text-[var(--text-secondary)]">Rozvaděč: {rozvadece.find(r => r.id === z.rozvadecId)?.nazev || 'Neznámý'}</p>
                 )}
-                {z.poznamka && <p className="text-xs text-slate-500 mt-1 italic">{z.poznamka}</p>}
+                {z.poznamka && <p className="text-xs text-[var(--text-muted)] mt-1 italic">{z.poznamka}</p>}
                 {Array.isArray(z.fotky) && z.fotky.length > 0 && (
                   <div className="flex gap-2 mt-2">
                     {z.fotky.slice(0, 4).map((foto, index) => (
@@ -332,7 +332,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
           ))}
         </div>
       ) : (
-        <p className="text-center text-slate-500 py-8 text-sm">Žádné závady nebyly zaznamenány. Přidejte první kliknutím na tlačítko výše.</p>
+        <p className="text-center text-[var(--text-muted)] py-8 text-sm">Žádné závady nebyly zaznamenány. Přidejte první kliknutím na tlačítko výše.</p>
       )}
     </Card>
 
@@ -401,7 +401,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                 });
               }
             }}
-            className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            className="w-full text-sm text-[var(--text-muted)] file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
           />
           {zavadaFormData.fotky.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">

@@ -1,4 +1,4 @@
-import { Input, Select, Modal, Button } from '../../components/ui';
+﻿import { Input, Select, Modal, Button } from '../../components/ui';
 import type { Revize } from '../../types';
 import type { ZakazkaFormData } from './utils';
 import { PRIORITA_OPTIONS, STAV_OPTIONS, addDays } from './utils';
@@ -93,7 +93,7 @@ export function ZakazkaForm({
                   <button
                     type="button"
                     onClick={() => removeExtraDay(day)}
-                    className="text-slate-400 hover:text-red-500 transition-colors px-2 py-1 text-lg leading-none"
+                    className="text-[var(--text-secondary)] hover:text-red-500 transition-colors px-2 py-1 text-lg leading-none"
                     title="Odebrat den"
                   >
                     ×
@@ -115,7 +115,7 @@ export function ZakazkaForm({
 
         {/* Revizní zpráva */}
         <div className="border-t border-slate-200 pt-4 space-y-3">
-          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Revizní zpráva</p>
+          <p className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">Revizní zpráva</p>
           <div className="flex items-end gap-3">
             <div className="flex-1">
               <Input

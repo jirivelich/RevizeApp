@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+﻿import { Link } from 'react-router-dom';
 import type { Revize, Firma, Nastaveni, Zakaznik } from '../../types';
 import { TW, SectionHeader, Field } from './tw';
 
@@ -83,7 +83,7 @@ export function HromosvodInfoTab({
           {selectedZakaznikId && (() => {
             const zakaznik = zakaznici.find(z => z.id === parseInt(selectedZakaznikId));
             return zakaznik ? (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-slate-500 bg-blue-50 rounded p-2">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-[var(--text-muted)] bg-blue-50 rounded p-2">
                 {zakaznik.adresa && <span>Adresa: {zakaznik.adresa}</span>}
                 {zakaznik.ico && <span>IČO: {zakaznik.ico}</span>}
                 {zakaznik.kontaktOsoba && <span>Kontakt: {zakaznik.kontaktOsoba}</span>}
@@ -151,7 +151,7 @@ export function HromosvodInfoTab({
               </select>
             </Field>
             <Field label="Platnost do">
-              <span className={`text-sm py-1 ${formData.datumPlatnosti ? 'font-medium' : 'text-slate-400'}`}>
+              <span className={`text-sm py-1 ${formData.datumPlatnosti ? 'font-medium' : 'text-[var(--text-secondary)]'}`}>
                 {formData.datumPlatnosti ? new Date(formData.datumPlatnosti).toLocaleDateString('cs-CZ') : 'Vypočítá se při dokončení'}
               </span>
             </Field>

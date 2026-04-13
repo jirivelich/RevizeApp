@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { Button, Modal } from '../../components/ui';
 import type { Revize, MericiPristroj, PredvolenyText } from '../../types';
 import { useAddPristrojToRevize, useRemovePristrojFromRevize } from '../../hooks/useQueries';
@@ -35,7 +35,7 @@ const stavColor = (stav?: string) => {
     case 'vyhovující': return 'text-emerald-700 bg-emerald-50';
     case 'nevyhovující': return 'text-red-700 bg-red-50';
     case 'částečně vyhovující': return 'text-amber-700 bg-amber-50';
-    default: return 'text-slate-500';
+    default: return 'text-[var(--text-muted)]';
   }
 };
 
@@ -199,7 +199,7 @@ export function HromosvodZarizeniTab({
               <label className={TW.label}>Zkušební svorky</label>
               <div className="flex items-center gap-2">
                 <input type="number" className={TW.input} min={0} value={formData.hromosvodSvodyZkusebniSvorky ?? ''} onChange={(e) => setFormData({ ...formData, hromosvodSvodyZkusebniSvorky: e.target.value ? parseInt(e.target.value) : undefined })} />
-                <span className="text-xs text-slate-400">ks</span>
+                <span className="text-xs text-[var(--text-secondary)]">ks</span>
               </div>
             </div>
             <div className="flex flex-col gap-1">
@@ -336,12 +336,12 @@ export function HromosvodZarizeniTab({
               </table>
             </div>
           ) : (
-            <p className="text-sm text-slate-400 text-center py-4">Zatím žádná měření. Přidejte měřicí body tlačítkem níže.</p>
+            <p className="text-sm text-[var(--text-secondary)] text-center py-4">Zatím žádná měření. Přidejte měřicí body tlačítkem níže.</p>
           )}
           <div className="flex items-center justify-between mt-3">
             <Button size="sm" onClick={addMereni}>+ Přidat měřicí bod</Button>
             {mereni.length > 0 && (
-              <div className="text-xs text-slate-500">
+              <div className="text-xs text-[var(--text-muted)]">
                 {mereni.filter(m => m.vyhovuje).length}/{mereni.length} vyhovuje |
                 {mereni.some(m => m.hodnota) && (
                   <> Průměr: {(mereni.filter(m => m.hodnota).reduce((s, m) => s + parseFloat(m.hodnota || '0'), 0) / Math.max(1, mereni.filter(m => m.hodnota).length)).toFixed(2)} Ω</>
@@ -377,16 +377,16 @@ export function HromosvodZarizeniTab({
                 <div key={p.id} className="flex items-center justify-between py-1.5 px-3 bg-slate-50 rounded border border-slate-200 text-sm">
                   <div>
                     <span className="font-medium">{p.nazev}</span>
-                    <span className="text-slate-400 ml-2">{p.vyrobce} {p.model}</span>
-                    <span className="text-slate-400 ml-2">v.č. {p.vyrobniCislo}</span>
-                    <span className="text-slate-400 ml-2">Kal. do: {new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}</span>
+                    <span className="text-[var(--text-secondary)] ml-2">{p.vyrobce} {p.model}</span>
+                    <span className="text-[var(--text-secondary)] ml-2">v.č. {p.vyrobniCislo}</span>
+                    <span className="text-[var(--text-secondary)] ml-2">Kal. do: {new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}</span>
                   </div>
                   <button onClick={() => removePristroj.mutate({ revizeId, pristrojId: p.id! })} className="text-red-500 hover:text-red-700 text-xs font-medium cursor-pointer">Odebrat</button>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-400 py-2">Žádné přístroje nepřiřazeny.</p>
+            <p className="text-sm text-[var(--text-secondary)] py-2">Žádné přístroje nepřiřazeny.</p>
           )}
           <Button size="sm" variant="secondary" onClick={() => setIsPristrojModalOpen(true)} className="mt-2">+ Přidat přístroj</Button>
         </div>
@@ -428,14 +428,14 @@ export function HromosvodZarizeniTab({
     >
       <div className="space-y-2">
         {vsechnyPristroje.filter(p => !pouzitePristroje.some(pp => pp.id === p.id)).length === 0 ? (
-          <p className="text-sm text-slate-400">Všechny přístroje jsou již přiřazeny nebo nemáte žádné v databázi.</p>
+          <p className="text-sm text-[var(--text-secondary)]">Všechny přístroje jsou již přiřazeny nebo nemáte žádné v databázi.</p>
         ) : (
           vsechnyPristroje.filter(p => !pouzitePristroje.some(pp => pp.id === p.id)).map(p => (
             <div key={p.id} className="flex items-center justify-between py-2 px-3 rounded border border-slate-200 hover:bg-slate-50">
               <div className="text-sm">
                 <span className="font-medium">{p.nazev}</span>
-                <span className="text-slate-400 ml-2">{p.vyrobce} {p.model}</span>
-                <span className="text-slate-400 ml-2">v.č. {p.vyrobniCislo}</span>
+                <span className="text-[var(--text-secondary)] ml-2">{p.vyrobce} {p.model}</span>
+                <span className="text-[var(--text-secondary)] ml-2">v.č. {p.vyrobniCislo}</span>
               </div>
               <Button size="sm" onClick={() => { addPristroj.mutate({ revizeId, pristrojId: p.id! }); setIsPristrojModalOpen(false); }}>Přidat</Button>
             </div>
