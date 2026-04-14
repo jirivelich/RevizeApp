@@ -1,4 +1,4 @@
-﻿import { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Button, Card, Select, Modal } from '../../components/ui';
 import { zavadaService, revizeService } from '../../services/database';
 import { useCreateZavada, useUpdateZavada, useDeleteZavada } from '../../hooks/useQueries';
@@ -203,7 +203,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                         type="button"
                         title="Upravit (vč. fotek)"
                         onClick={() => handleEditZavada(z)}
-                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)]"
                       >✎</button>
                       <button
                         type="button"
@@ -216,7 +216,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                 </tr>
               ))}
               {/* Draft row */}
-              <tr className="bg-[var(--bg-accent-soft)] border-b border-[var(--border)]">
+              <tr className="bg-[var(--bg-accent)] border-b border-[var(--border)]">
                 <td className="py-1.5 pr-3">
                   <input
                     ref={inlinePopisRef}
@@ -225,7 +225,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                     onChange={(e) => setInlineDraft(d => ({ ...d, popis: e.target.value }))}
                     onKeyDown={(e) => handleInlineKeyDown(e, 'popis')}
                     placeholder="Popis nové závady..."
-                    className="w-full px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
+                    className="w-full px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
                   />
                 </td>
                 <td className="py-1.5 pr-3">
@@ -234,7 +234,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                     value={inlineDraft.zavaznost}
                     onChange={(e) => setInlineDraft(d => ({ ...d, zavaznost: e.target.value as Zavada['zavaznost'] }))}
                     onKeyDown={(e) => handleInlineKeyDown(e, 'zavaznost')}
-                    className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
+                    className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
                   >
                     <option value="C1">C1</option>
                     <option value="C2">C2</option>
@@ -247,7 +247,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                     value={inlineDraft.stav}
                     onChange={(e) => setInlineDraft(d => ({ ...d, stav: e.target.value as Zavada['stav'] }))}
                     onKeyDown={(e) => handleInlineKeyDown(e, 'stav')}
-                    className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
+                    className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
                   >
                     <option value="otevřená">Otevřená</option>
                     <option value="v řešení">V řešení</option>
@@ -262,7 +262,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                     onChange={(e) => setInlineDraft(d => ({ ...d, poznamka: e.target.value }))}
                     onKeyDown={(e) => handleInlineKeyDown(e, 'poznamka')}
                     placeholder="Norma, poznámka..."
-                    className="w-full px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
+                    className="w-full px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
                   />
                 </td>
                 <td className="py-1.5">
@@ -351,7 +351,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
     >
       <form onSubmit={handleAddZavada} className="space-y-3">
         {!editingZavada && katalogZavad.length > 0 && (
-          <div className="p-2 bg-[var(--bg-accent-soft)] rounded-lg border border-[var(--border-medium)]">
+          <div className="p-2 bg-[var(--bg-accent)] rounded-lg border border-[var(--border-medium)]">
             <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Vybrat z katalogu závad</label>
             <Select
               value={selectedKatalogZavada}
@@ -367,7 +367,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
         <div>
           <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Popis závady *</label>
           <textarea value={zavadaFormData.popis} onChange={(e) => setZavadaFormData({ ...zavadaFormData, popis: e.target.value })}
-            className="w-full px-2 py-1.5 border rounded-lg border-[var(--border-input)] bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] text-sm" rows={2} placeholder="Popešte zjištěnou závadu..." required />
+            className="w-full px-2 py-1.5 border rounded-lg border-[var(--border-input)] bg-[var(--bg-input)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] text-sm" rows={2} placeholder="Popešte zjištěnou závadu..." required />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <Select label="Závažnost" value={zavadaFormData.zavaznost} onChange={(e) => setZavadaFormData({ ...zavadaFormData, zavaznost: e.target.value as any })}
@@ -386,10 +386,10 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
         <div>
           <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Poznámka / Odkaz na normu</label>
           <textarea value={zavadaFormData.poznamka} onChange={(e) => setZavadaFormData({ ...zavadaFormData, poznamka: e.target.value })}
-            className="w-full px-2 py-1.5 border rounded-lg border-[var(--border-input)] bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] text-xs" rows={3} placeholder="Volitelná poznámka nebo odkaz na normu/zákon..." />
+            className="w-full px-2 py-1.5 border rounded-lg border-[var(--border-input)] bg-[var(--bg-input)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] text-xs" rows={3} placeholder="Volitelná poznámka nebo odkaz na normu/zákon..." />
         </div>
         <div>
-          <label className="block text-xs font-medium text-[var(--text-primary)] mb-1">Fotky</label>
+          <label className="block text-xs font-medium text-[var(--text)] mb-1">Fotky</label>
           <input type="file" accept="image/*" multiple
             onChange={(e) => {
               const files = e.target.files;
@@ -401,7 +401,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                 });
               }
             }}
-            className="w-full text-sm text-[var(--text-muted)] file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-[var(--bg-accent-soft)] file:text-[var(--primary)] hover:file:bg-[var(--bg-accent)]"
+            className="w-full text-sm text-[var(--text-muted)] file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-[var(--bg-accent)] file:text-[var(--primary)] hover:file:bg-[var(--bg-accent)]"
           />
           {zavadaFormData.fotky.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
@@ -426,7 +426,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
       <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setLightboxImage(null)}>
         <div className="relative max-w-4xl max-h-[90vh]">
           <img src={lightboxImage} alt="Zvětšená fotka" className="max-w-full max-h-[90vh] object-contain rounded-lg" onClick={(e) => e.stopPropagation()} />
-          <button onClick={() => setLightboxImage(null)} className="absolute -top-3 -right-3 w-8 h-8 bg-[var(--surface)] rounded-full shadow-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]">✕</button>
+          <button onClick={() => setLightboxImage(null)} className="absolute -top-3 -right-3 w-8 h-8 bg-[var(--surface)] rounded-full shadow-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)]">✕</button>
         </div>
       </div>
     )}

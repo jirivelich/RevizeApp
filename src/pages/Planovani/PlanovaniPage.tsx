@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Modal } from '../../components/ui';
 import { useRevize, useZakazky, useCreateZakazka, useUpdateZakazka, useDeleteZakazka, useCreateRevize } from '../../hooks/useQueries';
@@ -217,7 +217,7 @@ export function PlanovaniPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-[var(--text-primary)]">Plánování</h1>
+          <h1 className="text-lg font-bold text-[var(--text)]">Plánování</h1>
           <p className="text-xs text-[var(--text-secondary)]">Správa zakázek a plánování revizí</p>
         </div>
         <div className="flex gap-2">
@@ -227,7 +227,7 @@ export function PlanovaniPage() {
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'list'
                   ? 'bg-slate-700 text-white'
-                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)]'
+                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
               }`}
             >
               Seznam
@@ -237,7 +237,7 @@ export function PlanovaniPage() {
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'week'
                   ? 'bg-slate-700 text-white'
-                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)]'
+                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
               }`}
             >
               Týden
@@ -247,7 +247,7 @@ export function PlanovaniPage() {
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'calendar'
                   ? 'bg-slate-700 text-white'
-                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)]'
+                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
               }`}
             >
               Měsíc
@@ -257,7 +257,7 @@ export function PlanovaniPage() {
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'gantt'
                   ? 'bg-slate-700 text-white'
-                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)]'
+                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
               }`}
             >
               Gantt
@@ -343,14 +343,14 @@ export function PlanovaniPage() {
                 onClick={() => handleKategorieSelected(kat.value)}
                 className="flex items-center gap-4 p-4 rounded-lg border-2 border-[var(--border-medium)] hover:border-[var(--checkbox-border)] hover:bg-[var(--bg-input)] transition-all text-left group"
               >
-                <div className="flex-shrink-0 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
+                <div className="flex-shrink-0 text-[var(--text-secondary)] group-hover:text-[var(--text)] transition-colors">
                   {kat.icon}
                 </div>
                 <div>
-                  <p className="font-semibold text-[var(--text-primary)] group-hover:text-white">{kat.label}</p>
+                  <p className="font-semibold text-[var(--text)] group-hover:text-white">{kat.label}</p>
                   <p className="text-xs text-[var(--text-secondary)] mt-0.5">{kat.popis}</p>
                 </div>
-                <div className="flex-shrink-0 ml-auto text-[var(--text-primary)] group-hover:text-[var(--text-muted)]">
+                <div className="flex-shrink-0 ml-auto text-[var(--text)] group-hover:text-[var(--text-muted)]">
                   <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                   </svg>

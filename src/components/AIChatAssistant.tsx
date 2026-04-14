@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { aiApi } from '../services/api';
 
 interface ChatMessage {
@@ -137,7 +137,7 @@ export function AIChatAssistant() {
                   className={`max-w-[80%] px-3 py-2 rounded-lg text-sm whitespace-pre-wrap ${
                     msg.role === 'user'
                       ? 'bg-violet-600 text-white'
-                      : 'bg-[var(--bg-input)] text-[var(--text-primary)]'
+                      : 'bg-[var(--bg-input)] text-[var(--text)]'
                   }`}
                 >
                   {msg.content}
@@ -159,7 +159,7 @@ export function AIChatAssistant() {
           </div>
 
           {/* Input */}
-          <div className="border-t border-[var(--border-table)] px-3 py-2">
+          <div className="border-t border-[var(--border)] px-3 py-2">
             <div className="flex gap-2">
               <input
                 ref={inputRef}
@@ -169,12 +169,12 @@ export function AIChatAssistant() {
                 onKeyDown={handleKeyDown}
                 placeholder="Napsat zprávu..."
                 disabled={loading}
-                className="flex-1 px-3 py-2 text-sm border border-[var(--border-input)] rounded-lg focus:outline-none focus:ring-1 focus:ring-violet-400 bg-[var(--bg-input)] text-[var(--text-primary)] disabled:bg-[var(--bg-surface)]"
+                className="flex-1 px-3 py-2 text-sm border border-[var(--border-input)] rounded-lg focus:outline-none focus:ring-1 focus:ring-violet-400 bg-[var(--bg-input)] text-[var(--text)] disabled:bg-[var(--bg-surface)]"
               />
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || loading}
-                className="px-3 py-2 bg-violet-600 hover:bg-violet-700 disabled:bg-[var(--bg-badge)] text-white rounded-lg transition-colors"
+                className="px-3 py-2 bg-violet-600 hover:bg-violet-700 disabled:bg-[var(--bg-hover)] text-white rounded-lg transition-colors"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 2L11 13M22 2l-7 20-4-9-9-4z" />

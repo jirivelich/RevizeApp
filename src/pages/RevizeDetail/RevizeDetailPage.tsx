@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '../../components/ui';
 import {
@@ -213,7 +213,7 @@ export function RevizeDetailPage() {
             <span>/</span>
             <span>{revize.cisloRevize}</span>
           </div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">{revize.nazev}</h1>
+          <h1 className="text-2xl font-bold text-[var(--text)]">{revize.nazev}</h1>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => navigate('/revize')}>← Zpět</Button>
@@ -222,7 +222,7 @@ export function RevizeDetailPage() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-[var(--border-table)] overflow-x-auto scrollbar-thin">
+      <div className="flex gap-1 border-b border-[var(--border)] overflow-x-auto scrollbar-thin">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -230,7 +230,7 @@ export function RevizeDetailPage() {
             className={`px-3 py-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap flex-shrink-0 cursor-pointer ${
               activeTab === tab.id
                 ? 'border-[var(--primary)] text-[var(--primary)]'
-                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text)]'
             }`}
           >
             <span className="mr-1.5">{tab.icon}</span>
@@ -327,7 +327,7 @@ export function RevizeDetailPage() {
           <div className="max-w-4xl mx-auto px-4 py-1 flex items-center justify-between gap-4">
             <div className="text-sm min-w-[140px]">
               {displayStatus === 'saving' && (
-                <span className="flex items-center gap-1.5 text-[var(--text-primary)]">
+                <span className="flex items-center gap-1.5 text-[var(--text)]">
                   <span className="inline-block w-3 h-3 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
                   Ukládání...
                 </span>

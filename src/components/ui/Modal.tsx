@@ -44,8 +44,8 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
         onClick={onClose}
       />
       <div className={`relative bg-[var(--surface)] border border-[var(--border-medium)] rounded-xl shadow-2xl ${sizeClasses[size]} w-full mx-4 max-h-[90vh] flex flex-col`}>
-        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-table)]">
-          <h2 className="text-sm font-semibold text-[var(--text-primary)]">{title}</h2>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)]">
+          <h2 className="text-sm font-semibold text-[var(--text)]">{title}</h2>
           <Button variant="secondary" size="sm" onClick={onClose}>
             ✕
           </Button>
@@ -54,7 +54,7 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
           {children}
         </div>
         {footer && (
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 px-5 py-3 border-t border-[var(--border-table)] [&>button]:w-full [&>button]:sm:w-auto">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 px-5 py-3 border-t border-[var(--border)] [&>button]:w-full [&>button]:sm:w-auto">
             {footer}
           </div>
         )}

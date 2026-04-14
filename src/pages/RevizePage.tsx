@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Input, Select, Modal } from '../components/ui';
 import { revizeService } from '../services/database';
@@ -105,7 +105,7 @@ export function RevizePage() {
   };
 
   const SortIcon = ({ col }: { col: SortKey }) => {
-    if (sortKey !== col) return <span className="ml-1 text-[var(--text-primary)]">↕</span>;
+    if (sortKey !== col) return <span className="ml-1 text-[var(--text)]">↕</span>;
     return <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>;
   };
 
@@ -282,7 +282,7 @@ export function RevizePage() {
     <div className="flex flex-col gap-4 h-full">
       <div className="flex items-center justify-between flex-shrink-0">
         <div>
-          <h1 className="text-lg font-bold text-[var(--text-primary)]">Revize</h1>
+          <h1 className="text-lg font-bold text-[var(--text)]">Revize</h1>
           <p className="text-xs text-[var(--text-secondary)]">Správa revizí elektrických instalací, hromosvodů a strojních zařízení</p>
         </div>
         <Button onClick={openModal}>
@@ -328,7 +328,7 @@ export function RevizePage() {
             <button
               onClick={() => setView('table')}
               title="Tabulka"
-              className={`p-1.5 rounded transition-colors ${viewMode === 'table' ? 'bg-[var(--bg-hover)] text-[var(--text-primary)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+              className={`p-1.5 rounded transition-colors ${viewMode === 'table' ? 'bg-[var(--bg-hover)] text-[var(--text)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'}`}
             >
               <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M5 4a2 2 0 00-2 2v8a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2H5zm0 2h10v2H5V6zm0 4h4v4H5v-4zm6 0h4v4h-4v-4z" clipRule="evenodd" />
@@ -337,7 +337,7 @@ export function RevizePage() {
             <button
               onClick={() => setView('grid')}
               title="Karty"
-              className={`p-1.5 rounded transition-colors ${viewMode === 'grid' ? 'bg-[var(--bg-hover)] text-[var(--text-primary)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+              className={`p-1.5 rounded transition-colors ${viewMode === 'grid' ? 'bg-[var(--bg-hover)] text-[var(--text)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'}`}
             >
               <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -354,7 +354,7 @@ export function RevizePage() {
             {paginatedRevize.map((r) => (
               <div key={r.id} className="bg-[var(--bg-surface)] rounded-lg border border-[var(--border)] p-3">
                 <Link to={`/revize/${r.id}`} className="block">
-                  <p className="font-semibold text-[var(--text-primary)] text-sm leading-snug">{r.nazev}</p>
+                  <p className="font-semibold text-[var(--text)] text-sm leading-snug">{r.nazev}</p>
                   <p className="text-xs text-[var(--text-secondary)] mt-0.5">{r.adresa}</p>
                 </Link>
                 <div className="flex items-center justify-between mt-2">
@@ -374,7 +374,7 @@ export function RevizePage() {
                     <span className="text-xs text-[var(--text-secondary)]">{new Date(r.datum).toLocaleDateString('cs-CZ')}</span>
                     <button
                       onClick={() => setActionSheetRevize({ id: r.id!, cisloRevize: r.cisloRevize, nazev: r.nazev })}
-                      className="p-1 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                      className="p-1 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
@@ -382,7 +382,7 @@ export function RevizePage() {
                     </button>
                     <button
                       onClick={() => navigate(`/revize/${r.id}/nahled`)}
-                      className="p-1 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                      className="p-1 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
                       title="Náhled tisku"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
@@ -399,15 +399,15 @@ export function RevizePage() {
           {/* Desktopová tabulka */}
           <div className={`${viewMode === 'table' ? 'hidden md:block' : 'hidden'} px-6 pb-4 flex-1 min-h-0 overflow-auto`}>
             <table className="w-full">
-              <thead className="sticky top-0 bg-[var(--bg-page)] z-10">
-                <tr className="border-b border-[var(--border-table)]">
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer select-none hover:text-[var(--text-primary)]" onClick={() => toggleSort('cisloRevize')}>Číslo<SortIcon col="cisloRevize" /></th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer select-none hover:text-[var(--text-primary)]" onClick={() => toggleSort('kategorieRevize')}>Kategorie<SortIcon col="kategorieRevize" /></th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer select-none hover:text-[var(--text-primary)]" onClick={() => toggleSort('nazev')}>Název<SortIcon col="nazev" /></th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer select-none hover:text-[var(--text-primary)]" onClick={() => toggleSort('adresa')}>Adresa<SortIcon col="adresa" /></th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer select-none hover:text-[var(--text-primary)]" onClick={() => toggleSort('datum')}>Datum<SortIcon col="datum" /></th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer select-none hover:text-[var(--text-primary)]" onClick={() => toggleSort('typRevize')}>Typ<SortIcon col="typRevize" /></th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer select-none hover:text-[var(--text-primary)]" onClick={() => toggleSort('stav')}>Stav<SortIcon col="stav" /></th>
+              <thead className="sticky top-0 bg-[var(--background)] z-10">
+                <tr className="border-b border-[var(--border)]">
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer select-none hover:text-[var(--text)]" onClick={() => toggleSort('cisloRevize')}>Číslo<SortIcon col="cisloRevize" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer select-none hover:text-[var(--text)]" onClick={() => toggleSort('kategorieRevize')}>Kategorie<SortIcon col="kategorieRevize" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer select-none hover:text-[var(--text)]" onClick={() => toggleSort('nazev')}>Název<SortIcon col="nazev" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer select-none hover:text-[var(--text)]" onClick={() => toggleSort('adresa')}>Adresa<SortIcon col="adresa" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer select-none hover:text-[var(--text)]" onClick={() => toggleSort('datum')}>Datum<SortIcon col="datum" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer select-none hover:text-[var(--text)]" onClick={() => toggleSort('typRevize')}>Typ<SortIcon col="typRevize" /></th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer select-none hover:text-[var(--text)]" onClick={() => toggleSort('stav')}>Stav<SortIcon col="stav" /></th>
                   <th className="text-right py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider"></th>
                 </tr>
               </thead>
@@ -415,7 +415,7 @@ export function RevizePage() {
                 {paginatedRevize.map((r) => (
                   <tr key={r.id} className="border-b border-[var(--border-subtle)] hover:bg-blue-500/[0.06] dark:hover:bg-blue-500/[0.08]">
                     <td className="py-2 px-3">
-                      <Link to={`/revize/${r.id}`} className="text-xs text-[var(--text-primary)] hover:text-slate-100 font-medium hover:underline">
+                      <Link to={`/revize/${r.id}`} className="text-xs text-[var(--text)] hover:text-slate-100 font-medium hover:underline">
                         {r.cisloRevize}
                       </Link>
                     </td>
@@ -431,7 +431,7 @@ export function RevizePage() {
                          r.kategorieRevize === 'stroje' ? 'Stroje' : 'Elektro'}
                       </span>
                     </td>
-                    <td className="py-2 px-3 text-xs font-medium text-[var(--text-primary)]">{r.nazev}</td>
+                    <td className="py-2 px-3 text-xs font-medium text-[var(--text)]">{r.nazev}</td>
                     <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">{r.adresa}</td>
                     <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">
                       {new Date(r.datum).toLocaleDateString('cs-CZ')}
@@ -454,7 +454,7 @@ export function RevizePage() {
                       <div className="relative" ref={openMenuId === r.id ? menuRef : undefined}>
                         <button
                           onClick={() => setOpenMenuId(openMenuId === r.id ? null : r.id!)}
-                          className="p-1 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                          className="p-1 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
                           title="Akce"
                         >
                           <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
@@ -465,30 +465,30 @@ export function RevizePage() {
                           <div className="absolute right-0 top-full mt-1 w-44 bg-[var(--surface)] rounded-lg shadow-lg border border-[var(--border-medium)] py-1 z-50">
                             <button
                               onClick={() => { setOpenMenuId(null); navigate(`/revize/${r.id}/nahled`); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
                             >
                               <span className="text-xs">👁️</span> Náhled tisku
                             </button>
-                            <div className="border-t border-[var(--border-table)] my-1"></div>
+                            <div className="border-t border-[var(--border)] my-1"></div>
                             <button
                               onClick={() => { setOpenMenuId(null); navigate(`/revize/${r.id}`); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
                             >
                               <span className="text-xs">✏️</span> Upravit
                             </button>
                             <button
                               onClick={() => { setOpenMenuId(null); openDuplikatModal(r.id!, r.cisloRevize); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
                             >
                               <span className="text-xs">📋</span> Kopírovat revizi
                             </button>
                             <button
                               onClick={() => { setOpenMenuId(null); openHistorieModal(r.id!, r.cisloRevize); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
                             >
                               <span className="text-xs">🕐</span> Historie
                             </button>
-                            <div className="border-t border-[var(--border-table)] my-1"></div>
+                            <div className="border-t border-[var(--border)] my-1"></div>
                             <button
                               onClick={() => { setOpenMenuId(null); handleDelete(r.id!); }}
                               className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/[0.08] flex items-center gap-2"
@@ -527,7 +527,7 @@ export function RevizePage() {
                         }`}>{r.stav}</span>
                       </div>
                     </div>
-                    <p className="font-semibold text-[var(--text-primary)] text-sm leading-snug mb-1">{r.nazev}</p>
+                    <p className="font-semibold text-[var(--text)] text-sm leading-snug mb-1">{r.nazev}</p>
                     <p className="text-xs text-[var(--text-secondary)] mb-3">{r.adresa}</p>
                     <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
                       <span>{r.cisloRevize}</span>
@@ -539,7 +539,7 @@ export function RevizePage() {
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <button
                         onClick={() => navigate(`/revize/${r.id}/nahled`)}
-                        className="p-1 rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                        className="p-1 rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
                         title="Náhled tisku"
                       >
                         <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
@@ -550,7 +550,7 @@ export function RevizePage() {
                       <div className="relative" ref={openMenuId === r.id ? menuRef : undefined}>
                         <button
                           onClick={() => setOpenMenuId(openMenuId === r.id ? null : r.id!)}
-                          className="p-1 rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                          className="p-1 rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
                           title="Akce"
                         >
                           <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
@@ -561,23 +561,23 @@ export function RevizePage() {
                           <div className="absolute right-0 top-full mt-1 w-44 bg-[var(--surface)] rounded-lg shadow-lg border border-[var(--border-medium)] py-1 z-50">
                             <button
                               onClick={() => { setOpenMenuId(null); navigate(`/revize/${r.id}`); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
                             >
                               <span>✏️</span> Upravit
                             </button>
                             <button
                               onClick={() => { setOpenMenuId(null); openDuplikatModal(r.id!, r.cisloRevize); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
                             >
                               <span>📋</span> Kopírovat revizi
                             </button>
                             <button
                               onClick={() => { setOpenMenuId(null); openHistorieModal(r.id!, r.cisloRevize); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
                             >
                               <span>🕐</span> Historie
                             </button>
-                            <div className="border-t border-[var(--border-table)] my-1"></div>
+                            <div className="border-t border-[var(--border)] my-1"></div>
                             <button
                               onClick={() => { setOpenMenuId(null); handleDelete(r.id!); }}
                               className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/[0.08] flex items-center gap-2"
@@ -594,7 +594,7 @@ export function RevizePage() {
             </div>
           </div>
           {/* Pagination footer */}
-          <div className="flex-shrink-0 flex items-center justify-between px-6 py-2.5 border-t border-[var(--border-table)] text-xs text-[var(--text-secondary)]">
+          <div className="flex-shrink-0 flex items-center justify-between px-6 py-2.5 border-t border-[var(--border)] text-xs text-[var(--text-secondary)]">
             <span>
               {totalCount === 0 ? '0 záznamů' : pageSize === -1
                 ? `${totalCount} záznamů`
@@ -606,7 +606,7 @@ export function RevizePage() {
                 <select
                   value={pageSize}
                   onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(0); }}
-                  className="bg-[var(--bg-input)] border border-[var(--border-medium)] rounded px-2 py-0.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--checkbox-border)]"
+                  className="bg-[var(--bg-input)] border border-[var(--border-medium)] rounded px-2 py-0.5 text-xs text-[var(--text)] focus:outline-none focus:border-[var(--checkbox-border)]"
                 >
                   <option value={10}>10</option>
                   <option value={25}>25</option>
@@ -682,14 +682,14 @@ export function RevizePage() {
                   onClick={() => selectKategorie(kat.value)}
                   className="flex items-center gap-4 p-4 rounded-lg border-2 border-[var(--border-medium)] hover:border-[var(--checkbox-border)] hover:bg-[var(--bg-input)] transition-all text-left group"
                 >
-                  <div className="flex-shrink-0 text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transition-colors">
+                  <div className="flex-shrink-0 text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors">
                     {kat.icon}
                   </div>
                   <div>
-                    <p className="font-semibold text-[var(--text-primary)] group-hover:text-white">{kat.label}</p>
+                    <p className="font-semibold text-[var(--text)] group-hover:text-white">{kat.label}</p>
                     <p className="text-xs text-[var(--text-secondary)] mt-0.5">{kat.popis}</p>
                   </div>
-                  <div className="flex-shrink-0 ml-auto text-slate-600 group-hover:text-[var(--text-primary)]">
+                  <div className="flex-shrink-0 ml-auto text-slate-600 group-hover:text-[var(--text)]">
                     <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                     </svg>
@@ -702,12 +702,12 @@ export function RevizePage() {
           /* ═══ KROK 2: Formulář ═══ */
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Zobrazení vybrané kategorie */}
-            <div className="flex items-center gap-3 px-3 py-2 bg-[var(--bg-subtle)] rounded-lg border border-[var(--border-medium)]">
+            <div className="flex items-center gap-3 px-3 py-2 bg-[var(--bg-surface)] rounded-lg border border-[var(--border-medium)]">
               <div className="text-[var(--text-secondary)]">
                 {KATEGORIE_REVIZE.find(k => k.value === formData.kategorieRevize)?.icon}
               </div>
               <div>
-                <p className="text-sm font-medium text-[var(--text-primary)]">
+                <p className="text-sm font-medium text-[var(--text)]">
                   {KATEGORIE_REVIZE.find(k => k.value === formData.kategorieRevize)?.label}
                 </p>
                 <p className="text-xs text-[var(--text-secondary)]">Kategorie revize</p>
@@ -829,7 +829,7 @@ export function RevizePage() {
                     </div>
                     <div className={`flex-1 rounded border px-3 py-2 text-sm ${isCurrent ? 'bg-blue-50 border-blue-200' : 'bg-[var(--surface)] border-[var(--border-medium)]'}`}>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-semibold text-[var(--text-primary)]">
+                        <span className="font-semibold text-[var(--text)]">
                           {h.cisloRevize}
                           {isCurrent && <span className="ml-2 text-xs text-blue-600">(aktuální)</span>}
                         </span>
@@ -882,25 +882,25 @@ export function RevizePage() {
           <div className="absolute inset-0 bg-black/40" onClick={() => setActionSheetRevize(null)} />
           <div className="relative bg-[var(--surface)] rounded-t-2xl shadow-xl pb-safe">
             <div className="px-4 pt-4 pb-2 border-b border-[var(--border-subtle)]">
-              <p className="font-semibold text-[var(--text-primary)] text-sm truncate">{actionSheetRevize.nazev}</p>
+              <p className="font-semibold text-[var(--text)] text-sm truncate">{actionSheetRevize.nazev}</p>
               <p className="text-xs text-[var(--text-secondary)]">{actionSheetRevize.cisloRevize}</p>
             </div>
             <div className="py-1">
               <button
                 onClick={() => { setActionSheetRevize(null); navigate(`/revize/${actionSheetRevize.id}`); }}
-                className="w-full text-left px-4 py-3.5 text-sm text-[var(--text-primary)] active:bg-[var(--bg-hover)] flex items-center gap-3"
+                className="w-full text-left px-4 py-3.5 text-sm text-[var(--text)] active:bg-[var(--bg-hover)] flex items-center gap-3"
               >
                 <span className="text-base">✏️</span> Upravit
               </button>
               <button
                 onClick={() => { const a = actionSheetRevize; setActionSheetRevize(null); openDuplikatModal(a.id, a.cisloRevize); }}
-                className="w-full text-left px-4 py-3.5 text-sm text-[var(--text-primary)] active:bg-[var(--bg-hover)] flex items-center gap-3"
+                className="w-full text-left px-4 py-3.5 text-sm text-[var(--text)] active:bg-[var(--bg-hover)] flex items-center gap-3"
               >
                 <span className="text-base">📋</span> Kopírovat revizi
               </button>
               <button
                 onClick={() => { const a = actionSheetRevize; setActionSheetRevize(null); openHistorieModal(a.id, a.cisloRevize); }}
-                className="w-full text-left px-4 py-3.5 text-sm text-[var(--text-primary)] active:bg-[var(--bg-hover)] flex items-center gap-3"
+                className="w-full text-left px-4 py-3.5 text-sm text-[var(--text)] active:bg-[var(--bg-hover)] flex items-center gap-3"
               >
                 <span className="text-base">🕐</span> Historie
               </button>
@@ -915,7 +915,7 @@ export function RevizePage() {
             <div className="px-4 pb-4 pt-1">
               <button
                 onClick={() => setActionSheetRevize(null)}
-                className="w-full py-3 rounded-xl bg-[var(--bg-surface)] text-sm font-medium text-[var(--text-primary)] active:bg-[var(--bg-hover)]"
+                className="w-full py-3 rounded-xl bg-[var(--bg-surface)] text-sm font-medium text-[var(--text)] active:bg-[var(--bg-hover)]"
               >
                 Zrušit
               </button>

@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Button, Card, Input, Modal } from '../components/ui';
 import { zakazniciService } from '../services/database';
 import { useZakaznici, useCreateZakaznik, useUpdateZakaznik, useDeleteZakaznik } from '../hooks/useQueries';
@@ -117,7 +117,7 @@ const ZakazniciPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-sm font-bold text-[var(--text-primary)]">Zákazníci</h1>
+          <h1 className="text-sm font-bold text-[var(--text)]">Zákazníci</h1>
           <p className="text-xs text-[var(--text-secondary)]">Správa zákazníků a jejich revizí</p>
         </div>
         <Button onClick={handleNewZakaznik}>
@@ -152,7 +152,7 @@ const ZakazniciPage: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[var(--border-table)]">
+                <tr className="border-b border-[var(--border)]">
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Název</th>
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">ČO</th>
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Adresa</th>
@@ -165,10 +165,10 @@ const ZakazniciPage: React.FC = () => {
               <tbody>
                 {filteredZakaznici.map((zakaznik) => (
                   <tr key={zakaznik.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)]">
-                    <td className="py-2 px-3 text-xs font-medium text-[var(--text-primary)]">{zakaznik.nazev}</td>
+                    <td className="py-2 px-3 text-xs font-medium text-[var(--text)]">{zakaznik.nazev}</td>
                     <td className="py-2 px-3 font-mono text-xs text-[var(--text-secondary)]">{zakaznik.ico || '-'}</td>
                     <td className="py-2 px-3 text-xs text-[var(--text-secondary)] max-w-xs truncate">{zakaznik.adresa || '-'}</td>
-                    <td className="py-2 px-3 text-xs text-[var(--text-primary)]">{zakaznik.kontaktOsoba || '-'}</td>
+                    <td className="py-2 px-3 text-xs text-[var(--text)]">{zakaznik.kontaktOsoba || '-'}</td>
                     <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">
                       {zakaznik.telefon && <div>{zakaznik.telefon}</div>}
                       {zakaznik.email && <div className="text-[var(--text-secondary)]">{zakaznik.email}</div>}
@@ -262,7 +262,7 @@ const ZakazniciPage: React.FC = () => {
             <textarea
               value={formData.poznamka}
               onChange={(e) => setFormData({ ...formData, poznamka: e.target.value })}
-              className="w-full px-3 py-2 border rounded-md bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-blue-500/[0.5]"
+              className="w-full px-3 py-2 border rounded-md bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-blue-500/[0.5]"
               rows={3}
             />
           </div>

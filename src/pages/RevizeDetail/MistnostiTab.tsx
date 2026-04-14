@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button, Card, Input, Select, Modal, BottomSheet } from '../../components/ui';
 import { TW } from './tw';
 import { zarizeniService } from '../../services/database';
@@ -220,10 +220,10 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
             }
           >
             <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-[10px] text-[var(--text-secondary)]">Patro</p><p className="font-medium text-xs text-[var(--text-primary)]">{selectedMistnost.patro || '—'}</p></div>
+              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-[10px] text-[var(--text-secondary)]">Patro</p><p className="font-medium text-xs text-[var(--text)]">{selectedMistnost.patro || '—'}</p></div>
             </div>
 
-            <h4 className="font-medium text-sm text-[var(--text-primary)] mb-2">Zařízení ({zarizeni.length})</h4>
+            <h4 className="font-medium text-sm text-[var(--text)] mb-2">Zařízení ({zarizeni.length})</h4>
             {zarizeni.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">

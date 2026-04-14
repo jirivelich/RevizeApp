@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
@@ -26,21 +26,21 @@ function EditableSelect({ label, value, onChange, options }: {
       {showCustom ? (
         <div className="relative">
           <input
-            className="w-full px-3 py-2 pr-8 border rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-blue-500/[0.5] text-xs"
+            className="w-full px-3 py-2 pr-8 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-blue-500/[0.5] text-xs"
             value={value}
             onChange={(e) => onChange(e.target.value)}
             autoFocus
           />
           <button
             type="button"
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] text-xs"
             onClick={() => { setShowCustom(false); }}
             title="Zpět na seznam"
           >↩</button>
         </div>
       ) : (
         <select
-          className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-blue-500/[0.5] text-xs"
+          className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-blue-500/[0.5] text-xs"
           value={options.includes(value) ? value : '__custom__'}
           onChange={(e) => {
             if (e.target.value === '__custom__') {
@@ -238,7 +238,7 @@ export function RozvadecDetailPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-[var(--text-primary)]">{rozvadec.nazev}</h1>
+          <h1 className="text-lg font-bold text-[var(--text)]">{rozvadec.nazev}</h1>
           <p className="text-xs text-[var(--text-secondary)]">{rozvadec.oznaceni} • {rozvadec.umisteni}</p>
         </div>
         <Button variant="secondary" onClick={() => navigate(`/revize/${revizeId}`)}>
@@ -249,15 +249,15 @@ export function RozvadecDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <p className="text-sm text-[var(--text-secondary)]">Typ rozváděče</p>
-          <p className="font-medium text-[var(--text-primary)]">{rozvadec.typRozvadece || '—'}</p>
+          <p className="font-medium text-[var(--text)]">{rozvadec.typRozvadece || '—'}</p>
         </Card>
         <Card>
           <p className="text-sm text-[var(--text-secondary)]">Stupeň krytí</p>
-          <p className="font-medium text-[var(--text-primary)]">{rozvadec.stupenKryti}</p>
+          <p className="font-medium text-[var(--text)]">{rozvadec.stupenKryti}</p>
         </Card>
         <Card>
           <p className="text-sm text-[var(--text-secondary)]">Počet okruhů</p>
-          <p className="font-medium text-[var(--text-primary)]">{okruhy.length}</p>
+          <p className="font-medium text-[var(--text)]">{okruhy.length}</p>
         </Card>
       </div>
 
@@ -274,7 +274,7 @@ export function RozvadecDetailPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[var(--border-table)]">
+                <tr className="border-b border-[var(--border)]">
                   <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Č.</th>
                   <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Název</th>
                   <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Jistič</th>
@@ -287,8 +287,8 @@ export function RozvadecDetailPage() {
               <tbody>
                 {[...okruhy].sort((a, b) => a.cislo - b.cislo).map((o) => (
                   <tr key={o.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)]">
-                    <td className="py-2 px-3 font-medium text-[var(--text-primary)]">{o.cislo}</td>
-                    <td className="py-2 px-3 text-[var(--text-primary)]">{o.nazev}</td>
+                    <td className="py-2 px-3 font-medium text-[var(--text)]">{o.cislo}</td>
+                    <td className="py-2 px-3 text-[var(--text)]">{o.nazev}</td>
                     <td className="py-2 px-3">
                       <span className="px-2 py-1 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
                         {o.jisticTyp}{o.jisticProud}
@@ -433,7 +433,7 @@ export function RozvadecDetailPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[var(--border-table)]">
+                <tr className="border-b border-[var(--border)]">
                   <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Č.</th>
                   <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Název</th>
                   <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Typ</th>
@@ -448,8 +448,8 @@ export function RozvadecDetailPage() {
               <tbody>
                 {[...chranice].sort((a, b) => a.cislo - b.cislo).map((c) => (
                   <tr key={c.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)]">
-                    <td className="py-2 px-3 font-medium text-[var(--text-primary)]">{c.cislo}</td>
-                    <td className="py-2 px-3 text-[var(--text-primary)]">{c.nazev}</td>
+                    <td className="py-2 px-3 font-medium text-[var(--text)]">{c.cislo}</td>
+                    <td className="py-2 px-3 text-[var(--text)]">{c.nazev}</td>
                     <td className="py-2 px-3">
                       <span className="px-2 py-1 rounded text-xs font-medium bg-[var(--bg-accent-badge)] text-blue-300">
                         {c.typ}
@@ -549,7 +549,7 @@ export function RozvadecDetailPage() {
           </div>
 
           {/* Měřené hodnoty – společné pro všechny typy */}
-          <div className="border-t border-[var(--border-table)] pt-3">
+          <div className="border-t border-[var(--border)] pt-3">
             <p className="text-xs font-medium text-[var(--text-secondary)] mb-3">Měřené hodnoty</p>
             <div className="grid grid-cols-2 gap-3">
               <label className="flex items-center gap-2 text-xs">

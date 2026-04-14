@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
 import { EditableSelect, computeVodic } from './RevizeDetail/RozvadeceTab';
@@ -746,7 +746,7 @@ export function RevizeDetailPage() {
             <span>/</span>
             <span>{revize.cisloRevize}</span>
           </div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">{revize.nazev}</h1>
+          <h1 className="text-2xl font-bold text-[var(--text)]">{revize.nazev}</h1>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button variant="secondary" onClick={() => navigate('/revize')}>
@@ -769,7 +769,7 @@ export function RevizeDetailPage() {
         <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
           <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center justify-between">
             <span>🕐 Historie revizí tohoto objektu</span>
-            <button onClick={() => setShowHistorie(false)} className="text-[var(--text-primary)] hover:text-white">✕</button>
+            <button onClick={() => setShowHistorie(false)} className="text-[var(--text)] hover:text-white">✕</button>
           </div>
           <div className="p-4">
             {historie.length === 0 ? (
@@ -800,7 +800,7 @@ export function RevizeDetailPage() {
                       {/* Obsah */}
                       <div className={`flex-1 rounded border px-3 py-2 text-sm ${isCurrent ? 'bg-blue-50 border-blue-200' : 'bg-[var(--surface)] border-[var(--border-medium)]'}`}>
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-semibold text-[var(--text-primary)]">
+                          <span className="font-semibold text-[var(--text)]">
                             {h.cisloRevize}
                             {isCurrent && <span className="ml-2 text-xs text-blue-600">(aktuální)</span>}
                           </span>
@@ -885,7 +885,7 @@ export function RevizeDetailPage() {
         </div>
       </Modal>
 
-      <div className="flex gap-2 border-b border-[var(--border-table)] overflow-x-auto scrollbar-thin">
+      <div className="flex gap-2 border-b border-[var(--border)] overflow-x-auto scrollbar-thin">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -893,7 +893,7 @@ export function RevizeDetailPage() {
             className={`px-4 py-3 font-medium transition-colors border-b-2 whitespace-nowrap flex-shrink-0 ${
               activeTab === tab.id
                 ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text)]'
             }`}
           >
             <span className="mr-2">{tab.icon}</span>
@@ -906,7 +906,7 @@ export function RevizeDetailPage() {
         <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden max-w-4xl mx-auto">
 
           {/* Záhlaví */}
-          <div className="flex items-center px-4 py-2 bg-[var(--bg-surface)] border-b border-[var(--border-table)]">
+          <div className="flex items-center px-4 py-2 bg-[var(--bg-surface)] border-b border-[var(--border)]">
             <span className="text-xs text-[var(--text-muted)] font-medium uppercase tracking-wide">Revizní zpráva č. {revize.cisloRevize}</span>
           </div>
 
@@ -915,25 +915,25 @@ export function RevizeDetailPage() {
           <table className="w-full text-sm border-collapse">
             <tbody>
               <tr className="border-b border-slate-200">
-                <td className="w-[180px] px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)]">Číslo revize</td>
+                <td className="w-[180px] px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)]">Číslo revize</td>
                 <td className="px-4 py-2">
-                  <input className="w-full bg-[var(--bg-surface)] px-2 py-1 rounded text-sm border border-[var(--border-table)] cursor-not-allowed" value={formData.cisloRevize || ''} disabled />
+                  <input className="w-full bg-[var(--bg-surface)] px-2 py-1 rounded text-sm border border-[var(--border)] cursor-not-allowed" value={formData.cisloRevize || ''} disabled />
                 </td>
               </tr>
               <tr className="border-b border-slate-200">
-                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)]">Název objektu</td>
+                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)]">Název objektu</td>
                 <td className="px-4 py-2">
                   <input className="w-full px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={formData.nazev || ''} onChange={(e) => setFormData({ ...formData, nazev: e.target.value })} />
                 </td>
               </tr>
               <tr className="border-b border-slate-200">
-                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)]">Adresa objektu</td>
+                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)]">Adresa objektu</td>
                 <td className="px-4 py-2">
                   <input className="w-full px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={formData.adresa || ''} onChange={(e) => setFormData({ ...formData, adresa: e.target.value })} />
                 </td>
               </tr>
               <tr className="border-b border-slate-200">
-                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)]">Kategorie</td>
+                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)]">Kategorie</td>
                 <td className="px-4 py-2">
                   <select className="px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={formData.kategorieRevize || 'elektro'} onChange={(e) => setFormData({ ...formData, kategorieRevize: e.target.value as any })}>
                     <option value="elektro">⚡ Elektrické instalace</option>
@@ -943,7 +943,7 @@ export function RevizeDetailPage() {
                 </td>
               </tr>
               <tr className="border-b border-slate-200">
-                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)]">Typ revize</td>
+                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)]">Typ revize</td>
                 <td className="px-4 py-2">
                   <select className="px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={formData.typRevize || ''} onChange={(e) => setFormData({ ...formData, typRevize: e.target.value as any })}>
                     <option value="pravidelná">Pravidelná</option>
@@ -960,13 +960,13 @@ export function RevizeDetailPage() {
           <table className="w-full text-sm border-collapse">
             <tbody>
               <tr className="border-b border-slate-200">
-                <td className="w-[180px] px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)]">Objednatel</td>
+                <td className="w-[180px] px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)]">Objednatel</td>
                 <td className="px-4 py-2">
                   <input className="w-full px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" placeholder="Nebo vyberte zákazníka níže" value={formData.objednatel || ''} onChange={(e) => setFormData({ ...formData, objednatel: e.target.value })} />
                 </td>
               </tr>
               <tr className="border-b border-slate-200">
-                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)]">Ze zákazníků</td>
+                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)]">Ze zákazníků</td>
                 <td className="px-4 py-2">
                   <select className="w-full px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={selectedZakaznikId} onChange={(e) => {
                     const zakaznikId = e.target.value;
@@ -998,19 +998,19 @@ export function RevizeDetailPage() {
           <table className="w-full text-sm border-collapse">
             <tbody>
               <tr className="border-b border-slate-200">
-                <td className="w-[180px] px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)]">Datum revize</td>
+                <td className="w-[180px] px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)]">Datum revize</td>
                 <td className="px-4 py-2"><input type="date" className="px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={formData.datum || ''} onChange={(e) => setFormData({ ...formData, datum: e.target.value })} /></td>
               </tr>
               <tr className="border-b border-slate-200">
-                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)]">Datum dokončení</td>
+                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)]">Datum dokončení</td>
                 <td className="px-4 py-2"><input type="date" className="px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={formData.datumDokonceni || ''} onChange={(e) => setFormData({ ...formData, datumDokonceni: e.target.value })} /></td>
               </tr>
               <tr className="border-b border-slate-200">
-                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)]">Datum vypracování</td>
+                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)]">Datum vypracování</td>
                 <td className="px-4 py-2"><input type="date" className="px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={formData.datumVypracovani || ''} onChange={(e) => setFormData({ ...formData, datumVypracovani: e.target.value })} /></td>
               </tr>
               <tr className="border-b border-slate-200">
-                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)]">Lhůta platnosti</td>
+                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)]">Lhůta platnosti</td>
                 <td className="px-4 py-2">
                   <select className="px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={String(formData.termin || 36)} onChange={(e) => setFormData({ ...formData, termin: parseInt(e.target.value) })}>
                     <option value="6">6 měsíců</option><option value="12">1 rok</option><option value="24">2 roky</option><option value="36">3 roky</option><option value="48">4 roky</option><option value="60">5 let</option>
@@ -1018,7 +1018,7 @@ export function RevizeDetailPage() {
                 </td>
               </tr>
               <tr className="border-b border-slate-200">
-                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)]">Platnost do</td>
+                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)]">Platnost do</td>
                 <td className="px-4 py-2"><span className={`font-medium ${formData.datumPlatnosti ? '' : 'text-[var(--text-secondary)]'}`}>{formData.datumPlatnosti ? new Date(formData.datumPlatnosti).toLocaleDateString('cs-CZ') : 'Vypočítá se při dokončení'}</span></td>
               </tr>
             </tbody>
@@ -1029,7 +1029,7 @@ export function RevizeDetailPage() {
           <table className="w-full text-sm border-collapse">
             <tbody>
               <tr className="border-b border-slate-200">
-                <td className="w-[180px] px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)]">Stav</td>
+                <td className="w-[180px] px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)]">Stav</td>
                 <td className="px-4 py-2">
                   <select className="px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={formData.stav || ''} onChange={(e) => setFormData({ ...formData, stav: e.target.value as any })}>
                     <option value="rozpracováno">Rozpracováno</option><option value="dokončeno">Dokončeno</option><option value="schváleno">Schváleno</option>
@@ -1037,7 +1037,7 @@ export function RevizeDetailPage() {
                 </td>
               </tr>
               <tr className="border-b border-slate-200">
-                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)]">Výsledek</td>
+                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)]">Výsledek</td>
                 <td className="px-4 py-2">
                   <select className="px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={formData.vysledek || ''} onChange={(e) => setFormData({ ...formData, vysledek: e.target.value as any })}>
                     <option value="">-- Nevyplněno --</option><option value="schopno">Schopno provozu</option><option value="neschopno">Neschopno provozu</option>
@@ -1061,10 +1061,10 @@ export function RevizeDetailPage() {
             </select>
             <table className="w-full text-sm border border-slate-200 rounded overflow-hidden">
               <tbody>
-                <tr className="border-b border-slate-200"><td className="w-[140px] px-3 py-1.5 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)] text-xs">Název firmy</td><td className="px-3 py-1.5"><input className="w-full px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" placeholder="Ponechte prázdné → firma z nastavení" value={formData.firmaJmeno || ''} onChange={(e) => setFormData({ ...formData, firmaJmeno: e.target.value })} /></td></tr>
-                <tr className="border-b border-slate-200"><td className="px-3 py-1.5 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)] text-xs">IČO</td><td className="px-3 py-1.5"><input className="w-full px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={formData.firmaIco || ''} onChange={(e) => setFormData({ ...formData, firmaIco: e.target.value })} /></td></tr>
-                <tr className="border-b border-slate-200"><td className="px-3 py-1.5 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)] text-xs">Adresa</td><td className="px-3 py-1.5"><input className="w-full px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={formData.firmaAdresa || ''} onChange={(e) => setFormData({ ...formData, firmaAdresa: e.target.value })} /></td></tr>
-                <tr><td className="px-3 py-1.5 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)] text-xs">DIČ</td><td className="px-3 py-1.5"><input className="w-full px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={formData.firmaDic || ''} onChange={(e) => setFormData({ ...formData, firmaDic: e.target.value })} /></td></tr>
+                <tr className="border-b border-slate-200"><td className="w-[140px] px-3 py-1.5 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)] text-xs">Název firmy</td><td className="px-3 py-1.5"><input className="w-full px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" placeholder="Ponechte prázdné → firma z nastavení" value={formData.firmaJmeno || ''} onChange={(e) => setFormData({ ...formData, firmaJmeno: e.target.value })} /></td></tr>
+                <tr className="border-b border-slate-200"><td className="px-3 py-1.5 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)] text-xs">IČO</td><td className="px-3 py-1.5"><input className="w-full px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={formData.firmaIco || ''} onChange={(e) => setFormData({ ...formData, firmaIco: e.target.value })} /></td></tr>
+                <tr className="border-b border-slate-200"><td className="px-3 py-1.5 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)] text-xs">Adresa</td><td className="px-3 py-1.5"><input className="w-full px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={formData.firmaAdresa || ''} onChange={(e) => setFormData({ ...formData, firmaAdresa: e.target.value })} /></td></tr>
+                <tr><td className="px-3 py-1.5 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)] text-xs">DIČ</td><td className="px-3 py-1.5"><input className="w-full px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={formData.firmaDic || ''} onChange={(e) => setFormData({ ...formData, firmaDic: e.target.value })} /></td></tr>
               </tbody>
             </table>
             {selectedFirmaId === '' && nastaveni && (nastaveni.firmaJmeno || nastaveni.firmaIco) && (
@@ -1311,7 +1311,7 @@ export function RevizeDetailPage() {
         <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden max-w-4xl mx-auto">
 
           {/* Záhlaví */}
-          <div className="flex items-center px-4 py-2 bg-[var(--bg-surface)] border-b border-[var(--border-table)]">
+          <div className="flex items-center px-4 py-2 bg-[var(--bg-surface)] border-b border-[var(--border)]">
             <span className="text-xs text-[var(--text-muted)] font-medium uppercase tracking-wide">Revidované zařízení</span>
           </div>
 
@@ -1340,14 +1340,14 @@ export function RevizeDetailPage() {
           <table className="w-full text-sm border-collapse">
             <tbody>
               <tr className="border-b border-slate-200">
-                <td className="w-[180px] px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)] align-top">1.1 Předmětem revize je</td>
+                <td className="w-[180px] px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)] align-top">1.1 Předmětem revize je</td>
                 <td className="px-4 py-2">
                   <div className="flex justify-end mb-1"><PredvolenyTextBtn field="rozsahRevize" /></div>
                   <textarea className="w-full px-2 py-1.5 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" rows={3} value={formData.rozsahRevize || ''} onChange={(e) => setFormData({ ...formData, rozsahRevize: e.target.value })} placeholder="Elektrická instalace objektu, rozváděče, obvody..." />
                 </td>
               </tr>
               <tr className="border-b border-slate-200">
-                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)] align-top">1.2 Předmětem revize není</td>
+                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)] align-top">1.2 Předmětem revize není</td>
                 <td className="px-4 py-2">
                   <div className="flex justify-end mb-1"><PredvolenyTextBtn field="predmetNeni" /></div>
                   <textarea className="w-full px-2 py-1.5 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" rows={3} value={formData.predmetNeni || ''} onChange={(e) => setFormData({ ...formData, predmetNeni: e.target.value })} placeholder="Spotřebiče, zařízení dodaná nájemci, hromosvod..." />
@@ -1364,7 +1364,7 @@ export function RevizeDetailPage() {
           <table className="w-full text-sm border-collapse">
             <tbody>
               <tr className="border-b border-slate-200">
-                <td className="w-[180px] px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)]">2.1 Napěťová soustava</td>
+                <td className="w-[180px] px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)]">2.1 Napěťová soustava</td>
                 <td className="px-4 py-2">
                   <select className="w-full px-2 py-1.5 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={formData.napetovaSoustava || ''} onChange={(e) => setFormData({ ...formData, napetovaSoustava: e.target.value })}>
                     <option value="">-- Vyberte napěťovou soustavu --</option>
@@ -1384,10 +1384,10 @@ export function RevizeDetailPage() {
           </table>
 
           {/* 2.2 Ochrana - tabulka checkboxů */}
-          <div className="px-4 py-2 bg-[var(--bg-input)] border-b border-t border-[var(--border-table)]">
-            <span className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wide">2.2 Ochrana před úrazem elektrickým proudem</span>
+          <div className="px-4 py-2 bg-[var(--bg-input)] border-b border-t border-[var(--border)]">
+            <span className="text-xs font-semibold text-[var(--text)] uppercase tracking-wide">2.2 Ochrana před úrazem elektrickým proudem</span>
           </div>
-          <div className="px-4 py-3 border-b border-[var(--border-table)]">
+          <div className="px-4 py-3 border-b border-[var(--border)]">
             <p className="text-xs text-[var(--text-secondary)] mb-2">Zaškrtněte opatření použitá v objektu:</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
               {[
@@ -1413,7 +1413,7 @@ export function RevizeDetailPage() {
                       if (e.target.checked) { updated.push(opatreni.id); } else { updated = updated.filter((id: string) => id !== opatreni.id); }
                       setFormData({ ...formData, ochranaOpatreni: JSON.stringify(updated) });
                     }} className="w-4 h-4 text-blue-600 rounded border-[var(--checkbox-border)]" />
-                    <span className="text-sm text-[var(--text-primary)]">{opatreni.label}</span>
+                    <span className="text-sm text-[var(--text)]">{opatreni.label}</span>
                   </label>
                 );
               })}
@@ -1445,7 +1445,7 @@ export function RevizeDetailPage() {
                     <th className="border-b border-r border-slate-200 px-4 py-1.5 text-left text-xs font-medium">Výrobce/Model</th>
                     <th className="border-b border-r border-slate-200 px-4 py-1.5 text-left text-xs font-medium">Výrobní číslo</th>
                     <th className="border-b border-r border-slate-200 px-4 py-1.5 text-center text-xs font-medium">Platnost kalibrace</th>
-                    <th className="border-b border-[var(--border-table)] px-4 py-1.5 text-center text-xs font-medium w-16">Akce</th>
+                    <th className="border-b border-[var(--border)] px-4 py-1.5 text-center text-xs font-medium w-16">Akce</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1455,7 +1455,7 @@ export function RevizeDetailPage() {
                       <td className="border-b border-r border-slate-200 px-4 py-1.5">{p.vyrobce} {p.model}</td>
                       <td className="border-b border-r border-slate-200 px-4 py-1.5 font-mono">{p.vyrobniCislo}</td>
                       <td className="border-b border-r border-slate-200 px-4 py-1.5 text-center">{new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}</td>
-                      <td className="border-b border-[var(--border-table)] px-4 py-1.5 text-center">
+                      <td className="border-b border-[var(--border)] px-4 py-1.5 text-center">
                         <Button variant="danger" size="sm" onClick={async () => { if (revize?.id && p.id) { await revizePristrojService.removeFromRevize(revize.id, p.id); loadData(revize.id); } }}>✕</Button>
                       </td>
                     </tr>
@@ -1501,7 +1501,7 @@ export function RevizeDetailPage() {
           <table className="w-full text-sm border-collapse">
             <tbody>
               <tr className="border-b border-slate-200">
-                <td className="w-[180px] px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)]">Výsledek</td>
+                <td className="w-[180px] px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)]">Výsledek</td>
                 <td className="px-4 py-2">
                   <select className="px-2 py-1 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={formData.vysledek || ''} onChange={(e) => setFormData({ ...formData, vysledek: e.target.value as any })}>
                     <option value="">-- Nevyplněno --</option><option value="schopno">Schopno provozu</option><option value="neschopno">Neschopno provozu</option><option value="podmíněně schopno">Podmíněně schopno</option>
@@ -1509,7 +1509,7 @@ export function RevizeDetailPage() {
                 </td>
               </tr>
               <tr className="border-b border-slate-200">
-                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border-table)] align-top">Odůvodnění</td>
+                <td className="px-4 py-2 bg-[var(--bg-surface)] font-semibold text-[var(--text-secondary)] border-r border-[var(--border)] align-top">Odůvodnění</td>
                 <td className="px-4 py-2">
                   <div className="flex justify-end mb-1"><PredvolenyTextBtn field="vysledekOduvodneni" /></div>
                   <textarea className="w-full px-2 py-1.5 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" rows={3} value={formData.vysledekOduvodneni || ''} onChange={(e) => setFormData({ ...formData, vysledekOduvodneni: e.target.value })} placeholder="Odůvodnění výsledku revize, pokud zařízení není schopno provozu..." />
@@ -2492,7 +2492,7 @@ export function RevizeDetailPage() {
             />
             <button
               onClick={() => setLightboxImage(null)}
-              className="absolute -top-3 -right-3 w-8 h-8 bg-[var(--surface)] rounded-full shadow-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+              className="absolute -top-3 -right-3 w-8 h-8 bg-[var(--surface)] rounded-full shadow-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)]"
             >
               ✕
             </button>

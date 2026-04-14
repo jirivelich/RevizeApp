@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
 import { useZavadyKatalog, useZavadyKategorie, useCreateZavadaKatalog, useUpdateZavadaKatalog, useDeleteZavadaKatalog } from '../hooks/useQueries';
@@ -109,7 +109,7 @@ export function ZavadyPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-sm font-bold text-[var(--text-primary)]">Katalog závad</h1>
+          <h1 className="text-sm font-bold text-[var(--text)]">Katalog závad</h1>
           <p className="text-xs text-[var(--text-secondary)]">Databáze typických závad s odkazy na normy a zákony</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
@@ -122,7 +122,7 @@ export function ZavadyPage() {
       <div className="lg:hidden">
         <button
           onClick={() => setShowStats(!showStats)}
-          className="flex items-center gap-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          className="flex items-center gap-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text)]"
         >
           <span>{showStats ? '▼' : '▶'}</span>
           <span>{showStats ? 'Skrýt statistiky' : 'Zobrazit statistiky'}</span>
@@ -131,19 +131,19 @@ export function ZavadyPage() {
       <div className={`grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 ${showStats ? '' : 'hidden lg:grid'}`}>
         <div className="bg-[var(--bg-surface)] rounded-lg p-3 sm:p-4 border border-[var(--border)]">
           <p className="text-xs text-[var(--text-secondary)]">Celkem v katalogu</p>
-          <p className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">{stats.celkem}</p>
+          <p className="text-lg sm:text-xl font-bold text-[var(--text)]">{stats.celkem}</p>
         </div>
         <div className="bg-[var(--bg-surface)] rounded-lg p-3 sm:p-4 border border-[var(--border)]">
           <p className="text-xs text-[var(--text-secondary)]">C1 - Kritické</p>
-          <p className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">{stats.kriticke}</p>
+          <p className="text-lg sm:text-xl font-bold text-[var(--text)]">{stats.kriticke}</p>
         </div>
         <div className="bg-[var(--bg-surface)] rounded-lg p-3 sm:p-4 border border-[var(--border)]">
           <p className="text-xs text-[var(--text-secondary)]">C2 - Vážné</p>
-          <p className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">{stats.vazne}</p>
+          <p className="text-lg sm:text-xl font-bold text-[var(--text)]">{stats.vazne}</p>
         </div>
         <div className="bg-[var(--bg-surface)] rounded-lg p-3 sm:p-4 border border-[var(--border)]">
           <p className="text-xs text-[var(--text-secondary)]">C3 - Drobné</p>
-          <p className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">{stats.drobne}</p>
+          <p className="text-lg sm:text-xl font-bold text-[var(--text)]">{stats.drobne}</p>
         </div>
       </div>
 
@@ -181,7 +181,7 @@ export function ZavadyPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[var(--border-table)]">
+                <tr className="border-b border-[var(--border)]">
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Závažnost</th>
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Kategorie</th>
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Popis</th>
@@ -209,7 +209,7 @@ export function ZavadyPage() {
                         {z.zneniClanku && (
                           <button
                             onClick={() => setExpandedId(expandedId === z.id ? null : z.id!)}
-                            className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] mt-1"
+                            className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] mt-1"
                           >
                             {expandedId === z.id ? '▼ Skrýt znění' : '▶ Zobrazit znění'}
                           </button>
@@ -283,7 +283,7 @@ export function ZavadyPage() {
             <textarea
               value={formData.popis}
               onChange={(e) => setFormData({ ...formData, popis: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]/[0.5]"
+              className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]/[0.5]"
               rows={2}
               placeholder="Stručný popis typické závady..."
               required
@@ -308,7 +308,7 @@ export function ZavadyPage() {
                 list="kategorie-list"
                 value={formData.kategorie}
                 onChange={(e) => setFormData({ ...formData, kategorie: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]/[0.5]"
+                className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]/[0.5]"
                 placeholder="Rozvaděče, Vedení, Uzemnění..."
               />
               <datalist id="kategorie-list">
@@ -319,8 +319,8 @@ export function ZavadyPage() {
             </div>
           </div>
 
-          <div className="border-t border-[var(--border-table)] pt-4 mt-4">
-            <h4 className="font-medium text-[var(--text-primary)] mb-3">Odkaz na normu / zákon</h4>
+          <div className="border-t border-[var(--border)] pt-4 mt-4">
+            <h4 className="font-medium text-[var(--text)] mb-3">Odkaz na normu / zákon</h4>
             
             <div className="grid grid-cols-2 gap-4">
               <Input
@@ -342,7 +342,7 @@ export function ZavadyPage() {
               <textarea
                 value={formData.zneniClanku}
                 onChange={(e) => setFormData({ ...formData, zneniClanku: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]/[0.5]"
+                className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]/[0.5]"
                 rows={4}
                 placeholder="Úplné nebo zkrácené znění článku normy či paragrafu zákona..."
               />

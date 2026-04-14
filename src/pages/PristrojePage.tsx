@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
 import { usePristroje, useCreatePristroj, useUpdatePristroj, useDeletePristroj, useKalibrace, useCreateKalibrace, useDeleteKalibrace } from '../hooks/useQueries';
 import type { MericiPristroj } from '../types';
@@ -117,7 +117,7 @@ export function PristrojePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-sm font-bold text-[var(--text-primary)]">Přístroje a kalibrace</h1>
+          <h1 className="text-sm font-bold text-[var(--text)]">Přístroje a kalibrace</h1>
           <p className="text-xs text-[var(--text-secondary)]">Správa měřících přístrojů a jejich kalibračních termínů</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
@@ -130,7 +130,7 @@ export function PristrojePage() {
       <div className="lg:hidden">
         <button
           onClick={() => setShowStats(!showStats)}
-          className="flex items-center gap-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          className="flex items-center gap-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text)]"
         >
           <span>{showStats ? '▼' : '▶'}</span>
           <span>{showStats ? 'Skrýt statistiky' : 'Zobrazit statistiky'}</span>
@@ -139,13 +139,13 @@ export function PristrojePage() {
       <div className={`grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 ${showStats ? '' : 'hidden lg:grid'}`}>
         <Card>
           <div className="text-center p-1">
-            <p className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">{pristroje.length}</p>
+            <p className="text-lg sm:text-xl font-bold text-[var(--text)]">{pristroje.length}</p>
             <p className="text-xs text-[var(--text-secondary)]">Celkem přístrojů</p>
           </div>
         </Card>
         <Card>
           <div className="text-center p-1">
-            <p className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">
+            <p className="text-lg sm:text-xl font-bold text-[var(--text)]">
               {pristroje.filter(p => !isExpiring(p.platnostKalibrace)).length}
             </p>
             <p className="text-xs text-[var(--text-secondary)]">Platná kalibrace</p>
@@ -153,7 +153,7 @@ export function PristrojePage() {
         </Card>
         <Card>
           <div className="text-center p-1">
-            <p className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">
+            <p className="text-lg sm:text-xl font-bold text-[var(--text)]">
               {pristroje.filter(p => isExpiring(p.platnostKalibrace) && !isExpired(p.platnostKalibrace)).length}
             </p>
             <p className="text-xs text-[var(--text-secondary)]">Brzy expiruje</p>
@@ -161,7 +161,7 @@ export function PristrojePage() {
         </Card>
         <Card>
           <div className="text-center p-1">
-            <p className="text-lg sm:text-xl font-bold text-[var(--text-primary)]">
+            <p className="text-lg sm:text-xl font-bold text-[var(--text)]">
               {pristroje.filter(p => isExpired(p.platnostKalibrace)).length}
             </p>
             <p className="text-xs text-[var(--text-secondary)]">Prošlá kalibrace</p>
@@ -190,7 +190,7 @@ export function PristrojePage() {
               onChange={(e) => setShowExpiring(e.target.checked)}
             className="w-4 h-4 rounded border-[var(--checkbox-border)]"
             />
-            <span className="text-sm text-[var(--text-primary)]">Pouze s expirující kalibraci</span>
+            <span className="text-sm text-[var(--text)]">Pouze s expirující kalibraci</span>
           </label>
         </div>
       </Card>
@@ -201,7 +201,7 @@ export function PristrojePage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[var(--border-table)]">
+                <tr className="border-b border-[var(--border)]">
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Název</th>
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Typ</th>
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Výrobce / Model</th>
@@ -214,7 +214,7 @@ export function PristrojePage() {
               <tbody>
                 {filteredPristroje.map((p) => (
                   <tr key={p.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)]">
-                    <td className="py-2 px-3 text-xs font-medium text-[var(--text-primary)]">{p.nazev}</td>
+                    <td className="py-2 px-3 text-xs font-medium text-[var(--text)]">{p.nazev}</td>
                     <td className="py-2 px-3">
                       <span className="px-2 py-1 bg-[var(--bg-hover)] text-[var(--text-secondary)] rounded text-xs">
                         {getTypLabel(p.typPristroje)}
@@ -371,9 +371,9 @@ export function PristrojePage() {
           <div className="bg-[var(--bg-input)] rounded-lg p-3 text-sm">
             <div className="grid grid-cols-2 gap-2">
               <span className="text-[var(--text-secondary)]">Výrobce / Model:</span>
-              <span className="font-medium text-[var(--text-primary)]">{historyPristroj?.vyrobce} {historyPristroj?.model}</span>
+              <span className="font-medium text-[var(--text)]">{historyPristroj?.vyrobce} {historyPristroj?.model}</span>
               <span className="text-[var(--text-secondary)]">Výrobní číslo:</span>
-              <span className="font-mono text-[var(--text-primary)]">{historyPristroj?.vyrobniCislo}</span>
+              <span className="font-mono text-[var(--text)]">{historyPristroj?.vyrobniCislo}</span>
               <span className="text-[var(--text-secondary)]">Aktuální kalibrace:</span>
               <span className="font-medium">
                 {historyPristroj?.datumKalibrace ? new Date(historyPristroj.datumKalibrace).toLocaleDateString('cs-CZ') : '—'}
@@ -471,7 +471,7 @@ export function PristrojePage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-[var(--border-table)]">
+                    <tr className="border-b border-[var(--border)]">
                       <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)]">Datum</th>
                       <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)]">Platnost do</th>
                       <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)]">Provedl</th>
@@ -483,11 +483,11 @@ export function PristrojePage() {
                   <tbody>
                     {kalibrace.map((k, idx) => (
                       <tr key={k.id} className={`border-b border-[var(--border-subtle)] ${idx === 0 ? 'bg-emerald-500/[0.07]' : ''}`}>
-                        <td className="py-2 px-3 font-medium text-[var(--text-primary)]">
+                        <td className="py-2 px-3 font-medium text-[var(--text)]">
                           {new Date(k.datumKalibrace).toLocaleDateString('cs-CZ')}
                           {idx === 0 && <span className="ml-1.5 text-[10px] px-1.5 py-0.5 bg-emerald-500/[0.15] text-emerald-300 rounded font-semibold">aktuální</span>}
                         </td>
-                        <td className="py-2 px-3 text-[var(--text-primary)]">{new Date(k.platnostKalibrace).toLocaleDateString('cs-CZ')}</td>
+                        <td className="py-2 px-3 text-[var(--text)]">{new Date(k.platnostKalibrace).toLocaleDateString('cs-CZ')}</td>
                         <td className="py-2 px-3 text-[var(--text-secondary)]">{k.provedl || '—'}</td>
                         <td className="py-2 px-3 font-mono text-xs text-[var(--text-secondary)]">{k.certifikat || '—'}</td>
                         <td className="py-2 px-3 text-[var(--text-muted)] text-xs">{k.poznamka || ''}</td>

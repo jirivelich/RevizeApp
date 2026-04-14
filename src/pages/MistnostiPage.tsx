@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
 import { useRevize } from '../hooks/useQueries';
 import { mistnostService } from '../services/database';
@@ -79,7 +79,7 @@ export function MistnostiPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-[var(--text-primary)]">Místnosti</h1>
+          <h1 className="text-lg font-bold text-[var(--text)]">Místnosti</h1>
           <p className="text-xs text-[var(--text-secondary)]">Evidence místností</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
@@ -97,11 +97,11 @@ export function MistnostiPage() {
                 className="p-4 rounded-lg bg-[var(--bg-surface)] border border-[var(--border)]"
               >
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-medium text-[var(--text-primary)]">{m.nazev}</h3>
+                  <h3 className="font-medium text-[var(--text)]">{m.nazev}</h3>
                   <div className="flex gap-1">
                     <button
                       onClick={() => handleEdit(m)}
-                      className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                      className="text-xs text-[var(--text-secondary)] hover:text-[var(--text)]"
                     >
                       Upravit
                     </button>

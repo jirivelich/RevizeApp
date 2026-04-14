@@ -44,7 +44,7 @@ const sidebarStyle: CSSProperties = {
   width: 224,
   minHeight: '100vh',
   background: 'var(--bg-sidebar)',
-  borderRight: '1px solid var(--border-table)',
+  borderRight: '1px solid var(--border)',
   display: 'flex',
   flexDirection: 'column',
   position: 'relative',
@@ -134,7 +134,7 @@ export function Sidebar({ onClose }: SidebarProps) {
         }
         .sidebar-logout:hover {
           background: var(--bg-hover) !important;
-          border-color: var(--border-hover) !important;
+          border-color: var(--border-strong) !important;
           color: var(--text-secondary) !important;
         }
       `}</style>

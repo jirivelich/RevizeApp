@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { PredvolenyText } from '../../types';
 import { useCreatePredvolenyText, useDeletePredvolenyText, usePredvoleneTexty } from '../../hooks/useQueries';
 import { PREDVOLENE_TEXTY } from './constants';
@@ -132,7 +132,7 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
             </>
           )}
           {/* Přidat novou */}
-          <div className="border-t border-[var(--border-table)] mt-1">
+          <div className="border-t border-[var(--border)] mt-1">
             {!adding ? (
               <button
                 type="button"
@@ -148,7 +148,7 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
                   placeholder="Název předvolby"
                   value={newNazev}
                   onChange={(e) => setNewNazev(e.target.value)}
-                  className="w-full text-xs px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none"
+                  className="w-full text-xs px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text)] focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none"
                   autoFocus
                 />
                 <textarea
@@ -156,7 +156,7 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
                   value={newText}
                   onChange={(e) => setNewText(e.target.value)}
                   rows={3}
-                  className="w-full text-xs px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text-primary)] focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none resize-none"
+                  className="w-full text-xs px-2 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text)] focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none resize-none"
                 />
                 <div className="flex gap-1 justify-end">
                   <button type="button" onClick={() => setAdding(false)} className="px-2 py-0.5 text-xs text-[var(--text-muted)] hover:bg-[var(--bg-hover)] rounded cursor-pointer">Zrušit</button>

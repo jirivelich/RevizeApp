@@ -1,4 +1,4 @@
-﻿import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import type { Revize, Firma, Nastaveni, Zakaznik } from '../../types';
 import { TW, SectionHeader, Field } from './tw';
 
@@ -41,7 +41,7 @@ export function InfoTab({
               </select>
             </Field>
             <Field label="Kategorie">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-[var(--bg-hover)] text-[var(--text-primary)] border border-[var(--border-medium)]">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-[var(--bg-hover)] text-[var(--text)] border border-[var(--border-medium)]">
                 {formData.kategorieRevize === 'elektro' ? 'Elektrické instalace' :
                  formData.kategorieRevize === 'hromosvod' ? 'Hromosvody' :
                  formData.kategorieRevize === 'stroje' ? 'Strojní zařízení' : 'Elektro'}

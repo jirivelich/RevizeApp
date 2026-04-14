@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Button, Card, Input, Modal } from '../components/ui';
 import { useFirmy, useCreateFirma, useUpdateFirma, useDeleteFirma } from '../hooks/useQueries';
 import type { Firma } from '../types';
@@ -83,7 +83,7 @@ export function FirmyPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-sm font-bold text-[var(--text-primary)]">Firmy</h1>
+          <h1 className="text-sm font-bold text-[var(--text)]">Firmy</h1>
           <p className="text-xs text-[var(--text-secondary)] mt-1">
             Seznam firem, pro které provádíte revize. Tyto firmy můžete vybírat při vytváření revize.
           </p>
@@ -113,7 +113,7 @@ export function FirmyPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-[var(--border-table)]">
+                <tr className="border-b border-[var(--border)]">
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Název</th>
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">ČO</th>
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Adresa</th>
@@ -125,10 +125,10 @@ export function FirmyPage() {
               <tbody>
                 {firmy.map((firma) => (
                   <tr key={firma.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)]">
-                    <td className="py-2 px-3 text-xs font-medium text-[var(--text-primary)]">{firma.nazev}</td>
+                    <td className="py-2 px-3 text-xs font-medium text-[var(--text)]">{firma.nazev}</td>
                     <td className="py-2 px-3 font-mono text-xs text-[var(--text-secondary)]">{firma.ico || '-'}</td>
                     <td className="py-2 px-3 text-xs text-[var(--text-secondary)] max-w-xs truncate">{firma.adresa || '-'}</td>
-                    <td className="py-2 px-3 text-xs text-[var(--text-primary)]">{firma.kontaktOsoba || '-'}</td>
+                    <td className="py-2 px-3 text-xs text-[var(--text)]">{firma.kontaktOsoba || '-'}</td>
                     <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">
                       {firma.telefon && <div>{firma.telefon}</div>}
                       {firma.email && <div className="text-[var(--text-secondary)]">{firma.email}</div>}
@@ -196,8 +196,8 @@ export function FirmyPage() {
             />
           </div>
 
-          <div className="border-t border-[var(--border-table)] pt-4">
-            <h4 className="text-sm font-medium text-[var(--text-primary)] mb-3">Kontaktní údaje</h4>
+          <div className="border-t border-[var(--border)] pt-4">
+            <h4 className="text-sm font-medium text-[var(--text)] mb-3">Kontaktní údaje</h4>
             <Input
               label="Kontaktní osoba"
               value={formData.kontaktOsoba}
@@ -229,12 +229,12 @@ export function FirmyPage() {
               value={formData.poznamka}
               onChange={(e) => setFormData({ ...formData, poznamka: e.target.value })}
               placeholder="Interní poznámky k firmě..."
-              className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text-primary)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-blue-500/[0.5] text-sm"
+              className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-blue-500/[0.5] text-sm"
               rows={3}
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-table)]">
+          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border)]">
             <Button variant="secondary" onClick={handleCloseModal}>
               Zrušit
             </Button>

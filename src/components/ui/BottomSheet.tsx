@@ -1,4 +1,4 @@
-﻿import { type ReactNode, useEffect } from 'react';
+import { type ReactNode, useEffect } from 'react';
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -34,11 +34,11 @@ export function BottomSheet({ isOpen, onClose, title, children, footer }: Bottom
       >
         {/* Drag handle */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-10 h-1 rounded-full bg-[var(--border-hover)]" />
+          <div className="w-10 h-1 rounded-full bg-[var(--border-strong)]" />
         </div>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-table)] flex-shrink-0">
-          <h2 className="text-sm font-semibold text-[var(--text-primary)]">{title}</h2>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)] flex-shrink-0">
+          <h2 className="text-sm font-semibold text-[var(--text)]">{title}</h2>
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg hover:bg-slate-100 text-[var(--text-secondary)] hover:text-slate-600 transition-colors"
@@ -54,7 +54,7 @@ export function BottomSheet({ isOpen, onClose, title, children, footer }: Bottom
         </div>
         {/* Footer */}
         {footer && (
-          <div className="flex flex-col-reverse gap-2 px-5 py-4 border-t border-[var(--border-table)] flex-shrink-0 [&>button]:w-full">
+          <div className="flex flex-col-reverse gap-2 px-5 py-4 border-t border-[var(--border)] flex-shrink-0 [&>button]:w-full">
             {footer}
           </div>
         )}

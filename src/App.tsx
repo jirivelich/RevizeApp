@@ -50,10 +50,10 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center p-4">
+        <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-4">
           <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-lg p-8 max-w-md w-full text-center">
             <div className="text-red-500 text-6xl mb-4">⚠️</div>
-            <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Něco se pokazilo</h1>
+            <h1 className="text-2xl font-bold text-[var(--text)] mb-2">Něco se pokazilo</h1>
             <p className="text-[var(--text-secondary)] mb-4">
               {this.state.error?.message || 'Neočekávaná chyba aplikace'}
             </p>

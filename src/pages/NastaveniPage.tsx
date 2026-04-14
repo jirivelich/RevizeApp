@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button, Card, Input } from '../components/ui';
 import { backupService } from '../services/database';
@@ -269,7 +269,7 @@ export function NastaveniPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-lg font-bold text-[var(--text-primary)]">Nastavení</h1>
+        <h1 className="text-lg font-bold text-[var(--text)]">Nastavení</h1>
         <p className="text-xs text-[var(--text-secondary)]">Konfigurace aplikace a údaje o firmě</p>
       </div>
 
@@ -282,13 +282,13 @@ export function NastaveniPage() {
       )}
 
       {/* Záložky */}
-      <div className="flex gap-1 border-b border-[var(--border-table)]">
+      <div className="flex gap-1 border-b border-[var(--border)]">
         <button
           onClick={() => setActiveTab('obecne')}
           className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors cursor-pointer ${
             activeTab === 'obecne'
-              ? 'bg-[var(--bg-badge)] text-[var(--text-primary)] border border-[var(--border-hover)] border-b-transparent -mb-px'
-              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]'
+              ? 'bg-[var(--bg-hover)] text-[var(--text)] border border-[var(--border-strong)] border-b-transparent -mb-px'
+              : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-input)]'
           }`}
         >
           Obecné
@@ -297,8 +297,8 @@ export function NastaveniPage() {
           onClick={() => setActiveTab('technik')}
           className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors cursor-pointer ${
             activeTab === 'technik'
-              ? 'bg-[var(--bg-badge)] text-[var(--text-primary)] border border-[var(--border-hover)] border-b-transparent -mb-px'
-              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]'
+              ? 'bg-[var(--bg-hover)] text-[var(--text)] border border-[var(--border-strong)] border-b-transparent -mb-px'
+              : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-input)]'
           }`}
         >
           Revizní technik
@@ -307,8 +307,8 @@ export function NastaveniPage() {
           onClick={() => setActiveTab('texty')}
           className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors cursor-pointer ${
             activeTab === 'texty'
-              ? 'bg-[var(--bg-badge)] text-[var(--text-primary)] border border-[var(--border-hover)] border-b-transparent -mb-px'
-              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]'
+              ? 'bg-[var(--bg-hover)] text-[var(--text)] border border-[var(--border-strong)] border-b-transparent -mb-px'
+              : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-input)]'
           }`}
         >
           Předvolené texty
@@ -320,8 +320,8 @@ export function NastaveniPage() {
           onClick={() => setActiveTab('zalohy')}
           className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors cursor-pointer ${
             activeTab === 'zalohy'
-              ? 'bg-[var(--bg-badge)] text-[var(--text-primary)] border border-[var(--border-hover)] border-b-transparent -mb-px'
-              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]'
+              ? 'bg-[var(--bg-hover)] text-[var(--text)] border border-[var(--border-strong)] border-b-transparent -mb-px'
+              : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-input)]'
           }`}
         >
           Zálohy
@@ -330,8 +330,8 @@ export function NastaveniPage() {
           onClick={() => setActiveTab('notifikace')}
           className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors cursor-pointer ${
             activeTab === 'notifikace'
-              ? 'bg-[var(--bg-badge)] text-[var(--text-primary)] border border-[var(--border-hover)] border-b-transparent -mb-px'
-              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)]'
+              ? 'bg-[var(--bg-hover)] text-[var(--text)] border border-[var(--border-strong)] border-b-transparent -mb-px'
+              : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-input)]'
           }`}
         >
           Notifikace
@@ -469,7 +469,7 @@ export function NastaveniPage() {
               <div className="overflow-x-auto mb-4">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-[var(--border-table)] text-left text-xs text-[var(--text-secondary)] uppercase">
+                    <tr className="border-b border-[var(--border)] text-left text-xs text-[var(--text-secondary)] uppercase">
                       <th className="pb-2 pr-4">Platné od</th>
                       <th className="pb-2 pr-4">Č. oprávnění</th>
                       <th className="pb-2 pr-4">Platnost opr.</th>
@@ -506,7 +506,7 @@ export function NastaveniPage() {
             )}
             {showNewDoklad ? (
               <div className="border border-[var(--border)] rounded-lg p-4 bg-[var(--bg-surface)] space-y-3">
-                <h4 className="text-sm font-medium text-[var(--text-primary)]">Nový doklad</h4>
+                <h4 className="text-sm font-medium text-[var(--text)]">Nový doklad</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <Input
                     label="Platné od"
@@ -547,7 +547,7 @@ export function NastaveniPage() {
             ) : (
               <button
                 onClick={() => { setNewDoklad(emptyDoklad()); setShowNewDoklad(true); }}
-                className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-input)] px-3 py-1.5 rounded transition-colors cursor-pointer font-medium"
+                className="text-sm text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-[var(--bg-input)] px-3 py-1.5 rounded transition-colors cursor-pointer font-medium"
               >
                 + Přidat doklad
               </button>
@@ -581,11 +581,11 @@ export function NastaveniPage() {
                       <p className="text-xs text-[var(--text-secondary)] truncate" title={table}>
                         {TABLE_LABELS[table] || table}
                       </p>
-                      <p className="text-xl font-bold text-[var(--text-primary)]">{count}</p>
+                      <p className="text-xl font-bold text-[var(--text)]">{count}</p>
                     </div>
                   ))}
                 </div>
-                <div className="flex items-center gap-6 mt-4 pt-4 border-t border-[var(--border-table)] text-sm text-[var(--text-secondary)]">
+                <div className="flex items-center gap-6 mt-4 pt-4 border-t border-[var(--border)] text-sm text-[var(--text-secondary)]">
                   <span>Velikost DB: <strong>{databaseSize} MB</strong></span>
                   <span>Celkem záznamů: <strong>{totalRecords}</strong></span>
                   {lastBackupDate && (
@@ -722,7 +722,7 @@ export function NastaveniPage() {
                   max={365}
                   value={nastaveni.upozorneniZakazkaDni ?? 7}
                   onChange={(e) => setNastaveni({ ...nastaveni, upozorneniZakazkaDni: Number(e.target.value) })}
-                  className="w-full bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]"
+                  className="w-full bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]"
                 />
                 <p className="text-[11px] text-[var(--text-secondary)] mt-1">Výchozí: 7 dní</p>
               </div>
@@ -736,7 +736,7 @@ export function NastaveniPage() {
                   max={365}
                   value={nastaveni.upozorneniRevizeDni ?? 14}
                   onChange={(e) => setNastaveni({ ...nastaveni, upozorneniRevizeDni: Number(e.target.value) })}
-                  className="w-full bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]"
+                  className="w-full bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]"
                 />
                 <p className="text-[11px] text-[var(--text-secondary)] mt-1">Výchozí: 14 dní</p>
               </div>
@@ -750,7 +750,7 @@ export function NastaveniPage() {
                   max={30}
                   value={nastaveni.upozorneniZpravaDni ?? 3}
                   onChange={(e) => setNastaveni({ ...nastaveni, upozorneniZpravaDni: Number(e.target.value) })}
-                  className="w-full bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]"
+                  className="w-full bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]"
                 />
                 <p className="text-[11px] text-[var(--text-secondary)] mt-1">Výchozí: 3 dny</p>
               </div>
@@ -764,7 +764,7 @@ export function NastaveniPage() {
                   max={365}
                   value={nastaveni.upozorneniKalibraceDni ?? 30}
                   onChange={(e) => setNastaveni({ ...nastaveni, upozorneniKalibraceDni: Number(e.target.value) })}
-                  className="w-full bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]"
+                  className="w-full bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]"
                 />
                 <p className="text-[11px] text-[var(--text-secondary)] mt-1">Výchozí: 30 dní</p>
               </div>
@@ -778,7 +778,7 @@ export function NastaveniPage() {
                   max={365}
                   value={nastaveni.upozorneniTechnikDni ?? 60}
                   onChange={(e) => setNastaveni({ ...nastaveni, upozorneniTechnikDni: Number(e.target.value) })}
-                  className="w-full bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]"
+                  className="w-full bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]"
                 />
                 <p className="text-[11px] text-[var(--text-secondary)] mt-1">Výchozí: 60 dní</p>
               </div>
@@ -830,13 +830,13 @@ export function NastaveniPage() {
                       }}
                       className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between gap-2 border-b border-[var(--border-subtle)] last:border-b-0 transition-colors cursor-pointer ${
                         isActive
-                          ? 'bg-[var(--bg-hover)] text-[var(--text-primary)] font-semibold border-l-2 border-l-blue-500'
-                          : 'text-[var(--text-secondary)] hover:bg-[var(--bg-input)] hover:text-[var(--text-primary)]'
+                          ? 'bg-[var(--bg-hover)] text-[var(--text)] font-semibold border-l-2 border-l-blue-500'
+                          : 'text-[var(--text-secondary)] hover:bg-[var(--bg-input)] hover:text-[var(--text)]'
                       }`}
                     >
                       <span className="truncate">{label}</span>
                       {count > 0 && (
-                        <span className="shrink-0 px-1.5 py-0.5 text-[10px] bg-[var(--bg-badge)] text-[var(--text-secondary)] rounded-full">{count}</span>
+                        <span className="shrink-0 px-1.5 py-0.5 text-[10px] bg-[var(--bg-hover)] text-[var(--text-secondary)] rounded-full">{count}</span>
                       )}
                     </button>
                   );
@@ -851,14 +851,14 @@ export function NastaveniPage() {
                   return (
                     <>
                       <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-semibold text-[var(--text-primary)]">{katLabel}</h3>
+                        <h3 className="text-sm font-semibold text-[var(--text)]">{katLabel}</h3>
                         {newText?.pole !== selectedKategorie && (
                           <button
                             onClick={() => {
                               setNewText({ pole: selectedKategorie, nazev: '', text: '' });
                               setEditingText(null);
                             }}
-                            className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] px-2.5 py-1 rounded transition-colors cursor-pointer font-medium"
+                            className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] px-2.5 py-1 rounded transition-colors cursor-pointer font-medium"
                           >
                             + Přidat předvolbu
                           </button>
@@ -878,14 +878,14 @@ export function NastaveniPage() {
                                   type="text"
                                   value={editingText.nazev}
                                   onChange={(e) => setEditingText({ ...editingText, nazev: e.target.value })}
-                                  className="w-full px-3 py-1.5 text-sm bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-input)] rounded focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none"
+                                  className="w-full px-3 py-1.5 text-sm bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] rounded focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none"
                                   placeholder="Název předvolby"
                                 />
                                 <textarea
                                   value={editingText.text}
                                   onChange={(e) => setEditingText({ ...editingText, text: e.target.value })}
                                   rows={4}
-                                  className="w-full px-3 py-1.5 text-sm bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-input)] rounded focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none resize-y"
+                                  className="w-full px-3 py-1.5 text-sm bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] rounded focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none resize-y"
                                   placeholder="Text předvolby"
                                 />
                                 <div className="flex gap-2 justify-end">
@@ -896,13 +896,13 @@ export function NastaveniPage() {
                             ) : (
                               <div className="flex items-start">
                                 <div className="flex-1 p-3">
-                                  <div className="text-sm font-semibold text-[var(--text-primary)]">{t.nazev}</div>
+                                  <div className="text-sm font-semibold text-[var(--text)]">{t.nazev}</div>
                                   <div className="text-xs text-[var(--text-secondary)] mt-1 whitespace-pre-wrap line-clamp-3">{t.text}</div>
                                 </div>
                                 <div className="flex items-center gap-1 p-2">
                                   <button
                                     onClick={() => setEditingText({ ...t })}
-                                    className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded transition-colors cursor-pointer text-xs"
+                                    className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] rounded transition-colors cursor-pointer text-xs"
                                     title="Upravit"
                                   >Upravit</button>
                                   <button
@@ -924,7 +924,7 @@ export function NastaveniPage() {
                             type="text"
                             value={newText.nazev}
                             onChange={(e) => setNewText({ ...newText, nazev: e.target.value })}
-                            className="w-full px-3 py-1.5 text-sm bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-input)] rounded focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none"
+                            className="w-full px-3 py-1.5 text-sm bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] rounded focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none"
                             placeholder="Název předvolby"
                             autoFocus
                           />
@@ -932,7 +932,7 @@ export function NastaveniPage() {
                             value={newText.text}
                             onChange={(e) => setNewText({ ...newText, text: e.target.value })}
                             rows={4}
-                            className="w-full px-3 py-1.5 text-sm bg-[var(--bg-input)] text-[var(--text-primary)] border border-[var(--border-input)] rounded focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none resize-y"
+                            className="w-full px-3 py-1.5 text-sm bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] rounded focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:outline-none resize-y"
                             placeholder="Text předvolby"
                           />
                           <div className="flex gap-2 justify-end">

@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Modal } from '../../components/ui';
 import type { Revize, MericiPristroj, PredvolenyText } from '../../types';
@@ -246,7 +246,7 @@ export function DokumentaceTab({
                       }}
                       className="w-4 h-4 text-blue-600 rounded border-[var(--checkbox-border)]"
                     />
-                    <span className="text-sm text-[var(--text-primary)]">{opatreni.label}</span>
+                    <span className="text-sm text-[var(--text)]">{opatreni.label}</span>
                   </label>
                 );
               })}
@@ -502,7 +502,7 @@ export function DokumentaceTab({
             .map((p) => (
               <div
                 key={p.id}
-                className="flex items-center justify-between p-3 bg-[var(--bg-surface)] rounded-lg border border-[var(--border-medium)] hover:border-[var(--border-hover)] cursor-pointer"
+                className="flex items-center justify-between p-3 bg-[var(--bg-surface)] rounded-lg border border-[var(--border-medium)] hover:border-[var(--border-strong)] cursor-pointer"
                 onClick={() => {
                   if (p.id) {
                     addPristroj.mutate({ revizeId, pristrojId: p.id }, {

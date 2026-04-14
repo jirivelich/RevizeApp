@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import type { Zakazka } from '../../types';
 import { Card } from '../../components/ui';
 import { getPriorityColor, getRealizaceDays, getReportDeadline, isOverdue } from './utils';
@@ -84,7 +84,7 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
     days.push(
       <div
         key={day}
-        className={`p-2 min-h-[90px] border border-[var(--border-table)] cursor-pointer hover:bg-blue-500/[0.06] transition-colors ${
+        className={`p-2 min-h-[90px] border border-[var(--border)] cursor-pointer hover:bg-blue-500/[0.06] transition-colors ${
           todayClass ? 'bg-blue-500/[0.12] ring-2 ring-blue-500/[0.40] ring-inset' : 'bg-[var(--bg-faint)]'
         }`}
         onClick={() => onDayClick(dateStr)}
@@ -157,7 +157,7 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
           ◀
         </button>
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)] capitalize">
+          <h2 className="text-lg font-semibold text-[var(--text)] capitalize">
             {monthLabel}
           </h2>
           <button
@@ -180,7 +180,7 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
         {DAY_NAMES.map((den) => (
           <div
             key={den}
-            className="p-2 text-center text-sm font-medium text-[var(--text-secondary)] bg-[var(--bg-input)] border-b border-[var(--border-table)]"
+            className="p-2 text-center text-sm font-medium text-[var(--text-secondary)] bg-[var(--bg-input)] border-b border-[var(--border)]"
           >
             {den}
           </div>
