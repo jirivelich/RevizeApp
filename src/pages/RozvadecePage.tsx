@@ -264,9 +264,9 @@ export function RozvadecDetailPage() {
       <Card
         title="Okruhy"
         actions={
-          <Button size="sm" onClick={() => { resetOkruhForm(); setIsOkruhModalOpen(true); }}>
-            <span className="sm:hidden text-base leading-none">+</span>
-            <span className="hidden sm:inline">+ Přidat okruh</span>
+          <Button size="sm" onClick={() => { resetOkruhForm(); setIsOkruhModalOpen(true); }} title="Přidat okruh">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span className="hidden sm:inline ml-1">Přidat okruh</span>
           </Button>
         }
       >
@@ -303,19 +303,11 @@ export function RozvadecDetailPage() {
                     </td>
                     <td className="py-2 px-3 text-right">
                       <div className="flex justify-end gap-1">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleEditOkruh(o)}
-                        >
-                          Upravit
+                        <Button variant="secondary" size="sm" onClick={() => handleEditOkruh(o)} title="Upravit">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleDeleteOkruh(o.id!)}
-                        >
-                          ×
+                        <Button variant="danger" size="sm" onClick={() => handleDeleteOkruh(o.id!)} title="Smazat">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
                         </Button>
                       </div>
                     </td>
@@ -423,9 +415,9 @@ export function RozvadecDetailPage() {
       <Card
         title="Proudové chraniče"
         actions={
-          <Button size="sm" onClick={() => { resetCranicForm(); setIsCranicModalOpen(true); }}>
-            <span className="sm:hidden text-base leading-none">+</span>
-            <span className="hidden sm:inline">+ Přidat chránič</span>
+          <Button size="sm" variant="secondary" onClick={() => { resetCranicForm(); setIsCranicModalOpen(true); }} title="Přidat chránič">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span className="hidden sm:inline ml-1">Přidat chránič</span>
           </Button>
         }
       >
@@ -462,8 +454,12 @@ export function RozvadecDetailPage() {
                     <td className="py-2 px-3 text-[var(--text-secondary)]">{c.casOdpojeni1x != null ? c.casOdpojeni1x : '—'}</td>
                     <td className="py-2 px-3 text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="secondary" size="sm" onClick={() => handleEditChranic(c)}>Upravit</Button>
-                        <Button variant="danger" size="sm" onClick={() => handleDeleteChranic(c.id!)}>×</Button>
+                        <Button variant="secondary" size="sm" onClick={() => handleEditChranic(c)} title="Upravit">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </Button>
+                        <Button variant="danger" size="sm" onClick={() => handleDeleteChranic(c.id!)} title="Smazat">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+                        </Button>
                       </div>
                     </td>
                   </tr>

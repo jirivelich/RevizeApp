@@ -577,67 +577,69 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
           <Card
             title={`${selectedRozvadec.nazev}`}
             actions={
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant={inlineModeRozvadecId === selectedRozvadec.id ? 'primary' : 'secondary'}
-                  className="hidden md:inline-flex"
-                  onClick={() => {
-                    if (inlineModeRozvadecId === selectedRozvadec.id) {
-                      setInlineModeRozvadecId(null);
-                    } else {
+              <div className="flex items-center gap-1">
+                {/* Hromadný vstup / ← Karty — jen desktop */}
+                {inlineModeRozvadecId === selectedRozvadec.id ? (
+                  <Button size="sm" variant="primary" className="hidden md:inline-flex"
+                    onClick={() => setInlineModeRozvadecId(null)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    Karty
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="secondary" className="hidden md:inline-flex"
+                    title="Hromadný vstup okruhů"
+                    onClick={() => {
                       const nextCislo = okruhy.length > 0 ? Math.max(...okruhy.map(o => o.cislo)) + 1 : 1;
                       setInlineOkruhDraft(d => ({ ...d, cislo: nextCislo, nazev: '', izolacniOdpor: '', impedanceSmycky: '' }));
                       setInlineModeRozvadecId(selectedRozvadec.id!);
                       setTimeout(() => inlineNazevRef.current?.focus(), 80);
-                    }
-                  }}
-                >
-                  {inlineModeRozvadecId === selectedRozvadec.id ? '← Karty' : '⌨ Hromadný vstup'}
-                </Button>
-                {inlineModeRozvadecId !== selectedRozvadec.id && (
-                  <Button size="sm" variant="secondary" onClick={() => setIsImportFotoOpen(true)} title="Import okruhů z fotografii">
-                    <span className="sm:hidden">📷</span>
-                    <span className="hidden sm:inline">📷 Z fotek</span>
+                    }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="9"/></svg>
+                    Hromadný vstup
                   </Button>
                 )}
-                {inlineModeRozvadecId !== selectedRozvadec.id && (
-                  <Button size="sm" onClick={() => {
-                    resetOkruhForm();
-                    if (window.innerWidth < 640) { setIsOkruhSheetOpen(true); }
-                    else { setIsOkruhModalOpen(true); }
-                  }}>
-                    <span className="sm:hidden">⊕</span>
-                    <span className="hidden sm:inline">+ Přidat okruh</span>
+
+                {inlineModeRozvadecId !== selectedRozvadec.id && (<>
+                  {/* Z fotek */}
+                  <Button size="sm" variant="secondary" onClick={() => setIsImportFotoOpen(true)} title="Import okruhů z fotografií">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    <span className="hidden sm:inline ml-1.5">Z fotek</span>
                   </Button>
-                )}
-                {inlineModeRozvadecId !== selectedRozvadec.id && (
-                  <Button size="sm" onClick={() => {
-                    resetCranicForm();
-                    if (window.innerWidth < 640) { setIsCranicSheetOpen(true); }
-                    else { setIsCranicModalOpen(true); }
-                  }}>
-                    <span className="sm:hidden">⚡</span>
-                    <span className="hidden sm:inline">+ Přidat chránič</span>
+
+                  {/* + Okruh */}
+                  <Button size="sm" title="Přidat okruh"
+                    onClick={() => { resetOkruhForm(); if (window.innerWidth < 640) { setIsOkruhSheetOpen(true); } else { setIsOkruhModalOpen(true); } }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span className="hidden sm:inline ml-1">Okruh</span>
                   </Button>
-                )}
-                {inlineModeRozvadecId !== selectedRozvadec.id && (
-                  <Button variant="secondary" size="sm" onClick={() => {
-                    setEditingRozvadec(selectedRozvadec);
-                    setRozvadecFormData({
-                      nazev: selectedRozvadec.nazev,
-                      oznaceni: selectedRozvadec.oznaceni || '',
-                      umisteni: selectedRozvadec.umisteni || '',
-                      typRozvadece: selectedRozvadec.typRozvadece || '',
-                      stupenKryti: selectedRozvadec.stupenKryti || 'IP20',
-                      poznamka: selectedRozvadec.poznamka || '',
-                    });
-                    setIsRozvadecModalOpen(true);
-                  }}>Upravit</Button>
-                )}
-                {inlineModeRozvadecId !== selectedRozvadec.id && (
-                  <Button variant="danger" size="sm" onClick={() => handleDeleteRozvadec(selectedRozvadec.id!)}>Smazat</Button>
-                )}
+
+                  {/* + Chránič */}
+                  <Button size="sm" variant="secondary" title="Přidat chránič"
+                    onClick={() => { resetCranicForm(); if (window.innerWidth < 640) { setIsCranicSheetOpen(true); } else { setIsCranicModalOpen(true); } }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    <span className="hidden sm:inline ml-1">Chránič</span>
+                  </Button>
+
+                  {/* oddělovač */}
+                  <div className="w-px h-5 bg-[var(--border-medium)] mx-0.5 self-center" />
+
+                  {/* Upravit rozvaděč */}
+                  <Button variant="secondary" size="sm" title="Upravit rozvaděč"
+                    onClick={() => {
+                      setEditingRozvadec(selectedRozvadec);
+                      setRozvadecFormData({ nazev: selectedRozvadec.nazev, oznaceni: selectedRozvadec.oznaceni || '', umisteni: selectedRozvadec.umisteni || '', typRozvadece: selectedRozvadec.typRozvadece || '', stupenKryti: selectedRozvadec.stupenKryti || 'IP20', poznamka: selectedRozvadec.poznamka || '' });
+                      setIsRozvadecModalOpen(true);
+                    }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    <span className="hidden md:inline ml-1">Upravit</span>
+                  </Button>
+
+                  {/* Smazat rozvaděč */}
+                  <Button variant="danger" size="sm" title="Smazat rozvaděč"
+                    onClick={() => handleDeleteRozvadec(selectedRozvadec.id!)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+                  </Button>
+                </>)}
               </div>
             }
           >
