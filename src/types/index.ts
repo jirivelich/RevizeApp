@@ -168,6 +168,16 @@ export interface Okruh {
   poznamka?: string;
 }
 
+export interface OkruhNavrh {
+  cislo: number;
+  nazev: string;
+  jisticTyp: string;
+  jisticProud: string;
+  pocetFazi: number;
+  selected: boolean;
+  conflictAction: 'add' | 'replace' | 'skip';
+}
+
 export interface Chranic {
   id?: number;
   rozvadecId: number;

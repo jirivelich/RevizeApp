@@ -4,6 +4,7 @@ import { TW } from './tw';
 import { okruhService, cranicService } from '../../services/database';
 import { useCreateRozvadec, useDeleteRozvadec, useUpdateRozvadec } from '../../hooks/useQueries';
 import type { Rozvadec, Okruh, Chranic } from '../../types';
+import { ImportZFotografiiModal } from './ImportZFotografiiModal';
 
 export const TYPY_KABELU = ['CYKY', 'CY', 'NYM', 'CYKFY', 'YDY', 'AYKY', 'AY'];
 export const PRUREZY = ['1', '1,5', '2,5', '4', '6', '10', '16', '25', '35', '50', '70', '95', '120'];
@@ -90,6 +91,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
   const [editingChranic, setEditingChranic] = useState<Chranic | null>(null);
   const [isOkruhSheetOpen, setIsOkruhSheetOpen] = useState(false);
   const [isCranicSheetOpen, setIsCranicSheetOpen] = useState(false);
+  const [isImportFotoOpen, setIsImportFotoOpen] = useState(false);
   const [cranicFormData, setCranicFormData] = useState({
     cislo: 1, nazev: '', typ: 'A', proud: '25A',
     citlivostMa: 30, pocetPolu: 2,
@@ -593,6 +595,12 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                 >
                   {inlineModeRozvadecId === selectedRozvadec.id ? '← Karty' : '⌨ Hromadný vstup'}
                 </Button>
+                {inlineModeRozvadecId !== selectedRozvadec.id && (
+                  <Button size="sm" variant="secondary" onClick={() => setIsImportFotoOpen(true)} title="Import okruhů z fotografii">
+                    <span className="sm:hidden">📷</span>
+                    <span className="hidden sm:inline">📷 Z fotek</span>
+                  </Button>
+                )}
                 {inlineModeRozvadecId !== selectedRozvadec.id && (
                   <Button size="sm" onClick={() => {
                     resetOkruhForm();
@@ -1177,6 +1185,23 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
         <Input label="Poznámka" value={cranicFormData.poznamka} onChange={(e) => setCranicFormData({ ...cranicFormData, poznamka: e.target.value })} />
       </form>
     </BottomSheet>
+
+    {selectedRozvadec && (
+      <ImportZFotografiiModal
+        open={isImportFotoOpen}
+        onClose={() => setIsImportFotoOpen(false)}
+        rozvadecId={selectedRozvadec.id!}
+        rozvadecNazev={selectedRozvadec.nazev}
+        existingOkruhy={okruhy}
+        onSaved={async () => {
+          if (selectedRozvadec?.id) {
+            const okruhyData = await okruhService.getByRozvadec(selectedRozvadec.id);
+            setOkruhy(okruhyData);
+            setOkruhyCounts(prev => ({ ...prev, [selectedRozvadec.id!]: okruhyData.length }));
+          }
+        }}
+      />
+    )}
     </>
   );
 }

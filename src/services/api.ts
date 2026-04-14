@@ -222,4 +222,16 @@ export const aiApi = {
       body: JSON.stringify({ field, formData, entityType }),
     }).then(res => handleResponse<{ suggestion: Record<string, string> }>(res));
   },
+
+  /** Analyzovat fotografie rozvaděče a navrhnout okruhy */
+  async analyzePhotos(
+    rozvadecId: number,
+    images: string[],
+  ): Promise<{ okruhy: { cislo: number; nazev: string; jisticTyp: string; jisticProud: string; pocetFazi: number }[] }> {
+    return fetch(`${API_BASE_URL}/ai/analyze-photos`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ rozvadecId, images }),
+    }).then(res => handleResponse<{ okruhy: { cislo: number; nazev: string; jisticTyp: string; jisticProud: string; pocetFazi: number }[] }>(res));
+  },
 };

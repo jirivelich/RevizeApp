@@ -189,3 +189,89 @@ Navrhni pouze relevantní hodnoty, které dávají smysl v kontextu elektrotechn
     return {};
   }
 }
+
+// ==================== ANALÝZA FOTOGRAFIÍ ROZVADĚČE ====================
+
+const SYSTEM_PHOTO_ANALYSIS = `Jsi expert na elektrotechniku a revize rozvaděčů v České republice.
+Tvým úkolem je z fotografie rozvaděče identifikovat jističe a okruhy.
+
+Pro každý viditelný jistič/okruh identifikuj:
+- cislo: pořadové číslo okruhu (integer, počínaje 1)
+- nazev: popis okruhu/spotřebiče (např. "Osvětlení 1.NP", "Zásuvky kuchyň", "Bojler")
+- jisticTyp: typ jistič (typicky "B", "C" nebo "D" - pouze písmeno bez proudu)
+- jisticProud: jmenovitý proud jističe jako string (např. "16", "10", "20", "32", "63")
+- pocetFazi: počet fází (1 nebo 3, integer)
+
+Pravidla:
+- Vrať POUZE validní JSON array bez jakéhokoli dalšího textu, markdown nebo vysvětlení
+- Pokud není údaj čitelný z fotky, odhadni rozumnou hodnotu dle kontextu
+- Typické hodnoty: typ B nebo C, proudy 6/10/16/20/25/32 A, 1 fáze
+- Třífázové okruhy mají typicky 3-pólový jistič (viditelné 3 páčky)
+- Seřaď okruhy dle jejich fyzického pořadí na DIN liště zleva/shora
+- Pokud je fotka nečitelná, vrať prázdný array []
+
+Příklad výstupu:
+[{"cislo":1,"nazev":"Hlavní jistič","jisticTyp":"C","jisticProud":"25","pocetFazi":1},{"cislo":2,"nazev":"Osvětlení","jisticTyp":"B","jisticProud":"10","pocetFazi":1}]`;
+
+export interface OkruhNavrhAI {
+  cislo: number;
+  nazev: string;
+  jisticTyp: string;
+  jisticProud: string;
+  pocetFazi: number;
+}
+
+export async function analyzeRozvadecPhotos(
+  images: string[],
+  rozvadecNazev: string,
+): Promise<OkruhNavrhAI[]> {
+  const ai = getClient();
+
+  // Sestavit content array: nejprve textový popis, pak obrázky
+  const content: Anthropic.MessageParam['content'] = [
+    {
+      type: 'text',
+      text: `Analyzuj ${images.length > 1 ? 'tyto fotografie rozvaděče' : 'tuto fotografii rozvaděče'} "${rozvadecNazev}".
+Identifikuj všechny jističe a jejich okruhy. Vrať JSON array s okruhy.`,
+    },
+    ...images.map((dataUrl): Anthropic.ImageBlockParam => {
+      // Detekovat media type z data URL prefixu
+      const match = dataUrl.match(/^data:(image\/[a-z+]+);base64,/);
+      const mediaType = (match?.[1] || 'image/jpeg') as
+        | 'image/jpeg'
+        | 'image/png'
+        | 'image/gif'
+        | 'image/webp';
+      const base64Data = dataUrl.replace(/^data:image\/[a-z+]+;base64,/, '');
+      return {
+        type: 'image',
+        source: { type: 'base64', media_type: mediaType, data: base64Data },
+      };
+    }),
+  ];
+
+  const response = await ai.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 2000,
+    system: SYSTEM_PHOTO_ANALYSIS,
+    messages: [{ role: 'user', content }],
+  });
+
+  const textBlock = response.content.find((b) => b.type === 'text');
+  if (!textBlock?.text) return [];
+
+  try {
+    const parsed = JSON.parse(textBlock.text.trim());
+    if (!Array.isArray(parsed)) return [];
+    // Sanitizovat výstup
+    return parsed.map((item: any, idx: number) => ({
+      cislo: typeof item.cislo === 'number' ? item.cislo : idx + 1,
+      nazev: String(item.nazev || `Okruh ${idx + 1}`),
+      jisticTyp: String(item.jisticTyp || 'B'),
+      jisticProud: String(item.jisticProud || '16'),
+      pocetFazi: typeof item.pocetFazi === 'number' ? item.pocetFazi : 1,
+    }));
+  } catch {
+    return [];
+  }
+}

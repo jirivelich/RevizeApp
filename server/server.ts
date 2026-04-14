@@ -4,7 +4,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import { pool, initializeDatabase } from './database';
 import { authMiddleware, loginUser, registerUser, logoutSession, AuthRequest } from './auth';
-import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion } from './ai';
+import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion, analyzeRozvadecPhotos } from './ai';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -1674,6 +1674,34 @@ async function startServer() {
       res.json({ suggestion });
     } catch (error) {
       console.error('❌ AI autofill error:', error);
+      const userMessage = getAIErrorMessage(error);
+      res.status(500).json({ error: userMessage });
+    }
+  });
+
+  // Analýza fotografií rozvaděče
+  app.post('/api/ai/analyze-photos', authMiddleware, async (req, res) => {
+    try {
+      const { images, rozvadecId } = req.body;
+
+      if (!Array.isArray(images) || images.length === 0) {
+        return res.status(400).json({ error: 'images musí být neprázdné pole' });
+      }
+      if (images.length > 5) {
+        return res.status(400).json({ error: 'Maximálně 5 fotografií' });
+      }
+      if (!rozvadecId) {
+        return res.status(400).json({ error: 'rozvadecId je povinné' });
+      }
+
+      // Načíst název rozvaděče pro kontext AI
+      const rozvadecResult = await pool.query('SELECT nazev FROM rozvadece WHERE id = $1', [rozvadecId]);
+      const rozvadecNazev = rozvadecResult.rows[0]?.nazev || 'Rozvaděč';
+
+      const okruhy = await analyzeRozvadecPhotos(images, rozvadecNazev);
+      res.json({ okruhy });
+    } catch (error) {
+      console.error('❌ AI analyze-photos error:', error);
       const userMessage = getAIErrorMessage(error);
       res.status(500).json({ error: userMessage });
     }
