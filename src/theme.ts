@@ -29,7 +29,6 @@ export const themes: Record<ThemeName, ThemeVars> = {
     '--nav-text-active':     '#FF6B6B',
     '--checkbox-border':     'rgba(226,225,233,0.25)',
     '--section-header-bg':   '#1E1E2E',
-    '--section-header-text': '#E2E1E9',
   },
   light: {
     '--background':          '#f8f8fb',
@@ -60,6 +59,5 @@ export const themes: Record<ThemeName, ThemeVars> = {
     '--nav-text-active':     '#FF6B6B',
     '--checkbox-border':     'rgba(44,44,62,0.25)',
     '--section-header-bg':   '#A4ABBF',
-    '--section-header-text': '#2C2C3E',
   },
 }

@@ -251,7 +251,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
 
       {/* ═══ 01 – IDENTIFIKACE STROJE ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
           <span className="text-blue-400">01</span> Identifikace strojního zařízení – štítek
         </div>
         <div className="p-4">
@@ -298,7 +298,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
 
       {/* ═══ 02 – JIŠTĚNÍ ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
           <span className="text-blue-400">02</span> Jištění strojního zařízení
         </div>
         <div className="p-4">
@@ -333,7 +333,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
 
       {/* ═══ 03 – IZOLAČNÍ ODPOR ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
           <span className="text-blue-400">03</span> Měření izolačního odporu (ČSN EN 60204-1)
         </div>
         <div className="p-4">
@@ -369,7 +369,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
 
       {/* ═══ 04 – SPOJITOST PE ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
           <span className="text-blue-400">04</span> Měření spojitosti ochranných vodičů (PE)
         </div>
         <div className="p-4">
@@ -405,7 +405,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
 
       {/* ═══ 05 – IMPEDANCE PORUCHOVÉ SMYČKY ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
           <span className="text-blue-400">05</span> Měření impedance poruchové smyčky
         </div>
         <div className="p-4">
@@ -439,7 +439,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
 
       {/* ═══ 06 – RCD ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
           <span className="text-blue-400">06</span> Měření proudových chráničů (RCD)
         </div>
         <div className="p-4">
@@ -472,7 +472,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
 
       {/* ═══ 07 – FUNKČNÍ KONTROLY ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
           <span className="text-blue-400">07</span> Funkční kontroly
         </div>
         <div className="p-4">
@@ -504,7 +504,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
 
       {/* ═══ 08 – MĚŘICÍ PŘÍSTROJE ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
           <span className="text-blue-400">08</span> Použité měřicí přístroje
           <button
             type="button"
@@ -628,7 +628,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
 
       {/* ═══ 09 – POSUDEK ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
           <span className="text-blue-400">09</span> Posudek
         </div>
         <div className="p-4">

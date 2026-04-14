@@ -767,7 +767,7 @@ export function RevizeDetailPage() {
       {/* Historie navazujících revizí */}
       {showHistorie && (
         <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-          <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center justify-between">
+          <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center justify-between">
             <span>🕐 Historie revizí tohoto objektu</span>
             <button onClick={() => setShowHistorie(false)} className="text-[var(--text)] hover:text-white">✕</button>
           </div>
@@ -911,7 +911,7 @@ export function RevizeDetailPage() {
           </div>
 
           {/* ═══ SEKCE 1: IDENTIFIKACE ═══ */}
-          <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider">Identifikace revize</div>
+          <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider">Identifikace revize</div>
           <table className="w-full text-sm border-collapse">
             <tbody>
               <tr className="border-b border-slate-200">
@@ -956,7 +956,7 @@ export function RevizeDetailPage() {
           </table>
 
           {/* ═══ SEKCE 2: OBJEDNATEL ═══ */}
-          <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider">Objednatel / Provozovatel</div>
+          <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider">Objednatel / Provozovatel</div>
           <table className="w-full text-sm border-collapse">
             <tbody>
               <tr className="border-b border-slate-200">
@@ -994,7 +994,7 @@ export function RevizeDetailPage() {
           </table>
 
           {/* ═══ SEKCE 3: TERMÍNY ═══ */}
-          <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider">Termíny a data</div>
+          <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider">Termíny a data</div>
           <table className="w-full text-sm border-collapse">
             <tbody>
               <tr className="border-b border-slate-200">
@@ -1025,7 +1025,7 @@ export function RevizeDetailPage() {
           </table>
 
           {/* ═══ SEKCE 4: STAV ═══ */}
-          <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider">Stav a výsledek revize</div>
+          <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider">Stav a výsledek revize</div>
           <table className="w-full text-sm border-collapse">
             <tbody>
               <tr className="border-b border-slate-200">
@@ -1048,7 +1048,7 @@ export function RevizeDetailPage() {
           </table>
 
           {/* ═══ SEKCE 5: FIRMA ═══ */}
-          <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider">Firma provádějící revizi</div>
+          <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider">Firma provádějící revizi</div>
           <div className="p-4 space-y-3 border-b border-slate-200">
             <select className="w-full px-2 py-1.5 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" value={selectedFirmaId} onChange={(e) => {
               const firmaId = e.target.value;
@@ -1422,7 +1422,7 @@ export function RevizeDetailPage() {
 
           {/* ═══ SEKCE 3: MĚŘICÍ PŘÍSTROJE ═══ */}
           </>)}
-          <div className="bg-[var(--section-header-bg)] text-[var(--section-header-text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center justify-between">
+          <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center justify-between">
             <span className={!isSekceVisible('pristroje') ? 'opacity-50 line-through' : ''}>2.3 Použité měřicí přístroje</span>
             <div className="flex items-center gap-2">
               <Button size="sm" onClick={() => setIsPristrojModalOpen(true)} className="!py-0.5 !px-2 !text-xs bg-white/20 hover:bg-white/30 text-white border-0">
