@@ -82,11 +82,12 @@ export function Sidebar({ onClose }: SidebarProps) {
 
     const activeStyle: CSSProperties = {
       display: 'flex', alignItems: 'center', gap: 9,
-      padding: '8px 10px', borderRadius: 8,
+      padding: '8px 10px', borderRadius: '0 8px 8px 0',
       fontSize: 13, fontWeight: 500,
       background: 'var(--active-bg)',
       color: 'var(--nav-text-active)',
-      border: '1px solid var(--active-border)',
+      border: '1px solid transparent',
+      borderLeft: '2px solid #C00606',
       textDecoration: 'none',
       position: 'relative',
       marginBottom: 2,
@@ -109,13 +110,6 @@ export function Sidebar({ onClose }: SidebarProps) {
         style={isActive ? activeStyle : defaultStyle}
         className={isActive ? '' : 'sidebar-nav-item'}
       >
-        {isActive && (
-          <span style={{
-            position: 'absolute', left: -1, top: '50%', transform: 'translateY(-50%)',
-            width: 3, height: 18, background: '#F00807', borderRadius: '0 2px 2px 0',
-            boxShadow: '0 0 8px var(--active-glow)',
-          }} />
-        )}
         <span style={{ flexShrink: 0 }}>{item.icon}</span>
         {item.label}
       </Link>

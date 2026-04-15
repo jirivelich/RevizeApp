@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Výběr variant – RevizeApp</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background: #111118; color: #E2E1E9; min-height: 100vh; padding: 40px; }
+
+  .page-nav { display: flex; gap: 8px; margin-bottom: 48px; flex-wrap: wrap; align-items: center; }
+  .page-nav a { font-size: 12px; color: #7E7E96; text-decoration: none; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.07); }
+  .page-nav a:hover { color: #E2E1E9; background: rgba(255,255,255,0.05); }
+  .page-nav a.active { color: #E2E1E9; background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); }
+  .page-title { font-size: 22px; font-weight: 700; color: #E2E1E9; margin-bottom: 4px; }
+  .page-sub { font-size: 13px; color: #7E7E96; margin-bottom: 40px; }
+
+  /* Category */
+  .cat { margin-bottom: 52px; }
+  .cat-header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .cat-num { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #5A5A72; }
+  .cat-title { font-size: 16px; font-weight: 700; color: #E2E1E9; }
+  .cat-link { font-size: 11px; color: #C00606; text-decoration: none; margin-left: auto; opacity: .7; }
+  .cat-link:hover { opacity: 1; }
+
+  .variants { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+  /* Radio card */
+  .radio-card input[type="radio"] { display: none; }
+  .radio-card label {
+    display: block; cursor: pointer;
+    background: rgba(226,225,233,0.03);
+    border: 1px solid rgba(226,225,233,0.07);
+    border-radius: 10px; overflow: hidden;
+    transition: border-color .15s;
+    height: 100%;
+  }
+  .radio-card label:hover { border-color: rgba(226,225,233,0.14); }
+  .radio-card input:checked + label {
+    border-color: #C00606;
+    background: rgba(192,6,6,0.04);
+  }
+
+  .card-preview { height: 160px; overflow: hidden; position: relative; background: #0A0A12; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .card-preview iframe { width: 250%; height: 250%; border: none; transform: scale(0.4); transform-origin: top left; pointer-events: none; display: block; }
+
+  .card-body { padding: 14px 16px 16px; }
+  .card-var-label { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #5A5A72; margin-bottom: 4px; }
+  .card-var-name { font-size: 14px; font-weight: 700; color: #E2E1E9; margin-bottom: 6px; line-height: 1.3; }
+  .card-var-desc { font-size: 12px; color: #7E7E96; line-height: 1.5; }
+
+  .check-indicator {
+    display: flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid rgba(226,225,233,0.20);
+    background: transparent; margin-top: 10px; transition: all .15s; flex-shrink: 0;
+  }
+  .radio-card input:checked + label .check-indicator {
+    background: #C00606; border-color: #C00606;
+  }
+  .check-indicator::after { content: ''; display: block; width: 6px; height: 6px; border-radius: 50%; background: white; opacity: 0; transition: opacity .15s; }
+  .radio-card input:checked + label .check-indicator::after { opacity: 1; }
+  .card-foot { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px 14px; }
+  .card-rec { font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #C00606; background: rgba(192,6,6,0.10); border: 1px solid rgba(192,6,6,0.20); border-radius: 4px; padding: 2px 7px; }
+
+  /* Summary */
+  .summary {
+    position: sticky; bottom: 24px;
+    background: #1A1A28; border: 1px solid rgba(226,225,233,0.09);
+    border-radius: 12px; padding: 16px 20px;
+    display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+    max-width: 900px; margin: 0 auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .sum-title { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #7E7E96; white-space: nowrap; }
+  .sum-items { display: flex; gap: 10px; flex-wrap: wrap; flex: 1; }
+  .sum-item { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .sum-cat { color: #7E7E96; }
+  .sum-val { color: #E2E1E9; font-weight: 600; background: rgba(226,225,233,0.07); border-radius: 4px; padding: 2px 8px; min-width: 24px; text-align: center; }
+  .sum-val.chosen { background: rgba(192,6,6,0.15); color: #FF8080; }
+  .sum-sep { color: rgba(226,225,233,0.15); font-size: 16px; }
+
+  .btn-copy {
+    background: #C00606; color: white; border: none; border-radius: 8px;
+    padding: 9px 20px; font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background .15s; white-space: nowrap;
+  }
+  .btn-copy:hover { background: #A00505; }
+  .btn-copy:active { transform: scale(.97); }
+
+  .copied-msg { font-size: 12px; color: #34d399; opacity: 0; transition: opacity .3s; white-space: nowrap; }
+  .copied-msg.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<nav class="page-nav">
+  <a href="navrhy-tlacitka.html">Tlačítka</a>
+  <a href="navrhy-tabulka.html">Tabulka</a>
+  <a href="navrhy-karty.html">Karty</a>
+  <a href="navrhy-menu.html">Menu</a>
+  <a href="navrhy-dotaznik.html" class="active">Výběr variant</a>
+</nav>
+
+<div class="page-title">Vyber variantu pro každou část</div>
+<div class="page-sub">Po výběru se zobrazí shrnutí — zkopíruješ ho a pošleš mi.</div>
+
+<!-- 1. TLAČÍTKA -->
+<div class="cat">
+  <div class="cat-header">
+    <span class="cat-num">01</span>
+    <span class="cat-title">Tlačítka</span>
+    <a class="cat-link" href="navrhy-tlacitka.html" target="_blank">detail →</a>
+  </div>
+  <div class="variants">
+    <div class="radio-card">
+      <input type="radio" name="tlacitka" id="tl-a" value="A – Flat">
+      <label for="tl-a">
+        <div class="card-preview">
+          <iframe src="navrhy-tlacitka.html" style="margin-top:-80px" tabindex="-1"></iframe>
+        </div>
+        <div class="card-body">
+          <div class="card-var-label">Varianta A</div>
+          <div class="card-var-name">Flat</div>
+          <div class="card-var-desc">Plochá červená barva, žádný gradient, žádný stín. Sekundární tlačítko šedé s borderem.</div>
+        </div>
+        <div class="card-foot"><span class="card-rec">doporučeno</span><div class="check-indicator"></div></div>
+      </label>
+    </div>
+    <div class="radio-card">
+      <input type="radio" name="tlacitka" id="tl-b" value="B – Outline">
+      <label for="tl-b">
+        <div class="card-preview">
+          <iframe src="navrhy-tlacitka.html" style="margin-top:-80px" tabindex="-1"></iframe>
+        </div>
+        <div class="card-body">
+          <div class="card-var-label">Varianta B</div>
+          <div class="card-var-name">Outline</div>
+          <div class="card-var-desc">Primární tlačítko průhledné s červeným borderem a textem. Plní se na hover.</div>
+        </div>
+        <div class="card-foot"><span></span><div class="check-indicator"></div></div>
+      </label>
+    </div>
+    <div class="radio-card">
+      <input type="radio" name="tlacitka" id="tl-c" value="C – Mono">
+      <label for="tl-c">
+        <div class="card-preview">
+          <iframe src="navrhy-tlacitka.html" style="margin-top:-80px" tabindex="-1"></iframe>
+        </div>
+        <div class="card-body">
+          <div class="card-var-label">Varianta C</div>
+          <div class="card-var-name">Mono</div>
+          <div class="card-var-desc">Bílý fill, tmavý text. Červená zcela odstraněna z tlačítek — maximálně neutrální.</div>
+        </div>
+        <div class="card-foot"><span></span><div class="check-indicator"></div></div>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- 2. TABULKA -->
+<div class="cat">
+  <div class="cat-header">
+    <span class="cat-num">02</span>
+    <span class="cat-title">Tabulka</span>
+    <a class="cat-link" href="navrhy-tabulka.html" target="_blank">detail →</a>
+  </div>
+  <div class="variants">
+    <div class="radio-card">
+      <input type="radio" name="tabulka" id="tb-a" value="A – Neutral hover">
+      <label for="tb-a">
+        <div class="card-preview">
+          <iframe src="navrhy-tabulka.html" style="margin-top:-80px" tabindex="-1"></iframe>
+        </div>
+        <div class="card-body">
+          <div class="card-var-label">Varianta A</div>
+          <div class="card-var-name">Neutral hover</div>
+          <div class="card-var-desc">Hover řádku = jemný bílý průhledný tón. Odkaz zůstává bílý, podtrhuje se na hover.</div>
+        </div>
+        <div class="card-foot"><span class="card-rec">doporučeno</span><div class="check-indicator"></div></div>
+      </label>
+    </div>
+    <div class="radio-card">
+      <input type="radio" name="tabulka" id="tb-b" value="B – Accent border-left">
+      <label for="tb-b">
+        <div class="card-preview">
+          <iframe src="navrhy-tabulka.html" style="margin-top:-80px" tabindex="-1"></iframe>
+        </div>
+        <div class="card-body">
+          <div class="card-var-label">Varianta B</div>
+          <div class="card-var-name">Accent border-left</div>
+          <div class="card-var-desc">Hover přidá 2px červený levý border. Odkaz se zbarví červeně. Výraznější feedback.</div>
+        </div>
+        <div class="card-foot"><span></span><div class="check-indicator"></div></div>
+      </label>
+    </div>
+    <div class="radio-card">
+      <input type="radio" name="tabulka" id="tb-c" value="C – Flat zero">
+      <label for="tb-c">
+        <div class="card-preview">
+          <iframe src="navrhy-tabulka.html" style="margin-top:-80px" tabindex="-1"></iframe>
+        </div>
+        <div class="card-body">
+          <div class="card-var-label">Varianta C</div>
+          <div class="card-var-name">Flat zero</div>
+          <div class="card-var-desc">Žádné oddělovače, žádný hover fill. Řádky pouze ztmavnou na hover. Minimalistické.</div>
+        </div>
+        <div class="card-foot"><span></span><div class="check-indicator"></div></div>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- 3. KARTY -->
+<div class="cat">
+  <div class="cat-header">
+    <span class="cat-num">03</span>
+    <span class="cat-title">Karty (grid pohled)</span>
+    <a class="cat-link" href="navrhy-karty.html" target="_blank">detail →</a>
+  </div>
+  <div class="variants">
+    <div class="radio-card">
+      <input type="radio" name="karty" id="ka-a" value="A – Mono badgy">
+      <label for="ka-a">
+        <div class="card-preview">
+          <iframe src="navrhy-karty.html" style="margin-top:-80px" tabindex="-1"></iframe>
+        </div>
+        <div class="card-body">
+          <div class="card-var-label">Varianta A</div>
+          <div class="card-var-name">Mono badgy</div>
+          <div class="card-var-desc">Všechny kategorie šedé. Stav (hotovo/rozpracováno) si barvu zachová. Border zesvětlí on-hover.</div>
+        </div>
+        <div class="card-foot"><span class="card-rec">doporučeno</span><div class="check-indicator"></div></div>
+      </label>
+    </div>
+    <div class="radio-card">
+      <input type="radio" name="karty" id="ka-b" value="B – Subtle outline">
+      <label for="ka-b">
+        <div class="card-preview">
+          <iframe src="navrhy-karty.html" style="margin-top:-80px" tabindex="-1"></iframe>
+        </div>
+        <div class="card-body">
+          <div class="card-var-label">Varianta B</div>
+          <div class="card-var-name">Subtle outline</div>
+          <div class="card-var-desc">Všechny badgy pouze outline, žádný fill. Hover přidá shadow. Nejsubtilnější vzhled.</div>
+        </div>
+        <div class="card-foot"><span></span><div class="check-indicator"></div></div>
+      </label>
+    </div>
+    <div class="radio-card">
+      <input type="radio" name="karty" id="ka-c" value="C – Accent hover border">
+      <label for="ka-c">
+        <div class="card-preview">
+          <iframe src="navrhy-karty.html" style="margin-top:-80px" tabindex="-1"></iframe>
+        </div>
+        <div class="card-body">
+          <div class="card-var-label">Varianta C</div>
+          <div class="card-var-name">Accent hover border</div>
+          <div class="card-var-desc">Hover zobrazí červený 3px levý border. Nejsilnější vizuální feedback ze tří variant.</div>
+        </div>
+        <div class="card-foot"><span></span><div class="check-indicator"></div></div>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- 4. MENU -->
+<div class="cat">
+  <div class="cat-header">
+    <span class="cat-num">04</span>
+    <span class="cat-title">Sidebar menu</span>
+    <a class="cat-link" href="navrhy-menu.html" target="_blank">detail →</a>
+  </div>
+  <div class="variants">
+    <div class="radio-card">
+      <input type="radio" name="menu" id="mn-a" value="A – White tint">
+      <label for="mn-a">
+        <div class="card-preview">
+          <iframe src="navrhy-menu.html" style="margin-top:-80px" tabindex="-1"></iframe>
+        </div>
+        <div class="card-body">
+          <div class="card-var-label">Varianta A</div>
+          <div class="card-var-name">White tint</div>
+          <div class="card-var-desc">Aktivní = bílý průhledný fill + bílý border. Žádný červený tón, žádný glow efekt.</div>
+        </div>
+        <div class="card-foot"><span class="card-rec">doporučeno</span><div class="check-indicator"></div></div>
+      </label>
+    </div>
+    <div class="radio-card">
+      <input type="radio" name="menu" id="mn-b" value="B – Red edge">
+      <label for="mn-b">
+        <div class="card-preview">
+          <iframe src="navrhy-menu.html" style="margin-top:-80px" tabindex="-1"></iframe>
+        </div>
+        <div class="card-body">
+          <div class="card-var-label">Varianta B</div>
+          <div class="card-var-name">Red edge</div>
+          <div class="card-var-desc">Aktivní = šedý fill + 2px levý červený border. Červená jako signál, ne jako plná barva pozadí.</div>
+        </div>
+        <div class="card-foot"><span></span><div class="check-indicator"></div></div>
+      </label>
+    </div>
+    <div class="radio-card">
+      <input type="radio" name="menu" id="mn-c" value="C – Text only">
+      <label for="mn-c">
+        <div class="card-preview">
+          <iframe src="navrhy-menu.html" style="margin-top:-80px" tabindex="-1"></iframe>
+        </div>
+        <div class="card-body">
+          <div class="card-var-label">Varianta C</div>
+          <div class="card-var-name">Text only</div>
+          <div class="card-var-desc">Žádné pozadí, žádný border. Aktivní = červený text. Nejplošší — čistě typografické.</div>
+        </div>
+        <div class="card-foot"><span></span><div class="check-indicator"></div></div>
+      </label>
+    </div>
+  </div>
+</div>
+
+<div style="height: 100px;"></div>
+
+<!-- Sticky summary -->
+<div class="summary" id="summary">
+  <span class="sum-title">Výběr</span>
+  <div class="sum-items">
+    <div class="sum-item"><span class="sum-cat">Tlačítka:</span><span class="sum-val" id="sv-tl">—</span></div>
+    <span class="sum-sep">·</span>
+    <div class="sum-item"><span class="sum-cat">Tabulka:</span><span class="sum-val" id="sv-tb">—</span></div>
+    <span class="sum-sep">·</span>
+    <div class="sum-item"><span class="sum-cat">Karty:</span><span class="sum-val" id="sv-ka">—</span></div>
+    <span class="sum-sep">·</span>
+    <div class="sum-item"><span class="sum-cat">Menu:</span><span class="sum-val" id="sv-mn">—</span></div>
+  </div>
+  <span class="copied-msg" id="copied-msg">Zkopírováno ✓</span>
+  <button class="btn-copy" id="btn-copy" onclick="copyResult()">Zkopírovat výběr</button>
+</div>
+
+<script>
+  const map = {
+    tlacitka: { el: 'sv-tl', label: 'Tlačítka' },
+    tabulka:  { el: 'sv-tb', label: 'Tabulka' },
+    karty:    { el: 'sv-ka', label: 'Karty' },
+    menu:     { el: 'sv-mn', label: 'Menu' },
+  };
+
+  document.querySelectorAll('input[type="radio"]').forEach(r => {
+    r.addEventListener('change', () => {
+      const cfg = map[r.name];
+      if (!cfg) return;
+      const el = document.getElementById(cfg.el);
+      el.textContent = r.value.split('–')[0].trim();
+      el.classList.add('chosen');
+    });
+  });
+
+  function copyResult() {
+    const lines = Object.entries(map).map(([name, cfg]) => {
+      const checked = document.querySelector(`input[name="${name}"]:checked`);
+      return `${cfg.label}: ${checked ? checked.value : '—'}`;
+    });
+    const text = lines.join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      const msg = document.getElementById('copied-msg');
+      msg.classList.add('show');
+      setTimeout(() => msg.classList.remove('show'), 2500);
+    });
+  }
+</script>
+</body>
+</html>

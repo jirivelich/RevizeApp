@@ -1297,7 +1297,7 @@ export function RevizeDetailPage() {
                         />
                         <div className="flex gap-1 justify-end">
                           <button type="button" onClick={() => setAdding(false)} className="px-2 py-0.5 text-xs text-[var(--text-muted)] hover:bg-slate-100 rounded cursor-pointer">Zrušit</button>
-                          <button type="button" onClick={handleAdd} className="px-2 py-0.5 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer" disabled={!newNazev.trim() || !newText.trim()}>Uložit</button>
+                          <button type="button" onClick={handleAdd} className="px-2 py-0.5 text-xs bg-[#C00606] text-white rounded hover:bg-[#A00505] cursor-pointer" disabled={!newNazev.trim() || !newText.trim()}>Uložit</button>
                         </div>
                       </div>
                     )}
@@ -1450,7 +1450,7 @@ export function RevizeDetailPage() {
                 </thead>
                 <tbody>
                   {pouzitePristroje.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-50">
+                    <tr key={p.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.03)] group">
                       <td className="border-b border-r border-slate-200 px-4 py-1.5 font-medium">{p.nazev}</td>
                       <td className="border-b border-r border-slate-200 px-4 py-1.5">{p.vyrobce} {p.model}</td>
                       <td className="border-b border-r border-slate-200 px-4 py-1.5 font-mono">{p.vyrobniCislo}</td>
@@ -1951,7 +1951,7 @@ export function RevizeDetailPage() {
                       </thead>
                       <tbody>
                         {zarizeni.map((z) => (
-                          <tr key={z.id} className="border-b border-[var(--border-subtle)] hover:bg-slate-50">
+                          <tr key={z.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.03)] group">
                             <td className="py-2 px-3">
                               <p className="font-medium">{z.nazev}</p>
                               {z.oznaceni && <p className="text-xs text-[var(--text-secondary)]">{z.oznaceni}</p>}
@@ -2503,7 +2503,7 @@ export function RevizeDetailPage() {
       {(activeTab === 'info' || activeTab === 'dokumentace') && (
         <div className="fixed bottom-0 left-0 lg:left-64 right-0 z-50 bg-[var(--surface)]/95 backdrop-blur border-t border-[var(--border)] shadow-[0_-2px_8px_rgba(0,0,0,0.15)]">
           <div className="max-w-4xl mx-auto px-4 py-1 flex justify-center">
-            <button onClick={handleSave} className="px-6 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded shadow transition-colors cursor-pointer">💾 Uložit změny</button>
+            <button onClick={handleSave} className="px-6 py-1 bg-[#C00606] hover:bg-[#A00505] text-white text-sm font-semibold rounded transition-colors cursor-pointer">💾 Uložit změny</button>
           </div>
         </div>
       )}

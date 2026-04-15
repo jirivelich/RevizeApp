@@ -124,7 +124,7 @@ export function FirmyPage() {
               </thead>
               <tbody>
                 {firmy.map((firma) => (
-                  <tr key={firma.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)]">
+                  <tr key={firma.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.03)] group">
                     <td className="py-2 px-3 text-xs font-medium text-[var(--text)]">{firma.nazev}</td>
                     <td className="py-2 px-3 font-mono text-xs text-[var(--text-secondary)]">{firma.ico || '-'}</td>
                     <td className="py-2 px-3 text-xs text-[var(--text-secondary)] max-w-xs truncate">{firma.adresa || '-'}</td>

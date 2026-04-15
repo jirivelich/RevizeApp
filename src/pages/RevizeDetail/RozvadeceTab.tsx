@@ -744,7 +744,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                   </thead>
                   <tbody>
                     {okruhy.sort((a, b) => a.cislo - b.cislo).map((o) => (
-                      <tr key={o.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)] group">
+                      <tr key={o.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.03)] group">
                         <td className="py-1.5 pr-2 text-xs font-medium text-[var(--text-secondary)]">{o.cislo}</td>
                         <td className="py-1.5 pr-2 text-xs font-medium text-[var(--text)]">{o.nazev}</td>
                         <td className="py-1.5 pr-2">
@@ -879,7 +879,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                         onDragOver={handleDragOver}
                         onDrop={() => handleDrop(o)}
                         onDragEnd={handleDragEnd}
-                        className={`border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)] cursor-grab active:cursor-grabbing ${
+                        className={`border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.03)] cursor-grab active:cursor-grabbing ${
                           draggedOkruh?.id === o.id ? 'opacity-50 bg-[var(--bg-accent)]' : ''
                         }`}
                       >
@@ -945,7 +945,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                   </thead>
                   <tbody>
                     {[...chranice].sort((a, b) => a.cislo - b.cislo).map((c) => (
-                      <tr key={c.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)]">
+                      <tr key={c.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.03)] group">
                         <td className="py-1 px-2 text-xs font-medium text-[var(--text)]">{c.cislo}</td>
                         <td className="py-1 px-2 text-xs text-[var(--text)]">{c.nazev}</td>
                         <td className="py-1 px-2 text-xs">

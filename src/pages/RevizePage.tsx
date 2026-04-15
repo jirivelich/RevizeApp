@@ -398,9 +398,9 @@ export function RevizePage() {
               </thead>
               <tbody>
                 {paginatedRevize.map((r) => (
-                  <tr key={r.id} className="border-b border-[var(--border-subtle)] hover:bg-blue-500/[0.06] dark:hover:bg-blue-500/[0.08]">
+                  <tr key={r.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.03)] group">
                     <td className="py-2 px-3">
-                      <Link to={`/revize/${r.id}`} className="text-xs text-[var(--text)] hover:text-slate-100 font-medium hover:underline">
+                      <Link to={`/revize/${r.id}`} className="text-xs text-[var(--text)] group-hover:text-[#C00606] font-medium hover:underline transition-colors">
                         {r.cisloRevize}
                       </Link>
                     </td>
@@ -493,15 +493,12 @@ export function RevizePage() {
           <div className={`${viewMode === 'grid' ? 'hidden md:block' : 'hidden'} px-6 pb-4 flex-1 min-h-0 overflow-auto`}>
             <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 py-2">
               {paginatedRevize.map((r) => (
-                <div key={r.id} className="bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] flex flex-col hover:border-[var(--border-medium)] transition-colors">
+                <div key={r.id} className="bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] flex flex-col relative overflow-hidden hover:border-[rgba(192,6,6,0.30)] transition-colors group">
                   <Link to={`/revize/${r.id}`} className="flex-1 p-4 block">
+                    <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#C00606] opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                          r.kategorieRevize === 'elektro' ? 'bg-blue-500/20 text-blue-600 dark:text-blue-300' :
-                          r.kategorieRevize === 'hromosvod' ? 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300' :
-                          'bg-purple-500/20 text-purple-700 dark:text-purple-300'
-                        }`}>
+                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
                           {r.kategorieRevize === 'elektro' ? 'Elektro' :
                            r.kategorieRevize === 'hromosvod' ? 'Hromosvod' : 'Stroje'}
                         </span>

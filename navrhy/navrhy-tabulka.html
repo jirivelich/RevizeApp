@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Návrhy – Tabulka</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background: #111118; color: #E2E1E9; min-height: 100vh; padding: 40px; }
+  h1 { font-size: 13px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #7E7E96; margin-bottom: 40px; }
+  h2 { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #5A5A72; margin-bottom: 6px; }
+  .nav { display: flex; gap: 8px; margin-bottom: 40px; flex-wrap: wrap; }
+  .nav a { font-size: 12px; color: #7E7E96; text-decoration: none; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.07); }
+  .nav a:hover { color: #E2E1E9; background: rgba(255,255,255,0.05); }
+  .nav a.active { color: #E2E1E9; background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); }
+
+  .variants { display: flex; flex-direction: column; gap: 32px; }
+  .variant { background: #1A1A28; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 32px 28px; }
+  .variant-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+  .variant-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #5A5A72; }
+  .variant-name { font-size: 15px; font-weight: 600; color: #E2E1E9; }
+  .variant-desc { font-size: 12px; color: #7E7E96; line-height: 1.6; margin-bottom: 24px; }
+  .recommended-tag { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #C00606; background: rgba(192,6,6,0.10); border: 1px solid rgba(192,6,6,0.20); border-radius: 4px; padding: 2px 7px; }
+  .current-tag { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #7E7E96; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; padding: 2px 7px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #7E7E96; }
+  tbody td { padding: 9px 12px; font-size: 13px; }
+
+  /* badge helpers */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-muted { background: rgba(226,225,233,0.07); color: #A4ABBF; }
+  .badge-done { background: rgba(16,185,129,0.12); color: #34d399; }
+  .badge-wip { background: rgba(245,158,11,0.12); color: #fbbf24; }
+
+  /* ── Varianta A: Neutrální hover ── */
+  .ta thead { border-bottom: 1px solid rgba(226,225,233,0.07); }
+  .ta tbody tr { border-bottom: 1px solid rgba(226,225,233,0.04); cursor: pointer; transition: background .1s; }
+  .ta tbody tr:hover { background: rgba(226,225,233,0.06); }
+  .ta .link { color: #E2E1E9; font-weight: 500; text-decoration: none; }
+  .ta .link:hover { text-decoration: underline; }
+
+  /* ── Varianta B: Accent border-left ── */
+  .tb thead { border-bottom: 1px solid rgba(226,225,233,0.07); }
+  .tb tbody tr { border-bottom: 1px solid rgba(226,225,233,0.04); cursor: pointer; transition: background .1s, padding-left .1s; position: relative; }
+  .tb tbody tr:hover { background: rgba(226,225,233,0.05); }
+  .tb tbody tr:hover td:first-child { border-left: 2px solid #C00606; padding-left: 10px; }
+  .tb td:first-child { border-left: 2px solid transparent; }
+  .tb .link { color: #E2E1E9; font-weight: 500; text-decoration: none; }
+  .tb tbody tr:hover .link { color: #FF6B6B; }
+
+  /* ── Varianta C: Flat zero — žádné oddělovače ── */
+  .tc thead { border-bottom: 1px solid rgba(226,225,233,0.05); }
+  .tc tbody tr { cursor: pointer; transition: opacity .1s; }
+  .tc tbody tr:hover { opacity: .7; }
+  .tc .link { color: #E2E1E9; font-weight: 500; text-decoration: none; }
+
+  /* Current */
+  .tcurrent thead { border-bottom: 1px solid rgba(226,225,233,0.07); }
+  .tcurrent tbody tr { border-bottom: 1px solid rgba(226,225,233,0.04); cursor: pointer; transition: background .1s; }
+  .tcurrent tbody tr:hover { background: rgba(59,130,246,0.06); }
+  .tcurrent .link { color: #E2E1E9; font-weight: 500; text-decoration: none; }
+  .tcurrent tbody tr:hover .link { color: #f1f5f9; }
+
+  .table-wrap { overflow: auto; border-radius: 8px; background: #141420; border: 1px solid rgba(255,255,255,0.05); }
+  .action-btn { background: transparent; border: none; padding: 4px; border-radius: 6px; color: #7E7E96; cursor: pointer; font-size: 16px; }
+  .action-btn:hover { background: rgba(226,225,233,0.07); color: #E2E1E9; }
+</style>
+</head>
+<body>
+
+<h1>Návrhy komponent — Tabulka</h1>
+
+<nav class="nav">
+  <a href="navrhy-tlacitka.html">Tlačítka</a>
+  <a href="navrhy-tabulka.html" class="active">Tabulka</a>
+  <a href="navrhy-karty.html">Karty</a>
+  <a href="navrhy-menu.html">Menu</a>
+</nav>
+
+<div class="variants">
+
+  <!-- A -->
+  <div class="variant">
+    <div class="variant-header">
+      <span class="variant-label">Varianta A</span>
+      <span class="variant-name">Neutrální hover</span>
+      <span class="recommended-tag">doporučeno</span>
+    </div>
+    <div class="variant-desc">Hover řádku = slabá bílá průhlednost. Žádná modrá, žádná cizí barva. Číslo revize zůstává bílé, podtrhne se. Minimalni vizuální hluk.</div>
+    <div class="table-wrap">
+      <table class="ta">
+        <thead>
+          <tr>
+            <th>Číslo</th><th>Kategorie</th><th>Název</th><th>Adresa</th><th>Datum</th><th>Stav</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a class="link">202601151030</a></td>
+            <td><span class="badge badge-muted">Elektro</span></td>
+            <td style="color:#E2E1E9;font-weight:500">Průmyslový areál Brno</td>
+            <td style="color:#A4ABBF">Vídeňská 12, Brno</td>
+            <td style="color:#A4ABBF">15. 1. 2026</td>
+            <td><span class="badge badge-done">Dokončeno</span></td>
+            <td><button class="action-btn">⋯</button></td>
+          </tr>
+          <tr>
+            <td><a class="link">202602201415</a></td>
+            <td><span class="badge badge-muted">Hromosvod</span></td>
+            <td style="color:#E2E1E9;font-weight:500">Administrativní budova Praha</td>
+            <td style="color:#A4ABBF">Wenceslas Sq. 1, Praha</td>
+            <td style="color:#A4ABBF">20. 2. 2026</td>
+            <td><span class="badge badge-wip">Rozpracováno</span></td>
+            <td><button class="action-btn">⋯</button></td>
+          </tr>
+          <tr>
+            <td><a class="link">202603051200</a></td>
+            <td><span class="badge badge-muted">Stroje</span></td>
+            <td style="color:#E2E1E9;font-weight:500">Výrobní hala Ostrava</td>
+            <td style="color:#A4ABBF">Průmyslová 8, Ostrava</td>
+            <td style="color:#A4ABBF">5. 3. 2026</td>
+            <td><span class="badge badge-done">Dokončeno</span></td>
+            <td><button class="action-btn">⋯</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- B -->
+  <div class="variant">
+    <div class="variant-header">
+      <span class="variant-label">Varianta B</span>
+      <span class="variant-name">Accent border-left</span>
+    </div>
+    <div class="variant-desc">Hover = levý červený border 2px + červené číslo revize. Výrazný, přesný. Styl "akcentovaného řádku" bez zbarvení celého pozadí.</div>
+    <div class="table-wrap">
+      <table class="tb">
+        <thead>
+          <tr>
+            <th>Číslo</th><th>Kategorie</th><th>Název</th><th>Adresa</th><th>Datum</th><th>Stav</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a class="link">202601151030</a></td>
+            <td><span class="badge badge-muted">Elektro</span></td>
+            <td style="color:#E2E1E9;font-weight:500">Průmyslový areál Brno</td>
+            <td style="color:#A4ABBF">Vídeňská 12, Brno</td>
+            <td style="color:#A4ABBF">15. 1. 2026</td>
+            <td><span class="badge badge-done">Dokončeno</span></td>
+            <td><button class="action-btn">⋯</button></td>
+          </tr>
+          <tr>
+            <td><a class="link">202602201415</a></td>
+            <td><span class="badge badge-muted">Hromosvod</span></td>
+            <td style="color:#E2E1E9;font-weight:500">Administrativní budova Praha</td>
+            <td style="color:#A4ABBF">Wenceslas Sq. 1, Praha</td>
+            <td style="color:#A4ABBF">20. 2. 2026</td>
+            <td><span class="badge badge-wip">Rozpracováno</span></td>
+            <td><button class="action-btn">⋯</button></td>
+          </tr>
+          <tr>
+            <td><a class="link">202603051200</a></td>
+            <td><span class="badge badge-muted">Stroje</span></td>
+            <td style="color:#E2E1E9;font-weight:500">Výrobní hala Ostrava</td>
+            <td style="color:#A4ABBF">Průmyslová 8, Ostrava</td>
+            <td style="color:#A4ABBF">5. 3. 2026</td>
+            <td><span class="badge badge-done">Dokončeno</span></td>
+            <td><button class="action-btn">⋯</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- C -->
+  <div class="variant">
+    <div class="variant-header">
+      <span class="variant-label">Varianta C</span>
+      <span class="variant-name">Flat zero</span>
+    </div>
+    <div class="variant-desc">Žádné oddělovače řádků, žádný hover. Pouze opacity snížení. Maximálně čistý "papírový" vzhled. Vhodné pro husté datové tabulky.</div>
+    <div class="table-wrap">
+      <table class="tc">
+        <thead>
+          <tr>
+            <th>Číslo</th><th>Kategorie</th><th>Název</th><th>Adresa</th><th>Datum</th><th>Stav</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a class="link">202601151030</a></td>
+            <td><span class="badge badge-muted">Elektro</span></td>
+            <td style="color:#E2E1E9;font-weight:500">Průmyslový areál Brno</td>
+            <td style="color:#A4ABBF">Vídeňská 12, Brno</td>
+            <td style="color:#A4ABBF">15. 1. 2026</td>
+            <td><span class="badge badge-done">Dokončeno</span></td>
+            <td><button class="action-btn">⋯</button></td>
+          </tr>
+          <tr>
+            <td><a class="link">202602201415</a></td>
+            <td><span class="badge badge-muted">Hromosvod</span></td>
+            <td style="color:#E2E1E9;font-weight:500">Administrativní budova Praha</td>
+            <td style="color:#A4ABBF">Wenceslas Sq. 1, Praha</td>
+            <td style="color:#A4ABBF">20. 2. 2026</td>
+            <td><span class="badge badge-wip">Rozpracováno</span></td>
+            <td><button class="action-btn">⋯</button></td>
+          </tr>
+          <tr>
+            <td><a class="link">202603051200</a></td>
+            <td><span class="badge badge-muted">Stroje</span></td>
+            <td style="color:#E2E1E9;font-weight:500">Výrobní hala Ostrava</td>
+            <td style="color:#A4ABBF">Průmyslová 8, Ostrava</td>
+            <td style="color:#A4ABBF">5. 3. 2026</td>
+            <td><span class="badge badge-done">Dokončeno</span></td>
+            <td><button class="action-btn">⋯</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CURRENT -->
+  <div class="variant" style="border-color:rgba(255,255,255,0.04); background:#161622;">
+    <div class="variant-header">
+      <span class="variant-label">Aktuální stav</span>
+      <span class="variant-name">Blue hover <span class="current-tag">současné</span></span>
+    </div>
+    <div class="variant-desc">Hover = modrá tinta (bg-blue-500/6%) — nesedí k červené paletě. Číslo revize zesvětlí na slate-100.</div>
+    <div class="table-wrap">
+      <table class="tcurrent">
+        <thead>
+          <tr>
+            <th>Číslo</th><th>Kategorie</th><th>Název</th><th>Adresa</th><th>Datum</th><th>Stav</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a class="link">202601151030</a></td>
+            <td><span class="badge badge-muted">Elektro</span></td>
+            <td style="color:#E2E1E9;font-weight:500">Průmyslový areál Brno</td>
+            <td style="color:#A4ABBF">Vídeňská 12, Brno</td>
+            <td style="color:#A4ABBF">15. 1. 2026</td>
+            <td><span class="badge badge-done">Dokončeno</span></td>
+            <td><button class="action-btn">⋯</button></td>
+          </tr>
+          <tr>
+            <td><a class="link">202602201415</a></td>
+            <td><span class="badge badge-muted">Hromosvod</span></td>
+            <td style="color:#E2E1E9;font-weight:500">Administrativní budova Praha</td>
+            <td style="color:#A4ABBF">Wenceslas Sq. 1, Praha</td>
+            <td style="color:#A4ABBF">20. 2. 2026</td>
+            <td><span class="badge badge-wip">Rozpracováno</span></td>
+            <td><button class="action-btn">⋯</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

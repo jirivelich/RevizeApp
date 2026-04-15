@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Světlý režim – zvolené varianty</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background: #f8f8fb; color: #2C2C3E; min-height: 100vh; padding: 40px; }
+
+  .page-nav { display: flex; gap: 8px; margin-bottom: 40px; flex-wrap: wrap; }
+  .page-nav a { font-size: 12px; color: #62657A; text-decoration: none; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(44,44,62,0.13); }
+  .page-nav a:hover { color: #2C2C3E; background: rgba(44,44,62,0.06); }
+  .page-nav a.active { color: #2C2C3E; background: rgba(44,44,62,0.08); border-color: rgba(44,44,62,0.20); }
+
+  .page-title { font-size: 22px; font-weight: 700; color: #2C2C3E; margin-bottom: 4px; }
+  .page-sub { font-size: 13px; color: #62657A; margin-bottom: 40px; }
+  .selected-tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #C00606; background: rgba(192,6,6,0.08); border: 1px solid rgba(192,6,6,0.18); border-radius: 4px; padding: 2px 7px; margin-left: 8px; }
+
+  .section { margin-bottom: 52px; }
+  .section-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+  .section-num { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #9899A8; }
+  .section-title { font-size: 16px; font-weight: 700; color: #2C2C3E; }
+  .section-desc { font-size: 12px; color: #62657A; line-height: 1.6; margin-bottom: 20px; }
+
+  /* ── 1. TLAČÍTKA A – Flat ─────────────────────────────────────────── */
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #C00606; color: white; border: none;
+    padding: 9px 20px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-primary:hover { background: #A00505; }
+
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent; color: #2C2C3E;
+    border: 1px solid rgba(44,44,62,0.20);
+    padding: 9px 20px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .btn-secondary:hover { background: rgba(44,44,62,0.06); border-color: rgba(44,44,62,0.30); }
+
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent; color: #62657A; border: none;
+    padding: 9px 20px; border-radius: 8px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .btn-ghost:hover { background: rgba(44,44,62,0.06); color: #2C2C3E; }
+
+  .btn-danger {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent; color: #C00606;
+    border: 1px solid rgba(192,6,6,0.25);
+    padding: 9px 20px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-danger:hover { background: rgba(192,6,6,0.08); }
+
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .btn-sm { padding: 6px 14px !important; font-size: 12px !important; }
+
+  /* ── 2. TABULKA B – Accent border-left ───────────────────────────── */
+  .table-wrap {
+    background: white; border: 1px solid rgba(44,44,62,0.10); border-radius: 10px; overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 700;
+    letter-spacing: .06em; text-transform: uppercase; color: #9899A8;
+    background: rgba(44,44,62,0.03); border-bottom: 1px solid rgba(44,44,62,0.08);
+  }
+  tbody tr {
+    border-bottom: 1px solid rgba(44,44,62,0.06);
+    transition: background .1s, border-left .1s;
+    border-left: 2px solid transparent;
+    cursor: pointer;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover {
+    background: rgba(192,6,6,0.04);
+    border-left: 2px solid #C00606;
+  }
+  tbody tr:hover .row-link { color: #C00606; text-decoration: underline; }
+  td { padding: 11px 16px; font-size: 13px; color: #2C2C3E; }
+  .row-link { font-weight: 600; color: #2C2C3E; text-decoration: none; transition: color .1s; }
+  td.muted { color: #9899A8; font-size: 12px; }
+  .badge-sm { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-done-l { background: rgba(16,185,129,0.12); color: #059669; }
+  .badge-wip-l  { background: rgba(245,158,11,0.12);  color: #D97706; }
+
+  /* ── 3. KARTY C – Accent hover border ───────────────────────────── */
+  .cards-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  .card-c {
+    background: rgba(224,224,225,0.27);
+    border: 1px solid rgba(44,44,62,0.10);
+    border-radius: 12px; overflow: hidden; cursor: pointer;
+    transition: border-color .15s;
+    position: relative;
+  }
+  .card-c::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; background: transparent; border-radius: 12px 0 0 12px;
+    transition: background .15s;
+  }
+  .card-c:hover { border-color: rgba(192,6,6,0.30); }
+  .card-c:hover::before { background: #C00606; }
+  .card-body-c { padding: 16px; }
+  .card-footer-c {
+    padding: 8px 16px; border-top: 1px solid rgba(44,44,62,0.07);
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(44,44,62,0.02);
+  }
+  .card-title-c { font-size: 13px; font-weight: 700; color: #2C2C3E; margin-bottom: 4px; }
+  .card-addr-c { font-size: 12px; color: #9899A8; margin-bottom: 12px; }
+  .card-meta-c { display: flex; justify-content: space-between; font-size: 11px; color: #B0B2BF; }
+  .badges-c { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .badge-cat-l { background: rgba(44,44,62,0.08); color: #5F6273; display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .foot-type-l { font-size: 11px; color: #9899A8; }
+  .action-btn-l { background: transparent; border: none; padding: 4px; border-radius: 6px; color: #9899A8; cursor: pointer; font-size: 14px; }
+  .action-btn-l:hover { background: rgba(44,44,62,0.08); color: #2C2C3E; }
+
+  /* ── 4. MENU B – Red edge ─────────────────────────────────────────── */
+  .sidebar-demo {
+    background: #2C2C3E; border-radius: 12px; padding: 12px 0; width: 220px;
+  }
+  .sidebar-logo { padding: 0 16px 14px; font-size: 13px; font-weight: 700; color: #E2E1E9; border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 8px; }
+  .sidebar-group { font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,0.25); padding: 8px 20px 4px; }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 16px; border-radius: 8px; margin: 1px 8px;
+    font-size: 13px; color: #A4ABBF; cursor: pointer;
+    transition: background .1s, color .1s;
+    border-left: 2px solid transparent;
+  }
+  .sidebar-item:hover { background: rgba(255,255,255,0.05); color: #E2E1E9; }
+  .sidebar-item.active {
+    background: rgba(255,255,255,0.06);
+    border-left: 2px solid #C00606;
+    color: #E2E1E9;
+    border-radius: 0 8px 8px 0;
+    margin-left: 8px;
+    padding-left: 14px;
+  }
+  .sidebar-ico { font-size: 13px; opacity: .7; flex-shrink: 0; }
+
+  .note-box {
+    background: rgba(44,44,62,0.05); border: 1px solid rgba(44,44,62,0.10); border-radius: 8px;
+    padding: 10px 14px; font-size: 12px; color: #62657A; margin-bottom: 20px;
+    line-height: 1.6;
+  }
+  .note-box strong { color: #2C2C3E; }
+</style>
+</head>
+<body>
+
+<nav class="page-nav">
+  <a href="navrhy-tlacitka.html">Tlačítka</a>
+  <a href="navrhy-tabulka.html">Tabulka</a>
+  <a href="navrhy-karty.html">Karty</a>
+  <a href="navrhy-menu.html">Menu</a>
+  <a href="navrhy-dotaznik.html">Výběr</a>
+  <a href="navrhy-paleta.html">Paleta</a>
+  <a href="navrhy-svetly-rezim.html" class="active">Světlý režim</a>
+</nav>
+
+<div class="page-title">Zvolené varianty — světlý režim</div>
+<div class="page-sub">Jak budou vypadat vybrané varianty (A / B / C / B) v light mode.</div>
+
+<!-- 1. Tlačítka A -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <span class="section-title">Tlačítka <span class="selected-tag">A – Flat</span></span>
+  </div>
+  <p class="section-desc">Plochá červená, žádný gradient ani stín. Sekundární šedé. Na světlém pozadí funguje kontrast stejně dobře.</p>
+  <div class="btn-row" style="margin-bottom:14px">
+    <button class="btn-primary">Uložit revizi</button>
+    <button class="btn-secondary">Zrušit</button>
+    <button class="btn-ghost">Přeskočit</button>
+    <button class="btn-danger">Smazat</button>
+  </div>
+  <div class="btn-row">
+    <button class="btn-primary btn-sm">+ Nová revize</button>
+    <button class="btn-secondary btn-sm">Export PDF</button>
+    <button class="btn-ghost btn-sm">Detail</button>
+  </div>
+</div>
+
+<!-- 2. Tabulka B -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <span class="section-title">Tabulka <span class="selected-tag">B – Accent border-left</span></span>
+  </div>
+  <p class="section-desc">Hover řádku = červený levý border + jemný červený tón pozadí. Odkaz se zbarví červeně. Na světlém pozadí dobře viditelné.</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Číslo</th><th>Název</th><th>Datum</th><th>Stav</th><th>Typ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="muted">202601151030</td>
+          <td><a class="row-link" href="#">Průmyslový areál Brno</a></td>
+          <td class="muted">15. 1. 2026</td>
+          <td><span class="badge-sm badge-done-l">Dokončeno</span></td>
+          <td class="muted">pravidelná</td>
+        </tr>
+        <tr>
+          <td class="muted">202602201415</td>
+          <td><a class="row-link" href="#">Administrativní budova Praha</a></td>
+          <td class="muted">20. 2. 2026</td>
+          <td><span class="badge-sm badge-wip-l">Rozpracováno</span></td>
+          <td class="muted">výchozí</td>
+        </tr>
+        <tr>
+          <td class="muted">202603051200</td>
+          <td><a class="row-link" href="#">Výrobní hala Ostrava</a></td>
+          <td class="muted">5. 3. 2026</td>
+          <td><span class="badge-sm badge-done-l">Dokončeno</span></td>
+          <td class="muted">pravidelná</td>
+        </tr>
+        <tr>
+          <td class="muted">202604100900</td>
+          <td><a class="row-link" href="#">Obchodní centrum Plzeň</a></td>
+          <td class="muted">10. 4. 2026</td>
+          <td><span class="badge-sm badge-wip-l">Rozpracováno</span></td>
+          <td class="muted">mimořádná</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 3. Karty C -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <span class="section-title">Karty <span class="selected-tag">C – Accent hover border</span></span>
+  </div>
+  <p class="section-desc">Hover = červený 3px levý border + jemný červený border. Kategorie šedé. Na světlém pozadí karty mají přirozenou stínování skrze barvu povrchu.</p>
+  <div class="cards-grid">
+    <div class="card-c">
+      <div class="card-body-c">
+        <div class="badges-c">
+          <span class="badge-cat-l">Elektro</span><span class="badge-sm badge-done-l">Dokončeno</span>
+        </div>
+        <div class="card-title-c">Průmyslový areál Brno</div>
+        <div class="card-addr-c">Vídeňská 12, Brno</div>
+        <div class="card-meta-c"><span>202601151030</span><span>15. 1. 2026</span></div>
+      </div>
+      <div class="card-footer-c"><span class="foot-type-l">pravidelná</span><button class="action-btn-l">⋯</button></div>
+    </div>
+    <div class="card-c">
+      <div class="card-body-c">
+        <div class="badges-c">
+          <span class="badge-cat-l">Hromosvod</span><span class="badge-sm badge-wip-l">Rozpracováno</span>
+        </div>
+        <div class="card-title-c">Administrativní budova Praha</div>
+        <div class="card-addr-c">Wenceslas Sq. 1, Praha</div>
+        <div class="card-meta-c"><span>202602201415</span><span>20. 2. 2026</span></div>
+      </div>
+      <div class="card-footer-c"><span class="foot-type-l">výchozí</span><button class="action-btn-l">⋯</button></div>
+    </div>
+    <div class="card-c">
+      <div class="card-body-c">
+        <div class="badges-c">
+          <span class="badge-cat-l">Stroje</span><span class="badge-sm badge-done-l">Dokončeno</span>
+        </div>
+        <div class="card-title-c">Výrobní hala Ostrava</div>
+        <div class="card-addr-c">Průmyslová 8, Ostrava</div>
+        <div class="card-meta-c"><span>202603051200</span><span>5. 3. 2026</span></div>
+      </div>
+      <div class="card-footer-c"><span class="foot-type-l">pravidelná</span><button class="action-btn-l">⋯</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. Menu B -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <span class="section-title">Sidebar menu <span class="selected-tag">B – Red edge</span></span>
+  </div>
+  <div class="note-box"><strong>Poznámka:</strong> Sidebar zůstává tmavý i ve světlém režimu (<code>#2C2C3E</code>) — záměrně, aby kontrastoval s bílým obsahem. Varianta B proto vypadá identicky v obou módech.</div>
+  <div class="sidebar-demo">
+    <div class="sidebar-logo">⚡ RevizeApp</div>
+    <div class="sidebar-group">Hlavní</div>
+    <div class="sidebar-item active"><span class="sidebar-ico">📋</span> Revize</div>
+    <div class="sidebar-item"><span class="sidebar-ico">🏢</span> Objekty</div>
+    <div class="sidebar-item"><span class="sidebar-ico">⚙️</span> Stroje</div>
+    <div class="sidebar-item"><span class="sidebar-ico">⚠️</span> Závady</div>
+    <div class="sidebar-group">Správa</div>
+    <div class="sidebar-item"><span class="sidebar-ico">🏭</span> Firmy</div>
+    <div class="sidebar-item"><span class="sidebar-ico">👤</span> Nastavení</div>
+  </div>
+</div>
+
+</body>
+</html>

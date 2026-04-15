@@ -213,7 +213,7 @@ export function PristrojePage() {
               </thead>
               <tbody>
                 {filteredPristroje.map((p) => (
-                  <tr key={p.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)]">
+                  <tr key={p.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.03)] group">
                     <td className="py-2 px-3 text-xs font-medium text-[var(--text)]">{p.nazev}</td>
                     <td className="py-2 px-3">
                       <span className="px-2 py-1 bg-[var(--bg-hover)] text-[var(--text-secondary)] rounded text-xs">

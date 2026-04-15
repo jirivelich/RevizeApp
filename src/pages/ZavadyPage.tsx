@@ -192,7 +192,7 @@ export function ZavadyPage() {
               </thead>
               <tbody>
                 {filteredZavady.map((z) => (
-                  <tr key={z.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)]">
+                  <tr key={z.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.03)] group">
                     <td className="py-2 px-3">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         z.zavaznost === 'C1' ? 'bg-red-500/[0.15] text-red-300' :

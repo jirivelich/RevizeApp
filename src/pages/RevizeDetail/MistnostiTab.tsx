@@ -240,7 +240,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
                   </thead>
                   <tbody>
                     {zarizeni.map((z) => (
-                      <tr key={z.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-input)]">
+                      <tr key={z.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.03)] group">
                         <td className="py-1 px-2 text-xs">
                           <p className="font-medium">{z.nazev}</p>
                           {z.oznaceni && <p className="text-[10px] text-[var(--text-secondary)]">{z.oznaceni}</p>}

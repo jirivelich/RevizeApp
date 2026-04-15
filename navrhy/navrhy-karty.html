@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Návrhy – Karty</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background: #111118; color: #E2E1E9; min-height: 100vh; padding: 40px; }
+  h1 { font-size: 13px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #7E7E96; margin-bottom: 40px; }
+  .nav { display: flex; gap: 8px; margin-bottom: 40px; flex-wrap: wrap; }
+  .nav a { font-size: 12px; color: #7E7E96; text-decoration: none; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.07); }
+  .nav a:hover { color: #E2E1E9; background: rgba(255,255,255,0.05); }
+  .nav a.active { color: #E2E1E9; background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); }
+
+  .section { margin-bottom: 48px; }
+  .section-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+  .section-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #5A5A72; }
+  .section-name { font-size: 15px; font-weight: 600; color: #E2E1E9; }
+  .section-desc { font-size: 12px; color: #7E7E96; line-height: 1.6; margin-bottom: 20px; }
+  .recommended-tag { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #C00606; background: rgba(192,6,6,0.10); border: 1px solid rgba(192,6,6,0.20); border-radius: 4px; padding: 2px 7px; }
+  .current-tag { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #7E7E96; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; padding: 2px 7px; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+  /* badge helpers */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-done { background: rgba(16,185,129,0.12); color: #34d399; }
+  .badge-wip { background: rgba(245,158,11,0.12); color: #fbbf24; }
+
+  /* ── Varianta A: Mono — všechny badgy šedé ── */
+  .card-a {
+    background: rgba(226,225,233,0.04); border: 1px solid rgba(226,225,233,0.07);
+    border-radius: 12px; overflow: hidden; cursor: pointer;
+    transition: border-color .15s;
+  }
+  .card-a:hover { border-color: rgba(226,225,233,0.14); }
+  .card-a .body { padding: 16px; }
+  .card-a .footer { padding: 8px 16px; border-top: 1px solid rgba(226,225,233,0.04); display: flex; align-items: center; justify-content: space-between; }
+  .badge-mono { background: rgba(226,225,233,0.07); color: #A4ABBF; }
+
+  /* ── Varianta B: Subtle — outline badgy ── */
+  .card-b {
+    background: rgba(226,225,233,0.03); border: 1px solid rgba(226,225,233,0.07);
+    border-radius: 12px; overflow: hidden; cursor: pointer;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .card-b:hover { border-color: rgba(226,225,233,0.12); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+  .card-b .body { padding: 16px; }
+  .card-b .footer { padding: 8px 16px; border-top: 1px solid rgba(226,225,233,0.04); display: flex; align-items: center; justify-content: space-between; }
+  .badge-outline { background: transparent; border: 1px solid rgba(226,225,233,0.12); color: #A4ABBF; }
+  .badge-outline-done { background: transparent; border: 1px solid rgba(16,185,129,0.25); color: #34d399; }
+  .badge-outline-wip { background: transparent; border: 1px solid rgba(245,158,11,0.25); color: #fbbf24; }
+
+  /* ── Varianta C: Accent hover border ── */
+  .card-c {
+    background: rgba(226,225,233,0.03); border: 1px solid rgba(226,225,233,0.07);
+    border-radius: 12px; overflow: hidden; cursor: pointer;
+    transition: border-color .15s;
+    position: relative;
+  }
+  .card-c::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; background: transparent; border-radius: 12px 0 0 12px;
+    transition: background .15s;
+  }
+  .card-c:hover { border-color: rgba(192,6,6,0.30); }
+  .card-c:hover::before { background: #C00606; }
+  .card-c .body { padding: 16px; }
+  .card-c .footer { padding: 8px 16px; border-top: 1px solid rgba(226,225,233,0.04); display: flex; align-items: center; justify-content: space-between; }
+
+  /* ── Current ── */
+  .card-cur {
+    background: rgba(226,225,233,0.04); border: 1px solid rgba(226,225,233,0.07);
+    border-radius: 12px; overflow: hidden; cursor: pointer;
+    transition: border-color .15s;
+  }
+  .card-cur:hover { border-color: rgba(226,225,233,0.12); }
+  .card-cur .body { padding: 16px; }
+  .card-cur .footer { padding: 8px 16px; border-top: 1px solid rgba(226,225,233,0.04); display: flex; align-items: center; justify-content: space-between; }
+
+  .card-title { font-size: 13px; font-weight: 600; color: #E2E1E9; margin-bottom: 4px; line-height: 1.35; }
+  .card-addr { font-size: 12px; color: #7E7E96; margin-bottom: 12px; }
+  .card-meta { display: flex; justify-content: space-between; font-size: 11px; color: #5A5A72; }
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .foot-type { font-size: 11px; color: #5A5A72; }
+  .action-btn { background: transparent; border: none; padding: 4px; border-radius: 6px; color: #7E7E96; cursor: pointer; font-size: 14px; }
+  .action-btn:hover { background: rgba(226,225,233,0.07); color: #E2E1E9; }
+
+  /* Current colored badges */
+  .badge-blue  { background: rgba(59,130,246,0.15); color: #93c5fd; }
+  .badge-yellow{ background: rgba(234,179,8,0.15); color: #fde047; }
+  .badge-purple{ background: rgba(168,85,247,0.15); color: #d8b4fe; }
+</style>
+</head>
+<body>
+
+<h1>Návrhy komponent — Karty</h1>
+
+<nav class="nav">
+  <a href="navrhy-tlacitka.html">Tlačítka</a>
+  <a href="navrhy-tabulka.html">Tabulka</a>
+  <a href="navrhy-karty.html" class="active">Karty</a>
+  <a href="navrhy-menu.html">Menu</a>
+</nav>
+
+<!-- VARIANTA A -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-label">Varianta A</span>
+    <span class="section-name">Mono <span class="recommended-tag">doporučeno</span></span>
+  </div>
+  <div class="section-desc">Všechny kategorie badgy šedé — žádná modrá, žlutá, fialová. Stav (dokončeno/rozpracováno) si barvu zachová. Karta se zesvětlí borderem on-hover.</div>
+  <div class="grid">
+    <div class="card-a">
+      <div class="body">
+        <div class="badges">
+          <span class="badge badge-mono">Elektro</span>
+          <span class="badge badge-done">Dokončeno</span>
+        </div>
+        <div class="card-title">Průmyslový areál Brno</div>
+        <div class="card-addr">Vídeňská 12, Brno</div>
+        <div class="card-meta"><span>202601151030</span><span>15. 1. 2026</span></div>
+      </div>
+      <div class="footer"><span class="foot-type">pravidelná</span><button class="action-btn">⋯</button></div>
+    </div>
+    <div class="card-a">
+      <div class="body">
+        <div class="badges">
+          <span class="badge badge-mono">Hromosvod</span>
+          <span class="badge badge-wip">Rozpracováno</span>
+        </div>
+        <div class="card-title">Administrativní budova Praha</div>
+        <div class="card-addr">Wenceslas Sq. 1, Praha</div>
+        <div class="card-meta"><span>202602201415</span><span>20. 2. 2026</span></div>
+      </div>
+      <div class="footer"><span class="foot-type">výchozí</span><button class="action-btn">⋯</button></div>
+    </div>
+    <div class="card-a">
+      <div class="body">
+        <div class="badges">
+          <span class="badge badge-mono">Stroje</span>
+          <span class="badge badge-done">Dokončeno</span>
+        </div>
+        <div class="card-title">Výrobní hala Ostrava</div>
+        <div class="card-addr">Průmyslová 8, Ostrava</div>
+        <div class="card-meta"><span>202603051200</span><span>5. 3. 2026</span></div>
+      </div>
+      <div class="footer"><span class="foot-type">pravidelná</span><button class="action-btn">⋯</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- VARIANTA B -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-label">Varianta B</span>
+    <span class="section-name">Subtle outline</span>
+  </div>
+  <div class="section-desc">Kategorie i stav jako outline badgy — žádný fill, jen jemný border. Hover přidá shadow. Nejsubtilnější, "papírový" pocit.</div>
+  <div class="grid">
+    <div class="card-b">
+      <div class="body">
+        <div class="badges">
+          <span class="badge badge-outline">Elektro</span>
+          <span class="badge badge-outline-done">Dokončeno</span>
+        </div>
+        <div class="card-title">Průmyslový areál Brno</div>
+        <div class="card-addr">Vídeňská 12, Brno</div>
+        <div class="card-meta"><span>202601151030</span><span>15. 1. 2026</span></div>
+      </div>
+      <div class="footer"><span class="foot-type">pravidelná</span><button class="action-btn">⋯</button></div>
+    </div>
+    <div class="card-b">
+      <div class="body">
+        <div class="badges">
+          <span class="badge badge-outline">Hromosvod</span>
+          <span class="badge badge-outline-wip">Rozpracováno</span>
+        </div>
+        <div class="card-title">Administrativní budova Praha</div>
+        <div class="card-addr">Wenceslas Sq. 1, Praha</div>
+        <div class="card-meta"><span>202602201415</span><span>20. 2. 2026</span></div>
+      </div>
+      <div class="footer"><span class="foot-type">výchozí</span><button class="action-btn">⋯</button></div>
+    </div>
+    <div class="card-b">
+      <div class="body">
+        <div class="badges">
+          <span class="badge badge-outline">Stroje</span>
+          <span class="badge badge-outline-done">Dokončeno</span>
+        </div>
+        <div class="card-title">Výrobní hala Ostrava</div>
+        <div class="card-addr">Průmyslová 8, Ostrava</div>
+        <div class="card-meta"><span>202603051200</span><span>5. 3. 2026</span></div>
+      </div>
+      <div class="footer"><span class="foot-type">pravidelná</span><button class="action-btn">⋯</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- VARIANTA C -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-label">Varianta C</span>
+    <span class="section-name">Accent hover</span>
+  </div>
+  <div class="section-desc">Hover zvýrazní levý červený border (3px). Výrazné, přesné. Kategorie šedé, stav barevný. Nejsilnější vizuální feedback ze tří.</div>
+  <div class="grid">
+    <div class="card-c">
+      <div class="body">
+        <div class="badges">
+          <span class="badge badge-mono">Elektro</span>
+          <span class="badge badge-done">Dokončeno</span>
+        </div>
+        <div class="card-title">Průmyslový areál Brno</div>
+        <div class="card-addr">Vídeňská 12, Brno</div>
+        <div class="card-meta"><span>202601151030</span><span>15. 1. 2026</span></div>
+      </div>
+      <div class="footer"><span class="foot-type">pravidelná</span><button class="action-btn">⋯</button></div>
+    </div>
+    <div class="card-c">
+      <div class="body">
+        <div class="badges">
+          <span class="badge badge-mono">Hromosvod</span>
+          <span class="badge badge-wip">Rozpracováno</span>
+        </div>
+        <div class="card-title">Administrativní budova Praha</div>
+        <div class="card-addr">Wenceslas Sq. 1, Praha</div>
+        <div class="card-meta"><span>202602201415</span><span>20. 2. 2026</span></div>
+      </div>
+      <div class="footer"><span class="foot-type">výchozí</span><button class="action-btn">⋯</button></div>
+    </div>
+    <div class="card-c">
+      <div class="body">
+        <div class="badges">
+          <span class="badge badge-mono">Stroje</span>
+          <span class="badge badge-done">Dokončeno</span>
+        </div>
+        <div class="card-title">Výrobní hala Ostrava</div>
+        <div class="card-addr">Průmyslová 8, Ostrava</div>
+        <div class="card-meta"><span>202603051200</span><span>5. 3. 2026</span></div>
+      </div>
+      <div class="footer"><span class="foot-type">pravidelná</span><button class="action-btn">⋯</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- CURRENT -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-label">Aktuální stav</span>
+    <span class="current-tag">současné</span>
+  </div>
+  <div class="section-desc">Kategorie s modrou/žlutou/fialovou — 3 cizí barvy nesouvisející s paletou.</div>
+  <div class="grid">
+    <div class="card-cur">
+      <div class="body">
+        <div class="badges">
+          <span class="badge badge-blue">Elektro</span>
+          <span class="badge badge-done">Dokončeno</span>
+        </div>
+        <div class="card-title">Průmyslový areál Brno</div>
+        <div class="card-addr">Vídeňská 12, Brno</div>
+        <div class="card-meta"><span>202601151030</span><span>15. 1. 2026</span></div>
+      </div>
+      <div class="footer"><span class="foot-type">pravidelná</span><button class="action-btn">⋯</button></div>
+    </div>
+    <div class="card-cur">
+      <div class="body">
+        <div class="badges">
+          <span class="badge badge-yellow">Hromosvod</span>
+          <span class="badge badge-wip">Rozpracováno</span>
+        </div>
+        <div class="card-title">Administrativní budova Praha</div>
+        <div class="card-addr">Wenceslas Sq. 1, Praha</div>
+        <div class="card-meta"><span>202602201415</span><span>20. 2. 2026</span></div>
+      </div>
+      <div class="footer"><span class="foot-type">výchozí</span><button class="action-btn">⋯</button></div>
+    </div>
+    <div class="card-cur">
+      <div class="body">
+        <div class="badges">
+          <span class="badge badge-purple">Stroje</span>
+          <span class="badge badge-done">Dokončeno</span>
+        </div>
+        <div class="card-title">Výrobní hala Ostrava</div>
+        <div class="card-addr">Průmyslová 8, Ostrava</div>
+        <div class="card-meta"><span>202603051200</span><span>5. 3. 2026</span></div>
+      </div>
+      <div class="footer"><span class="foot-type">pravidelná</span><button class="action-btn">⋯</button></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
