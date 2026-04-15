@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Modal } from '../../components/ui';
 import { useRevize, useZakazky, useCreateZakazka, useUpdateZakazka, useDeleteZakazka, useCreateRevize } from '../../hooks/useQueries';
 import type { Zakazka, KategorieRevize } from '../../types';
-import { emptyFormData, zakazkaToFormData, getRealizaceDays } from './utils';
+import { emptyFormData, zakazkaToFormData } from './utils';
 import type { ZakazkaFormData } from './utils';
 import { ListView } from './ListView';
 import { CalendarView } from './CalendarView';
