@@ -38,7 +38,7 @@
   height: 100%;
   font-size: 16px;
   color: #64748b;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
 }
 
 .nahled-btn {
@@ -50,7 +50,7 @@
   border: none;
   font-size: 14px;
   font-weight: 600;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
   cursor: pointer;
   transition: opacity .15s;
   white-space: nowrap;
