@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plánování – návrhy menších karet</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    background: #f1f5f9;
+    color: #0f172a;
+    transition: background .2s, color .2s;
+  }
+  body.dark {
+    background: #0f172a;
+    color: #e2e8f0;
+  }
+
+  /* ---- TOOLBAR ---- */
+  .toolbar {
+    position: sticky; top: 0; z-index: 100;
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 10px 20px;
+    display: flex; align-items: center; gap: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  body.dark .toolbar { background: #1e293b; border-color: #334155; }
+  .toolbar h1 { font-size: 15px; font-weight: 600; color: #334155; flex: 1; }
+  body.dark .toolbar h1 { color: #94a3b8; }
+
+  .tabs { display: flex; gap: 4px; background: #f1f5f9; padding: 3px; border-radius: 8px; }
+  body.dark .tabs { background: #0f172a; }
+  .tab {
+    padding: 5px 14px; border-radius: 6px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 500; background: transparent;
+    color: #64748b; transition: all .15s;
+  }
+  .tab.active { background: #fff; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  body.dark .tab { color: #94a3b8; }
+  body.dark .tab.active { background: #1e293b; color: #f1f5f9; }
+
+  .toggle-dark {
+    padding: 5px 12px; border-radius: 6px; border: 1px solid #e2e8f0;
+    background: #fff; cursor: pointer; font-size: 13px; color: #475569;
+    transition: all .15s;
+  }
+  body.dark .toggle-dark { background: #1e293b; border-color: #334155; color: #94a3b8; }
+
+  /* ---- LAYOUT ---- */
+  .page { padding: 24px 20px; max-width: 900px; margin: 0 auto; }
+
+  .variant-panel { display: none; }
+  .variant-panel.active { display: block; }
+
+  .panel-header {
+    margin-bottom: 14px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+  }
+  .panel-title { font-size: 18px; font-weight: 700; color: #0f172a; }
+  body.dark .panel-title { color: #f1f5f9; }
+  .panel-desc { font-size: 13px; color: #64748b; margin-top: 3px; }
+
+  .panel-badge {
+    font-size: 11px; font-weight: 600; letter-spacing: .04em;
+    padding: 3px 9px; border-radius: 12px;
+    background: #dbeafe; color: #1d4ed8;
+  }
+
+  /* list wrapper */
+  .list-wrap {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+  }
+  body.dark .list-wrap { background: #1e293b; border-color: #334155; }
+
+  .filter-row { margin-bottom: 12px; }
+  .filter-select {
+    padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0;
+    font-size: 13px; background: #fff; color: #374151;
+    outline: none;
+  }
+  body.dark .filter-select { background: #0f172a; border-color: #475569; color: #e2e8f0; }
+
+  /* ---- BADGES ---- */
+  .badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 7px; border-radius: 4px;
+    font-size: 11px; font-weight: 500; white-space: nowrap;
+    line-height: 1.6;
+  }
+  .badge-planovano  { background: #dbeafe; color: #1d4ed8; }
+  .badge-realizaci  { background: #fef9c3; color: #92400e; }
+  .badge-dokonceno  { background: #dcfce7; color: #166534; }
+  .badge-zruseno    { background: #fee2e2; color: #991b1b; }
+  .badge-nizka      { background: #f0fdf4; color: #15803d; }
+  .badge-stredni    { background: #fef3c7; color: #b45309; }
+  .badge-vysoka     { background: #fee2e2; color: #b91c1c; }
+  .badge-zprava     { background: #fef3c7; color: #92400e; }
+  .badge-odevzdano  { background: #dcfce7; color: #166534; }
+
+  /* dot */
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; display: inline-block;
+  }
+  .dot-planovano  { background: #3b82f6; }
+  .dot-realizaci  { background: #f59e0b; }
+  .dot-dokonceno  { background: #22c55e; }
+  .dot-zruseno    { background: #ef4444; }
+
+  /* left border accent */
+  .accent-planovano  { border-left: 3px solid #3b82f6; }
+  .accent-realizaci  { border-left: 3px solid #f59e0b; }
+  .accent-dokonceno  { border-left: 3px solid #22c55e; }
+  .accent-zruseno    { border-left: 3px solid #ef4444; }
+
+  /* ---- DROPDOWN MENU ---- */
+  .menu-wrap { position: relative; }
+  .menu-btn {
+    width: 28px; height: 28px; border-radius: 6px; border: 1px solid transparent;
+    background: transparent; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: #94a3b8; transition: all .12s;
+  }
+  .menu-btn:hover { background: #f1f5f9; border-color: #e2e8f0; color: #475569; }
+  body.dark .menu-btn:hover { background: #334155; border-color: #475569; color: #cbd5e1; }
+
+  .menu-dropdown {
+    display: none; position: absolute; right: 0; top: calc(100% + 4px); z-index: 99;
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.12); min-width: 156px; padding: 4px;
+  }
+  body.dark .menu-dropdown { background: #1e293b; border-color: #334155; }
+  .menu-dropdown.open { display: block; }
+
+  .menu-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; border-radius: 5px; cursor: pointer;
+    font-size: 13px; color: #374151; transition: background .1s;
+  }
+  .menu-item:hover { background: #f1f5f9; }
+  body.dark .menu-item { color: #e2e8f0; }
+  body.dark .menu-item:hover { background: #334155; }
+  .menu-item.danger { color: #ef4444; }
+  .menu-item.danger:hover { background: #fee2e2; }
+  body.dark .menu-item.danger:hover { background: #450a0a; }
+  .menu-separator { height: 1px; background: #e2e8f0; margin: 3px 0; }
+  body.dark .menu-separator { background: #334155; }
+
+  /* ---- TEXT UTILS ---- */
+  .text-muted { color: #64748b; }
+  body.dark .text-muted { color: #94a3b8; }
+  .text-sm { font-size: 12px; }
+  .fw-medium { font-weight: 500; }
+  .fw-semibold { font-weight: 600; }
+  .truncate { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+
+  /* ================================================
+     VARIANTA A – COMPACT ROW
+     ================================================ */
+  .vA-list { display: flex; flex-direction: column; gap: 4px; }
+
+  .vA-card {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 7px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    transition: border-color .15s, background .15s;
+  }
+  .vA-card:hover { background: #f1f5f9; border-color: #cbd5e1; }
+  body.dark .vA-card { background: #0f172a; border-color: #334155; }
+  body.dark .vA-card:hover { background: #1e293b; border-color: #475569; }
+
+  .vA-card .vA-main { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .vA-card .vA-name { font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
+  .vA-card .vA-meta { font-size: 12px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body.dark .vA-card .vA-meta { color: #94a3b8; }
+  .vA-card .vA-badges { display: flex; gap: 4px; flex-shrink: 0; }
+  .vA-card .vA-date { font-size: 12px; color: #64748b; white-space: nowrap; }
+  body.dark .vA-card .vA-date { color: #94a3b8; }
+
+
+  /* ================================================
+     VARIANTA B – SLIM CARD
+     ================================================ */
+  .vB-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .vB-card {
+    padding: 10px 12px; border-radius: 8px;
+    border: 1px solid #e2e8f0; background: #f8fafc;
+    transition: border-color .15s, background .15s;
+  }
+  .vB-card:hover { background: #f1f5f9; border-color: #cbd5e1; }
+  body.dark .vB-card { background: #0f172a; border-color: #334155; }
+  body.dark .vB-card:hover { background: #1e293b; border-color: #475569; }
+
+  .vB-row1 { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .vB-name { font-weight: 600; font-size: 13px; flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .vB-row2 { display: flex; align-items: center; gap: 6px; }
+  .vB-meta { font-size: 12px; color: #64748b; flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  body.dark .vB-meta { color: #94a3b8; }
+
+
+  /* ================================================
+     VARIANTA C – BORDER ACCENT
+     ================================================ */
+  .vC-list { display: flex; flex-direction: column; gap: 5px; }
+
+  .vC-card {
+    padding: 9px 12px 9px 13px;
+    border-radius: 0 8px 8px 0;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    transition: background .15s;
+  }
+  .vC-card:hover { background: #f1f5f9; }
+  body.dark .vC-card { background: #0f172a; border-color: #334155; }
+  body.dark .vC-card:hover { background: #1e293b; }
+
+  .vC-row1 { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .vC-name { font-weight: 600; font-size: 13px; flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .vC-date { font-size: 12px; color: #64748b; white-space: nowrap; flex-shrink: 0; }
+  body.dark .vC-date { color: #94a3b8; }
+  .vC-row2 { display: flex; align-items: center; gap: 6px; }
+  .vC-klient {
+    font-size: 12px; color: #475569;
+    background: #e2e8f0; padding: 1px 7px; border-radius: 10px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;
+  }
+  body.dark .vC-klient { background: #334155; color: #94a3b8; }
+  .vC-spacer { flex: 1; }
+
+
+  /* ================================================
+     VARIANTA D – MINI CARD GRID
+     ================================================ */
+  .vD-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media (max-width: 540px) { .vD-grid { grid-template-columns: 1fr; } }
+
+  .vD-card {
+    padding: 10px 12px; border-radius: 8px;
+    border: 1px solid #e2e8f0; background: #f8fafc;
+    display: flex; flex-direction: column; gap: 5px;
+    transition: border-color .15s, background .15s;
+    min-width: 0;
+  }
+  .vD-card:hover { background: #f1f5f9; border-color: #cbd5e1; }
+  body.dark .vD-card { background: #0f172a; border-color: #334155; }
+  body.dark .vD-card:hover { background: #1e293b; border-color: #475569; }
+
+  .vD-top { display: flex; align-items: center; gap: 5px; justify-content: space-between; }
+  .vD-badges { display: flex; gap: 4px; flex-wrap: wrap; }
+  .vD-name { font-weight: 600; font-size: 13px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .vD-bottom { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .vD-meta { font-size: 12px; color: #64748b; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; }
+  body.dark .vD-meta { color: #94a3b8; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h1>Plánování – návrhy menších karet</h1>
+  <div class="tabs">
+    <button class="tab active" onclick="showVariant('A')">A – Compact Row</button>
+    <button class="tab" onclick="showVariant('B')">B – Slim Card</button>
+    <button class="tab" onclick="showVariant('C')">C – Border Accent</button>
+    <button class="tab" onclick="showVariant('D')">D – Mini Grid</button>
+  </div>
+  <button class="toggle-dark" onclick="document.body.classList.toggle('dark')">☀/🌙 Tmavý</button>
+</div>
+
+<div class="page">
+
+  <!-- ########## VARIANTA A ########## -->
+  <div class="variant-panel active" id="panel-A">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">A – Compact Row</div>
+        <div class="panel-desc">Nejmenší varianta. Vše na jednom řádku (~42 px). Tečka stavu, název, meta, badges, ⋮ menu.</div>
+      </div>
+      <span class="panel-badge">~42 px / řádek</span>
+    </div>
+
+    <div class="list-wrap">
+      <div class="filter-row">
+        <select class="filter-select"><option>Všechny stavy</option><option>Plánováno</option><option>V realizaci</option></select>
+      </div>
+
+      <div class="vA-list">
+
+        <!-- Plánováno -->
+        <div class="vA-card">
+          <div class="vA-main">
+            <span class="dot dot-planovano"></span>
+            <span class="vA-name">Revize elektroinstalace – bytový dům Mánesova</span>
+            <span class="vA-meta">Bytové centrum s.r.o. • Mánesova 12, Praha 2</span>
+          </div>
+          <div class="vA-badges">
+            <span class="badge badge-stredni">střední</span>
+            <span class="badge badge-zprava">📋 Zpráva do 25. 4.</span>
+          </div>
+          <span class="vA-date">Po 21. 4.</span>
+          <div class="menu-wrap">
+            <button class="menu-btn" onclick="toggleMenu(this)">⋮</button>
+            <div class="menu-dropdown">
+              <div class="menu-item">✏️ Upravit</div>
+              <div class="menu-item">📋 Vytvořit revizi</div>
+              <div class="menu-item">🔄 Změnit stav</div>
+              <div class="menu-separator"></div>
+              <div class="menu-item danger">🗑 Smazat</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- V realizaci -->
+        <div class="vA-card">
+          <div class="vA-main">
+            <span class="dot dot-realizaci"></span>
+            <span class="vA-name">Kontrola hromosvodů – průmyslová hala</span>
+            <span class="vA-meta">Strojírenství Novák a.s. • Průmyslová 55, Brno</span>
+          </div>
+          <div class="vA-badges">
+            <span class="badge badge-vysoka">vysoká</span>
+          </div>
+          <span class="vA-date">Út 22. 4. – St 23. 4.</span>
+          <div class="menu-wrap">
+            <button class="menu-btn" onclick="toggleMenu(this)">⋮</button>
+            <div class="menu-dropdown">
+              <div class="menu-item">✏️ Upravit</div>
+              <div class="menu-item">📋 Vytvořit revizi</div>
+              <div class="menu-item">🔄 Změnit stav</div>
+              <div class="menu-separator"></div>
+              <div class="menu-item danger">🗑 Smazat</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dokončeno -->
+        <div class="vA-card" style="opacity:.72;">
+          <div class="vA-main">
+            <span class="dot dot-dokonceno"></span>
+            <span class="vA-name">Revize spotřebičů – kancelářský komplex</span>
+            <span class="vA-meta">Office Park CZ s.r.o. • Wenceslas sq. 1, Praha 1</span>
+          </div>
+          <div class="vA-badges">
+            <span class="badge badge-dokonceno">dokončeno</span>
+            <span class="badge badge-odevzdano">✓ Odevzdáno 10. 4.</span>
+          </div>
+          <span class="vA-date">Čt 10. 4.</span>
+          <div class="menu-wrap">
+            <button class="menu-btn" onclick="toggleMenu(this)">⋮</button>
+            <div class="menu-dropdown">
+              <div class="menu-item">✏️ Upravit</div>
+              <div class="menu-item">📋 Vytvořit revizi</div>
+              <div class="menu-separator"></div>
+              <div class="menu-item danger">🗑 Smazat</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Zrušeno -->
+        <div class="vA-card" style="opacity:.55;">
+          <div class="vA-main">
+            <span class="dot dot-zruseno"></span>
+            <span class="vA-name">Revize výtahů – obchodní centrum</span>
+            <span class="vA-meta">Mall Invest a.s. • Obchodní 100, Ostrava</span>
+          </div>
+          <div class="vA-badges">
+            <span class="badge badge-zruseno">zrušeno</span>
+          </div>
+          <span class="vA-date">Pá 18. 4.</span>
+          <div class="menu-wrap">
+            <button class="menu-btn" onclick="toggleMenu(this)">⋮</button>
+            <div class="menu-dropdown">
+              <div class="menu-item">✏️ Upravit</div>
+              <div class="menu-separator"></div>
+              <div class="menu-item danger">🗑 Smazat</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /vA-list -->
+    </div><!-- /list-wrap -->
+  </div><!-- /panel-A -->
+
+
+  <!-- ########## VARIANTA B ########## -->
+  <div class="variant-panel" id="panel-B">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">B – Slim Card</div>
+        <div class="panel-desc">Dvouřádková karta (~62 px). Badges + název nahoře, klient + datum dole. ⋮ menu vpravo.</div>
+      </div>
+      <span class="panel-badge">~62 px / karta</span>
+    </div>
+
+    <div class="list-wrap">
+      <div class="filter-row">
+        <select class="filter-select"><option>Všechny stavy</option></select>
+      </div>
+      <div class="vB-list">
+
+        <!-- Plánováno -->
+        <div class="vB-card">
+          <div class="vB-row1">
+            <span class="badge badge-planovano">plánováno</span>
+            <span class="badge badge-stredni">střední</span>
+            <span class="badge badge-zprava">📋 Zpráva do 25. 4.</span>
+            <span class="vB-name">Revize elektroinstalace – bytový dům Mánesova</span>
+            <div class="menu-wrap" style="margin-left:auto; flex-shrink:0;">
+              <button class="menu-btn" onclick="toggleMenu(this)">⋮</button>
+              <div class="menu-dropdown">
+                <div class="menu-item">✏️ Upravit</div>
+                <div class="menu-item">📋 Vytvořit revizi</div>
+                <div class="menu-item">🔄 Změnit stav</div>
+                <div class="menu-separator"></div>
+                <div class="menu-item danger">🗑 Smazat</div>
+              </div>
+            </div>
+          </div>
+          <div class="vB-row2">
+            <span class="vB-meta">Bytové centrum s.r.o. • Mánesova 12, Praha 2</span>
+            <span class="text-sm text-muted" style="flex-shrink:0;">Po 21. 4.</span>
+          </div>
+        </div>
+
+        <!-- V realizaci -->
+        <div class="vB-card">
+          <div class="vB-row1">
+            <span class="badge badge-realizaci">v realizaci</span>
+            <span class="badge badge-vysoka">vysoká</span>
+            <span class="vB-name">Kontrola hromosvodů – průmyslová hala</span>
+            <div class="menu-wrap" style="margin-left:auto; flex-shrink:0;">
+              <button class="menu-btn" onclick="toggleMenu(this)">⋮</button>
+              <div class="menu-dropdown">
+                <div class="menu-item">✏️ Upravit</div>
+                <div class="menu-item">📋 Vytvořit revizi</div>
+                <div class="menu-item">🔄 Změnit stav</div>
+                <div class="menu-separator"></div>
+                <div class="menu-item danger">🗑 Smazat</div>
+              </div>
+            </div>
+          </div>
+          <div class="vB-row2">
+            <span class="vB-meta">Strojírenství Novák a.s. • Průmyslová 55, Brno</span>
+            <span class="text-sm text-muted" style="flex-shrink:0;">Út 22. 4. – St 23. 4.</span>
+          </div>
+        </div>
+
+        <!-- Dokončeno -->
+        <div class="vB-card" style="opacity:.75;">
+          <div class="vB-row1">
+            <span class="badge badge-dokonceno">dokončeno</span>
+            <span class="badge badge-nizka">nízká</span>
+            <span class="badge badge-odevzdano">✓ Odevzdáno 10. 4.</span>
+            <span class="vB-name">Revize spotřebičů – kancelářský komplex</span>
+            <div class="menu-wrap" style="margin-left:auto; flex-shrink:0;">
+              <button class="menu-btn" onclick="toggleMenu(this)">⋮</button>
+              <div class="menu-dropdown">
+                <div class="menu-item">✏️ Upravit</div>
+                <div class="menu-item">📋 Vytvořit revizi</div>
+                <div class="menu-separator"></div>
+                <div class="menu-item danger">🗑 Smazat</div>
+              </div>
+            </div>
+          </div>
+          <div class="vB-row2">
+            <span class="vB-meta">Office Park CZ s.r.o. • Wenceslas sq. 1, Praha 1</span>
+            <span class="text-sm text-muted" style="flex-shrink:0;">Čt 10. 4.</span>
+          </div>
+        </div>
+
+        <!-- Zrušeno -->
+        <div class="vB-card" style="opacity:.55;">
+          <div class="vB-row1">
+            <span class="badge badge-zruseno">zrušeno</span>
+            <span class="badge badge-stredni">střední</span>
+            <span class="vB-name">Revize výtahů – obchodní centrum</span>
+            <div class="menu-wrap" style="margin-left:auto; flex-shrink:0;">
+              <button class="menu-btn" onclick="toggleMenu(this)">⋮</button>
+              <div class="menu-dropdown">
+                <div class="menu-item">✏️ Upravit</div>
+                <div class="menu-separator"></div>
+                <div class="menu-item danger">🗑 Smazat</div>
+              </div>
+            </div>
+          </div>
+          <div class="vB-row2">
+            <span class="vB-meta">Mall Invest a.s. • Obchodní 100, Ostrava</span>
+            <span class="text-sm text-muted" style="flex-shrink:0;">Pá 18. 4.</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /panel-B -->
+
+
+  <!-- ########## VARIANTA C ########## -->
+  <div class="variant-panel" id="panel-C">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">C – Border Accent</div>
+        <div class="panel-desc">Barevná linka vlevo dle stavu (~58 px). Název + datum nahoře, klient pill + priorita + ⋮ menu dole.</div>
+      </div>
+      <span class="panel-badge">~58 px / karta</span>
+    </div>
+
+    <div class="list-wrap">
+      <div class="filter-row">
+        <select class="filter-select"><option>Všechny stavy</option></select>
+      </div>
+      <div class="vC-list">
+
+        <!-- Plánováno -->
+        <div class="vC-card accent-planovano">
+          <div class="vC-row1">
+            <span class="vC-name">Revize elektroinstalace – bytový dům Mánesova</span>
+            <span class="vC-date">Po 21. 4. 2026</span>
+          </div>
+          <div class="vC-row2">
+            <span class="vC-klient">Bytové centrum s.r.o.</span>
+            <span class="badge badge-stredni">střední</span>
+            <span class="badge badge-zprava">📋 Zpráva do 25. 4.</span>
+            <span class="vC-spacer"></span>
+            <div class="menu-wrap">
+              <button class="menu-btn" onclick="toggleMenu(this)">⋮</button>
+              <div class="menu-dropdown">
+                <div class="menu-item">✏️ Upravit</div>
+                <div class="menu-item">📋 Vytvořit revizi</div>
+                <div class="menu-item">🔄 Změnit stav</div>
+                <div class="menu-separator"></div>
+                <div class="menu-item danger">🗑 Smazat</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- V realizaci -->
+        <div class="vC-card accent-realizaci">
+          <div class="vC-row1">
+            <span class="vC-name">Kontrola hromosvodů – průmyslová hala</span>
+            <span class="vC-date">Út 22. 4. – St 23. 4.</span>
+          </div>
+          <div class="vC-row2">
+            <span class="vC-klient">Strojírenství Novák a.s.</span>
+            <span class="badge badge-vysoka">vysoká</span>
+            <span class="vC-spacer"></span>
+            <div class="menu-wrap">
+              <button class="menu-btn" onclick="toggleMenu(this)">⋮</button>
+              <div class="menu-dropdown">
+                <div class="menu-item">✏️ Upravit</div>
+                <div class="menu-item">📋 Vytvořit revizi</div>
+                <div class="menu-item">🔄 Změnit stav</div>
+                <div class="menu-separator"></div>
+                <div class="menu-item danger">🗑 Smazat</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dokončeno -->
+        <div class="vC-card accent-dokonceno" style="opacity:.75;">
+          <div class="vC-row1">
+            <span class="vC-name">Revize spotřebičů – kancelářský komplex</span>
+            <span class="vC-date" style="color:#22c55e; font-weight:500;">✓ Dokončeno 10. 4.</span>
+          </div>
+          <div class="vC-row2">
+            <span class="vC-klient">Office Park CZ s.r.o.</span>
+            <span class="badge badge-nizka">nízká</span>
+            <span class="badge badge-odevzdano">✓ Odevzdáno</span>
+            <span class="vC-spacer"></span>
+            <div class="menu-wrap">
+              <button class="menu-btn" onclick="toggleMenu(this)">⋮</button>
+              <div class="menu-dropdown">
+                <div class="menu-item">✏️ Upravit</div>
+                <div class="menu-item">📋 Vytvořit revizi</div>
+                <div class="menu-separator"></div>
+                <div class="menu-item danger">🗑 Smazat</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Zrušeno -->
+        <div class="vC-card accent-zruseno" style="opacity:.55;">
+          <div class="vC-row1">
+            <span class="vC-name">Revize výtahů – obchodní centrum</span>
+            <span class="vC-date">Pá 18. 4. 2026</span>
+          </div>
+          <div class="vC-row2">
+            <span class="vC-klient">Mall Invest a.s.</span>
+            <span class="badge badge-zruseno">zrušeno</span>
+            <span class="badge badge-stredni">střední</span>
+            <span class="vC-spacer"></span>
+            <div class="menu-wrap">
+              <button class="menu-btn" onclick="toggleMenu(this)">⋮</button>
+              <div class="menu-dropdown">
+                <div class="menu-item">✏️ Upravit</div>
+                <div class="menu-separator"></div>
+                <div class="menu-item danger">🗑 Smazat</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /panel-C -->
+
+
+  <!-- ########## VARIANTA D ########## -->
+  <div class="variant-panel" id="panel-D">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">D – Mini Card Grid</div>
+        <div class="panel-desc">2-sloupcový grid menších karet (~88 px). Badges + název + klient + datum. ⋮ v pravém horním rohu.</div>
+      </div>
+      <span class="panel-badge">~88 px / karta</span>
+    </div>
+
+    <div class="list-wrap">
+      <div class="filter-row">
+        <select class="filter-select"><option>Všechny stavy</option></select>
+      </div>
+      <div class="vD-grid">
+
+        <!-- Plánováno -->
+        <div class="vD-card">
+          <div class="vD-top">
+            <div class="vD-badges">
+              <span class="badge badge-planovano">plánováno</span>
+              <span class="badge badge-stredni">střední</span>
+            </div>
+            <div class="menu-wrap">
+              <button class="menu-btn" onclick="toggleMenu(this)">⋮</button>
+              <div class="menu-dropdown">
+                <div class="menu-item">✏️ Upravit</div>
+                <div class="menu-item">📋 Vytvořit revizi</div>
+                <div class="menu-item">🔄 Změnit stav</div>
+                <div class="menu-separator"></div>
+                <div class="menu-item danger">🗑 Smazat</div>
+              </div>
+            </div>
+          </div>
+          <div class="vD-name">Revize elektroinstalace – bytový dům Mánesova</div>
+          <div class="vD-bottom">
+            <span class="vD-meta">Bytové centrum s.r.o.</span>
+            <span class="badge badge-zprava" style="flex-shrink:0;">📋 25. 4.</span>
+          </div>
+        </div>
+
+        <!-- V realizaci -->
+        <div class="vD-card">
+          <div class="vD-top">
+            <div class="vD-badges">
+              <span class="badge badge-realizaci">v realizaci</span>
+              <span class="badge badge-vysoka">vysoká</span>
+            </div>
+            <div class="menu-wrap">
+              <button class="menu-btn" onclick="toggleMenu(this)">⋮</button>
+              <div class="menu-dropdown">
+                <div class="menu-item">✏️ Upravit</div>
+                <div class="menu-item">📋 Vytvořit revizi</div>
+                <div class="menu-item">🔄 Změnit stav</div>
+                <div class="menu-separator"></div>
+                <div class="menu-item danger">🗑 Smazat</div>
+              </div>
+            </div>
+          </div>
+          <div class="vD-name">Kontrola hromosvodů – průmyslová hala</div>
+          <div class="vD-bottom">
+            <span class="vD-meta">Strojírenství Novák a.s.</span>
+            <span class="text-sm text-muted" style="flex-shrink:0;">22.–23. 4.</span>
+          </div>
+        </div>
+
+        <!-- Dokončeno -->
+        <div class="vD-card" style="opacity:.75;">
+          <div class="vD-top">
+            <div class="vD-badges">
+              <span class="badge badge-dokonceno">dokončeno</span>
+              <span class="badge badge-nizka">nízká</span>
+            </div>
+            <div class="menu-wrap">
+              <button class="menu-btn" onclick="toggleMenu(this)">⋮</button>
+              <div class="menu-dropdown">
+                <div class="menu-item">✏️ Upravit</div>
+                <div class="menu-item">📋 Vytvořit revizi</div>
+                <div class="menu-separator"></div>
+                <div class="menu-item danger">🗑 Smazat</div>
+              </div>
+            </div>
+          </div>
+          <div class="vD-name">Revize spotřebičů – kancelářský komplex</div>
+          <div class="vD-bottom">
+            <span class="vD-meta">Office Park CZ s.r.o.</span>
+            <span class="badge badge-odevzdano" style="flex-shrink:0;">✓ 10. 4.</span>
+          </div>
+        </div>
+
+        <!-- Zrušeno -->
+        <div class="vD-card" style="opacity:.55;">
+          <div class="vD-top">
+            <div class="vD-badges">
+              <span class="badge badge-zruseno">zrušeno</span>
+              <span class="badge badge-stredni">střední</span>
+            </div>
+            <div class="menu-wrap">
+              <button class="menu-btn" onclick="toggleMenu(this)">⋮</button>
+              <div class="menu-dropdown">
+                <div class="menu-item">✏️ Upravit</div>
+                <div class="menu-separator"></div>
+                <div class="menu-item danger">🗑 Smazat</div>
+              </div>
+            </div>
+          </div>
+          <div class="vD-name">Revize výtahů – obchodní centrum</div>
+          <div class="vD-bottom">
+            <span class="vD-meta">Mall Invest a.s.</span>
+            <span class="text-sm text-muted" style="flex-shrink:0;">18. 4.</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /panel-D -->
+
+</div><!-- /page -->
+
+<script>
+  function showVariant(v) {
+    document.querySelectorAll('.variant-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + v).classList.add('active');
+    document.querySelectorAll('.tab').forEach(t => {
+      if (t.textContent.startsWith(v + ' ')) t.classList.add('active');
+    });
+    closeAllMenus();
+  }
+
+  function toggleMenu(btn) {
+    const dd = btn.nextElementSibling;
+    const isOpen = dd.classList.contains('open');
+    closeAllMenus();
+    if (!isOpen) dd.classList.add('open');
+  }
+
+  function closeAllMenus() {
+    document.querySelectorAll('.menu-dropdown.open').forEach(m => m.classList.remove('open'));
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.menu-wrap')) closeAllMenus();
+  });
+</script>
+</body>
+</html>

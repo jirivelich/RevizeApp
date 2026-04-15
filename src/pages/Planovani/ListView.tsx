@@ -43,7 +43,7 @@ export function ListView({
       </div>
 
       {filteredZakazky.length > 0 ? (
-        <div className="space-y-4">
+        <div className="space-y-1.5">
           {filteredZakazky.map((z) => (
             <ZakazkaCard
               key={z.id}
