@@ -217,7 +217,7 @@ export function RevizeDetailPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => navigate('/revize')}>← Zpět</Button>
-          <Button variant="success" onClick={() => navigate(`/revize/${id}/nahled`)}>Náhled</Button>
+          <Button variant="success" onClick={async () => { await flush(); navigate(`/revize/${id}/nahled`); }}>Náhled</Button>
         </div>
       </div>
 

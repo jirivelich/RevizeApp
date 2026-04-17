@@ -8,8 +8,8 @@ interface UseAutosaveReturn {
   lastSavedAt: Date | null;
   /** Signals that the NEXT formData change should be saved immediately (no debounce). */
   saveNow: () => void;
-  /** Flushes pending debounce timer immediately. */
-  flush: () => void;
+  /** Flushes pending debounce timer immediately. Returns a Promise that resolves when the save is done. */
+  flush: () => Promise<void>;
 }
 
 export function useAutosave(
@@ -95,13 +95,14 @@ export function useAutosave(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** Flush debounce timer now (e.g. on tab switch). */
-  const flush = useCallback(() => {
+  /** Flush debounce timer now (e.g. on tab switch or before navigation). */
+  const flush = useCallback((): Promise<void> => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
-      doSave(formDataRef.current);
+      return doSave(formDataRef.current);
     }
+    return Promise.resolve();
   }, [doSave]);
 
   /**

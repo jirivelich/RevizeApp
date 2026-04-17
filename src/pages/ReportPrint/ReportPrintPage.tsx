@@ -470,6 +470,16 @@ export function ReportPrintPage() {
             <td className="label-cell">Lhůta příští revize:</td>
             <td>{revize.termin} měsíců</td>
           </tr>
+          <tr>
+            <td className="label-cell">Typ revize:</td>
+            <td colSpan={3}>{typRevizeLabel}</td>
+          </tr>
+          {revize.typRevize === 'mimořádná' && revize.duvodMimoradne && (
+            <tr>
+              <td className="label-cell">Odůvodnění mimořádné revize:</td>
+              <td colSpan={3}>{revize.duvodMimoradne}</td>
+            </tr>
+          )}
         </tbody></table>
       </ReportSection>
 
