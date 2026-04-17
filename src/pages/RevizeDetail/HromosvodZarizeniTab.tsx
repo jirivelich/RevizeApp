@@ -120,7 +120,7 @@ export function HromosvodZarizeniTab({
             <textarea className={TW.textarea} rows={2} placeholder="Systém ochrany před bleskem (LPS) objektu..." value={formData.rozsahRevize || ''} onChange={(e) => setFormData({ ...formData, rozsahRevize: e.target.value })} />
           </div>
           <div>
-            <label className={TW.label}>Předmětem revize není</label>
+            <label className={TW.label}>Předmětem revize není/nejsou</label>
             <textarea className={TW.textarea + ' mt-1'} rows={2} placeholder="Elektrická instalace objektu, spotřebiče..." value={formData.predmetNeni || ''} onChange={(e) => setFormData({ ...formData, predmetNeni: e.target.value })} />
           </div>
         </div>

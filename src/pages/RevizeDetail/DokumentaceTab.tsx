@@ -161,7 +161,7 @@ export function DokumentaceTab({
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className={TW.label}>1.2 Předmětem revize není</label>
+              <label className={TW.label}>1.2 Předmětem revize není/nejsou</label>
               <PredvolenyTextBtn
                 field="predmetNeni"
                 value={formData.predmetNeni || ''}

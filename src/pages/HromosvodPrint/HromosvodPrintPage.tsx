@@ -358,7 +358,7 @@ export function HromosvodPrintPage() {
         )}
         {revize.predmetNeni && (
           <div className="report-text" style={{ marginTop: '6px' }}>
-            <strong>Předmětem revize není:</strong>
+            <strong>Předmětem revize není/nejsou:</strong>
             <p>{revize.predmetNeni}</p>
           </div>
         )}

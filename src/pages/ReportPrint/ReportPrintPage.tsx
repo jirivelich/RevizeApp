@@ -530,7 +530,7 @@ export function ReportPrintPage() {
         )}
         {revize.predmetNeni && (
           <div className="report-text" style={{ marginTop: '6px' }}>
-            <strong>Předmětem revize není:</strong>
+            <strong>Předmětem revize není/nejsou:</strong>
             <p>{revize.predmetNeni}</p>
           </div>
         )}
@@ -600,7 +600,7 @@ export function ReportPrintPage() {
 
       {/* PROVEDENÉ ÚKONY */}
       {isSekceVisible('provedeneUkony') && (
-      <ReportSection title={`${sectionNums.provedeneUkony}. Soupis provedených úknů`}>
+      <ReportSection title={`${sectionNums.provedeneUkony}. Soupis provedených úkonů`}>
         {revize.provedeneUkony ? (
           <p className="report-text">{revize.provedeneUkony}</p>
         ) : (

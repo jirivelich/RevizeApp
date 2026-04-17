@@ -183,7 +183,7 @@ export async function exportHromosvodToWord(data: HromosvodWordData): Promise<vo
       children.push(textParagraph(revize.rozsahRevize));
     }
     if (revize.predmetNeni) {
-      children.push(textParagraph('Předmětem revize není:', { bold: true }));
+      children.push(textParagraph('Předmětem revize není/nejsou:', { bold: true }));
       children.push(textParagraph(revize.predmetNeni));
     }
     if (!revize.rozsahRevize && !revize.predmetNeni) children.push(emptyText());

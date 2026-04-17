@@ -354,7 +354,7 @@ export async function exportElektroToWord(data: ReportData): Promise<void> {
       children.push(textParagraph(revize.rozsahRevize));
     }
     if (revize.predmetNeni) {
-      children.push(textParagraph('Předmětem revize není:', { bold: true }));
+      children.push(textParagraph('Předmětem revize není/nejsou:', { bold: true }));
       children.push(textParagraph(revize.predmetNeni));
     }
     if (!revize.rozsahRevize && !revize.predmetNeni) children.push(emptyText());
