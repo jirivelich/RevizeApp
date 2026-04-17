@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useQuery as useRQQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useRevize, usePristroje, useZakazky } from '../hooks/useQueries';
 import type { MericiPristroj, Revize, Zakazka } from '../types';
 
@@ -344,10 +344,31 @@ function DayPopup({ day, zakazky, onClose }: { day: Date; zakazky: Zakazka[]; on
   );
 }
 
+const LEGEND_ITEMS = [
+  { color: 'bg-red-500', label: 'Vysoká priorita' },
+  { color: 'bg-amber-400', label: 'Střední' },
+  { color: 'bg-blue-400', label: 'Nízká' },
+  { color: 'bg-slate-400', label: 'Dokončeno' },
+] as const;
+
 function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
   const today = new Date();
   const [offset, setOffset] = useState(0);
   const [selectedDay, setSelectedDay] = useState<{ day: Date; zakazky: Zakazka[] } | null>(null);
+  const navigate = useNavigate();
+
+  // Klávesová navigace: ← → pro měsíce, T pro dnešek
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).tagName === 'INPUT') return;
+      if (e.key === 'ArrowLeft') setOffset(o => o - 1);
+      else if (e.key === 'ArrowRight') setOffset(o => o + 1);
+      else if (e.key === 't' || e.key === 'T') setOffset(0);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   const viewDate = useMemo(() => {
     const d = new Date(today.getFullYear(), today.getMonth() + offset, 1);
     return d;
@@ -367,6 +388,15 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
     return map;
   }, [zakazky]);
 
+  // Počet zakázek v zobrazovaném měsíci
+  const monthCount = useMemo(() => {
+    return zakazky.filter(z => {
+      if (!z.datumPlanovany) return false;
+      const d = new Date(z.datumPlanovany);
+      return d.getMonth() === viewDate.getMonth() && d.getFullYear() === viewDate.getFullYear();
+    }).length;
+  }, [zakazky, viewDate]);
+
   const monthLabel = viewDate.toLocaleDateString('cs-CZ', { month: 'long', year: 'numeric' });
 
   return (
@@ -374,17 +404,22 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
     <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-subtle)]">
-        <h2 className="text-[13px] font-semibold text-[var(--text)] capitalize">{monthLabel}</h2>
+        <h2 className="text-[13px] font-semibold text-[var(--text)] capitalize flex items-center gap-2">
+          {monthLabel}
+          {monthCount > 0 && (
+            <span className="text-[10px] font-normal text-[var(--text-muted)]">{monthCount} zakázek</span>
+          )}
+        </h2>
         <div className="flex items-center gap-1">
-          <button onClick={() => setOffset(o => o - 1)} className="h-6 w-6 flex items-center justify-center rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors text-xs">‹</button>
+          <button title="Předchozí měsíc (←)" onClick={() => setOffset(o => o - 1)} className="h-6 w-6 flex items-center justify-center rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors text-xs">‹</button>
           <button onClick={() => setOffset(0)} className="px-2 py-0.5 rounded text-[10px] font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors">Dnes</button>
-          <button onClick={() => setOffset(o => o + 1)} className="h-6 w-6 flex items-center justify-center rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors text-xs">›</button>
+          <button title="Další měsíc (→)" onClick={() => setOffset(o => o + 1)} className="h-6 w-6 flex items-center justify-center rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors text-xs">›</button>
         </div>
       </div>
       {/* Day headers */}
       <div className="grid grid-cols-7 border-b border-[var(--border-subtle)]">
         {DAY_HEADERS.map((d, i) => (
-          <div key={d} className={`py-1 text-center text-[9px] font-semibold uppercase tracking-wider ${i >= 5 ? 'text-[var(--text)]' : 'text-[var(--text-secondary)]'}`}>{d}</div>
+          <div key={d} className={`py-1 text-center text-[9px] font-semibold uppercase tracking-wider ${i >= 5 ? 'text-slate-500' : 'text-[var(--text-secondary)]'}`}>{d}</div>
         ))}
       </div>
       {/* Cells */}
@@ -397,24 +432,39 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
           const isWeekend = dow >= 5;
           const dayZ = zakazkyByDay.get(day.toDateString()) ?? [];
           const hasEvents = dayZ.length > 0;
+          const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
           return (
             <div
               key={i}
-              onClick={() => hasEvents && setSelectedDay({ day, zakazky: dayZ })}
-              className={`relative min-h-[36px] border-t border-r border-[var(--border-subtle)] px-0.5 py-1 flex flex-col items-center ${
-                isToday ? 'bg-[var(--bg-surface)]' : ''
-              } ${isPast && !hasEvents ? 'opacity-30' : isPast ? 'opacity-60' : ''} ${hasEvents ? 'cursor-pointer hover:bg-[var(--bg-accent)] transition-colors' : ''}`}
+              onClick={() => {
+                if (hasEvents) {
+                  setSelectedDay({ day, zakazky: dayZ });
+                } else {
+                  navigate(`/planovani?datum=${dateStr}`);
+                }
+              }}
+              className={`relative min-h-[36px] border-t border-r border-[var(--border-subtle)] px-0.5 py-1 flex flex-col items-center cursor-pointer transition-colors ${
+                isToday ? 'bg-[var(--bg-surface)]' : isWeekend ? 'bg-white/[0.015]' : ''
+              } ${isPast && !hasEvents ? 'opacity-30' : isPast ? 'opacity-60' : ''} ${
+                hasEvents ? 'hover:bg-[var(--bg-accent)]' : 'hover:bg-white/[0.04]'
+              }`}
             >
               <p className={`text-center text-[11px] font-medium leading-none ${
                 isToday
                   ? 'flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white text-[10px]'
-                  : isWeekend ? 'text-[var(--text-secondary)]' : 'text-[var(--text-secondary)]'
+                  : isWeekend ? 'text-slate-500' : 'text-[var(--text-secondary)]'
               }`}>{day.getDate()}</p>
               {hasEvents && (
                 <div className="mt-1 flex items-center justify-center gap-0.5 flex-wrap">
                   {dayZ.slice(0, 3).map((z) => {
                     const color = z.stav === 'dokončeno' ? 'bg-slate-400' : z.priorita === 'vysoká' ? 'bg-red-500' : z.priorita === 'střední' ? 'bg-amber-400' : 'bg-blue-400';
-                    return <span key={z.id} className={`h-1.5 w-1.5 rounded-full ${color}`} />;
+                    return (
+                      <span
+                        key={z.id}
+                        className={`h-1.5 w-1.5 rounded-full ${color}`}
+                        title={`${z.nazev} — ${z.klient}`}
+                      />
+                    );
                   })}
                   {dayZ.length > 3 && (
                     <span className="text-[7px] font-bold text-[var(--text-secondary)]">+{dayZ.length - 3}</span>
@@ -424,6 +474,16 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
             </div>
           );
         })}
+      </div>
+      {/* Legenda */}
+      <div className="flex items-center gap-3 px-3 py-2 border-t border-[var(--border-subtle)] flex-wrap">
+        {LEGEND_ITEMS.map(l => (
+          <span key={l.label} className="flex items-center gap-1 text-[9px] text-[var(--text-muted)]">
+            <span className={`h-1.5 w-1.5 rounded-full ${l.color}`} />
+            {l.label}
+          </span>
+        ))}
+        <span className="ml-auto text-[9px] text-[var(--text-muted)] opacity-50">← T →</span>
       </div>
     </div>
     {selectedDay && (
