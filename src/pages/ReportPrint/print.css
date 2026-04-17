@@ -6,7 +6,7 @@
 
 /* ── Pozadí stránky ── */
 .report-print-bg {
-  background: #e2e8f0;
+  background: #cbd5e1;
   min-height: 100vh;
   position: relative;
   z-index: 1;
@@ -24,7 +24,7 @@
 
 /* ── Pagedjs cílový kontejner ── */
 .report-preview {
-  padding: 24px 0;
+  padding: 32px 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -380,9 +380,9 @@
    ======================================== */
 .pagedjs_page {
   background: white !important;
-  margin-bottom: 24px !important;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.12) !important;
-  border-radius: 2px;
+  margin-bottom: 28px !important;
+  box-shadow: 0 4px 28px rgba(0,0,0,0.20), 0 1px 4px rgba(0,0,0,0.08) !important;
+  border-radius: 4px;
 }
 
 .pagedjs_pages {
