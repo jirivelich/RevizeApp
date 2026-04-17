@@ -381,6 +381,7 @@ export function ReportPrintPage() {
     return {
       popisZarizeni:          num(isSekceVisible('popisZarizeni') && !!revize.popisZarizeni),
       rozsahRevize:           num(isSekceVisible('rozsahRevize')),
+      oduvodneniMimoradne:    num(revize.typRevize === 'mimořádná' && !!revize.duvodMimoradne),
       charakteristika:        num(isSekceVisible('charakteristika') && !!(revize.napetovaSoustava || ochranaList.length > 0)),
       pristroje:              num(isSekceVisible('pristroje')),
       podklady:               num(isSekceVisible('podklady')),
@@ -470,16 +471,6 @@ export function ReportPrintPage() {
             <td className="label-cell">Lhůta příští revize:</td>
             <td>{revize.termin} měsíců</td>
           </tr>
-          <tr>
-            <td className="label-cell">Typ revize:</td>
-            <td colSpan={3}>{typRevizeLabel}</td>
-          </tr>
-          {revize.typRevize === 'mimořádná' && revize.duvodMimoradne && (
-            <tr>
-              <td className="label-cell">Odůvodnění mimořádné revize:</td>
-              <td colSpan={3}>{revize.duvodMimoradne}</td>
-            </tr>
-          )}
         </tbody></table>
       </ReportSection>
 
@@ -544,6 +535,13 @@ export function ReportPrintPage() {
           </div>
         )}
         {!revize.rozsahRevize && !revize.predmetNeni && <p className="report-empty">Nebylo vyplněno</p>}
+      </ReportSection>
+      )}
+
+      {/* ODŮVODNĚNÍ MIMOŘÁDNÉ REVIZE */}
+      {revize.typRevize === 'mimořádná' && revize.duvodMimoradne && (
+      <ReportSection title={`${sectionNums.oduvodneniMimoradne}. Odůvodnění mimořádné revize`}>
+        <p className="report-text">{revize.duvodMimoradne}</p>
       </ReportSection>
       )}
 

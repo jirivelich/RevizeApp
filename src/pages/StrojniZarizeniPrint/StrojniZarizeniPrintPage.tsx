@@ -361,12 +361,15 @@ export function StrojniZarizeniPrintPage() {
           {revize.datumVypracovani && <tr><td className="label-cell">Datum vypracování protokolu:</td><td>{new Date(revize.datumVypracovani).toLocaleDateString('cs-CZ')}</td></tr>}
           {!revize.lhutaText?.trim() && revize.datumPlatnosti && <tr><td className="label-cell">Platnost do:</td><td>{new Date(revize.datumPlatnosti).toLocaleDateString('cs-CZ')}</td></tr>}
           <tr><td className="label-cell">Lhůta příštího ověření:</td><td>{revize.lhutaText?.trim() || `${revize.termin} měsíců`}</td></tr>
-          <tr><td className="label-cell">Typ revize:</td><td>{typRevizeLabel}</td></tr>
-          {revize.typRevize === 'mimořádná' && revize.duvodMimoradne && (
-            <tr><td className="label-cell">Odůvodnění mimořádné revize:</td><td>{revize.duvodMimoradne}</td></tr>
-          )}
         </tbody></table>
       </ReportSection>
+
+      {/* ODŮVODNĚNÍ MIMOŘÁDNÉ REVIZE */}
+      {revize.typRevize === 'mimořádná' && revize.duvodMimoradne && (
+      <ReportSection title="5a. Odůvodnění mimořádné revize">
+        <p className="report-text">{revize.duvodMimoradne}</p>
+      </ReportSection>
+      )}
 
       {/* f) JIŠTĚNÍ STROJNÍHO ZAŘÍZENÍ */}
       {jisteniRows.length > 0 && (
