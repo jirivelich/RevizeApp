@@ -6,8 +6,7 @@ const RED_DARK = '#CC0706';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({ username: '', password: '', email: '', jmeno: '' });
+  const [formData, setFormData] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -23,14 +22,10 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const API_BASE = import.meta.env.VITE_API_URL || '/api';
-      const endpoint = isLogin ? '/auth/login' : '/auth/register';
-      const payload = isLogin
-        ? { username: formData.username, password: formData.password }
-        : formData;
-      const response = await fetch(`${API_BASE}${endpoint}`, {
+      const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ username: formData.username, password: formData.password }),
       });
       const data = await response.json();
       if (!response.ok) { setError(data.error || 'Chyba při ověřování'); setLoading(false); return; }
@@ -41,12 +36,6 @@ export default function LoginPage() {
       setError('Chyba připojení k serveru');
       setLoading(false);
     }
-  };
-
-  const switchMode = (login: boolean) => {
-    setIsLogin(login);
-    setError('');
-    setFormData({ username: '', password: '', email: '', jmeno: '' });
   };
 
   const baseInput: React.CSSProperties = {
@@ -97,62 +86,24 @@ export default function LoginPage() {
 
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 21, fontWeight: 700, color: '#f1f5f9', marginBottom: 4 }}>
-          {isLogin ? 'Přihlášení' : 'Nový účet'}
+          Přihlášení
         </h1>
         <p style={{ fontSize: 13, color: '#475569' }}>
-          {isLogin ? 'Zadejte přihlašovací údaje' : 'Vyplňte registrační formulář'}
+          Zadejte přihlašovací údaje
         </p>
       </div>
 
-      {/* Tabs */}
-      <div style={{
-        display: 'flex', marginBottom: 24,
-        background: 'rgba(226,225,233,0.04)',
-        border: '1px solid rgba(226,225,233,0.07)',
-        borderRadius: 10, padding: 4,
-      }}>
-        {([{ key: true, label: 'Přihlášení' }, { key: false, label: 'Registrace' }] as const).map(({ key, label }) => {
-          const active = isLogin === key;
-          return (
-            <button key={label} type="button" onClick={() => switchMode(key)} style={{
-              flex: 1, padding: '8px 0',
-              border: active ? '1px solid rgba(240,8,7,0.30)' : '1px solid transparent',
-              borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer',
-              background: active ? 'rgba(240,8,7,0.16)' : 'transparent',
-              color: active ? '#FF6B6B' : '#475569',
-              transition: 'all .18s', fontFamily: 'inherit',
-            }}>{label}</button>
-          );
-        })}
-      </div>
-
       <form onSubmit={handleSubmit}>
-        {!isLogin && (
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#64748b', marginBottom: 6 }}>Celé jméno</label>
-            <input type="text" name="jmeno" value={formData.jmeno} onChange={handleChange}
-              placeholder="Jan Novák" style={getInputStyle('jmeno')}
-              onFocus={() => setFocusedField('jmeno')} onBlur={() => setFocusedField(null)} />
-          </div>
-        )}
         <div style={{ marginBottom: 16 }}>
           <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#64748b', marginBottom: 6 }}>Uživatelské jméno</label>
           <input type="text" name="username" value={formData.username} onChange={handleChange}
             required placeholder="jan.novak" autoComplete="username" style={getInputStyle('username')}
             onFocus={() => setFocusedField('username')} onBlur={() => setFocusedField(null)} />
         </div>
-        {!isLogin && (
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#64748b', marginBottom: 6 }}>Email</label>
-            <input type="email" name="email" value={formData.email} onChange={handleChange}
-              required placeholder="jan@firma.cz" autoComplete="email" style={getInputStyle('email')}
-              onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)} />
-          </div>
-        )}
         <div style={{ marginBottom: 22 }}>
           <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#64748b', marginBottom: 6 }}>Heslo</label>
           <input type="password" name="password" value={formData.password} onChange={handleChange}
-            required placeholder="••••••••" autoComplete={isLogin ? 'current-password' : 'new-password'} style={getInputStyle('password')}
+            required placeholder="••••••••" autoComplete="current-password" style={getInputStyle('password')}
             onFocus={() => setFocusedField('password')} onBlur={() => setFocusedField(null)} />
         </div>
 
@@ -184,19 +135,11 @@ export default function LoginPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
             </svg>
           )}
-          {loading ? 'Čekání...' : (isLogin ? 'Přihlásit se' : 'Registrovat se')}
+          {loading ? 'Čekání...' : 'Přihlásit se'}
         </button>
       </form>
 
-      <div style={{ textAlign: 'center', fontSize: 13, color: '#334155', marginTop: 20 }}>
-        {isLogin ? 'Nemáte účet? ' : 'Již máte účet? '}
-        <button type="button" onClick={() => switchMode(!isLogin)} style={{
-          background: 'none', border: 'none', color: '#60a5fa',
-          fontWeight: 500, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit',
-        }}>
-          {isLogin ? 'Zaregistrujte se' : 'Přihlaste se'}
-        </button>
-      </div>
+
     </div>
   );
 

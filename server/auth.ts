@@ -115,6 +115,26 @@ export async function registerUser(data: { username: string; email: string; pass
   };
 }
 
+// Změnit heslo (vyžaduje aktuální heslo)
+export async function changePassword(userId: number, currentPassword: string, newPassword: string): Promise<void> {
+  if (newPassword.length < 8) {
+    throw new Error('Nové heslo musí mít alespoň 8 znaků');
+  }
+
+  const result = await pool.query('SELECT password FROM users WHERE id = $1', [userId]);
+  if (result.rows.length === 0) {
+    throw new Error('Uživatel nebyl nalezen');
+  }
+
+  const isValid = await verifyPassword(currentPassword, result.rows[0].password);
+  if (!isValid) {
+    throw new Error('Aktuální heslo je nesprávné');
+  }
+
+  const newHash = await hashPassword(newPassword);
+  await pool.query('UPDATE users SET password = $1, "updatedAt" = $2 WHERE id = $3', [newHash, new Date().toISOString(), userId]);
+}
+
 // Ověřit přihlášení
 export async function loginUser(username: string, password: string): Promise<{ token: string; user: { id: number; username: string; email: string } }> {
   const result = await pool.query(

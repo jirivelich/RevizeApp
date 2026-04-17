@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { pool, initializeDatabase } from './database';
-import { authMiddleware, loginUser, registerUser, logoutSession, AuthRequest } from './auth';
+import { authMiddleware, loginUser, registerUser, logoutSession, changePassword, AuthRequest } from './auth';
 import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion, analyzeRozvadecPhotos } from './ai';
 import fs from 'fs';
 import path from 'path';
@@ -100,6 +100,21 @@ async function startServer() {
       res.json({ ok: true });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Změna hesla
+  app.post('/api/auth/change-password', authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        res.status(400).json({ error: 'Chybí aktuální nebo nové heslo' });
+        return;
+      }
+      await changePassword(req.user!.id, currentPassword, newPassword);
+      res.json({ ok: true });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
     }
   });
 

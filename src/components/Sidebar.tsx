@@ -4,6 +4,7 @@ import React from 'react';
 import { logoutApi } from '../services/api';
 import { NotificationBell } from './NotificationBell';
 import { useTheme } from '../context/ThemeContext';
+import ZmenaHeslaModal from './ZmenaHeslaModal';
 
 type NavSection = 'Práce' | 'Vybavení' | 'Správa' | null;
 
@@ -65,6 +66,7 @@ export function Sidebar({ onClose }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { themeName, setTheme } = useTheme();
+  const [showZmenaHesla, setShowZmenaHesla] = React.useState(false);
 
   const handleLogout = async () => {
     await logoutApi();
@@ -204,6 +206,23 @@ export function Sidebar({ onClose }: SidebarProps) {
             </div>
           )}
           <button
+            onClick={() => setShowZmenaHesla(true)}
+            className="sidebar-logout"
+            style={{
+              width: '100%', padding: '7px 12px', borderRadius: 8,
+              background: 'var(--bg-surface)', border: '1px solid var(--border)',
+              color: 'var(--text-secondary)', fontSize: 12, fontWeight: 500,
+              cursor: 'pointer', textAlign: 'center', transition: 'all .15s',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              marginBottom: 6,
+            }}
+          >
+            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            Změnit heslo
+          </button>
+          <button
             onClick={() => setTheme(themeName === 'dark' ? 'light' : 'dark')}
             className="sidebar-logout"
             style={{
@@ -236,6 +255,7 @@ export function Sidebar({ onClose }: SidebarProps) {
           <p style={{ fontSize: 10, color: '#1e3a5f', textAlign: 'center', marginTop: 8 }}>© 2026 RevizeApp v1.0.0</p>
         </div>
       </aside>
+      {showZmenaHesla && <ZmenaHeslaModal onClose={() => setShowZmenaHesla(false)} />}
     </>
   );
 }
