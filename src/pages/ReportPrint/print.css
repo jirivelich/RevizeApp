@@ -24,7 +24,7 @@
 
 /* ── Pagedjs cílový kontejner ── */
 .report-preview {
-  padding: 32px 40px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -389,6 +389,8 @@
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
+  padding: 32px 40px !important;
+  box-sizing: border-box !important;
 }
 
 /* Barvy v pagedjs margin-boxech */
