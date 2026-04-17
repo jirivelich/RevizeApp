@@ -366,7 +366,7 @@ export function ReportPrintPage() {
 
   const typRevizeLabel = revize.typRevize === 'výchozí' ? 'Výchozí revize' :
     revize.typRevize === 'pravidelná' ? 'Pravidelná revize' :
-    `Mimořádná revize${revize.duvodMimoradne ? ` – ${revize.duvodMimoradne}` : ''}`;
+    'Mimořádná revize';
 
   const vysledekLabel = revize.vysledek === 'schopno' ? 'ELEKTRICKÁ INSTALACE JE Z HLEDISKA BEZPEČNOSTI SCHOPNA PROVOZU' :
     revize.vysledek === 'neschopno' ? 'ELEKTRICKÁ INSTALACE NENÍ Z HLEDISKA BEZPEČNOSTI SCHOPNA PROVOZU' : '—';

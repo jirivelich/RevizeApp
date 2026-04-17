@@ -252,7 +252,7 @@ export function HromosvodPrintPage() {
 
   const typRevizeLabel = revize.typRevize === 'výchozí' ? 'Výchozí revize' :
     revize.typRevize === 'pravidelná' ? 'Pravidelná revize' :
-    `Mimořádná revize${revize.duvodMimoradne ? ` – ${revize.duvodMimoradne}` : ''}`;
+    'Mimořádná revize';
 
   const vysledekLabel = revize.vysledek === 'schopno' ? 'SCHOPNO BEZPEČNÉHO PROVOZU' :
     revize.vysledek === 'neschopno' ? 'NESCHOPNO BEZPEČNÉHO PROVOZU' : '—';
@@ -380,6 +380,9 @@ export function HromosvodPrintPage() {
       {/* f) DRUH REVIZE */}
       <ReportSection title="6. Druh revize">
         <p className="report-text"><strong>{typRevizeLabel}</strong></p>
+        {revize.typRevize === 'mimořádná' && revize.duvodMimoradne && (
+          <p className="report-text" style={{ marginTop: '6px' }}>{revize.duvodMimoradne}</p>
+        )}
       </ReportSection>
 
       {/* g) DŮLEŽITÁ DATA */}
