@@ -21,7 +21,6 @@ import {
 } from './pages';
 import { useOfflineQueueSync } from './hooks/useOfflineQueue';
 import { ThemeProvider } from './context/ThemeContext';
-import { FormBuilderPage } from './template/form-builder';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -130,7 +129,6 @@ function App() {
               <Route path="zakaznici" element={<ZakazniciPage />} />
               <Route path="planovani" element={<PlanovaniPage />} />
               <Route path="nastaveni" element={<NastaveniPage />} />
-              <Route path="form-builder" element={<FormBuilderPage />} />
             </Route>
           </Routes>
         </BrowserRouter>
