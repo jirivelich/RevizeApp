@@ -169,10 +169,10 @@ export function HromosvodInfoTab({
                 const newStav = e.target.value;
                 let newData: Partial<Revize> = { ...formData, stav: newStav as any };
                 if (newStav === 'dokončeno' && revize.stav !== 'dokončeno') {
-                  const today = new Date();
-                  const platnostDo = new Date(today);
+                  const baseDate = formData.datumDokonceni ? new Date(formData.datumDokonceni) : new Date();
+                  const platnostDo = new Date(baseDate);
                   platnostDo.setMonth(platnostDo.getMonth() + (formData.termin || 36));
-                  newData = { ...newData, datumPlatnosti: platnostDo.toISOString().split('T')[0], datumVypracovani: today.toISOString().split('T')[0] };
+                  newData = { ...newData, datumPlatnosti: platnostDo.toISOString().split('T')[0], datumVypracovani: new Date().toISOString().split('T')[0] };
                 }
                 setFormData(newData);
                 saveNow?.();

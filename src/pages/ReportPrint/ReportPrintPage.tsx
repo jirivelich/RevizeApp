@@ -465,6 +465,10 @@ export function ReportPrintPage() {
             <td className="label-cell">Vypracování zprávy:</td>
             <td>{revize.datumVypracovani ? new Date(revize.datumVypracovani).toLocaleDateString('cs-CZ') : '—'}</td>
           </tr>
+          {revize.datumDokonceni && <tr>
+            <td className="label-cell">Datum dokončení:</td>
+            <td colSpan={3}>{new Date(revize.datumDokonceni).toLocaleDateString('cs-CZ')}</td>
+          </tr>}
           <tr>
             <td className="label-cell">Platnost do:</td>
             <td>{revize.datumPlatnosti ? new Date(revize.datumPlatnosti).toLocaleDateString('cs-CZ') : '—'}</td>

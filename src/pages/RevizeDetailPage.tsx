@@ -267,11 +267,11 @@ export function RevizeDetailPage() {
       
       // Pokud se stav změní na "dokončeno", vypočítat platnost
       if (formData.stav === 'dokončeno' && revize.stav !== 'dokončeno') {
-        const today = new Date();
-        const platnostDo = new Date(today);
+        const baseDate = formData.datumDokonceni ? new Date(formData.datumDokonceni) : new Date();
+        const platnostDo = new Date(baseDate);
         platnostDo.setMonth(platnostDo.getMonth() + (formData.termin || 36));
         dataToSave.datumPlatnosti = platnostDo.toISOString().split('T')[0];
-        dataToSave.datumVypracovani = today.toISOString().split('T')[0];
+        dataToSave.datumVypracovani = new Date().toISOString().split('T')[0];
       }
       
       await revizeService.update(revize.id, dataToSave);
