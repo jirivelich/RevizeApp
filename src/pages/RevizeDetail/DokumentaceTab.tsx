@@ -487,6 +487,25 @@ export function DokumentaceTab({
         )}
       </div>
 
+      {/* ═══ 12 – PŘÍLOHY ═══ */}
+      <div className={TW.card}>
+        <ToggleSectionHeader num="12" visible={isSekceVisible('prilohy')} onToggle={() => toggleSekce('prilohy')}>
+          Přílohy
+        </ToggleSectionHeader>
+        {isSekceVisible('prilohy') && (
+        <div className="p-4">
+          <p className="text-xs text-[var(--text-muted)] mb-2">Jeden řádek = jedna příloha (např. „Protokol o měření č. 1“, „Schéma zapojení rozváděče“…)</p>
+          <textarea
+            className={TW.textarea}
+            rows={5}
+            value={formData.prilohy || ''}
+            onChange={(e) => setFormData({ ...formData, prilohy: e.target.value })}
+            placeholder={`Protokol o měření č. 1\nSchéma zapojení rozváděče RH\nFotodokumentace`}
+          />
+        </div>
+        )}
+      </div>
+
     </div>
 
     {/* Modal pro přidání přístroje k revizi */}
