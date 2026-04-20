@@ -295,6 +295,14 @@ function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+function getISOWeek(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const day = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
 function getMonthGrid(year: number, month: number): (Date | null)[] {
   const first = new Date(year, month, 1);
   const startDow = (first.getDay() + 6) % 7; // 0=Po
@@ -375,6 +383,7 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
   }, [offset, today.getFullYear(), today.getMonth()]);
 
   const cells = useMemo(() => getMonthGrid(viewDate.getFullYear(), viewDate.getMonth()), [viewDate]);
+  const startDow = useMemo(() => (new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).getDay() + 6) % 7, [viewDate]);
 
   const zakazkyByDay = useMemo(() => {
     const map = new Map<string, Zakazka[]>();
@@ -417,62 +426,72 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
         </div>
       </div>
       {/* Day headers */}
-      <div className="grid grid-cols-7 border-b border-[var(--border-subtle)]">
+      <div className="grid grid-cols-[20px_repeat(7,1fr)] border-b border-[var(--border-subtle)]">
+        <div className="py-1 text-center text-[8px] font-semibold uppercase tracking-wider text-[var(--text-muted)] opacity-50">Tý</div>
         {DAY_HEADERS.map((d, i) => (
           <div key={d} className={`py-1 text-center text-[9px] font-semibold uppercase tracking-wider ${i >= 5 ? 'text-slate-500' : 'text-[var(--text-secondary)]'}`}>{d}</div>
         ))}
       </div>
       {/* Cells */}
-      <div className="grid grid-cols-7">
-        {cells.map((day, i) => {
-          if (!day) return <div key={`e${i}`} className="min-h-[36px] bg-white/[0.01]" />;
-          const isToday = isSameDay(day, today);
-          const isPast = day < today && !isToday;
-          const dow = i % 7;
-          const isWeekend = dow >= 5;
-          const dayZ = zakazkyByDay.get(day.toDateString()) ?? [];
-          const hasEvents = dayZ.length > 0;
-          const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
-          return (
-            <div
-              key={i}
-              onClick={() => {
-                if (hasEvents) {
-                  setSelectedDay({ day, zakazky: dayZ });
-                } else {
-                  navigate(`/planovani?datum=${dateStr}`);
-                }
-              }}
-              className={`relative min-h-[36px] border-t border-r border-[var(--border-subtle)] px-0.5 py-1 flex flex-col items-center cursor-pointer transition-colors ${
-                isToday ? 'bg-[var(--bg-surface)]' : isWeekend ? 'bg-white/[0.015]' : ''
-              } ${isPast && !hasEvents ? 'opacity-30' : isPast ? 'opacity-60' : ''} ${
-                hasEvents ? 'hover:bg-[var(--bg-accent)]' : 'hover:bg-white/[0.04]'
-              }`}
-            >
-              <p className={`text-center text-[11px] font-medium leading-none ${
-                isToday
-                  ? 'flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white text-[10px]'
-                  : isWeekend ? 'text-slate-500' : 'text-[var(--text-secondary)]'
-              }`}>{day.getDate()}</p>
-              {hasEvents && (
-                <div className="mt-1 flex items-center justify-center gap-0.5 flex-wrap">
-                  {dayZ.slice(0, 3).map((z) => {
-                    const color = z.stav === 'dokončeno' ? 'bg-slate-400' : z.priorita === 'vysoká' ? 'bg-red-500' : z.priorita === 'střední' ? 'bg-amber-400' : 'bg-blue-400';
-                    return (
-                      <span
-                        key={z.id}
-                        className={`h-1.5 w-1.5 rounded-full ${color}`}
-                        title={`${z.nazev} — ${z.klient}`}
-                      />
-                    );
-                  })}
-                  {dayZ.length > 3 && (
-                    <span className="text-[7px] font-bold text-[var(--text-secondary)]">+{dayZ.length - 3}</span>
+      <div className="grid grid-cols-[20px_repeat(7,1fr)]">
+        {Array.from({ length: cells.length / 7 }, (_, r) => {
+          const rowMonday = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1 - startDow + r * 7);
+          const weekNum = getISOWeek(rowMonday);
+          return [
+            <div key={`wn-${r}`} className="min-h-[36px] border-t border-[var(--border-subtle)] flex items-start justify-center pt-1">
+              <span className="text-[8px] font-medium text-[var(--text-muted)] opacity-50 tabular-nums leading-none">{weekNum}</span>
+            </div>,
+            ...cells.slice(r * 7, r * 7 + 7).map((day, col) => {
+              const i = r * 7 + col;
+              if (!day) return <div key={`e${i}`} className="min-h-[36px] bg-white/[0.01]" />;
+              const isToday = isSameDay(day, today);
+              const isPast = day < today && !isToday;
+              const isWeekend = col >= 5;
+              const dayZ = zakazkyByDay.get(day.toDateString()) ?? [];
+              const hasEvents = dayZ.length > 0;
+              const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+              return (
+                <div
+                  key={i}
+                  onClick={() => {
+                    if (hasEvents) {
+                      setSelectedDay({ day, zakazky: dayZ });
+                    } else {
+                      navigate(`/planovani?datum=${dateStr}`);
+                    }
+                  }}
+                  className={`relative min-h-[36px] border-t border-r border-[var(--border-subtle)] px-0.5 py-1 flex flex-col items-center cursor-pointer transition-colors ${
+                    isToday ? 'bg-[var(--bg-surface)]' : isWeekend ? 'bg-white/[0.015]' : ''
+                  } ${isPast && !hasEvents ? 'opacity-30' : isPast ? 'opacity-60' : ''} ${
+                    hasEvents ? 'hover:bg-[var(--bg-accent)]' : 'hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <p className={`text-center text-[11px] font-medium leading-none ${
+                    isToday
+                      ? 'flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white text-[10px]'
+                      : isWeekend ? 'text-slate-500' : 'text-[var(--text-secondary)]'
+                  }`}>{day.getDate()}</p>
+                  {hasEvents && (
+                    <div className="mt-1 flex items-center justify-center gap-0.5 flex-wrap">
+                      {dayZ.slice(0, 3).map((z) => {
+                        const color = z.stav === 'dokončeno' ? 'bg-slate-400' : z.priorita === 'vysoká' ? 'bg-red-500' : z.priorita === 'střední' ? 'bg-amber-400' : 'bg-blue-400';
+                        return (
+                          <span
+                            key={z.id}
+                            className={`h-1.5 w-1.5 rounded-full ${color}`}
+                            title={`${z.nazev} — ${z.klient}`}
+                          />
+                        );
+                      })}
+                      {dayZ.length > 3 && (
+                        <span className="text-[7px] font-bold text-[var(--text-secondary)]">+{dayZ.length - 3}</span>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-          );
+              );
+            }),
+          ];
         })}
       </div>
       {/* Legenda */}

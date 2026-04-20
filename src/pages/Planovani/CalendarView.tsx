@@ -20,6 +20,14 @@ const LEGEND_ITEMS = [
   { color: 'bg-green-400/80', label: 'Odevzdání' },
 ] as const;
 
+function getISOWeek(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const day = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
 // SVG ikony místo emoji
 function IconClipboard() {
   return (
@@ -104,109 +112,112 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
     }).length;
   }, [zakazky, currentMonth, currentYear]);
 
-  const days: React.ReactNode[] = [];
+  const numRows = Math.ceil((startingDay + daysInMonth) / 7);
+  const rows: React.ReactNode[] = [];
 
-  // Empty cells before first day
-  for (let i = 0; i < startingDay; i++) {
-    const isWeekendEmpty = WEEKEND_INDICES.has(i);
-    days.push(
-      <div key={`empty-${i}`} className={`p-2 min-h-[90px] border border-[var(--border)] ${isWeekendEmpty ? 'bg-white/[0.015]' : 'bg-[var(--bg-faint)]'}`}></div>
-    );
-  }
-
-  // Day cells
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = formatDateStr(day);
-    const dayOfWeekIndex = (startingDay + day - 1) % 7;
-    const isWeekend = WEEKEND_INDICES.has(dayOfWeekIndex);
-
-    // Zakázky s realizací v tento den
-    const dayZakazky = zakazky.filter((z) => getRealizaceDays(z).includes(dateStr));
-
-    // Deadline zpráv v tento den
-    const deadlineZpravy = zakazky.filter((z) => {
-      const dl = getReportDeadline(z);
-      return dl === dateStr;
-    });
-
-    // Plánované odevzdání v tento den
-    const odevzdani = zakazky.filter((z) => z.datumOdevzdaniZpravy === dateStr);
-
-    const todayClass = isTodayFn(day);
-    const hiddenCount = Math.max(0, dayZakazky.length - 3);
-
-    days.push(
-      <div
-        key={day}
-        className={`p-2 min-h-[90px] border border-[var(--border)] cursor-pointer hover:bg-blue-500/[0.06] transition-colors ${
-          todayClass
-            ? 'bg-blue-500/[0.12] ring-2 ring-blue-500/[0.40] ring-inset'
-            : isWeekend
-            ? 'bg-white/[0.015]'
-            : 'bg-[var(--bg-faint)]'
-        }`}
-        onClick={() => onDayClick(dateStr)}
-      >
-        <span
-          className={`text-sm font-medium inline-flex items-center justify-center w-7 h-7 rounded-full ${
-            todayClass
-              ? 'bg-blue-500 text-white'
-              : isWeekend
-              ? 'text-slate-500'
-              : 'text-[var(--text-secondary)]'
-          }`}
-        >
-          {day}
-        </span>
-        <div className="mt-1 space-y-1">
-          {dayZakazky.slice(0, 3).map((z) => {
-            const realizaceDays = getRealizaceDays(z);
-            const isFirst = realizaceDays[0] === dateStr;
-            return (
-              <div
-                key={z.id}
-                className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 ${getPriorityColor(z.priorita)} ${!isFirst ? 'opacity-70' : ''}`}
-                title={`${z.nazev} — ${z.klient}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onZakazkaClick(z);
-                }}
-              >
-                {isFirst ? '● ' : '▬ '}{z.klient || z.nazev}
-              </div>
-            );
-          })}
-          {hiddenCount > 0 && (
-            <div
-              className="text-xs text-[var(--text-secondary)] pl-1 cursor-pointer hover:text-[var(--text)] transition-colors"
-              title={`Dalších ${hiddenCount} zakázek: ${dayZakazky.slice(3).map(z => z.klient || z.nazev).join(', ')}`}
-            >
-              +{hiddenCount} dalších
-            </div>
-          )}
-          {deadlineZpravy.map((z) => (
-            <div
-              key={`dl-${z.id}`}
-              className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 flex items-center ${isOverdue(dateStr) ? 'bg-red-500/20 text-red-300' : 'bg-amber-500/20 text-amber-300'}`}
-              title={`Zpráva: ${z.nazev} — ${z.klient}`}
-              onClick={(e) => { e.stopPropagation(); onZakazkaClick(z); }}
-            >
-              <IconClipboard />{z.klient}
-            </div>
-          ))}
-          {odevzdani.map((z) => (
-            <div
-              key={`ov-${z.id}`}
-              className="text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 flex items-center bg-green-500/20 text-green-300"
-              title={`Odevzdání: ${z.nazev} — ${z.klient}`}
-              onClick={(e) => { e.stopPropagation(); onZakazkaClick(z); }}
-            >
-              <IconCheck />{z.klient}
-            </div>
-          ))}
-        </div>
+  for (let r = 0; r < numRows; r++) {
+    const rowMonday = new Date(currentYear, currentMonth, 1 - startingDay + r * 7);
+    const weekNum = getISOWeek(rowMonday);
+    rows.push(
+      <div key={`wn-${r}`} className="flex items-start justify-center pt-3 min-h-[90px] border border-[var(--border)] bg-[var(--bg-faint)]">
+        <span className="text-[10px] font-medium text-[var(--text-muted)] opacity-50 leading-none tabular-nums">{weekNum}</span>
       </div>
     );
+
+    for (let col = 0; col < 7; col++) {
+      const cellIndex = r * 7 + col;
+      const day = cellIndex - startingDay + 1;
+      const isWeekend = WEEKEND_INDICES.has(col);
+
+      if (day < 1 || day > daysInMonth) {
+        rows.push(
+          <div key={`empty-${r}-${col}`} className={`p-2 min-h-[90px] border border-[var(--border)] ${isWeekend ? 'bg-white/[0.015]' : 'bg-[var(--bg-faint)]'}`}></div>
+        );
+      } else {
+        const dateStr = formatDateStr(day);
+        const dayZakazky = zakazky.filter((z) => getRealizaceDays(z).includes(dateStr));
+        const deadlineZpravy = zakazky.filter((z) => {
+          const dl = getReportDeadline(z);
+          return dl === dateStr;
+        });
+        const odevzdani = zakazky.filter((z) => z.datumOdevzdaniZpravy === dateStr);
+        const todayClass = isTodayFn(day);
+        const hiddenCount = Math.max(0, dayZakazky.length - 3);
+
+        rows.push(
+          <div
+            key={day}
+            className={`p-2 min-h-[90px] border border-[var(--border)] cursor-pointer hover:bg-blue-500/[0.06] transition-colors ${
+              todayClass
+                ? 'bg-blue-500/[0.12] ring-2 ring-blue-500/[0.40] ring-inset'
+                : isWeekend
+                ? 'bg-white/[0.015]'
+                : 'bg-[var(--bg-faint)]'
+            }`}
+            onClick={() => onDayClick(dateStr)}
+          >
+            <span
+              className={`text-sm font-medium inline-flex items-center justify-center w-7 h-7 rounded-full ${
+                todayClass
+                  ? 'bg-blue-500 text-white'
+                  : isWeekend
+                  ? 'text-slate-500'
+                  : 'text-[var(--text-secondary)]'
+              }`}
+            >
+              {day}
+            </span>
+            <div className="mt-1 space-y-1">
+              {dayZakazky.slice(0, 3).map((z) => {
+                const realizaceDays = getRealizaceDays(z);
+                const isFirst = realizaceDays[0] === dateStr;
+                return (
+                  <div
+                    key={z.id}
+                    className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 ${getPriorityColor(z.priorita)} ${!isFirst ? 'opacity-70' : ''}`}
+                    title={`${z.nazev} — ${z.klient}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onZakazkaClick(z);
+                    }}
+                  >
+                    {isFirst ? '● ' : '▬ '}{z.klient || z.nazev}
+                  </div>
+                );
+              })}
+              {hiddenCount > 0 && (
+                <div
+                  className="text-xs text-[var(--text-secondary)] pl-1 cursor-pointer hover:text-[var(--text)] transition-colors"
+                  title={`Dalších ${hiddenCount} zakázek: ${dayZakazky.slice(3).map(z => z.klient || z.nazev).join(', ')}`}
+                >
+                  +{hiddenCount} dalších
+                </div>
+              )}
+              {deadlineZpravy.map((z) => (
+                <div
+                  key={`dl-${z.id}`}
+                  className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 flex items-center ${isOverdue(dateStr) ? 'bg-red-500/20 text-red-300' : 'bg-amber-500/20 text-amber-300'}`}
+                  title={`Zpráva: ${z.nazev} — ${z.klient}`}
+                  onClick={(e) => { e.stopPropagation(); onZakazkaClick(z); }}
+                >
+                  <IconClipboard />{z.klient}
+                </div>
+              ))}
+              {odevzdani.map((z) => (
+                <div
+                  key={`ov-${z.id}`}
+                  className="text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 flex items-center bg-green-500/20 text-green-300"
+                  title={`Odevzdání: ${z.nazev} — ${z.klient}`}
+                  onClick={(e) => { e.stopPropagation(); onZakazkaClick(z); }}
+                >
+                  <IconCheck />{z.klient}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+    }
   }
 
   return (
@@ -245,7 +256,8 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
       </div>
 
       {/* Mřížka */}
-      <div className="grid grid-cols-7 gap-0">
+      <div className="grid grid-cols-[30px_repeat(7,1fr)] gap-0">
+        <div className="p-2 text-center text-[10px] font-medium bg-[var(--bg-input)] border-b border-[var(--border)] text-[var(--text-muted)] opacity-50">Tý</div>
         {DAY_NAMES.map((den, i) => (
           <div
             key={den}
@@ -256,7 +268,7 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
             {den}
           </div>
         ))}
-        {days}
+        {rows}
       </div>
 
       {/* Legenda + nápověda klávesnic */}
