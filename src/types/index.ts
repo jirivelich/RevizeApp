@@ -167,6 +167,21 @@ export interface Okruh {
   izolacniOdpor?: string;
   impedanceSmycky?: string;
   poznamka?: string;
+  // Jississochranič (RCBO) – vestavěný chránič
+  jeJisticochranac?: boolean;
+  chrTyp?: string;
+  chrCitlivostMa?: number;
+  chrPocetPolu?: number;
+  chrTestovacitlacitko?: boolean;
+  chrNevybavovaci?: boolean;
+  chrDotykoveNapeti?: number;
+  chrVybavovacProud?: number;
+  chrCasOdpojeni1x?: number;
+  chrCasOdpojeni5x?: number;
+  chrCasOdpojeni1_4x?: number;
+  chrCasOdpojeni2x?: number;
+  chrZkouskaVypnuti2x?: boolean;
+  chrSelektivita?: boolean;
 }
 
 export interface OkruhNavrh {

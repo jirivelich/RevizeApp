@@ -632,7 +632,8 @@ export function ReportPrintPage() {
                   [
                     o.jisticTyp,
                     o.jisticProud ? `/${o.jisticProud}` : '',
-                    o.pocetFazi ? `/${o.pocetFazi}` : ''
+                    o.pocetFazi ? `/${o.pocetFazi}` : '',
+                    o.jeJisticochranac ? ` +${o.chrTyp || 'A'}/${o.chrCitlivostMa ?? 30}mA` : ''
                   ].join('').replace(/\/\//g, '/').replace(/\/$/, ''),
                   o.nazev,
                   (o.typKabelu || o.pocetZil || o.prurez)

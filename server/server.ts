@@ -380,9 +380,16 @@ async function startServer() {
         const okruhy = await client.query('SELECT * FROM okruh WHERE "rozvadecId" = $1', [rozv.id]);
         for (const okr of okruhy.rows) {
           await client.query(`
-            INSERT INTO okruh ("rozvadecId", cislo, nazev, "jisticTyp", "jisticProud", "pocetFazi", vodic, "typKabelu", "pocetZil", prurez, "izolacniOdpor", "impedanceSmycky", poznamka)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-          `, [newRozvId, okr.cislo, okr.nazev, okr.jisticTyp, okr.jisticProud, okr.pocetFazi, okr.vodic, okr.typKabelu, okr.pocetZil, okr.prurez, okr.izolacniOdpor, okr.impedanceSmycky, okr.poznamka]);
+            INSERT INTO okruh ("rozvadecId", cislo, nazev, "jisticTyp", "jisticProud", "pocetFazi", vodic, "typKabelu", "pocetZil", prurez, "izolacniOdpor", "impedanceSmycky", poznamka,
+              "jeJisticochranac", "chrTyp", "chrCitlivostMa", "chrPocetPolu", "chrTestovacitlacitko", "chrNevybavovaci",
+              "chrDotykoveNapeti", "chrVybavovacProud", "chrCasOdpojeni1x", "chrCasOdpojeni5x",
+              "chrCasOdpojeni1_4x", "chrCasOdpojeni2x", "chrZkouskaVypnuti2x", "chrSelektivita")
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
+              $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
+          `, [newRozvId, okr.cislo, okr.nazev, okr.jisticTyp, okr.jisticProud, okr.pocetFazi, okr.vodic, okr.typKabelu, okr.pocetZil, okr.prurez, okr.izolacniOdpor, okr.impedanceSmycky, okr.poznamka,
+            okr.jeJisticochranac, okr.chrTyp, okr.chrCitlivostMa, okr.chrPocetPolu, okr.chrTestovacitlacitko, okr.chrNevybavovaci,
+            okr.chrDotykoveNapeti, okr.chrVybavovacProud, okr.chrCasOdpojeni1x, okr.chrCasOdpojeni5x,
+            okr.chrCasOdpojeni1_4x, okr.chrCasOdpojeni2x, okr.chrZkouskaVypnuti2x, okr.chrSelektivita]);
         }
       }
       console.log(`  ✅ Zkopírováno ${rozvadece.rows.length} rozvaděčů`);
@@ -522,13 +529,24 @@ async function startServer() {
 
   app.post('/api/okruhy', authMiddleware, async (req, res) => {
     try {
-      const { rozvadecId, cislo, nazev, jisticTyp, jisticProud, pocetFazi, vodic, typKabelu, pocetZil, prurez, izolacniOdpor, impedanceSmycky, poznamka } = req.body;
+      const { rozvadecId, cislo, nazev, jisticTyp, jisticProud, pocetFazi, vodic, typKabelu, pocetZil, prurez, izolacniOdpor, impedanceSmycky, poznamka,
+        jeJisticochranac, chrTyp, chrCitlivostMa, chrPocetPolu, chrTestovacitlacitko, chrNevybavovaci,
+        chrDotykoveNapeti, chrVybavovacProud, chrCasOdpojeni1x, chrCasOdpojeni5x,
+        chrCasOdpojeni1_4x, chrCasOdpojeni2x, chrZkouskaVypnuti2x, chrSelektivita } = req.body;
       
       const result = await pool.query(`
-        INSERT INTO okruh ("rozvadecId", cislo, nazev, "jisticTyp", "jisticProud", "pocetFazi", vodic, "typKabelu", "pocetZil", prurez, "izolacniOdpor", "impedanceSmycky", poznamka)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        INSERT INTO okruh ("rozvadecId", cislo, nazev, "jisticTyp", "jisticProud", "pocetFazi", vodic, "typKabelu", "pocetZil", prurez, "izolacniOdpor", "impedanceSmycky", poznamka,
+          "jeJisticochranac", "chrTyp", "chrCitlivostMa", "chrPocetPolu", "chrTestovacitlacitko", "chrNevybavovaci",
+          "chrDotykoveNapeti", "chrVybavovacProud", "chrCasOdpojeni1x", "chrCasOdpojeni5x",
+          "chrCasOdpojeni1_4x", "chrCasOdpojeni2x", "chrZkouskaVypnuti2x", "chrSelektivita")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
+          $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
         RETURNING id
-      `, [rozvadecId, cislo, nazev, jisticTyp, jisticProud, pocetFazi, vodic, typKabelu, pocetZil, prurez, izolacniOdpor, impedanceSmycky, poznamka]);
+      `, [rozvadecId, cislo, nazev, jisticTyp, jisticProud, pocetFazi, vodic, typKabelu, pocetZil, prurez, izolacniOdpor, impedanceSmycky, poznamka,
+        jeJisticochranac ?? null, chrTyp ?? null, chrCitlivostMa ?? null, chrPocetPolu ?? null,
+        chrTestovacitlacitko ?? null, chrNevybavovaci ?? null, chrDotykoveNapeti ?? null,
+        chrVybavovacProud ?? null, chrCasOdpojeni1x ?? null, chrCasOdpojeni5x ?? null,
+        chrCasOdpojeni1_4x ?? null, chrCasOdpojeni2x ?? null, chrZkouskaVypnuti2x ?? null, chrSelektivita ?? null]);
       
       res.json({ id: result.rows[0].id });
     } catch (error) {

@@ -491,6 +491,21 @@ export async function initializeDatabase() {
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodNacrt" TEXT',
       // Přílohy – textový seznam příloh
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "prilohy" TEXT',
+      // Jississochranič (RCBO) – vestavěný chránič v okruhu
+      'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "jeJisticochranac" BOOLEAN',
+      'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "chrTyp" TEXT',
+      'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "chrCitlivostMa" REAL',
+      'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "chrPocetPolu" INTEGER',
+      'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "chrTestovacitlacitko" BOOLEAN',
+      'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "chrNevybavovaci" BOOLEAN',
+      'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "chrDotykoveNapeti" REAL',
+      'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "chrVybavovacProud" REAL',
+      'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "chrCasOdpojeni1x" REAL',
+      'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "chrCasOdpojeni5x" REAL',
+      'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "chrCasOdpojeni1_4x" REAL',
+      'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "chrCasOdpojeni2x" REAL',
+      'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "chrZkouskaVypnuti2x" BOOLEAN',
+      'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "chrSelektivita" BOOLEAN',
     ];
     
     for (const migration of migrations) {

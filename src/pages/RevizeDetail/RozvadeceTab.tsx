@@ -149,6 +149,21 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     impedanceSmycky: '',
     impedanceSmyckyMax: false,
     poznamka: '',
+    // Jississochranič (RCBO)
+    jeJisticochranac: false,
+    chrTyp: 'A' as string,
+    chrCitlivostMa: 30 as number,
+    chrPocetPolu: 2 as number,
+    chrTestovacitlacitko: undefined as boolean | undefined,
+    chrNevybavovaci: undefined as boolean | undefined,
+    chrDotykoveNapeti: undefined as number | undefined,
+    chrVybavovacProud: undefined as number | undefined,
+    chrCasOdpojeni1x: undefined as number | undefined,
+    chrCasOdpojeni5x: undefined as number | undefined,
+    chrCasOdpojeni1_4x: undefined as number | undefined,
+    chrCasOdpojeni2x: undefined as number | undefined,
+    chrZkouskaVypnuti2x: undefined as boolean | undefined,
+    chrSelektivita: undefined as boolean | undefined,
   });
 
   // Sync counts from parent
@@ -238,6 +253,12 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
       cislo: nextCislo, nazev: '', jisticTyp: 'B', jisticProud: '16A', pocetFazi: 1,
       typKabelu: 'CYKY', pocetZil: '3', prurez: '2,5',
       izolacniOdpor: '', impedanceSmycky: '', impedanceSmyckyMax: false, poznamka: '',
+      jeJisticochranac: false, chrTyp: 'A', chrCitlivostMa: 30, chrPocetPolu: 2,
+      chrTestovacitlacitko: undefined, chrNevybavovaci: undefined,
+      chrDotykoveNapeti: undefined, chrVybavovacProud: undefined,
+      chrCasOdpojeni1x: undefined, chrCasOdpojeni5x: undefined,
+      chrCasOdpojeni1_4x: undefined, chrCasOdpojeni2x: undefined,
+      chrZkouskaVypnuti2x: undefined, chrSelektivita: undefined,
     });
   };
 
@@ -312,6 +333,20 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
       izolacniOdpor: okruh.izolacniOdpor || '',
       impedanceSmycky: okruh.impedanceSmycky?.replace(/^max\.\s*/, '') || '', impedanceSmyckyMax: okruh.impedanceSmycky?.startsWith('max.') || false,
       poznamka: okruh.poznamka || '',
+      jeJisticochranac: okruh.jeJisticochranac || false,
+      chrTyp: okruh.chrTyp || 'A',
+      chrCitlivostMa: okruh.chrCitlivostMa ?? 30,
+      chrPocetPolu: okruh.chrPocetPolu ?? 2,
+      chrTestovacitlacitko: okruh.chrTestovacitlacitko,
+      chrNevybavovaci: okruh.chrNevybavovaci,
+      chrDotykoveNapeti: okruh.chrDotykoveNapeti,
+      chrVybavovacProud: okruh.chrVybavovacProud,
+      chrCasOdpojeni1x: okruh.chrCasOdpojeni1x,
+      chrCasOdpojeni5x: okruh.chrCasOdpojeni5x,
+      chrCasOdpojeni1_4x: okruh.chrCasOdpojeni1_4x,
+      chrCasOdpojeni2x: okruh.chrCasOdpojeni2x,
+      chrZkouskaVypnuti2x: okruh.chrZkouskaVypnuti2x,
+      chrSelektivita: okruh.chrSelektivita,
     });
     if (window.innerWidth < 640) {
       setIsOkruhSheetOpen(true);
@@ -897,6 +932,11 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                               o.pocetFazi ? `/${o.pocetFazi}` : ''
                             ].join('').replace(/\/\//g, '/').replace(/\/$/, '')}
                           </span>
+                          {o.jeJisticochranac && (
+                            <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" title="Jississochranič (RCBO)">
+                              +{o.chrTyp || 'A'}/{o.chrCitlivostMa ?? 30}mA
+                            </span>
+                          )}
                         </td>
                         <td className="py-1 px-2 text-xs text-[var(--text)]">{o.nazev}</td>
                         <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{computeVodic(o.typKabelu, o.pocetZil, o.prurez) || o.vodic}</td>
@@ -1051,6 +1091,59 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
             </label>
           </div>
         </div>
+        {/* Jississochranič (RCBO) */}
+        <div className="border-t border-[var(--border)] pt-3">
+          <label className="flex items-center gap-2 cursor-pointer select-none mb-3">
+            <input type="checkbox" checked={okruhFormData.jeJisticochranac} onChange={(e) => setOkruhFormData({ ...okruhFormData, jeJisticochranac: e.target.checked })} className="rounded border-[var(--checkbox-border)]" />
+            <span className="text-sm font-medium text-[var(--text)]">Jississochranič (vestavěný chránič, RCBO)</span>
+          </label>
+          {okruhFormData.jeJisticochranac && (
+            <>
+              <div className="grid grid-cols-3 gap-4 mb-3">
+                <EditableSelect label="Typ chrániče" value={okruhFormData.chrTyp} onChange={(val) => setOkruhFormData({ ...okruhFormData, chrTyp: val })} options={['A', 'AC', 'B', 'F', 'G']} />
+                <Select label="Citlivost IΔn (mA)" value={String(okruhFormData.chrCitlivostMa)} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrCitlivostMa: parseFloat(e.target.value) })} options={[{ value: '10', label: '10 mA' }, { value: '30', label: '30 mA' }, { value: '100', label: '100 mA' }, { value: '300', label: '300 mA' }, { value: '500', label: '500 mA' }]} />
+                <Select label="Počet pólů" value={String(okruhFormData.chrPocetPolu)} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrPocetPolu: parseInt(e.target.value) })} options={[{ value: '2', label: '2' }, { value: '4', label: '4' }]} />
+              </div>
+              <p className="text-xs font-medium text-[var(--text-secondary)] mb-3">Měřené hodnoty chrániče</p>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex items-center gap-2 text-xs">
+                  <input type="checkbox" checked={!!okruhFormData.chrTestovacitlacitko} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrTestovacitlacitko: e.target.checked || undefined })} className="rounded border-[var(--checkbox-border)]" />
+                  <span>Testovací tlačítko ✓</span>
+                </label>
+                <label className="flex items-center gap-2 text-xs">
+                  <input type="checkbox" checked={!!okruhFormData.chrNevybavovaci} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrNevybavovaci: e.target.checked || undefined })} className="rounded border-[var(--checkbox-border)]" />
+                  <span>Nevybavení při 0,5×IΔn ✓</span>
+                </label>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <Input type="number" step="0.1" label="Dotykové napětí Uc [V]" value={okruhFormData.chrDotykoveNapeti ?? ''} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrDotykoveNapeti: e.target.value ? parseFloat(e.target.value) : undefined })} />
+                <Input type="number" step="0.1" label="Vybavovací proud IΔ [mA]" value={okruhFormData.chrVybavovacProud ?? ''} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrVybavovacProud: e.target.value ? parseFloat(e.target.value) : undefined })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <Input type="number" step="1" label="Čas odpojení tA při 1×IΔn [ms]" value={okruhFormData.chrCasOdpojeni1x ?? ''} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrCasOdpojeni1x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+                {['AC', 'A'].includes(okruhFormData.chrTyp) && (
+                  <Input type="number" step="1" label="Čas odpojení tA při 5×IΔn [ms]" value={okruhFormData.chrCasOdpojeni5x ?? ''} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrCasOdpojeni5x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+                )}
+                {okruhFormData.chrTyp === 'F' && (
+                  <>
+                    <Input type="number" step="1" label="Čas odpojení tA při 1,4×IΔn [ms]" value={okruhFormData.chrCasOdpojeni1_4x ?? ''} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrCasOdpojeni1_4x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+                    <Input type="number" step="1" label="Čas odpojení tA při 2×IΔn [ms]" value={okruhFormData.chrCasOdpojeni2x ?? ''} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrCasOdpojeni2x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+                    <label className="flex items-center gap-2 text-xs col-span-2">
+                      <input type="checkbox" checked={!!okruhFormData.chrZkouskaVypnuti2x} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrZkouskaVypnuti2x: e.target.checked || undefined })} className="rounded border-[var(--checkbox-border)]" />
+                      <span>Zkouška vypnutí při 2×IΔn ✓</span>
+                    </label>
+                  </>
+                )}
+              </div>
+              <div className="mt-3">
+                <label className="flex items-center gap-2 text-xs">
+                  <input type="checkbox" checked={!!okruhFormData.chrSelektivita} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrSelektivita: e.target.checked || undefined })} className="rounded border-[var(--checkbox-border)]" />
+                  <span>Selektivita (typ S/G) ✓</span>
+                </label>
+              </div>
+            </>
+          )}
+        </div>
 
       </form>
     </Modal>
@@ -1188,6 +1281,61 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
               <span className="text-xs text-[var(--text-secondary)] whitespace-nowrap">max.</span>
             </label>
           </div>
+        </div>
+        {/* Jississochranič (RCBO) */}
+        <div className="border-t border-[var(--border)] pt-3">
+          <label className="flex items-center gap-2 cursor-pointer select-none mb-3">
+            <input type="checkbox" checked={okruhFormData.jeJisticochranac} onChange={(e) => setOkruhFormData({ ...okruhFormData, jeJisticochranac: e.target.checked })} className="rounded border-[var(--checkbox-border)]" />
+            <span className="text-sm font-medium text-[var(--text)]">Jississochranič (vestavěný chránič, RCBO)</span>
+          </label>
+          {okruhFormData.jeJisticochranac && (
+            <>
+              <div className="grid grid-cols-2 gap-4 mb-3">
+                <EditableSelect label="Typ chrániče" value={okruhFormData.chrTyp} onChange={(val) => setOkruhFormData({ ...okruhFormData, chrTyp: val })} options={['A', 'AC', 'B', 'F', 'G']} />
+                <Select label="Citlivost IΔn (mA)" value={String(okruhFormData.chrCitlivostMa)} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrCitlivostMa: parseFloat(e.target.value) })} options={[{ value: '10', label: '10 mA' }, { value: '30', label: '30 mA' }, { value: '100', label: '100 mA' }, { value: '300', label: '300 mA' }, { value: '500', label: '500 mA' }]} />
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-3">
+                <Select label="Počet pólů" value={String(okruhFormData.chrPocetPolu)} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrPocetPolu: parseInt(e.target.value) })} options={[{ value: '2', label: '2' }, { value: '4', label: '4' }]} />
+              </div>
+              <p className="text-xs font-medium text-[var(--text-secondary)] mb-3">Měřené hodnoty chrániče</p>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex items-center gap-2 text-xs">
+                  <input type="checkbox" checked={!!okruhFormData.chrTestovacitlacitko} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrTestovacitlacitko: e.target.checked || undefined })} className="rounded border-[var(--checkbox-border)]" />
+                  <span>Testovací tlačítko ✓</span>
+                </label>
+                <label className="flex items-center gap-2 text-xs">
+                  <input type="checkbox" checked={!!okruhFormData.chrNevybavovaci} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrNevybavovaci: e.target.checked || undefined })} className="rounded border-[var(--checkbox-border)]" />
+                  <span>Nevybavení při 0,5×IΔn ✓</span>
+                </label>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <Input type="number" step="0.1" label="Dotykové napětí Uc [V]" value={okruhFormData.chrDotykoveNapeti ?? ''} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrDotykoveNapeti: e.target.value ? parseFloat(e.target.value) : undefined })} />
+                <Input type="number" step="0.1" label="Vybavovací proud IΔ [mA]" value={okruhFormData.chrVybavovacProud ?? ''} onChange={(e) => setOkruhFormData({ ... okruhFormData, chrVybavovacProud: e.target.value ? parseFloat(e.target.value) : undefined })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <Input type="number" step="1" label="Čas odpojení tA při 1×IΔn [ms]" value={okruhFormData.chrCasOdpojeni1x ?? ''} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrCasOdpojeni1x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+                {['AC', 'A'].includes(okruhFormData.chrTyp) && (
+                  <Input type="number" step="1" label="Čas odpojení tA při 5×IΔn [ms]" value={okruhFormData.chrCasOdpojeni5x ?? ''} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrCasOdpojeni5x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+                )}
+                {okruhFormData.chrTyp === 'F' && (
+                  <>
+                    <Input type="number" step="1" label="Čas odpojení tA při 1,4×IΔn [ms]" value={okruhFormData.chrCasOdpojeni1_4x ?? ''} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrCasOdpojeni1_4x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+                    <Input type="number" step="1" label="Čas odpojení tA při 2×IΔn [ms]" value={okruhFormData.chrCasOdpojeni2x ?? ''} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrCasOdpojeni2x: e.target.value ? parseFloat(e.target.value) : undefined })} />
+                    <label className="flex items-center gap-2 text-xs col-span-2">
+                      <input type="checkbox" checked={!!okruhFormData.chrZkouskaVypnuti2x} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrZkouskaVypnuti2x: e.target.checked || undefined })} className="rounded border-[var(--checkbox-border)]" />
+                      <span>Zkouška vypnutí při 2×IΔn ✓</span>
+                    </label>
+                  </>
+                )}
+              </div>
+              <div className="mt-3">
+                <label className="flex items-center gap-2 text-xs">
+                  <input type="checkbox" checked={!!okruhFormData.chrSelektivita} onChange={(e) => setOkruhFormData({ ...okruhFormData, chrSelektivita: e.target.checked || undefined })} className="rounded border-[var(--checkbox-border)]" />
+                  <span>Selektivita (typ S/G) ✓</span>
+                </label>
+              </div>
+            </>
+          )}
         </div>
       </form>
     </BottomSheet>
