@@ -1522,9 +1522,18 @@ export function RevizeDetailPage() {
           {/* ═══ SEKCE 8: ZÁVĚR ═══ */}
           <SekceHeader id="zaver">6. Závěr revize</SekceHeader>
           {isSekceVisible('zaver') && (
-          <div className="px-4 py-3">
+          <div className="px-4 py-3 border-b border-slate-200">
             <div className="flex justify-end mb-1"><PredvolenyTextBtn field="zaver" /></div>
             <textarea className="w-full px-2 py-1.5 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" rows={4} value={formData.zaver || ''} onChange={(e) => setFormData({ ...formData, zaver: e.target.value })} placeholder="Celkové shrnutí a závěr revizní zprávy..." />
+          </div>
+          )}
+
+          {/* ═══ SEKCE 9: PŘÍLOHY ═══ */}
+          <SekceHeader id="prilohy">7. Přílohy</SekceHeader>
+          {isSekceVisible('prilohy') && (
+          <div className="px-4 py-3">
+            <p className="text-xs text-[var(--text-secondary)] mb-2">Jeden řádek = jedna příloha (např. „Protokol o měření č. 1", „Schéma zapojení rozváděče"…)</p>
+            <textarea className="w-full px-2 py-1.5 rounded text-sm border border-[var(--border-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none" rows={5} value={formData.prilohy || ''} onChange={(e) => setFormData({ ...formData, prilohy: e.target.value })} placeholder={"Protokol o měření č. 1\nSchéma zapojení rozváděče RH\nFotodokumentace"} />
           </div>
           )}
         </div>

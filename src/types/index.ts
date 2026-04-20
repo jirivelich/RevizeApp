@@ -39,6 +39,7 @@ export interface Revize {
   vysledek?: 'schopno' | 'neschopno';
   vysledekOduvodneni?: string; // l) Odůvodnění pokud není schopno provozu
   zaver?: string; // Závěr/shrnutí revize
+  prilohy?: string; // Přílohy – seznam příloh (jeden řádek = jedna příloha)
   
   // 1. Vymezení rozsahu revize
   rozsahRevize?: string;        // 1.1 Předmět revize je

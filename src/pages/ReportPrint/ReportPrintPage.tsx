@@ -394,6 +394,7 @@ export function ReportPrintPage() {
       oduvodneni:             num(isSekceVisible('vysledekOduvodneni') && !!revize.vysledekOduvodneni),
       zaver:                  num(isSekceVisible('zaver') && !!revize.zaver),
       rozdelovnik:            num(isSekceVisible('rozdelovnik') && !!revize.rozdelovnik),
+      prilohy:                num(isSekceVisible('prilohy') && !!revize.prilohy),
     };
   })();
 
@@ -832,6 +833,17 @@ export function ReportPrintPage() {
             })}
           </tbody>
         </table>
+      </ReportSection>
+      )}
+
+      {/* SEZNAM PŘÍLOH */}
+      {isSekceVisible('prilohy') && revize.prilohy && (
+      <ReportSection title={`${sectionNums.prilohy}. Přílohy`}>
+        <ol style={{ margin: 0, paddingLeft: '20px' }}>
+          {revize.prilohy.split('\n').filter(r => r.trim()).map((radek, i) => (
+            <li key={i} className="report-text" style={{ marginBottom: '2px' }}>{radek.trim()}</li>
+          ))}
+        </ol>
       </ReportSection>
       )}
 
