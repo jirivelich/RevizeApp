@@ -210,6 +210,8 @@ async function startServer() {
         'rozdelovnik',
         // Náčrt LPS – base64 PNG
         'hromosvodNacrt',
+        // Přílohy – textový seznam příloh
+        'prilohy',
       ];
       
       const updates: Record<string, any> = { updatedAt: now };
