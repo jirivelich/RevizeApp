@@ -123,7 +123,7 @@ export function useNotifications() {
               severity: severity(days),
               title: `Zpráva: ${z.nazev}`,
               description: days < 0
-                ? `Deadline odevzdání zprávy byl ${label}`,
+                ? `Deadline odevzdání zprávy byl ${label}`
                 : `Odevzdat zprávu do ${label}`,
               daysUntil: days,
               link: '/planovani',
