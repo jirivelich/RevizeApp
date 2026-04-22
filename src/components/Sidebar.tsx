@@ -149,8 +149,8 @@ export function Sidebar({ onClose }: SidebarProps) {
               </svg>
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--nav-text-strong, #1e293b)', letterSpacing: '-0.3px' }}>RevizeApp</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--nav-text-strong, #1e293b)', marginTop: 1 }}>Správa elektro revizí</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: themeName === 'dark' ? '#f1f5f9' : '#1e293b', letterSpacing: '-0.3px' }}>RevizeApp</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: themeName === 'dark' ? '#f1f5f9' : '#1e293b', marginTop: 1 }}>Správa elektro revizí</div>
             </div>
           </div>
           {/* Mobilní zavírací tlačítko */}
