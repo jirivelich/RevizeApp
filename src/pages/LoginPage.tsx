@@ -79,7 +79,7 @@ export default function LoginPage() {
           </svg>
         </div>
         <div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: '#f1f5f9' }}>RevizeApp</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#f1f5f9' }}>JV Revize</div>
           <div style={{ fontSize: 11, fontWeight: 600, color: '#f1f5f9' }}>Správa elektro revizí</div>
         </div>
       </div>
@@ -219,7 +219,7 @@ export default function LoginPage() {
                 </svg>
               </div>
               <div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.4px' }}>RevizeApp</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.4px' }}>JV Revize</div>
                 <div style={{ fontSize: 11, color: '#475569', marginTop: 1 }}>Správa elektro revizí</div>
               </div>
             </div>

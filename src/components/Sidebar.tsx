@@ -149,7 +149,7 @@ export function Sidebar({ onClose }: SidebarProps) {
               </svg>
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.3px' }}>RevizeApp</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.3px' }}>JV Revize</div>
               <div style={{ fontSize: 10, fontWeight: 600, color: '#cbd5e1', marginTop: 1 }}>Správa elektro revizí</div>
             </div>
           </div>
@@ -252,7 +252,7 @@ export function Sidebar({ onClose }: SidebarProps) {
             </svg>
             Odhlásit se
           </button>
-          <p style={{ fontSize: 10, color: '#64748b', textAlign: 'center', marginTop: 8 }}>© 2026 RevizeApp v1.0.0</p>
+          <p style={{ fontSize: 10, color: '#64748b', textAlign: 'center', marginTop: 8 }}>© 2026 JV Revize v1.0.0</p>
         </div>
       </aside>
       {showZmenaHesla && <ZmenaHeslaModal onClose={() => setShowZmenaHesla(false)} />}

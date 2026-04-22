@@ -38,7 +38,7 @@ export function Layout() {
       <main className="lg:ml-56 h-screen flex flex-col" style={{ background: 'var(--background)' }}>
         {/* Mobilní header s menu tlačítkem */}
         <div className="lg:hidden px-4 py-3 flex items-center justify-between sticky top-0 z-30 flex-shrink-0" style={{ background: 'var(--bg-sidebar)', borderBottom: '1px solid var(--border)' }}>
-          <h1 className="text-lg font-bold" style={{ color: '#f1f5f9' }}>RevizeApp</h1>
+          <h1 className="text-lg font-bold" style={{ color: '#f1f5f9' }}>JV Revize</h1>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="p-2 rounded-lg"
