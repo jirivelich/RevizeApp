@@ -40,9 +40,11 @@ export function useNotifications() {
 
     const items: AppNotification[] = [];
 
-    // 1. Plánované zakázky – datum nastávající do N dní
+    // 1. Plánované zakázky – datum nastávající do N dní (pouze pokud nejsou dokončené)
     for (const z of zakazky) {
       if (z.stav !== 'plánováno') continue;
+      // Pokud je zakázka dokončená, přeskočit (pro jistotu, i když by neměla být v tomto stavu)
+      if (z.stav === 'dokončeno') continue;
       const days = daysUntil(z.datumPlanovany);
       if (days <= thresholdZakazka) {
         const d = new Date(z.datumPlanovany);
@@ -83,8 +85,10 @@ export function useNotifications() {
       }
     }
 
-    // 3. Deadline odevzdání zprávy po zakázce
+    // 3. Deadline odevzdání zprávy po zakázce (pouze pokud není dokončeno a není nastaveno datum odevzdání)
     for (const z of zakazky) {
+      // Pokud je zakázka dokončená a má nastavené datum odevzdání, neupozorňovat
+      if (z.stav === 'dokončeno' && z.datumOdevzdaniZpravy) continue;
       // Explicitně nastavené datum odevzdání
       if (z.datumOdevzdaniZpravy) {
         const days = daysUntil(z.datumOdevzdaniZpravy);
@@ -119,7 +123,7 @@ export function useNotifications() {
               severity: severity(days),
               title: `Zpráva: ${z.nazev}`,
               description: days < 0
-                ? `Deadline odevzdání zprávy byl ${label}`
+                ? `Deadline odevzdání zprávy byl ${label}`,
                 : `Odevzdat zprávu do ${label}`,
               daysUntil: days,
               link: '/planovani',
