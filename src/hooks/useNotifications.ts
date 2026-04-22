@@ -43,8 +43,6 @@ export function useNotifications() {
     // 1. Plánované zakázky – datum nastávající do N dní (pouze pokud nejsou dokončené)
     for (const z of zakazky) {
       if (z.stav !== 'plánováno') continue;
-      // Pokud je zakázka dokončená, přeskočit (pro jistotu, i když by neměla být v tomto stavu)
-      if (z.stav === 'dokončeno') continue;
       const days = daysUntil(z.datumPlanovany);
       if (days <= thresholdZakazka) {
         const d = new Date(z.datumPlanovany);
