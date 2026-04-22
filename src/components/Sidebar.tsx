@@ -149,8 +149,8 @@ export function Sidebar({ onClose }: SidebarProps) {
               </svg>
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: themeName === 'dark' ? '#f1f5f9' : '#1e293b', letterSpacing: '-0.3px' }}>RevizeApp</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: themeName === 'dark' ? '#f1f5f9' : '#1e293b', marginTop: 1 }}>Správa elektro revizí</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.3px' }}>RevizeApp</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: '#cbd5e1', marginTop: 1 }}>Správa elektro revizí</div>
             </div>
           </div>
           {/* Mobilní zavírací tlačítko */}
@@ -200,8 +200,8 @@ export function Sidebar({ onClose }: SidebarProps) {
                 {initials}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--nav-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.username}</div>
-                <div style={{ fontSize: 10, color: '#334155', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.username}</div>
+                <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
               </div>
             </div>
           )}
@@ -210,8 +210,8 @@ export function Sidebar({ onClose }: SidebarProps) {
             className="sidebar-logout"
             style={{
               width: '100%', padding: '7px 12px', borderRadius: 8,
-              background: 'var(--bg-surface)', border: '1px solid var(--border)',
-              color: 'var(--nav-text-strong, #1e293b)', fontSize: 13, fontWeight: 700,
+              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
+              color: '#f1f5f9', fontSize: 13, fontWeight: 600,
               cursor: 'pointer', textAlign: 'center', transition: 'all .15s',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               marginBottom: 6,
@@ -227,8 +227,8 @@ export function Sidebar({ onClose }: SidebarProps) {
             className="sidebar-logout"
             style={{
               width: '100%', padding: '7px 12px', borderRadius: 8,
-              background: 'var(--bg-surface)', border: '1px solid var(--border)',
-              color: 'var(--nav-text-strong, #1e293b)', fontSize: 13, fontWeight: 700,
+              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
+              color: '#f1f5f9', fontSize: 13, fontWeight: 600,
               cursor: 'pointer', textAlign: 'center', transition: 'all .15s',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               marginBottom: 6,
@@ -241,8 +241,8 @@ export function Sidebar({ onClose }: SidebarProps) {
             className="sidebar-logout"
             style={{
               width: '100%', padding: '7px 12px', borderRadius: 8,
-              background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
-              color: 'var(--nav-text-strong, #1e293b)', fontSize: 13, fontWeight: 700,
+              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
+              color: '#f1f5f9', fontSize: 13, fontWeight: 600,
               cursor: 'pointer', textAlign: 'center', transition: 'all .15s',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}
@@ -252,7 +252,7 @@ export function Sidebar({ onClose }: SidebarProps) {
             </svg>
             Odhlásit se
           </button>
-          <p style={{ fontSize: 10, color: '#1e3a5f', textAlign: 'center', marginTop: 8 }}>© 2026 RevizeApp v1.0.0</p>
+          <p style={{ fontSize: 10, color: '#64748b', textAlign: 'center', marginTop: 8 }}>© 2026 RevizeApp v1.0.0</p>
         </div>
       </aside>
       {showZmenaHesla && <ZmenaHeslaModal onClose={() => setShowZmenaHesla(false)} />}
