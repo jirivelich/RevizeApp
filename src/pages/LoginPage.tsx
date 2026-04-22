@@ -79,8 +79,8 @@ export default function LoginPage() {
           </svg>
         </div>
         <div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: '#f1f5f9' }}>RevizeApp</div>
-          <div style={{ fontSize: 11, color: '#475569' }}>Správa elektro revizí</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#1e293b' }}>RevizeApp</div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#1e293b' }}>Správa elektro revizí</div>
         </div>
       </div>
 

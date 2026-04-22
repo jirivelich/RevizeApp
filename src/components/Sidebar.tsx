@@ -149,8 +149,8 @@ export function Sidebar({ onClose }: SidebarProps) {
               </svg>
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.3px' }}>RevizeApp</div>
-              <div style={{ fontSize: 10, color: '#334155', marginTop: 1 }}>Správa elektro revizí</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--nav-text-strong, #1e293b)', letterSpacing: '-0.3px' }}>RevizeApp</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--nav-text-strong, #1e293b)', marginTop: 1 }}>Správa elektro revizí</div>
             </div>
           </div>
           {/* Mobilní zavírací tlačítko */}
@@ -179,7 +179,7 @@ export function Sidebar({ onClose }: SidebarProps) {
 
         {/* Notification bell */}
         <div style={{ padding: '0 8px 4px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <NotificationBell />
+          <NotificationBell strongText />
         </div>
 
         {/* User footer */}
@@ -211,7 +211,7 @@ export function Sidebar({ onClose }: SidebarProps) {
             style={{
               width: '100%', padding: '7px 12px', borderRadius: 8,
               background: 'var(--bg-surface)', border: '1px solid var(--border)',
-              color: 'var(--text-secondary)', fontSize: 12, fontWeight: 500,
+              color: 'var(--nav-text-strong, #1e293b)', fontSize: 13, fontWeight: 700,
               cursor: 'pointer', textAlign: 'center', transition: 'all .15s',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               marginBottom: 6,
@@ -228,7 +228,7 @@ export function Sidebar({ onClose }: SidebarProps) {
             style={{
               width: '100%', padding: '7px 12px', borderRadius: 8,
               background: 'var(--bg-surface)', border: '1px solid var(--border)',
-              color: 'var(--text-secondary)', fontSize: 12, fontWeight: 500,
+              color: 'var(--nav-text-strong, #1e293b)', fontSize: 13, fontWeight: 700,
               cursor: 'pointer', textAlign: 'center', transition: 'all .15s',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               marginBottom: 6,
@@ -242,7 +242,7 @@ export function Sidebar({ onClose }: SidebarProps) {
             style={{
               width: '100%', padding: '7px 12px', borderRadius: 8,
               background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
-              color: '#475569', fontSize: 12, fontWeight: 500,
+              color: 'var(--nav-text-strong, #1e293b)', fontSize: 13, fontWeight: 700,
               cursor: 'pointer', textAlign: 'center', transition: 'all .15s',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}
