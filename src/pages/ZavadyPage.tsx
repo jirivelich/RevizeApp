@@ -112,7 +112,7 @@ export function ZavadyPage() {
           <h1 className="text-sm font-bold text-[var(--text)]">Katalog závad</h1>
           <p className="text-xs text-[var(--text-secondary)]">Databáze typických závad s odkazy na normy a zákony</p>
         </div>
-        <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
+        <Button size="sm" onClick={() => { resetForm(); setIsModalOpen(true); }}>
           <span className="sm:hidden text-lg leading-none">+</span>
           <span className="hidden sm:inline">+ Nová závada</span>
         </Button>
@@ -268,10 +268,10 @@ export function ZavadyPage() {
         size="lg"
         footer={
           <>
-            <Button variant="secondary" onClick={() => { setIsModalOpen(false); setEditingZavada(null); }}>
+            <Button size="sm" variant="secondary" onClick={() => { setIsModalOpen(false); setEditingZavada(null); }}>
               Zrušit
             </Button>
-            <Button onClick={handleSubmit} disabled={!formData.popis}>
+            <Button size="sm" onClick={handleSubmit} disabled={!formData.popis}>
               {editingZavada ? 'Uložit' : 'Vytvořit'}
             </Button>
           </>

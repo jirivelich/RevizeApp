@@ -82,7 +82,7 @@ export function MistnostiPage() {
           <h1 className="text-lg font-bold text-[var(--text)]">Místnosti</h1>
           <p className="text-xs text-[var(--text-secondary)]">Evidence místností</p>
         </div>
-        <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
+        <Button size="sm" onClick={() => { resetForm(); setIsModalOpen(true); }}>
           <span className="sm:hidden text-lg leading-none">+</span>
           <span className="hidden sm:inline">+ Nová místnost</span>
         </Button>
@@ -133,10 +133,10 @@ export function MistnostiPage() {
         title={editingMistnost ? 'Upravit místnost' : 'Nová místnost'}
         footer={
           <>
-            <Button variant="secondary" onClick={() => { setIsModalOpen(false); setEditingMistnost(null); }}>
+            <Button size="sm" variant="secondary" onClick={() => { setIsModalOpen(false); setEditingMistnost(null); }}>
               Zrušit
             </Button>
-            <Button onClick={handleSubmit} disabled={!formData.revizeId}>
+            <Button size="sm" onClick={handleSubmit} disabled={!formData.revizeId}>
               {editingMistnost ? 'Uložit' : 'Vytvořit'}
             </Button>
           </>

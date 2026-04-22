@@ -344,8 +344,8 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
       size="lg"
       footer={
         <>
-          <Button variant="secondary" onClick={() => { setIsZavadaModalOpen(false); resetZavadaForm(); }}>Zrušit</Button>
-          <Button onClick={handleAddZavada}>{editingZavada ? 'Uložit změny' : 'Přidat'}</Button>
+          <Button size="sm" variant="secondary" onClick={() => { setIsZavadaModalOpen(false); resetZavadaForm(); }}>Zrušit</Button>
+          <Button size="sm" onClick={handleAddZavada}>{editingZavada ? 'Uložit změny' : 'Přidat'}</Button>
         </>
       }
     >

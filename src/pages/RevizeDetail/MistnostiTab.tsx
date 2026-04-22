@@ -287,7 +287,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
       footer={
         <>
           <Button variant="secondary" onClick={() => { setIsMistnostModalOpen(false); resetMistnostForm(); }}>Zrušit</Button>
-          <Button onClick={handleAddMistnost}>{editingMistnost ? 'Uložit změny' : 'Přidat'}</Button>
+            <Button size="sm" onClick={handleAddMistnost}>{editingMistnost ? 'Uložit změny' : 'Přidat'}</Button>
         </>
       }
     >
@@ -306,7 +306,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
       footer={
         <>
           <Button variant="secondary" onClick={() => { setIsZarizeniModalOpen(false); resetZarizeniForm(); }}>Zrušit</Button>
-          <Button onClick={handleAddZarizeni}>{editingZarizeni ? 'Uložit změny' : 'Přidat'}</Button>
+            <Button size="sm" onClick={handleAddZarizeni}>{editingZarizeni ? 'Uložit změny' : 'Přidat'}</Button>
         </>
       }
     >
