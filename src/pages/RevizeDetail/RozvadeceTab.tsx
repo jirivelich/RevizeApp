@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { Button, Card, Input, Select, Modal, BottomSheet } from '../../components/ui';
 import { TW } from './tw';
 import { okruhService, cranicService } from '../../services/database';
@@ -779,7 +779,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                   </thead>
                   <tbody>
                     {okruhy.sort((a, b) => a.cislo - b.cislo).map((o) => (
-                      <tr key={o.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.03)] group">
+                      <tr key={o.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#759d2f] hover:bg-[rgba(117,157,47,0.03)] group">
                         <td className="py-1.5 pr-2 text-xs font-medium text-[var(--text-secondary)]">{o.cislo}</td>
                         <td className="py-1.5 pr-2 text-xs font-medium text-[var(--text)]">{o.nazev}</td>
                         <td className="py-1.5 pr-2">
@@ -914,7 +914,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                         onDragOver={handleDragOver}
                         onDrop={() => handleDrop(o)}
                         onDragEnd={handleDragEnd}
-                        className={`border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.03)] cursor-grab active:cursor-grabbing ${
+                        className={`border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#759d2f] hover:bg-[rgba(117,157,47,0.03)] cursor-grab active:cursor-grabbing ${
                           draggedOkruh?.id === o.id ? 'opacity-50 bg-[var(--bg-accent)]' : ''
                         }`}
                       >
@@ -985,7 +985,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                   </thead>
                   <tbody>
                     {[...chranice].sort((a, b) => a.cislo - b.cislo).map((c) => (
-                      <tr key={c.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.03)] group">
+                      <tr key={c.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#759d2f] hover:bg-[rgba(117,157,47,0.03)] group">
                         <td className="py-1 px-2 text-xs font-medium text-[var(--text)]">{c.cislo}</td>
                         <td className="py-1 px-2 text-xs text-[var(--text)]">{c.nazev}</td>
                         <td className="py-1 px-2 text-xs">

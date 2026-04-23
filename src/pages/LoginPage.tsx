@@ -1,8 +1,8 @@
 ﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const RED = '#F00807';
-const RED_DARK = '#CC0706';
+const RED = '#92c43b';
+const RED_DARK = '#759d2f';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -47,7 +47,7 @@ export default function LoginPage() {
   };
   const getInputStyle = (name: string): React.CSSProperties =>
     focusedField === name
-      ? { ...baseInput, borderColor: 'rgba(240,8,7,0.5)', background: 'rgba(240,8,7,0.06)', boxShadow: '0 0 0 3px rgba(240,8,7,0.12)' }
+      ? { ...baseInput, borderColor: 'rgba(146,196,59,0.5)', background: 'rgba(146,196,59,0.06)', boxShadow: '0 0 0 3px rgba(146,196,59,0.12)' }
       : baseInput;
 
   const features = [
@@ -72,7 +72,7 @@ export default function LoginPage() {
           width: 36, height: 36,
           background: `linear-gradient(135deg, ${RED} 0%, ${RED_DARK} 100%)`,
           borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 0 18px rgba(240,8,7,0.45)',
+          boxShadow: '0 0 18px rgba(146,196,59,0.45)',
         }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -121,7 +121,7 @@ export default function LoginPage() {
           color: 'white', border: 'none', borderRadius: 10,
           fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
           opacity: loading ? 0.65 : 1,
-          boxShadow: '0 4px 20px rgba(240,8,7,0.38)',
+          boxShadow: '0 4px 20px rgba(146,196,59,0.38)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           transition: 'all .18s', fontFamily: 'inherit',
         }}>
@@ -165,26 +165,26 @@ export default function LoginPage() {
         {/* LEVÝ PANEL */}
         <div className="login-left" style={{
           width: '42%', minWidth: 340,
-          background: '#0F0F1A',
+          background: '#0d1306',
           flexDirection: 'column', justifyContent: 'space-between',
           padding: '48px 44px',
           position: 'relative', overflow: 'hidden',
         }}>
           <div style={{
             position: 'absolute', inset: 0, pointerEvents: 'none',
-            backgroundImage: 'linear-gradient(rgba(240,8,7,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(240,8,7,0.035) 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(rgba(146,196,59,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(146,196,59,0.035) 1px, transparent 1px)',
             backgroundSize: '40px 40px',
           }} />
           <div style={{
             position: 'absolute', top: '5%', right: '-10%',
             width: 380, height: 380, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(240,8,7,0.14) 0%, transparent 65%)',
+            background: 'radial-gradient(circle, rgba(146,196,59,0.14) 0%, transparent 65%)',
             pointerEvents: 'none',
           }} />
           <div style={{
             position: 'absolute', bottom: '-5%', left: '-8%',
             width: 300, height: 300, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(240,8,7,0.10) 0%, transparent 65%)',
+            background: 'radial-gradient(circle, rgba(146,196,59,0.10) 0%, transparent 65%)',
             pointerEvents: 'none',
           }} />
           <svg style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.22, width: '100%', height: '100%' }}
@@ -199,7 +199,7 @@ export default function LoginPage() {
               <circle cx="560" cy="860" r="4" fill={RED} />
               <circle cx="420" cy="740" r="3" fill={RED} opacity="0.5" />
               <circle cx="220" cy="820" r="4" fill={RED} />
-              <rect x="216" y="816" width="8" height="8" fill="rgba(240,8,7,0.15)" stroke={RED} />
+              <rect x="216" y="816" width="8" height="8" fill="rgba(146,196,59,0.15)" stroke={RED} />
               <polyline points="30,440 120,440 120,520" />
               <circle cx="30" cy="440" r="3" fill={RED} opacity="0.4" />
             </g>
@@ -212,7 +212,7 @@ export default function LoginPage() {
                 width: 42, height: 42,
                 background: `linear-gradient(135deg, ${RED} 0%, ${RED_DARK} 100%)`,
                 borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 0 24px rgba(240,8,7,0.50)',
+                boxShadow: '0 0 24px rgba(146,196,59,0.50)',
               }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -239,7 +239,7 @@ export default function LoginPage() {
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{
                     width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-                    background: 'rgba(240,8,7,0.10)', border: '1px solid rgba(240,8,7,0.20)',
+                    background: 'rgba(146,196,59,0.10)', border: '1px solid rgba(146,196,59,0.20)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={RED} strokeWidth="2">
@@ -263,13 +263,13 @@ export default function LoginPage() {
 
         {/* PRAVÝ PANEL */}
         <div className="login-right" style={{
-          flex: 1, background: '#141420',
+          flex: 1, background: '#141b08',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: '48px 40px', position: 'relative',
         }}>
           <div style={{
             position: 'absolute', inset: 0, pointerEvents: 'none',
-            background: 'radial-gradient(ellipse at 60% 40%, rgba(240,8,7,0.07) 0%, transparent 60%)',
+            background: 'radial-gradient(ellipse at 60% 40%, rgba(146,196,59,0.07) 0%, transparent 60%)',
           }} />
           <div className="login-card-wrap" style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 420 }}>
             {formCard}

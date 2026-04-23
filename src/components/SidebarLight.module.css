@@ -1,22 +1,22 @@
-.sidebar-light {
+﻿.sidebar-light {
   background: #f4f6fb;
   color: #222;
   border-right: 1px solid #e2e8f0;
 }
 .sidebar-light .active {
-  background: rgba(240,8,7,0.10);
-  color: #F00807;
+  background: rgba(146,196,59,0.10);
+  color: #92c43b;
 }
 .sidebar-light .sidebar-header {
-  background: rgba(240,8,7,0.08);
-  color: #F00807;
+  background: rgba(146,196,59,0.08);
+  color: #92c43b;
 }
 .sidebar-light .sidebar-link {
   color: #444;
 }
 .sidebar-light .sidebar-link:hover {
-  background: rgba(240,8,7,0.06);
-  color: #F00807;
+  background: rgba(146,196,59,0.06);
+  color: #92c43b;
 }
 .sidebar-light .sidebar-footer {
   border-top: 1px solid #e2e8f0;

@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+﻿import { Link, useLocation, useNavigate } from 'react-router-dom';
 import type { CSSProperties } from 'react';
 import React from 'react';
 import { logoutApi } from '../services/api';
@@ -44,7 +44,7 @@ interface SidebarProps {
 const sidebarStyle: CSSProperties = {
   width: 224,
   minHeight: '100vh',
-  background: 'linear-gradient(180deg, #0D0D1A 0%, #09090f 100%)',
+  background: 'linear-gradient(180deg, #0e1307 0%, #090e04 100%)',
   borderRight: '1px solid rgba(226,225,233,0.06)',
   display: 'flex',
   flexDirection: 'column',
@@ -86,10 +86,10 @@ export function Sidebar({ onClose }: SidebarProps) {
       display: 'flex', alignItems: 'center', gap: 9,
       padding: '8px 10px', borderRadius: 8,
       fontSize: 13, fontWeight: 500,
-      background: 'rgba(240,8,7,0.16)',
+      background: 'rgba(146,196,59,0.16)',
       color: 'var(--nav-text-active)',
-      border: '1px solid rgba(240,8,7,0.28)',
-      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 0 14px rgba(240,8,7,0.14)',
+      border: '1px solid rgba(146,196,59,0.28)',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 0 14px rgba(146,196,59,0.14)',
       textDecoration: 'none',
       position: 'relative',
       marginBottom: 2,
@@ -142,9 +142,9 @@ export function Sidebar({ onClose }: SidebarProps) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
               width: 34, height: 34,
-              background: 'linear-gradient(135deg, #F00807, #CC0706)',
+              background: 'linear-gradient(135deg, #92c43b, #759d2f)',
               borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 0 24px rgba(240,8,7,0.60), 0 0 8px rgba(240,8,7,0.35)', flexShrink: 0,
+              boxShadow: '0 0 24px rgba(146,196,59,0.60), 0 0 8px rgba(146,196,59,0.35)', flexShrink: 0,
             }}>
               <svg width="18" height="18" fill="none" stroke="white" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -195,7 +195,7 @@ export function Sidebar({ onClose }: SidebarProps) {
             }}>
               <div style={{
                 width: 28, height: 28, borderRadius: 8,
-                background: 'linear-gradient(135deg, #F00807, #FF6B6B)',
+                background: 'linear-gradient(135deg, #92c43b, #bedc89)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 11, fontWeight: 700, color: 'white', flexShrink: 0,
               }}>

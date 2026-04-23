@@ -1,4 +1,4 @@
-/* ========================================
+﻿/* ========================================
    NÁHLED SHELL – toolbar + scroll oblast
    POZOR: tento soubor NESMÍ obsahovat .report-* ani .pagedjs_* selektory.
    runPagedjs() sbírá CSS pravidla podle těchto prefixů – pokud by je našel zde,
@@ -66,7 +66,7 @@
 }
 
 .nahled-btn--print {
-  background: #F00807;
+  background: #92c43b;
   color: #fff;
 }
 

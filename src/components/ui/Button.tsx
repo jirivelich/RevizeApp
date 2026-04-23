@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+﻿import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning';
@@ -8,7 +8,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses = {
-  primary: 'bg-gradient-to-br from-[#F00807] to-[#C00606] hover:from-[#CC0706] hover:to-[#A00505] text-white shadow-[0_2px_10px_rgba(240,8,7,0.30)] hover:shadow-[0_4px_16px_rgba(240,8,7,0.45)]',
+  primary: 'bg-gradient-to-br from-[#92c43b] to-[#759d2f] hover:from-[#759d2f] hover:to-[#587623] text-white shadow-[0_2px_10px_rgba(146,196,59,0.30)] hover:shadow-[0_4px_16px_rgba(146,196,59,0.45)]',
   secondary: 'bg-[var(--glass-bg)] backdrop-blur-sm hover:bg-[var(--bg-hover-strong)] text-[var(--text)] border border-[var(--glass-border)] hover:border-[var(--glass-border-hover)]',
   success: 'bg-emerald-500/[0.15] hover:bg-emerald-500/[0.22] text-emerald-400 border border-emerald-500/[0.25] hover:shadow-[0_2px_10px_rgba(34,197,94,0.20)]',
   danger: 'bg-red-500/[0.12] hover:bg-red-500/[0.20] text-red-400 border border-red-500/[0.25] hover:shadow-[0_2px_10px_rgba(248,113,113,0.20)]',

@@ -398,9 +398,9 @@ export function RevizePage() {
               </thead>
               <tbody>
                 {paginatedRevize.map((r) => (
-                  <tr key={r.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.07)] group">
+                  <tr key={r.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#759d2f] hover:bg-[rgba(117,157,47,0.07)] group">
                     <td className="py-2 px-3">
-                      <Link to={`/revize/${r.id}`} className="text-xs text-[var(--text)] group-hover:text-[#C00606] font-medium hover:underline transition-colors">
+                      <Link to={`/revize/${r.id}`} className="text-xs text-[var(--text)] group-hover:text-[#759d2f] font-medium hover:underline transition-colors">
                         {r.cisloRevize}
                       </Link>
                     </td>
@@ -493,9 +493,9 @@ export function RevizePage() {
           <div className={`${viewMode === 'grid' ? 'hidden md:block' : 'hidden'} px-6 pb-4 flex-1 min-h-0 overflow-auto`}>
             <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 py-2">
               {paginatedRevize.map((r) => (
-                <div key={r.id} className="bg-[var(--glass-bg)] backdrop-blur-sm rounded-xl border border-[var(--glass-border)] flex flex-col relative overflow-hidden hover:border-[rgba(240,8,7,0.35)] transition-all duration-200 group hover:shadow-[0_4px_20px_rgba(240,8,7,0.12)]">
+                <div key={r.id} className="bg-[var(--glass-bg)] backdrop-blur-sm rounded-xl border border-[var(--glass-border)] flex flex-col relative overflow-hidden hover:border-[rgba(146,196,59,0.35)] transition-all duration-200 group hover:shadow-[0_4px_20px_rgba(146,196,59,0.12)]">
                   <Link to={`/revize/${r.id}`} className="flex-1 p-4 block">
-                    <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#C00606] opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#759d2f] opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">

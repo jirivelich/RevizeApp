@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card, Input, Select, Modal } from '../components/ui';
@@ -286,7 +286,7 @@ export function RozvadecDetailPage() {
               </thead>
               <tbody>
                 {[...okruhy].sort((a, b) => a.cislo - b.cislo).map((o) => (
-                  <tr key={o.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.03)] group">
+                  <tr key={o.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#759d2f] hover:bg-[rgba(117,157,47,0.03)] group">
                     <td className="py-2 px-3 font-medium text-[var(--text)]">{o.cislo}</td>
                     <td className="py-2 px-3 text-[var(--text)]">{o.nazev}</td>
                     <td className="py-2 px-3">
@@ -439,7 +439,7 @@ export function RozvadecDetailPage() {
               </thead>
               <tbody>
                 {[...chranice].sort((a, b) => a.cislo - b.cislo).map((c) => (
-                  <tr key={c.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.03)] group">
+                  <tr key={c.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#759d2f] hover:bg-[rgba(117,157,47,0.03)] group">
                     <td className="py-2 px-3 font-medium text-[var(--text)]">{c.cislo}</td>
                     <td className="py-2 px-3 text-[var(--text)]">{c.nazev}</td>
                     <td className="py-2 px-3">

@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from 'react-router-dom';
+﻿import { Outlet, useNavigate } from 'react-router-dom';
 import { useState, useCallback } from 'react';
 import { Sidebar } from './Sidebar';
 import { AIChatAssistant } from './AIChatAssistant';
@@ -39,7 +39,7 @@ export function Layout() {
         backgroundColor: 'var(--background)',
         backgroundImage: [
           'radial-gradient(ellipse 70% 55% at 8% 0%, rgba(99,102,241,0.18) 0%, transparent 50%)',
-          'radial-gradient(ellipse 60% 50% at 92% 95%, rgba(240,8,7,0.12) 0%, transparent 50%)',
+          'radial-gradient(ellipse 60% 50% at 92% 95%, rgba(146,196,59,0.12) 0%, transparent 50%)',
           'radial-gradient(ellipse 50% 40% at 50% 50%, rgba(99,102,241,0.04) 0%, transparent 70%)',
         ].join(', ')
       }}>

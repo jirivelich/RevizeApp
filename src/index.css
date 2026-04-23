@@ -1,16 +1,16 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --primary: #F00807;
-  --primary-hover: #CC0706;
+  --primary: #92c43b;
+  --primary-hover: #759d2f;
   --secondary: #6366f1;
   --secondary-hover: #4f46e5;
   --success: #22c55e;
   --warning: #f59e0b;
   --danger: #f97316;
-  --background: #141420;
-  --surface: #1E1E2E;
+  --background: #141b08;
+  --surface: #1a2810;
   --text: #E2E1E9;
   --text-muted: #7E7E96;
   --border: rgba(226,225,233,0.07);
@@ -20,31 +20,31 @@
   --bg-input: rgba(226,225,233,0.06);
   --bg-hover: rgba(226,225,233,0.07);
   --bg-hover-strong: rgba(226,225,233,0.12);
-  --bg-accent: rgba(240,8,7,0.10);
-  --bg-accent-badge: rgba(240,8,7,0.15);
+  --bg-accent: rgba(146,196,59,0.10);
+  --bg-accent-badge: rgba(146,196,59,0.15);
   --bg-secondary-accent: rgba(99,102,241,0.10);
   --border-input: rgba(226,225,233,0.10);
   --border-subtle: rgba(226,225,233,0.05);
   --border-medium: rgba(226,225,233,0.09);
   --border-strong: rgba(226,225,233,0.14);
   --text-secondary: #A4ABBF;
-  --focus-ring-color: rgba(240,8,7,0.4);
-  --bg-sidebar: #0F0F1A;
-  --active-bg: rgba(240,8,7,0.15);
-  --active-border: rgba(240,8,7,0.30);
-  --active-glow: rgba(240,8,7,0.5);
+  --focus-ring-color: rgba(146,196,59,0.4);
+  --bg-sidebar: #0d1306;
+  --active-bg: rgba(146,196,59,0.15);
+  --active-border: rgba(146,196,59,0.30);
+  --active-glow: rgba(146,196,59,0.5);
   --nav-text: #7E7E96;
-  --nav-text-active: #FF8080;
+  --nav-text-active: #bedc89;
   --bg-faint: rgba(226,225,233,0.02);
   --checkbox-border: rgba(226,225,233,0.25);
-  --section-header-bg: #1E1E2E;
+  --section-header-bg: #1a2810;
 
   /* === Glassmorphism tokeny === */
-  --glass-bg: rgba(40,40,62,0.72);
-  --glass-bg-strong: rgba(16,16,30,0.90);
+  --glass-bg: rgba(26,40,16,0.72);
+  --glass-bg-strong: rgba(13,19,8,0.90);
   --glass-border: rgba(226,225,233,0.16);
   --glass-border-hover: rgba(226,225,233,0.28);
-  --glow-primary: 0 0 24px rgba(240,8,7,0.28);
+  --glow-primary: 0 0 24px rgba(146,196,59,0.28);
   --glow-secondary: 0 0 24px rgba(99,102,241,0.28);
   --shadow-elevated: 0 4px 6px rgba(0,0,0,0.3), 0 10px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(226,225,233,0.06);
 }
@@ -126,7 +126,7 @@ button, a, [role="button"] {
   position: absolute;
   width: 12px;
   height: 12px;
-  background: #F00807;
+  background: #92c43b;
   border: 2px solid white;
   border-radius: 50%;
   z-index: 50;
@@ -134,7 +134,7 @@ button, a, [role="button"] {
 }
 
 .react-resizable-handle:hover {
-  background: #CC0706;
+  background: #759d2f;
   transform: scale(1.2);
 }
 
