@@ -371,7 +371,7 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
       <div className="grid grid-cols-[20px_repeat(7,1fr)] border-b border-[var(--border-subtle)]">
         <div className="py-1 text-center text-[8px] font-semibold uppercase tracking-wider text-[var(--text-muted)] opacity-50">Tý</div>
         {DAY_HEADERS.map((d, i) => (
-          <div key={d} className={`py-1 text-center text-[9px] font-semibold uppercase tracking-wider ${i >= 5 ? 'text-slate-500' : 'text-[var(--text-secondary)]'}`}>{d}</div>
+          <div key={d} className={`py-1 text-center text-[9px] font-semibold uppercase tracking-wider ${i >= 5 ? 'text-[var(--text-muted)]' : 'text-[var(--text-secondary)]'}`}>{d}</div>
         ))}
       </div>
       {/* Cells */}
@@ -410,13 +410,13 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
                 >
                   <p className={`text-center text-[11px] font-medium leading-none ${
                     isToday
-                      ? 'flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white text-[10px]'
-                      : isWeekend ? 'text-slate-500' : 'text-[var(--text-secondary)]'
+                      ? 'flex h-5 w-5 items-center justify-center rounded-full bg-[var(--primary)] text-white text-[10px]'
+                      : isWeekend ? 'text-[var(--text-muted)]' : 'text-[var(--text-secondary)]'
                   }`}>{day.getDate()}</p>
                   {hasEvents && (
                     <div className="mt-1 flex items-center justify-center gap-0.5 flex-wrap">
                       {dayZ.slice(0, 3).map((z) => {
-                        const color = z.stav === 'dokončeno' ? 'bg-slate-400' : z.priorita === 'vysoká' ? 'bg-red-500' : z.priorita === 'střední' ? 'bg-amber-400' : 'bg-blue-400';
+                        const color = z.stav === 'dokončeno' ? 'bg-[var(--text-muted)]' : z.priorita === 'vysoká' ? 'bg-red-500' : z.priorita === 'střední' ? 'bg-amber-400' : 'bg-[var(--primary)]';
                         return (
                           <span
                             key={z.id}
@@ -536,7 +536,7 @@ export function Dashboard() {
       </div>
 
       {/* ═══ Hlavní grid ═══ */}
-      <div className="grid grid-cols-3 gap-4 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
         <SectionCard
           title="Rozpracované revize"
           icon=""
@@ -562,12 +562,12 @@ export function Dashboard() {
         </SectionCard>
 
         {/* Kalendář — pravý sloupec přes oba řádky */}
-        <div className="row-span-2">
+        <div className="lg:row-span-2">
           <MonthCalendar zakazky={zakazky} />
         </div>
 
         {/* Stat karty — levý blok col-span-2 */}
-        <div className="col-span-2 grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+        <div className="lg:col-span-2 grid grid-cols-2 lg:grid-cols-4 gap-2.5">
           <StatCard
             title="Celkem revizí"
             value={stats.celkemRevizi}
