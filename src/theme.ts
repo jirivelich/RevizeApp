@@ -38,7 +38,7 @@ export const themes: Record<ThemeName, ThemeVars> = {
     '--glass-border-hover':  'rgba(226,225,233,0.28)',
     '--glow-primary':        '0 0 24px rgba(146,196,59,0.28)',
     '--glow-secondary':      '0 0 24px rgba(99,102,241,0.28)',
-    '--shadow-elevated':     '0 4px 6px rgba(0,0,0,0.3), 0 10px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(226,225,233,0.06)',
+    '--shadow-elevated':     '0 2px 4px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.45), 0 20px 48px rgba(0,0,0,0.30), inset 0 1px 0 rgba(226,225,233,0.06)',
   },
   light: {
     '--background':          '#f4f9ec',
@@ -78,6 +78,6 @@ export const themes: Record<ThemeName, ThemeVars> = {
     '--glass-border-hover':  'rgba(44,44,62,0.22)',
     '--glow-primary':        '0 0 20px rgba(117,157,47,0.18)',
     '--glow-secondary':      '0 0 20px rgba(79,70,229,0.18)',
-    '--shadow-elevated':     '0 8px 32px rgba(44,44,62,0.15), 0 2px 8px rgba(44,44,62,0.08)',
+    '--shadow-elevated':     '0 1px 3px rgba(44,44,62,0.10), 0 4px 12px rgba(44,44,62,0.14), 0 12px 32px rgba(44,44,62,0.12)',
   },
 }
