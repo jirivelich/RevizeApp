@@ -71,25 +71,6 @@ function ZakazkaRow({ z }: { z: Zakazka }) {
   );
 }
 
-function PristrojRow({ p }: { p: MericiPristroj }) {
-  const expired = new Date(p.platnostKalibrace) < new Date();
-  const days = daysUntil(p.platnostKalibrace);
-  return (
-    <Link to="/pristroje" className="group flex items-center gap-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-faint)] px-2.5 py-2 transition-all hover:border-[var(--border-strong)]">
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-medium text-[var(--text)] group-hover:text-slate-100 transition-colors">{p.nazev}</p>
-        <p className="text-[11px] text-[var(--text-secondary)]">{p.vyrobce} {p.model} · {p.vyrobniCislo}</p>
-      </div>
-      <div className="text-right shrink-0">
-        <span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium ${expired ? 'bg-red-500/[0.15] text-red-300' : 'bg-[var(--bg-hover)] text-[var(--text-secondary)]'}`}>
-          {expired ? `${Math.abs(days)}d po termu00ednu` : `za ${days}d`}
-        </span>
-        <p className="text-[10px] text-[var(--text-secondary)]">{formatDate(p.platnostKalibrace)}</p>
-      </div>
-    </Link>
-  );
-}
-
 function SectionCard({ title, icon: _icon, count, viewAllLink, viewAllLabel, empty, emptyLink, emptyLabel, children }: {
   title: string; icon: string; count?: number;
   viewAllLink: string; viewAllLabel?: string;
@@ -186,76 +167,6 @@ function RevizeBarChart({ revize }: { revize: Revize[] }) {
   );
 }
 
-/* ═══ Today Panel ═══ */
-
-const QUICK_ACTIONS = [
-  { label: 'Nová revize', to: '/revize', icon: '📋' },
-  { label: 'Naplánovat zakázku', to: '/planovani', icon: '📅' },
-  { label: 'Přidat firmu', to: '/firmy', icon: '🏢' },
-  { label: 'Přístroje', to: '/pristroje', icon: '🔧' },
-] as const;
-
-function TodayPanel({ zakazky }: { zakazky: Zakazka[] }) {
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const todayZakazky = zakazky.filter(
-    z => z.datumPlanovany === todayStr && (z.stav === 'plánováno' || z.stav === 'v realizaci')
-  ).sort((a, b) => (a.casPlanovany ?? '99:99').localeCompare(b.casPlanovany ?? '99:99'));
-
-  const prioritaBar = {
-    'vysoká': 'border-l-red-500',
-    'střední': 'border-l-amber-400',
-    'nizká': 'border-l-blue-400',
-  } as const;
-
-  return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] shadow-[var(--shadow-elevated)]">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-subtle)]">
-        <h2 className="text-[13px] font-semibold text-[var(--text)]">Dnes</h2>
-        <Link to="/planovani" className="text-[11px] font-medium text-[var(--text-secondary)] hover:text-[var(--text)] transition-colors">
-          Vše →
-        </Link>
-      </div>
-      {todayZakazky.length > 0 ? (
-        <div className="divide-y divide-white/[0.05]">
-          {todayZakazky.map(z => (
-            <Link
-              key={z.id}
-              to="/planovani"
-              className={`group flex items-center gap-3 px-4 py-2.5 border-l-[3px] ${prioritaBar[z.priorita] ?? 'border-l-slate-600'} hover:bg-[var(--bg-input)] transition-colors`}
-            >
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-medium text-[var(--text)] group-hover:text-slate-100">{z.nazev}</p>
-                <p className="text-[11px] text-[var(--text-secondary)]">{z.klient}</p>
-              </div>
-              {z.casPlanovany && (
-                <span className="shrink-0 text-[11px] font-medium text-[var(--text-secondary)] bg-[var(--bg-hover)] rounded px-2 py-0.5">
-                  {z.casPlanovany}
-                </span>
-              )}
-              {z.stav === 'v realizaci' && (
-                <span className="shrink-0 text-[10px] font-medium text-amber-300 bg-amber-500/[0.15] rounded px-2 py-0.5">provádí se</span>
-              )}
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <div className="p-3 grid grid-cols-2 gap-2">
-          {QUICK_ACTIONS.map(a => (
-            <Link
-              key={a.to}
-              to={a.to}
-              className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2.5 text-[12px] font-medium text-[var(--text)] hover:bg-[var(--bg-input)] hover:border-[var(--border-strong)] transition-all"
-            >
-              <span className="text-base leading-none">{a.icon}</span>
-              {a.label}
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 /* ═══ Weather ═══ */
 
 const WEATHER_URL =
@@ -303,49 +214,19 @@ function useWeather() {
   });
 }
 
-const CZ_DAYS = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
-
-function WeatherWidget() {
-  const { data, isError, isLoading } = useWeather();
-
-  if (isError || (!isLoading && !data)) return null;
-
+function WeatherInline() {
+  const { data, isLoading } = useWeather();
+  const today = new Date().toISOString().slice(0, 10);
+  const day = data?.find(d => d.date === today);
+  if (isLoading) return <span className="text-[12px] text-[var(--text-muted)] animate-pulse">načítám…</span>;
+  if (!day) return null;
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] shadow-[var(--shadow-elevated)]">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-subtle)]">
-        <h2 className="text-[13px] font-semibold text-[var(--text)]">Počasí — Tachov</h2>
-        <span className="text-[10px] text-[var(--text-muted)]">Open-Meteo</span>
-      </div>
-      <div className="grid grid-cols-5 divide-x divide-white/[0.05]">
-        {isLoading
-          ? Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex flex-col items-center gap-1 py-3 px-2">
-                <div className="h-3 w-6 rounded bg-[var(--bg-hover)] animate-pulse" />
-                <div className="h-6 w-6 rounded bg-[var(--bg-hover)] animate-pulse" />
-                <div className="h-3 w-10 rounded bg-[var(--bg-hover)] animate-pulse" />
-                <div className="h-3 w-8 rounded bg-[var(--bg-hover)] animate-pulse" />
-              </div>
-            ))
-          : data!.map((day) => {
-              const d = new Date(day.date);
-              const dayName = CZ_DAYS[d.getDay()];
-              const isToday = day.date === new Date().toISOString().slice(0, 10);
-              return (
-                <div key={day.date} className={`flex flex-col items-center gap-0.5 py-3 px-2 ${isToday ? 'bg-[var(--bg-surface)]' : ''}`}>
-                  <p className={`text-[11px] font-semibold ${isToday ? 'text-[var(--text)]' : 'text-[var(--text-secondary)]'}`}>
-                    {isToday ? 'Dnes' : dayName}
-                  </p>
-                  <span className="text-xl leading-none">{wmoToEmoji(day.code)}</span>
-                  <p className="text-[12px] font-medium text-[var(--text)]">
-                    {day.max}° <span className="text-[var(--text-muted)] font-normal">{day.min}°</span>
-                  </p>
-                  {day.precip > 0 && (
-                    <p className="text-[10px] text-blue-500">💧 {day.precip}%</p>
-                  )}
-                </div>
-              );
-            })}
-      </div>
+    <div className="flex items-center gap-2">
+      <span className="text-xl leading-none">{wmoToEmoji(day.code)}</span>
+      <span className="text-[14px] font-semibold text-[var(--text)]">{day.max}°</span>
+      <span className="text-[13px] text-[var(--text-muted)]">{day.min}°</span>
+      {day.precip > 0 && <span className="text-[11px] text-blue-400">💧{day.precip}%</span>}
+      <span className="text-[11px] text-[var(--text-muted)]">Tachov</span>
     </div>
   );
 }
@@ -586,24 +467,21 @@ export function Dashboard() {
 
   const isLoading = loadingRevize || loadingPristroje || loadingZakazky;
 
-  const { stats, recentRevize, upcomingZakazky, expiringPristroje } = useMemo(() => {
-    const today = new Date();
+  const { stats, recentRevize, upcomingZakazky } = useMemo(() => {
+    const dokonceno = revize.filter(r => r.stav === 'dokončeno' || r.stav === 'schváleno').length;
     const in30Days = new Date();
-    in30Days.setDate(today.getDate() + 30);
-
-    const expiringOrExpired = pristroje.filter((p: MericiPristroj) => {
+    in30Days.setDate(in30Days.getDate() + 30);
+    const pristrojeKRekalibraci = pristroje.filter((p: MericiPristroj) => {
       if (!p.platnostKalibrace) return false;
       return new Date(p.platnostKalibrace) <= in30Days;
-    });
-
-    const dokonceno = revize.filter(r => r.stav === 'dokončeno' || r.stav === 'schváleno').length;
+    }).length;
 
     return {
       stats: {
         celkemRevizi: revize.length,
         dokonceno,
         rozpracovano: revize.filter(r => r.stav === 'rozpracováno').length,
-        pristrojeKRekalibraci: expiringOrExpired.length,
+        pristrojeKRekalibraci,
         planovaneZakazky: zakazky.filter(z => z.stav === 'plánováno').length,
       },
       recentRevize: revize
@@ -613,9 +491,6 @@ export function Dashboard() {
       upcomingZakazky: zakazky
         .filter(z => z.stav === 'plánováno')
         .sort((a, b) => new Date(a.datumPlanovany).getTime() - new Date(b.datumPlanovany).getTime())
-        .slice(0, 5),
-      expiringPristroje: expiringOrExpired
-        .sort((a, b) => new Date(a.platnostKalibrace).getTime() - new Date(b.platnostKalibrace).getTime())
         .slice(0, 5),
     };
   }, [revize, pristroje, zakazky]);
@@ -643,21 +518,54 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* ═══ Header ═══ */}
-      <div className="flex items-center justify-between">
-        <div>
+      {/* ═══ Header + Počasí inline ═══ */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1.5">
           <h1 className="text-lg font-bold text-[var(--text)]">{greeting}</h1>
           <p className="text-xs text-[var(--text-secondary)] capitalize">{todayLabel}</p>
+          <WeatherInline />
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5 shrink-0 mt-1">
           <Link to="/revize" className="inline-flex items-center rounded border border-[var(--border-strong)] bg-[var(--bg-surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--text)] hover:bg-white/[0.09] transition-colors">
             + Revize
           </Link>
-          <Link to="/planovani" className="inline-flex items-center rounded border border-blue-600 bg-blue-600 px-2.5 py-1 text-[11px] font-medium text-white hover:bg-blue-500 transition-colors">
+          <Link to="/planovani" className="inline-flex items-center rounded border border-[var(--primary)] bg-[var(--primary)] px-2.5 py-1 text-[11px] font-medium text-white hover:opacity-90 transition-opacity">
             + Zakázka
           </Link>
         </div>
       </div>
+
+      {/* ═══ Revize + Zakázky + Kalendář ═══ */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+        <SectionCard
+          title="Rozpracované revize"
+          icon=""
+          count={stats.rozpracovano}
+          viewAllLink="/revize"
+          empty="Zatím nemáte žádné revize."
+          emptyLink="/revize"
+          emptyLabel="Vytvořit první revizi →"
+        >
+          {recentRevize.map(r => <RevizeRow key={r.id} r={r} />)}
+        </SectionCard>
+
+        <SectionCard
+          title="Nadcházející zakázky"
+          icon=""
+          count={stats.planovaneZakazky}
+          viewAllLink="/planovani"
+          empty="Žádné plánované zakázky."
+          emptyLink="/planovani"
+          emptyLabel="Naplánovat zakázku →"
+        >
+          {upcomingZakazky.map(z => <ZakazkaRow key={z.id} z={z} />)}
+        </SectionCard>
+
+        <MonthCalendar zakazky={zakazky} />
+      </div>
+
+      {/* ═══ Graf revizí ═══ */}
+      <RevizeBarChart revize={revize} />
 
       {/* ═══ Stat karty ═══ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
@@ -690,61 +598,6 @@ export function Dashboard() {
           link="/planovani"
         />
       </div>
-
-      {/* ═══ Počasí + Dnes + Kalendář ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-        <div className="flex flex-col gap-4">
-          <WeatherWidget />
-          <TodayPanel zakazky={zakazky} />
-        </div>
-        <MonthCalendar zakazky={zakazky} />
-      </div>
-
-      {/* ═══ Graf revizí ═══ */}
-      <RevizeBarChart revize={revize} />
-
-      {/* ═══ Sekce: revize + zakázky ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <SectionCard
-          title="Rozpracované revize"
-          icon=""
-          count={stats.rozpracovano}
-          viewAllLink="/revize"
-          empty="Zatím nemáte žádné revize."
-          emptyLink="/revize"
-          emptyLabel="Vytvořit první revizi →"
-        >
-          {recentRevize.map(r => <RevizeRow key={r.id} r={r} />)}
-        </SectionCard>
-
-        <SectionCard
-          title="Nadcházející zakázky"
-          icon=""
-          count={stats.planovaneZakazky}
-          viewAllLink="/planovani"
-          empty="Žádné plánované zakázky."
-          emptyLink="/planovani"
-          emptyLabel="Naplánovat zakázku →"
-        >
-          {upcomingZakazky.map(z => <ZakazkaRow key={z.id} z={z} />)}
-        </SectionCard>
-      </div>
-
-      {/* ═══ Přístroje k rekalibraci ═══ */}
-      {expiringPristroje.length > 0 && (
-        <SectionCard
-          title="Přístroje k rekalibraci"
-          icon=""
-          count={expiringPristroje.length}
-          viewAllLink="/pristroje"
-          viewAllLabel="Všechny přístroje →"
-          empty=""
-          emptyLink="/pristroje"
-          emptyLabel=""
-        >
-          {expiringPristroje.map(p => <PristrojRow key={p.id} p={p} />)}
-        </SectionCard>
-      )}
     </div>
   );
 }
