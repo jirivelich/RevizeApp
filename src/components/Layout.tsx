@@ -38,18 +38,17 @@ export function Layout() {
       <main className="lg:ml-56 h-screen flex flex-col" style={{
         backgroundColor: 'var(--background)',
         backgroundImage: [
-          'radial-gradient(ellipse 70% 55% at 8% 0%, rgba(99,102,241,0.18) 0%, transparent 50%)',
-          'radial-gradient(ellipse 60% 50% at 92% 95%, rgba(146,196,59,0.12) 0%, transparent 50%)',
-          'radial-gradient(ellipse 50% 40% at 50% 50%, rgba(99,102,241,0.04) 0%, transparent 70%)',
+          'radial-gradient(ellipse 70% 55% at 8% 0%, rgba(146,196,59,0.10) 0%, transparent 50%)',
+          'radial-gradient(ellipse 60% 50% at 92% 95%, rgba(146,196,59,0.08) 0%, transparent 50%)',
         ].join(', ')
       }}>
         {/* Mobilní header s menu tlačítkem */}
-        <div className="lg:hidden px-4 py-3 flex items-center justify-between sticky top-0 z-30 flex-shrink-0" style={{ background: 'rgba(13,13,26,0.85)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(226,225,233,0.06)' }}>
-          <h1 className="text-lg font-bold" style={{ color: '#f1f5f9' }}>JV Revize</h1>
+        <div className="lg:hidden px-4 py-3 flex items-center justify-between sticky top-0 z-30 flex-shrink-0" style={{ background: 'var(--glass-bg-strong)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid var(--border)' }}>
+          <h1 className="text-lg font-bold" style={{ color: 'var(--text)' }}>JV Revize</h1>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="p-2 rounded-lg"
-            style={{ color: '#475569' }}
+            style={{ color: 'var(--text-muted)' }}
             aria-label="Toggle menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

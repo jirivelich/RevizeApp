@@ -44,8 +44,8 @@ interface SidebarProps {
 const sidebarStyle: CSSProperties = {
   width: 224,
   minHeight: '100vh',
-  background: 'linear-gradient(180deg, #0e1307 0%, #090e04 100%)',
-  borderRight: '1px solid rgba(226,225,233,0.06)',
+  background: 'var(--bg-sidebar)',
+  borderRight: '1px solid var(--border)',
   display: 'flex',
   flexDirection: 'column',
   position: 'relative',
@@ -57,7 +57,7 @@ const sectionLabelStyle: CSSProperties = {
   fontWeight: 600,
   letterSpacing: '0.1em',
   textTransform: 'uppercase',
-  color: 'rgba(164,171,191,0.55)',
+  color: 'var(--text-muted)',
   padding: '10px 10px 4px',
   marginTop: 4,
 };
@@ -125,20 +125,20 @@ export function Sidebar({ onClose }: SidebarProps) {
     <>
       <style>{`
         .sidebar-nav-item:hover {
-          background: rgba(226,225,233,0.06) !important;
-          border-color: rgba(226,225,233,0.08) !important;
+          background: var(--bg-hover) !important;
+          border-color: var(--border-medium) !important;
           color: var(--text) !important;
           transition: all 0.15s ease;
         }
         .sidebar-logout:hover {
-          background: rgba(226,225,233,0.08) !important;
-          border-color: rgba(226,225,233,0.14) !important;
+          background: var(--bg-hover-strong) !important;
+          border-color: var(--border-strong) !important;
           color: var(--text) !important;
         }
       `}</style>
       <aside style={sidebarStyle}>
         {/* Header */}
-        <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: '16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
               width: 34, height: 34,
@@ -151,8 +151,8 @@ export function Sidebar({ onClose }: SidebarProps) {
               </svg>
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.3px' }}>JV Revize</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: '#cbd5e1', marginTop: 1 }}>Správa elektro revizí</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.3px' }}>JV Revize</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', marginTop: 1 }}>Správa elektro revizí</div>
             </div>
           </div>
           {/* Mobilní zavírací tlačítko */}
@@ -180,17 +180,17 @@ export function Sidebar({ onClose }: SidebarProps) {
         </nav>
 
         {/* Notification bell */}
-        <div style={{ padding: '0 8px 4px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ padding: '0 8px 4px', borderTop: '1px solid var(--border)' }}>
           <NotificationBell strongText />
         </div>
 
         {/* User footer */}
-        <div style={{ padding: '10px 12px 12px', borderTop: '1px solid rgba(226,225,233,0.05)', background: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(12px)' }}>
+        <div style={{ padding: '10px 12px 12px', borderTop: '1px solid var(--border)', background: 'var(--bg-faint)', backdropFilter: 'blur(12px)' }}>
           {user && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 9,
               padding: '8px 10px', borderRadius: 8,
-              background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)',
+              background: 'var(--bg-faint)', border: '1px solid var(--border)',
               marginBottom: 8,
             }}>
               <div style={{
@@ -202,8 +202,8 @@ export function Sidebar({ onClose }: SidebarProps) {
                 {initials}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.username}</div>
-                <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.username}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
               </div>
             </div>
           )}
@@ -212,8 +212,8 @@ export function Sidebar({ onClose }: SidebarProps) {
             className="sidebar-logout"
             style={{
               width: '100%', padding: '7px 12px', borderRadius: 8,
-              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-              color: '#f1f5f9', fontSize: 13, fontWeight: 600,
+              background: 'var(--bg-hover)', border: '1px solid var(--border-input)',
+              color: 'var(--text)', fontSize: 13, fontWeight: 600,
               cursor: 'pointer', textAlign: 'center', transition: 'all .15s',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               marginBottom: 6,
@@ -229,8 +229,8 @@ export function Sidebar({ onClose }: SidebarProps) {
             className="sidebar-logout"
             style={{
               width: '100%', padding: '7px 12px', borderRadius: 8,
-              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-              color: '#f1f5f9', fontSize: 13, fontWeight: 600,
+              background: 'var(--bg-hover)', border: '1px solid var(--border-input)',
+              color: 'var(--text)', fontSize: 13, fontWeight: 600,
               cursor: 'pointer', textAlign: 'center', transition: 'all .15s',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               marginBottom: 6,
@@ -243,8 +243,8 @@ export function Sidebar({ onClose }: SidebarProps) {
             className="sidebar-logout"
             style={{
               width: '100%', padding: '7px 12px', borderRadius: 8,
-              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-              color: '#f1f5f9', fontSize: 13, fontWeight: 600,
+              background: 'var(--bg-hover)', border: '1px solid var(--border-input)',
+              color: 'var(--text)', fontSize: 13, fontWeight: 600,
               cursor: 'pointer', textAlign: 'center', transition: 'all .15s',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}
@@ -254,7 +254,7 @@ export function Sidebar({ onClose }: SidebarProps) {
             </svg>
             Odhlásit se
           </button>
-          <p style={{ fontSize: 10, color: '#64748b', textAlign: 'center', marginTop: 8 }}>© 2026 JV Revize v1.0.0</p>
+          <p style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', marginTop: 8 }}>© 2026 JV Revize v1.0.0</p>
         </div>
       </aside>
       {showZmenaHesla && <ZmenaHeslaModal onClose={() => setShowZmenaHesla(false)} />}
