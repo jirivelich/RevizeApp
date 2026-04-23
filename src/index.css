@@ -40,13 +40,13 @@
   --section-header-bg: #1E1E2E;
 
   /* === Glassmorphism tokeny === */
-  --glass-bg: rgba(30,30,46,0.55);
-  --glass-bg-strong: rgba(20,20,34,0.82);
-  --glass-border: rgba(226,225,233,0.10);
-  --glass-border-hover: rgba(226,225,233,0.18);
-  --glow-primary: 0 0 20px rgba(240,8,7,0.22);
-  --glow-secondary: 0 0 20px rgba(99,102,241,0.22);
-  --shadow-elevated: 0 8px 32px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3);
+  --glass-bg: rgba(40,40,62,0.72);
+  --glass-bg-strong: rgba(16,16,30,0.90);
+  --glass-border: rgba(226,225,233,0.16);
+  --glass-border-hover: rgba(226,225,233,0.28);
+  --glow-primary: 0 0 24px rgba(240,8,7,0.28);
+  --glow-secondary: 0 0 24px rgba(99,102,241,0.28);
+  --shadow-elevated: 0 4px 6px rgba(0,0,0,0.3), 0 10px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(226,225,233,0.06);
 }
 
 * {
@@ -102,9 +102,20 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-image: radial-gradient(ellipse 80% 60% at 0% 0%, rgba(99,102,241,0.06) 0%, transparent 55%),
-                    radial-gradient(ellipse 50% 40% at 100% 100%, rgba(240,8,7,0.05) 0%, transparent 50%);
 }
+
+/* Globální přechody pro interaktivní prvky */
+button, a, [role="button"] {
+  transition-property: background-color, border-color, color, box-shadow, opacity, transform;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(226,225,233,0.12); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(226,225,233,0.22); }
 
 /* PDF Designer - Resize handles */
 .react-resizable {

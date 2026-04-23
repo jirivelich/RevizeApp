@@ -35,7 +35,14 @@ export function Layout() {
       </div>
       
       {/* Main content - s paddingem pro sidebar na velkých obrazovkách */}
-      <main className="lg:ml-56 h-screen flex flex-col" style={{ background: 'var(--background)', backgroundImage: 'radial-gradient(ellipse 80% 60% at 0% 0%, rgba(99,102,241,0.05) 0%, transparent 55%), radial-gradient(ellipse 50% 40% at 100% 100%, rgba(240,8,7,0.04) 0%, transparent 50%)' }}>
+      <main className="lg:ml-56 h-screen flex flex-col" style={{
+        backgroundColor: 'var(--background)',
+        backgroundImage: [
+          'radial-gradient(ellipse 70% 55% at 8% 0%, rgba(99,102,241,0.18) 0%, transparent 50%)',
+          'radial-gradient(ellipse 60% 50% at 92% 95%, rgba(240,8,7,0.12) 0%, transparent 50%)',
+          'radial-gradient(ellipse 50% 40% at 50% 50%, rgba(99,102,241,0.04) 0%, transparent 70%)',
+        ].join(', ')
+      }}>
         {/* Mobilní header s menu tlačítkem */}
         <div className="lg:hidden px-4 py-3 flex items-center justify-between sticky top-0 z-30 flex-shrink-0" style={{ background: 'rgba(13,13,26,0.85)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(226,225,233,0.06)' }}>
           <h1 className="text-lg font-bold" style={{ color: '#f1f5f9' }}>JV Revize</h1>
