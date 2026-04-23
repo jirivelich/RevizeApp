@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+﻿import { useMemo, useState, useEffect } from 'react';
 import { useQuery as useRQQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { useRevize, usePristroje, useZakazky } from '../hooks/useQueries';
@@ -19,7 +19,7 @@ function StatCard({ title, value, subtitle, accent, link }: {
   accent: string; link: string;
 }) {
   return (
-    <Link to={link} className={`group block rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] p-3 transition-all hover:border-[var(--border-strong)] active:scale-[0.98] border-l-[3px] ${accent}`}>
+    <Link to={link} className={`group block rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] shadow-[var(--shadow-elevated)] p-3 transition-all hover:border-[var(--border-strong)] active:scale-[0.98] border-l-[3px] ${accent}`}>
       <p className="text-[11px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">{title}</p>
       <p className="mt-1 text-2xl font-bold text-[var(--text)] tracking-tight">{value}</p>
       {subtitle && <p className="mt-0.5 text-[10px] text-[var(--text-muted)]">{subtitle}</p>}
@@ -97,7 +97,7 @@ function SectionCard({ title, icon: _icon, count, viewAllLink, viewAllLabel, emp
   children: React.ReactNode[];
 }) {
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)]">
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] shadow-[var(--shadow-elevated)]">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border-subtle)]">
         <h2 className="text-[13px] font-semibold text-[var(--text)]">{title}</h2>
         <div className="flex items-center gap-2">
@@ -147,7 +147,7 @@ function TodayPanel({ zakazky }: { zakazky: Zakazka[] }) {
   } as const;
 
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)]">
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] shadow-[var(--shadow-elevated)]">
       <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-subtle)]">
         <h2 className="text-[13px] font-semibold text-[var(--text)]">Dnes</h2>
         <Link to="/planovani" className="text-[11px] font-medium text-[var(--text-secondary)] hover:text-[var(--text)] transition-colors">
@@ -250,7 +250,7 @@ function WeatherWidget() {
   if (isError || (!isLoading && !data)) return null;
 
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)]">
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] shadow-[var(--shadow-elevated)]">
       <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-subtle)]">
         <h2 className="text-[13px] font-semibold text-[var(--text)]">Počasí — Tachov</h2>
         <span className="text-[10px] text-[var(--text-muted)]">Open-Meteo</span>
@@ -410,7 +410,7 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
 
   return (
     <>
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)]">
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] shadow-[var(--shadow-elevated)]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-subtle)]">
         <h2 className="text-[13px] font-semibold text-[var(--text)] capitalize flex items-center gap-2">
