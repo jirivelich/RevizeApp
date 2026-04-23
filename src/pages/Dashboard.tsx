@@ -125,6 +125,67 @@ function SectionCard({ title, icon: _icon, count, viewAllLink, viewAllLabel, emp
   );
 }
 
+/* ═══ Revize Bar Chart ═══ */
+
+const CZ_MONTHS = ['Led','Úno','Bře','Dub','Kvě','Čvn','Čvc','Srp','Zář','Říj','Lis','Pro'];
+
+function RevizeBarChart({ revize }: { revize: Revize[] }) {
+  const bars = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+      const count = revize.filter(r => {
+        const rd = new Date(r.datum);
+        return rd.getFullYear() === d.getFullYear() && rd.getMonth() === d.getMonth();
+      }).length;
+      return { label: CZ_MONTHS[d.getMonth()], year: d.getFullYear(), month: d.getMonth(), count, isCurrent: i === 11 };
+    });
+  }, [revize]);
+
+  const max = Math.max(...bars.map(b => b.count), 1);
+  const total = bars.reduce((s, b) => s + b.count, 0);
+
+  return (
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)]">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border-subtle)]">
+        <h2 className="text-[13px] font-semibold text-[var(--text)]">Revize za posledních 12 měsíců</h2>
+        <span className="text-[11px] font-medium text-[var(--text-muted)]">{total} celkem</span>
+      </div>
+      <div className="px-4 py-4">
+        <div className="flex items-end gap-1.5 h-28">
+          {bars.map((b, i) => {
+            const heightPct = max > 0 ? (b.count / max) * 100 : 0;
+            return (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1 group" title={`${CZ_MONTHS[b.month]} ${b.year}: ${b.count} revizí`}>
+                <span className={`text-[9px] font-medium transition-opacity ${b.count > 0 ? 'opacity-70 group-hover:opacity-100' : 'opacity-0'} text-[var(--text-secondary)]`}>
+                  {b.count > 0 ? b.count : ''}
+                </span>
+                <div className="w-full flex items-end" style={{ height: 72 }}>
+                  <div
+                    className="w-full rounded-sm transition-all duration-300"
+                    style={{
+                      height: b.count === 0 ? 2 : `${Math.round(heightPct)}%`,
+                      background: b.isCurrent
+                        ? 'var(--primary)'
+                        : b.count === 0
+                        ? 'var(--border)'
+                        : 'rgba(146,196,59,0.45)',
+                      minHeight: b.count === 0 ? 2 : 4,
+                    }}
+                  />
+                </div>
+                <span className={`text-[8px] font-medium ${b.isCurrent ? 'text-[var(--primary)]' : 'text-[var(--text-muted)]'}`}>
+                  {b.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ═══ Today Panel ═══ */
 
 const QUICK_ACTIONS = [
@@ -638,6 +699,9 @@ export function Dashboard() {
         </div>
         <MonthCalendar zakazky={zakazky} />
       </div>
+
+      {/* ═══ Graf revizí ═══ */}
+      <RevizeBarChart revize={revize} />
 
       {/* ═══ Sekce: revize + zakázky ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
