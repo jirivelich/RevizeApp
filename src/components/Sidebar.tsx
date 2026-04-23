@@ -44,8 +44,8 @@ interface SidebarProps {
 const sidebarStyle: CSSProperties = {
   width: 224,
   minHeight: '100vh',
-  background: 'var(--bg-sidebar)',
-  borderRight: '1px solid var(--border)',
+  background: 'linear-gradient(180deg, #0D0D1A 0%, #09090f 100%)',
+  borderRight: '1px solid rgba(226,225,233,0.06)',
   display: 'flex',
   flexDirection: 'column',
   position: 'relative',
@@ -57,7 +57,7 @@ const sectionLabelStyle: CSSProperties = {
   fontWeight: 600,
   letterSpacing: '0.1em',
   textTransform: 'uppercase',
-  color: '#64748b',
+  color: 'rgba(164,171,191,0.55)',
   padding: '10px 10px 4px',
   marginTop: 4,
 };
@@ -84,12 +84,12 @@ export function Sidebar({ onClose }: SidebarProps) {
 
     const activeStyle: CSSProperties = {
       display: 'flex', alignItems: 'center', gap: 9,
-      padding: '8px 10px', borderRadius: '0 8px 8px 0',
+      padding: '8px 10px', borderRadius: 8,
       fontSize: 13, fontWeight: 500,
-      background: 'var(--active-bg)',
+      background: 'rgba(240,8,7,0.16)',
       color: 'var(--nav-text-active)',
-      border: '1px solid transparent',
-      borderLeft: '2px solid #C00606',
+      border: '1px solid rgba(240,8,7,0.28)',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 0 14px rgba(240,8,7,0.14)',
       textDecoration: 'none',
       position: 'relative',
       marginBottom: 2,
@@ -125,13 +125,15 @@ export function Sidebar({ onClose }: SidebarProps) {
     <>
       <style>{`
         .sidebar-nav-item:hover {
-          background: var(--bg-hover) !important;
-          color: var(--nav-text) !important;
+          background: rgba(226,225,233,0.06) !important;
+          border-color: rgba(226,225,233,0.08) !important;
+          color: var(--text) !important;
+          transition: all 0.15s ease;
         }
         .sidebar-logout:hover {
-          background: var(--bg-hover) !important;
-          border-color: var(--border-strong) !important;
-          color: var(--text-secondary) !important;
+          background: rgba(226,225,233,0.08) !important;
+          border-color: rgba(226,225,233,0.14) !important;
+          color: var(--text) !important;
         }
       `}</style>
       <aside style={sidebarStyle}>
@@ -142,7 +144,7 @@ export function Sidebar({ onClose }: SidebarProps) {
               width: 34, height: 34,
               background: 'linear-gradient(135deg, #F00807, #CC0706)',
               borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 0 16px rgba(240,8,7,0.45)', flexShrink: 0,
+              boxShadow: '0 0 24px rgba(240,8,7,0.60), 0 0 8px rgba(240,8,7,0.35)', flexShrink: 0,
             }}>
               <svg width="18" height="18" fill="none" stroke="white" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -183,7 +185,7 @@ export function Sidebar({ onClose }: SidebarProps) {
         </div>
 
         {/* User footer */}
-        <div style={{ padding: '10px 12px 12px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ padding: '10px 12px 12px', borderTop: '1px solid rgba(226,225,233,0.05)', background: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(12px)' }}>
           {user && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 9,

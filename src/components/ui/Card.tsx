@@ -9,9 +9,9 @@ interface CardProps {
 
 export function Card({ title, children, className = '', actions }: CardProps) {
   return (
-    <div className={`bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] ${className}`}>
+    <div className={`bg-[var(--glass-bg)] backdrop-blur-xl rounded-xl border border-[var(--glass-border)] shadow-[var(--shadow-elevated)] transition-all duration-200 hover:border-[var(--glass-border-hover)] ${className}`}>
       {(title || actions) && (
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--glass-border)]">
           {title && <h2 className="text-lg font-semibold text-[var(--text)]">{title}</h2>}
           {actions && <div className="flex gap-2">{actions}</div>}
         </div>

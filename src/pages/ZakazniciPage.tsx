@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Button, Card, Input, Modal } from '../components/ui';
 import { zakazniciService } from '../services/database';
 import { useZakaznici, useCreateZakaznik, useUpdateZakaznik, useDeleteZakaznik } from '../hooks/useQueries';
@@ -164,7 +164,7 @@ const ZakazniciPage: React.FC = () => {
               </thead>
               <tbody>
                 {filteredZakaznici.map((zakaznik) => (
-                  <tr key={zakaznik.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.03)] group">
+                  <tr key={zakaznik.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.07)] group">
                     <td className="py-2 px-3 text-xs font-medium text-[var(--text)]">{zakaznik.nazev}</td>
                     <td className="py-2 px-3 font-mono text-xs text-[var(--text-secondary)]">{zakaznik.ico || '-'}</td>
                     <td className="py-2 px-3 text-xs text-[var(--text-secondary)] max-w-xs truncate">{zakaznik.adresa || '-'}</td>
@@ -319,3 +319,6 @@ const ZakazniciPage: React.FC = () => {
 };
 
 export default ZakazniciPage;
+
+
+

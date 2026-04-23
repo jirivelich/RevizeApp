@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Input, Select, Modal } from '../components/ui';
 import { revizeService } from '../services/database';
@@ -276,7 +276,7 @@ export function RevizePage() {
         </Button>
       </div>
 
-      <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] flex-1 min-h-0 flex flex-col overflow-hidden">
+      <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-xl border border-[var(--glass-border)] shadow-[var(--shadow-elevated)] flex-1 min-h-0 flex flex-col overflow-hidden">
         <div className="px-6 pt-5 pb-3 flex-shrink-0">
           <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:gap-4">
           <div className="w-full md:flex-1 md:min-w-[200px]">
@@ -337,19 +337,19 @@ export function RevizePage() {
           {/* Mobilní seznam karet */}
           <div className="md:hidden px-4 pb-4 flex-1 min-h-0 overflow-auto space-y-2">
             {paginatedRevize.map((r) => (
-              <div key={r.id} className="bg-[var(--bg-surface)] rounded-lg border border-[var(--border)] p-3">
+              <div key={r.id} className="bg-[var(--glass-bg)] backdrop-blur-sm rounded-lg border border-[var(--glass-border)] p-3">
                 <Link to={`/revize/${r.id}`} className="block">
                   <p className="font-semibold text-[var(--text)] text-sm leading-snug">{r.nazev}</p>
                   <p className="text-xs text-[var(--text-secondary)] mt-0.5">{r.adresa}</p>
                 </Link>
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
+                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
                       {r.kategorieRevize === 'elektro' ? 'Elektro' :
                        r.kategorieRevize === 'hromosvod' ? 'Hromosvod' :
                        r.kategorieRevize === 'stroje' ? 'Stroje' : r.kategorieRevize}
                     </span>
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                       r.stav === 'dokončeno' ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' :
                       r.stav === 'rozpracováno' ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300' :
                       'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
@@ -384,7 +384,7 @@ export function RevizePage() {
           {/* Desktopová tabulka */}
           <div className={`${viewMode === 'table' ? 'hidden md:block' : 'hidden'} px-6 pb-4 flex-1 min-h-0 overflow-auto`}>
             <table className="w-full">
-              <thead className="sticky top-0 bg-[var(--background)] z-10">
+              <thead className="sticky top-0 bg-[var(--glass-bg-strong)] backdrop-blur-md z-10">
                 <tr className="border-b border-[var(--border)]">
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer select-none hover:text-[var(--text)]" onClick={() => toggleSort('cisloRevize')}>Číslo<SortIcon col="cisloRevize" /></th>
                   <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer select-none hover:text-[var(--text)]" onClick={() => toggleSort('kategorieRevize')}>Kategorie<SortIcon col="kategorieRevize" /></th>
@@ -398,14 +398,14 @@ export function RevizePage() {
               </thead>
               <tbody>
                 {paginatedRevize.map((r) => (
-                  <tr key={r.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.03)] group">
+                  <tr key={r.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#C00606] hover:bg-[rgba(192,6,6,0.07)] group">
                     <td className="py-2 px-3">
                       <Link to={`/revize/${r.id}`} className="text-xs text-[var(--text)] group-hover:text-[#C00606] font-medium hover:underline transition-colors">
                         {r.cisloRevize}
                       </Link>
                     </td>
                     <td className="py-2 px-3">
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                         r.kategorieRevize === 'elektro' ? 'bg-[var(--bg-hover)] text-[var(--text-secondary)]' :
                         r.kategorieRevize === 'hromosvod' ? 'bg-[var(--bg-hover)] text-[var(--text-secondary)]' :
                         r.kategorieRevize === 'stroje' ? 'bg-[var(--bg-hover)] text-[var(--text-secondary)]' :
@@ -422,12 +422,12 @@ export function RevizePage() {
                       {new Date(r.datum).toLocaleDateString('cs-CZ')}
                     </td>
                     <td className="py-2 px-3">
-                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
                         {r.typRevize}
                       </span>
                     </td>
                     <td className="py-2 px-3">
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                         r.stav === 'dokončeno' ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' :
                         r.stav === 'rozpracováno' ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300' :
                         'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
@@ -447,7 +447,7 @@ export function RevizePage() {
                           </svg>
                         </button>
                         {openMenuId === r.id && (
-                          <div className="absolute right-0 top-full mt-1 w-44 bg-[var(--surface)] rounded-lg shadow-lg border border-[var(--border-medium)] py-1 z-50">
+                          <div className="absolute right-0 top-full mt-1 w-44 bg-[var(--glass-bg-strong)] backdrop-blur-xl rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.45)] border border-[var(--glass-border)] py-1 z-50">
                             <button
                               onClick={() => { setOpenMenuId(null); navigate(`/revize/${r.id}/nahled`); }}
                               className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
@@ -493,16 +493,16 @@ export function RevizePage() {
           <div className={`${viewMode === 'grid' ? 'hidden md:block' : 'hidden'} px-6 pb-4 flex-1 min-h-0 overflow-auto`}>
             <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 py-2">
               {paginatedRevize.map((r) => (
-                <div key={r.id} className="bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] flex flex-col relative overflow-hidden hover:border-[rgba(192,6,6,0.30)] transition-colors group">
+                <div key={r.id} className="bg-[var(--glass-bg)] backdrop-blur-sm rounded-xl border border-[var(--glass-border)] flex flex-col relative overflow-hidden hover:border-[rgba(240,8,7,0.35)] transition-all duration-200 group hover:shadow-[0_4px_20px_rgba(240,8,7,0.12)]">
                   <Link to={`/revize/${r.id}`} className="flex-1 p-4 block">
                     <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#C00606] opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
                           {r.kategorieRevize === 'elektro' ? 'Elektro' :
                            r.kategorieRevize === 'hromosvod' ? 'Hromosvod' : 'Stroje'}
                         </span>
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                           r.stav === 'dokončeno' ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' :
                           r.stav === 'rozpracováno' ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300' :
                           'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
@@ -540,7 +540,7 @@ export function RevizePage() {
                           </svg>
                         </button>
                         {openMenuId === r.id && (
-                          <div className="absolute right-0 top-full mt-1 w-44 bg-[var(--surface)] rounded-lg shadow-lg border border-[var(--border-medium)] py-1 z-50">
+                          <div className="absolute right-0 top-full mt-1 w-44 bg-[var(--glass-bg-strong)] backdrop-blur-xl rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.45)] border border-[var(--glass-border)] py-1 z-50">
                             <button
                               onClick={() => { setOpenMenuId(null); navigate(`/revize/${r.id}`); }}
                               className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
@@ -815,7 +815,7 @@ export function RevizePage() {
                           {h.cisloRevize}
                           {isCurrent && <span className="ml-2 text-xs text-blue-600">(aktuální)</span>}
                         </span>
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                           h.stav === 'dokončeno' ? 'bg-emerald-50 text-emerald-600' :
                           h.stav === 'rozpracováno' ? 'bg-amber-50 text-amber-600' :
                           'bg-[var(--bg-surface)] text-[var(--text-secondary)]'
@@ -972,3 +972,4 @@ export function RevizePage() {
     </div>
   );
 }
+

@@ -4,7 +4,8 @@
 :root {
   --primary: #F00807;
   --primary-hover: #CC0706;
-  --secondary: #5A5A72;
+  --secondary: #6366f1;
+  --secondary-hover: #4f46e5;
   --success: #22c55e;
   --warning: #f59e0b;
   --danger: #f97316;
@@ -21,6 +22,7 @@
   --bg-hover-strong: rgba(226,225,233,0.12);
   --bg-accent: rgba(240,8,7,0.10);
   --bg-accent-badge: rgba(240,8,7,0.15);
+  --bg-secondary-accent: rgba(99,102,241,0.10);
   --border-input: rgba(226,225,233,0.10);
   --border-subtle: rgba(226,225,233,0.05);
   --border-medium: rgba(226,225,233,0.09);
@@ -28,14 +30,23 @@
   --text-secondary: #A4ABBF;
   --focus-ring-color: rgba(240,8,7,0.4);
   --bg-sidebar: #0F0F1A;
-  --active-bg: rgba(240,8,7,0.12);
-  --active-border: rgba(240,8,7,0.20);
-  --active-glow: rgba(240,8,7,0.6);
+  --active-bg: rgba(240,8,7,0.15);
+  --active-border: rgba(240,8,7,0.30);
+  --active-glow: rgba(240,8,7,0.5);
   --nav-text: #7E7E96;
-  --nav-text-active: #FF6B6B;
+  --nav-text-active: #FF8080;
   --bg-faint: rgba(226,225,233,0.02);
   --checkbox-border: rgba(226,225,233,0.25);
   --section-header-bg: #1E1E2E;
+
+  /* === Glassmorphism tokeny === */
+  --glass-bg: rgba(30,30,46,0.55);
+  --glass-bg-strong: rgba(20,20,34,0.82);
+  --glass-border: rgba(226,225,233,0.10);
+  --glass-border-hover: rgba(226,225,233,0.18);
+  --glow-primary: 0 0 20px rgba(240,8,7,0.22);
+  --glow-secondary: 0 0 20px rgba(99,102,241,0.22);
+  --shadow-elevated: 0 8px 32px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3);
 }
 
 * {
@@ -91,6 +102,8 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-image: radial-gradient(ellipse 80% 60% at 0% 0%, rgba(99,102,241,0.06) 0%, transparent 55%),
+                    radial-gradient(ellipse 50% 40% at 100% 100%, rgba(240,8,7,0.05) 0%, transparent 50%);
 }
 
 /* PDF Designer - Resize handles */

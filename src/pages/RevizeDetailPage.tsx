@@ -885,14 +885,14 @@ export function RevizeDetailPage() {
         </div>
       </Modal>
 
-      <div className="flex gap-2 border-b border-[var(--border)] overflow-x-auto scrollbar-thin">
+      <div className="flex gap-2 border-b border-[var(--glass-border)] overflow-x-auto scrollbar-thin" style={{ background: 'rgba(0,0,0,0.15)' }}>
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`px-4 py-3 font-medium transition-colors border-b-2 whitespace-nowrap flex-shrink-0 ${
+            className={`px-4 py-3 font-medium transition-all duration-200 border-b-2 whitespace-nowrap flex-shrink-0 ${
               activeTab === tab.id
-                ? 'border-blue-600 text-blue-600'
+                ? 'border-[var(--primary)] text-[var(--nav-text-active)] drop-shadow-[0_0_6px_rgba(240,8,7,0.5)]'
                 : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text)]'
             }`}
           >
@@ -2510,7 +2510,7 @@ export function RevizeDetailPage() {
       )}
       {/* Fixní spodní lišta Uložit – viditelná při scrollování */}
       {(activeTab === 'info' || activeTab === 'dokumentace') && (
-        <div className="fixed bottom-0 left-0 lg:left-64 right-0 z-50 bg-[var(--surface)]/95 backdrop-blur border-t border-[var(--border)] shadow-[0_-2px_8px_rgba(0,0,0,0.15)]">
+        <div className="fixed bottom-0 left-0 lg:left-64 right-0 z-50 bg-[var(--glass-bg-strong)] backdrop-blur-md border-t border-[var(--glass-border)] shadow-[0_-4px_20px_rgba(0,0,0,0.35)]">
           <div className="max-w-4xl mx-auto px-4 py-1 flex justify-center">
             <button onClick={handleSave} className="px-6 py-1 bg-[#C00606] hover:bg-[#A00505] text-white text-sm font-semibold rounded transition-colors cursor-pointer">💾 Uložit změny</button>
           </div>

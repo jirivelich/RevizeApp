@@ -22,7 +22,7 @@ export function Layout() {
       {/* Mobilní overlay */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 lg:hidden z-40"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm lg:hidden z-40"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -35,9 +35,9 @@ export function Layout() {
       </div>
       
       {/* Main content - s paddingem pro sidebar na velkých obrazovkách */}
-      <main className="lg:ml-56 h-screen flex flex-col" style={{ background: 'var(--background)' }}>
+      <main className="lg:ml-56 h-screen flex flex-col" style={{ background: 'var(--background)', backgroundImage: 'radial-gradient(ellipse 80% 60% at 0% 0%, rgba(99,102,241,0.05) 0%, transparent 55%), radial-gradient(ellipse 50% 40% at 100% 100%, rgba(240,8,7,0.04) 0%, transparent 50%)' }}>
         {/* Mobilní header s menu tlačítkem */}
-        <div className="lg:hidden px-4 py-3 flex items-center justify-between sticky top-0 z-30 flex-shrink-0" style={{ background: 'var(--bg-sidebar)', borderBottom: '1px solid var(--border)' }}>
+        <div className="lg:hidden px-4 py-3 flex items-center justify-between sticky top-0 z-30 flex-shrink-0" style={{ background: 'rgba(13,13,26,0.85)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(226,225,233,0.06)' }}>
           <h1 className="text-lg font-bold" style={{ color: '#f1f5f9' }}>JV Revize</h1>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
