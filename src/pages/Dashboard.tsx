@@ -535,8 +535,8 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* ═══ Revize + Zakázky + Kalendář ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+      {/* ═══ Hlavní grid ═══ */}
+      <div className="grid grid-cols-3 gap-4 items-start">
         <SectionCard
           title="Rozpracované revize"
           icon=""
@@ -561,43 +561,46 @@ export function Dashboard() {
           {upcomingZakazky.map(z => <ZakazkaRow key={z.id} z={z} />)}
         </SectionCard>
 
-        <MonthCalendar zakazky={zakazky} />
+        {/* Kalendář — pravý sloupec přes oba řádky */}
+        <div className="row-span-2">
+          <MonthCalendar zakazky={zakazky} />
+        </div>
+
+        {/* Stat karty — levý blok col-span-2 */}
+        <div className="col-span-2 grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+          <StatCard
+            title="Celkem revizí"
+            value={stats.celkemRevizi}
+            subtitle={`${stats.dokonceno} dokončených`}
+            accent="border-l-slate-400"
+            link="/revize"
+          />
+          <StatCard
+            title="Rozpracováno"
+            value={stats.rozpracovano}
+            subtitle="čeká na dokončení"
+            accent="border-l-amber-400"
+            link="/revize"
+          />
+          <StatCard
+            title="K rekalibraci"
+            value={stats.pristrojeKRekalibraci}
+            subtitle="do 30 dnů"
+            accent="border-l-red-400"
+            link="/pristroje"
+          />
+          <StatCard
+            title="Plánované zakázky"
+            value={stats.planovaneZakazky}
+            subtitle="naplánováno"
+            accent="border-l-emerald-400"
+            link="/planovani"
+          />
+        </div>
       </div>
 
       {/* ═══ Graf revizí ═══ */}
       <RevizeBarChart revize={revize} />
-
-      {/* ═══ Stat karty ═══ */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-        <StatCard
-          title="Celkem revizí"
-          value={stats.celkemRevizi}
-          subtitle={`${stats.dokonceno} dokončených`}
-          accent="border-l-slate-400"
-          link="/revize"
-        />
-        <StatCard
-          title="Rozpracováno"
-          value={stats.rozpracovano}
-          subtitle="čeká na dokončení"
-          accent="border-l-amber-400"
-          link="/revize"
-        />
-        <StatCard
-          title="K rekalibraci"
-          value={stats.pristrojeKRekalibraci}
-          subtitle="do 30 dnů"
-          accent="border-l-red-400"
-          link="/pristroje"
-        />
-        <StatCard
-          title="Plánované zakázky"
-          value={stats.planovaneZakazky}
-          subtitle="naplánováno"
-          accent="border-l-emerald-400"
-          link="/planovani"
-        />
-      </div>
     </div>
   );
 }
