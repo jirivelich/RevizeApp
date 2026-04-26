@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Input, Select, Modal } from '../components/ui';
 import { revizeService } from '../services/database';
@@ -70,6 +70,17 @@ export function RevizePage() {
 
   // Dropdown menu pro akce (desktop)
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const openMenuRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (openMenuId === null) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (openMenuRef.current && !openMenuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openMenuId]);
   // Action sheet pro mobil
   const [actionSheetRevize, setActionSheetRevize] = useState<{ id: number; cisloRevize: string; nazev: string } | null>(null);
 
@@ -436,7 +447,7 @@ export function RevizePage() {
                       </span>
                     </td>
                     <td className="py-2 px-3 text-right">
-                      <div className="relative">
+                      <div className="relative" ref={openMenuId === r.id ? openMenuRef : undefined}>
                         <button
                           onClick={() => setOpenMenuId(openMenuId === r.id ? null : r.id!)}
                           className="p-1 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
@@ -493,7 +504,7 @@ export function RevizePage() {
           <div className={`${viewMode === 'grid' ? 'hidden md:block' : 'hidden'} px-6 pb-4 flex-1 min-h-0 overflow-auto`}>
             <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 py-2">
               {paginatedRevize.map((r) => (
-                <div key={r.id} className="bg-[var(--glass-bg)] backdrop-blur-sm rounded-xl border border-[var(--glass-border)] flex flex-col relative overflow-hidden hover:border-[rgba(146,196,59,0.35)] transition-all duration-200 group hover:shadow-[0_4px_20px_rgba(146,196,59,0.12)]">
+                <div key={r.id} className="bg-[var(--glass-bg)] backdrop-blur-sm rounded-xl border border-[var(--glass-border)] flex flex-col relative hover:border-[rgba(146,196,59,0.35)] transition-all duration-200 group hover:shadow-[0_4px_20px_rgba(146,196,59,0.12)]">
                   <Link to={`/revize/${r.id}`} className="flex-1 p-4 block">
                     <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#759d2f] opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="flex items-start justify-between gap-2 mb-2">
@@ -529,7 +540,7 @@ export function RevizePage() {
                           <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
                         </svg>
                       </button>
-                        <div className="relative">
+                        <div className="relative" ref={openMenuId === r.id ? openMenuRef : undefined}>
                         <button
                           onClick={() => setOpenMenuId(openMenuId === r.id ? null : r.id!)}
                           className="p-1 rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
@@ -857,11 +868,6 @@ export function RevizePage() {
           Opravdu chcete smazat tuto revizi? Budou smazány i všechny související záznamy.
         </p>
       </Modal>
-
-      {/* Overlay pro zavření dropdown menu kliknutím mimo */}
-      {openMenuId !== null && (
-        <div className="fixed inset-0 z-40" onClick={() => setOpenMenuId(null)} />
-      )}
 
       {/* Action sheet pro mobil – akce revize */}
       {actionSheetRevize && (
