@@ -453,7 +453,7 @@ export function RevizePage() {
                       </span>
                     </td>
                     <td className="py-2 px-3 text-right">
-                      <div className="relative" ref={openMenuId === r.id ? openMenuRef : undefined}>
+                      <div className="relative">
                         <button
                           onClick={(e) => {
                             if (openMenuId === r.id) { setOpenMenuId(null); return; }
@@ -516,7 +516,7 @@ export function RevizePage() {
                           <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
                         </svg>
                       </button>
-                        <div className="relative" ref={openMenuId === r.id ? openMenuRef : undefined}>
+                        <div className="relative">
                         <button
                           onClick={(e) => {
                             if (openMenuId === r.id) { setOpenMenuId(null); return; }
