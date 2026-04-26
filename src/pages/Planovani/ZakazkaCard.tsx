@@ -1,7 +1,7 @@
 ﻿import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import type { Zakazka } from '../../types';
-import { getPriorityColor, getRealizaceDays, getReportDeadline, isOverdue, formatDayShort } from './utils';
+import { getPriorityColor, getRealizaceDays, getReportDeadline, formatDayShort } from './utils';
 
 function getAccentColor(stav: Zakazka['stav']): string {
   switch (stav) {
