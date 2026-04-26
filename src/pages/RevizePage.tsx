@@ -290,7 +290,7 @@ export function RevizePage() {
         </Button>
       </div>
 
-      <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-xl border border-[var(--glass-border)] shadow-[var(--shadow-elevated)] flex-1 min-h-0 flex flex-col overflow-hidden">
+      <div className="bg-[var(--glass-bg)] backdrop-blur-xl rounded-xl border border-[var(--glass-border)] shadow-[var(--shadow-elevated)] flex-1 min-h-0 flex flex-col">
         <div className="px-6 pt-5 pb-3 flex-shrink-0">
           <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:gap-4">
           <div className="w-full md:flex-1 md:min-w-[200px]">
