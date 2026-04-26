@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Input, Select, Modal } from '../components/ui';
 import { revizeService } from '../services/database';
@@ -82,6 +83,7 @@ export function RevizePage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [openMenuId]);
+  const openRevize = revize.find(r => r.id === openMenuId) ?? null;
   // Action sheet pro mobil
   const [actionSheetRevize, setActionSheetRevize] = useState<{ id: number; cisloRevize: string; nazev: string } | null>(null);
 
@@ -466,42 +468,7 @@ export function RevizePage() {
                             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                           </svg>
                         </button>
-                        {openMenuId === r.id && (
-                          <div className="fixed w-44 bg-[var(--glass-bg-strong)] backdrop-blur-xl rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.45)] border border-[var(--glass-border)] py-1 z-[9999]" style={{ top: dropdownPos.top, right: dropdownPos.right }}>
-                            <button
-                              onClick={() => { setOpenMenuId(null); navigate(`/revize/${r.id}/nahled`); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
-                            >
-                              <span className="text-xs">👁️</span> Náhled tisku
-                            </button>
-                            <div className="border-t border-[var(--border)] my-1"></div>
-                            <button
-                              onClick={() => { setOpenMenuId(null); navigate(`/revize/${r.id}`); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
-                            >
-                              <span className="text-xs">✏️</span> Upravit
-                            </button>
-                            <button
-                              onClick={() => { setOpenMenuId(null); openDuplikatModal(r.id!, r.cisloRevize); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
-                            >
-                              <span className="text-xs">📋</span> Kopírovat revizi
-                            </button>
-                            <button
-                              onClick={() => { setOpenMenuId(null); openHistorieModal(r.id!, r.cisloRevize); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
-                            >
-                              <span className="text-xs">🕐</span> Historie
-                            </button>
-                            <div className="border-t border-[var(--border)] my-1"></div>
-                            <button
-                              onClick={() => { setOpenMenuId(null); handleDelete(r.id!, r.cisloRevize); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/[0.08] flex items-center gap-2"
-                            >
-                              <span className="text-xs">🗑️</span> Smazat
-                            </button>
-                          </div>
-                        )}
+                        {openMenuId === r.id && null}
                       </div>
                     </td>
                   </tr>
@@ -564,35 +531,7 @@ export function RevizePage() {
                             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                           </svg>
                         </button>
-                        {openMenuId === r.id && (
-                          <div className="fixed w-44 bg-[var(--glass-bg-strong)] backdrop-blur-xl rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.45)] border border-[var(--glass-border)] py-1 z-[9999]" style={{ top: dropdownPos.top, right: dropdownPos.right }}>
-                            <button
-                              onClick={() => { setOpenMenuId(null); navigate(`/revize/${r.id}`); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
-                            >
-                              <span>✏️</span> Upravit
-                            </button>
-                            <button
-                              onClick={() => { setOpenMenuId(null); openDuplikatModal(r.id!, r.cisloRevize); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
-                            >
-                              <span>📋</span> Kopírovat revizi
-                            </button>
-                            <button
-                              onClick={() => { setOpenMenuId(null); openHistorieModal(r.id!, r.cisloRevize); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
-                            >
-                              <span>🕐</span> Historie
-                            </button>
-                            <div className="border-t border-[var(--border)] my-1"></div>
-                            <button
-                              onClick={() => { setOpenMenuId(null); handleDelete(r.id!, r.cisloRevize); }}
-                              className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/[0.08] flex items-center gap-2"
-                            >
-                              <span>🗑️</span> Smazat
-                            </button>
-                          </div>
-                        )}
+                        {openMenuId === r.id && null}
                       </div>
                     </div>
                   </div>
@@ -1003,6 +942,49 @@ export function RevizePage() {
           />
         </div>
       </Modal>
+
+      {/* Dropdown portal – mimo všechny overflow/backdrop-filter kontejnery */}
+      {openMenuId !== null && openRevize && createPortal(
+        <div
+          ref={openMenuRef}
+          className="fixed w-44 bg-[var(--glass-bg-strong)] backdrop-blur-xl rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.45)] border border-[var(--glass-border)] py-1 z-[9999]"
+          style={{ top: dropdownPos.top, right: dropdownPos.right }}
+        >
+          <button
+            onClick={() => { setOpenMenuId(null); navigate(`/revize/${openRevize.id}/nahled`); }}
+            className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+          >
+            <span>👁️</span> Náhled tisku
+          </button>
+          <div className="border-t border-[var(--border)] my-1" />
+          <button
+            onClick={() => { setOpenMenuId(null); navigate(`/revize/${openRevize.id}`); }}
+            className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+          >
+            <span>✏️</span> Upravit
+          </button>
+          <button
+            onClick={() => { setOpenMenuId(null); openDuplikatModal(openRevize.id!, openRevize.cisloRevize); }}
+            className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+          >
+            <span>📋</span> Kopírovat revizi
+          </button>
+          <button
+            onClick={() => { setOpenMenuId(null); openHistorieModal(openRevize.id!, openRevize.cisloRevize); }}
+            className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+          >
+            <span>🕐</span> Historie
+          </button>
+          <div className="border-t border-[var(--border)] my-1" />
+          <button
+            onClick={() => { setOpenMenuId(null); handleDelete(openRevize.id!, openRevize.cisloRevize); }}
+            className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/[0.08] flex items-center gap-2"
+          >
+            <span>🗑️</span> Smazat
+          </button>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
