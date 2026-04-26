@@ -70,6 +70,7 @@ export function RevizePage() {
 
   // Dropdown menu pro akce (desktop)
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 });
   const openMenuRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (openMenuId === null) return;
@@ -452,7 +453,12 @@ export function RevizePage() {
                     <td className="py-2 px-3 text-right">
                       <div className="relative" ref={openMenuId === r.id ? openMenuRef : undefined}>
                         <button
-                          onClick={() => setOpenMenuId(openMenuId === r.id ? null : r.id!)}
+                          onClick={(e) => {
+                            if (openMenuId === r.id) { setOpenMenuId(null); return; }
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setDropdownPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                            setOpenMenuId(r.id!);
+                          }}
                           className="p-1 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
                           title="Akce"
                         >
@@ -461,7 +467,7 @@ export function RevizePage() {
                           </svg>
                         </button>
                         {openMenuId === r.id && (
-                          <div className="absolute right-0 top-full mt-1 w-44 bg-[var(--glass-bg-strong)] backdrop-blur-xl rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.45)] border border-[var(--glass-border)] py-1 z-50">
+                          <div className="fixed w-44 bg-[var(--glass-bg-strong)] backdrop-blur-xl rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.45)] border border-[var(--glass-border)] py-1 z-[9999]" style={{ top: dropdownPos.top, right: dropdownPos.right }}>
                             <button
                               onClick={() => { setOpenMenuId(null); navigate(`/revize/${r.id}/nahled`); }}
                               className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
@@ -545,7 +551,12 @@ export function RevizePage() {
                       </button>
                         <div className="relative" ref={openMenuId === r.id ? openMenuRef : undefined}>
                         <button
-                          onClick={() => setOpenMenuId(openMenuId === r.id ? null : r.id!)}
+                          onClick={(e) => {
+                            if (openMenuId === r.id) { setOpenMenuId(null); return; }
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setDropdownPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                            setOpenMenuId(r.id!);
+                          }}
                           className="p-1 rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
                           title="Akce"
                         >
@@ -554,7 +565,7 @@ export function RevizePage() {
                           </svg>
                         </button>
                         {openMenuId === r.id && (
-                          <div className="absolute right-0 top-full mt-1 w-44 bg-[var(--glass-bg-strong)] backdrop-blur-xl rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.45)] border border-[var(--glass-border)] py-1 z-50">
+                          <div className="fixed w-44 bg-[var(--glass-bg-strong)] backdrop-blur-xl rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.45)] border border-[var(--glass-border)] py-1 z-[9999]" style={{ top: dropdownPos.top, right: dropdownPos.right }}>
                             <button
                               onClick={() => { setOpenMenuId(null); navigate(`/revize/${r.id}`); }}
                               className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
