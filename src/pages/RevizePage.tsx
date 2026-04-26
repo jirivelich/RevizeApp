@@ -85,7 +85,8 @@ export function RevizePage() {
   const [actionSheetRevize, setActionSheetRevize] = useState<{ id: number; cisloRevize: string; nazev: string } | null>(null);
 
   // Potvrzení smazání (náhrada za window.confirm – nefunguje v iOS PWA)
-  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: number; cisloRevize: string } | null>(null);
+  const [confirmDeleteInput, setConfirmDeleteInput] = useState('');
 
   // Paginace
   const [pageSize, setPageSize] = useState<number>(25);
@@ -201,14 +202,16 @@ export function RevizePage() {
     setModalStep(1);
   };
 
-  const handleDelete = (id: number) => {
-    setConfirmDeleteId(id);
+  const handleDelete = (id: number, cisloRevize: string) => {
+    setConfirmDelete({ id, cisloRevize });
+    setConfirmDeleteInput('');
   };
 
   const executeDelete = () => {
-    if (confirmDeleteId !== null) {
-      deleteRevize.mutate(confirmDeleteId);
-      setConfirmDeleteId(null);
+    if (confirmDelete !== null) {
+      deleteRevize.mutate(confirmDelete.id);
+      setConfirmDelete(null);
+      setConfirmDeleteInput('');
     }
   };
 
@@ -486,7 +489,7 @@ export function RevizePage() {
                             </button>
                             <div className="border-t border-[var(--border)] my-1"></div>
                             <button
-                              onClick={() => { setOpenMenuId(null); handleDelete(r.id!); }}
+                              onClick={() => { setOpenMenuId(null); handleDelete(r.id!, r.cisloRevize); }}
                               className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/[0.08] flex items-center gap-2"
                             >
                               <span className="text-xs">🗑️</span> Smazat
@@ -572,7 +575,7 @@ export function RevizePage() {
                             </button>
                             <div className="border-t border-[var(--border)] my-1"></div>
                             <button
-                              onClick={() => { setOpenMenuId(null); handleDelete(r.id!); }}
+                              onClick={() => { setOpenMenuId(null); handleDelete(r.id!, r.cisloRevize); }}
                               className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/[0.08] flex items-center gap-2"
                             >
                               <span>🗑️</span> Smazat
@@ -854,19 +857,33 @@ export function RevizePage() {
 
       {/* Modal pro potvrzení smazání */}
       <Modal
-        isOpen={confirmDeleteId !== null}
-        onClose={() => setConfirmDeleteId(null)}
+        isOpen={confirmDelete !== null}
+        onClose={() => { setConfirmDelete(null); setConfirmDeleteInput(''); }}
         title="Smazat revizi"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setConfirmDeleteId(null)}>Zrušit</Button>
-            <Button variant="danger" onClick={executeDelete}>Smazat</Button>
+            <Button variant="secondary" onClick={() => { setConfirmDelete(null); setConfirmDeleteInput(''); }}>Zrušit</Button>
+            <Button variant="danger" onClick={executeDelete} disabled={confirmDeleteInput !== confirmDelete?.cisloRevize}>Smazat</Button>
           </>
         }
       >
-        <p className="text-sm text-[var(--text-secondary)]">
-          Opravdu chcete smazat tuto revizi? Budou smazány i všechny související záznamy.
-        </p>
+        <div className="space-y-3">
+          <p className="text-sm text-[var(--text-secondary)]">
+            Tato akce je nevratná. Budou smazány i všechny související záznamy (rozvaděče, místnosti, závady, přístroje).
+          </p>
+          <p className="text-sm text-[var(--text-secondary)]">
+            Pro potvrzení zadejte číslo revize: <span className="font-mono font-semibold text-[var(--text)]">{confirmDelete?.cisloRevize}</span>
+          </p>
+          <input
+            type="text"
+            value={confirmDeleteInput}
+            onChange={e => setConfirmDeleteInput(e.target.value)}
+            onPaste={e => e.preventDefault()}
+            placeholder={confirmDelete?.cisloRevize ?? ''}
+            className="w-full px-3 py-2 rounded-lg border border-[var(--border-medium)] bg-[var(--bg-input)] text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500"
+            autoComplete="off"
+          />
+        </div>
       </Modal>
 
       {/* Action sheet pro mobil – akce revize */}
@@ -899,7 +916,7 @@ export function RevizePage() {
               </button>
               <div className="border-t border-[var(--border-subtle)] mx-4 my-1" />
               <button
-                onClick={() => { const a = actionSheetRevize; setActionSheetRevize(null); handleDelete(a.id); }}
+                onClick={() => { const a = actionSheetRevize; setActionSheetRevize(null); handleDelete(a.id, a.cisloRevize); }}
                 className="w-full text-left px-4 py-3.5 text-sm text-red-600 active:bg-red-50 flex items-center gap-3"
               >
                 <span className="text-base">🗑️</span> Smazat
