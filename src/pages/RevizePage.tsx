@@ -878,10 +878,10 @@ export function RevizePage() {
             type="text"
             value={confirmDeleteInput}
             onChange={e => setConfirmDeleteInput(e.target.value)}
-            onPaste={e => e.preventDefault()}
             placeholder={confirmDelete?.cisloRevize ?? ''}
             className="w-full px-3 py-2 rounded-lg border border-[var(--border-medium)] bg-[var(--bg-input)] text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500"
             autoComplete="off"
+            autoFocus
           />
         </div>
       </Modal>
