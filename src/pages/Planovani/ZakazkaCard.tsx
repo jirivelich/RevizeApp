@@ -66,7 +66,7 @@ export function ZakazkaCard({ zakazka: z, onEdit, onUpdateStav, onDelete, onCrea
           {z.priorita}
         </span>
         {reportDeadline && (
-          <span className={`px-1.5 py-0.5 rounded text-xs font-medium shrink-0 ${isOverdue(reportDeadline) ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+          <span className="px-1.5 py-0.5 rounded text-xs font-medium shrink-0 bg-red-100 text-red-700">
             📋 {new Date(reportDeadline).toLocaleDateString('cs-CZ')}
           </span>
         )}
