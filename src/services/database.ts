@@ -55,11 +55,11 @@ export const revizeService = {
       } catch {
         // Network error - fallback to cache
         const all = await db.revizeCache.toArray();
-        return all.map(r => r.data);
+        return all.filter(r => !r.data._pendingDelete).map(r => r.data);
       }
     } else {
       const all = await db.revizeCache.toArray();
-      return all.map(r => r.data);
+      return all.filter(r => !r.data._pendingDelete).map(r => r.data);
     }
   },
 
@@ -75,11 +75,11 @@ export const revizeService = {
         return revize;
       } catch {
         const cached = await db.revizeCache.get(id);
-        return cached?.data;
+        return cached?.data?._pendingDelete ? undefined : cached?.data;
       }
     } else {
       const cached = await db.revizeCache.get(id);
-      return cached?.data;
+      return cached?.data?._pendingDelete ? undefined : cached?.data;
     }
   },
 
@@ -133,11 +133,18 @@ export const revizeService = {
   },
 
   async delete(id: number): Promise<void> {
-    await db.revizeCache.delete(id);
+    // Soft-delete: označit v cache příznakem, skutečně smazat až po úspěšné sync
+    const cached = await db.revizeCache.get(id);
+    if (cached) {
+      await db.revizeCache.put({ ...cached, data: { ...cached.data, _pendingDelete: true } });
+    }
     await safeApiRequest({ url: `${API_BASE_URL}/revize/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 
   async duplikovat(id: number, cisloRevize: string, typ: 'navazujici' | 'duplikat' = 'navazujici'): Promise<{ id: number; skupinaRevizi: string }> {
+    if (!navigator.onLine) {
+      throw new Error('Duplikace revize není dostupná offline. Připojte se k internetu a zkuste znovu.');
+    }
     return fetch(`${API_BASE_URL}/revize/${id}/duplikovat`, {
       method: 'POST',
       headers: getAuthHeaders(),

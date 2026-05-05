@@ -84,6 +84,10 @@ export function RevizePage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [openMenuId]);
   const openRevize = revize.find(r => r.id === openMenuId) ?? null;
+
+  // Temp ID = záporné číslo = offline záznam čekající na synchronizaci
+  const isOfflineId = (id: number | undefined) => (id ?? 0) < 0;
+
   // Action sheet pro mobil
   const [actionSheetRevize, setActionSheetRevize] = useState<{ id: number; cisloRevize: string; nazev: string } | null>(null);
 
@@ -417,9 +421,16 @@ export function RevizePage() {
                 {paginatedRevize.map((r) => (
                   <tr key={r.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#759d2f] hover:bg-[rgba(117,157,47,0.07)] group">
                     <td className="py-2 px-3">
-                      <Link to={`/revize/${r.id}`} className="text-xs text-[var(--text)] group-hover:text-[#759d2f] font-medium hover:underline transition-colors">
-                        {r.cisloRevize}
-                      </Link>
+                      {isOfflineId(r.id) ? (
+                        <span className="text-xs text-[var(--text-muted)] font-medium flex items-center gap-1.5">
+                          {r.cisloRevize}
+                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/20 text-amber-600 dark:text-amber-400">⏳ offline</span>
+                        </span>
+                      ) : (
+                        <Link to={`/revize/${r.id}`} className="text-xs text-[var(--text)] group-hover:text-[#759d2f] font-medium hover:underline transition-colors">
+                          {r.cisloRevize}
+                        </Link>
+                      )}
                     </td>
                     <td className="py-2 px-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -481,35 +492,54 @@ export function RevizePage() {
             <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 py-2">
               {paginatedRevize.map((r) => (
                 <div key={r.id} className="bg-[var(--glass-bg)] backdrop-blur-sm rounded-xl border border-[var(--glass-border)] flex flex-col relative hover:border-[rgba(146,196,59,0.35)] transition-all duration-200 group hover:shadow-[0_4px_20px_rgba(146,196,59,0.12)]">
-                  <Link to={`/revize/${r.id}`} className="flex-1 p-4 block">
-                    <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#759d2f] opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
-                          {r.kategorieRevize === 'elektro' ? 'Elektro' :
-                           r.kategorieRevize === 'hromosvod' ? 'Hromosvod' : 'Stroje'}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          r.stav === 'dokončeno' ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' :
-                          r.stav === 'rozpracováno' ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300' :
-                          'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
-                        }`}>{r.stav}</span>
+                  {isOfflineId(r.id) ? (
+                    <div className="flex-1 p-4">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-600 dark:text-amber-400">⏳ Čeká na synchronizaci</span>
+                      </div>
+                      <p className="font-semibold text-[var(--text)] text-sm leading-snug mb-1">{r.nazev}</p>
+                      <p className="text-xs text-[var(--text-secondary)] mb-3">{r.adresa}</p>
+                      <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
+                        <span>{r.cisloRevize}</span>
+                        <span>{new Date(r.datum).toLocaleDateString('cs-CZ')}</span>
                       </div>
                     </div>
-                    <p className="font-semibold text-[var(--text)] text-sm leading-snug mb-1">{r.nazev}</p>
-                    <p className="text-xs text-[var(--text-secondary)] mb-3">{r.adresa}</p>
-                    <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
-                      <span>{r.cisloRevize}</span>
-                      <span>{new Date(r.datum).toLocaleDateString('cs-CZ')}</span>
-                    </div>
-                  </Link>
+                  ) : (
+                    <Link to={`/revize/${r.id}`} className="flex-1 p-4 block">
+                      <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#759d2f] opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
+                            {r.kategorieRevize === 'elektro' ? 'Elektro' :
+                             r.kategorieRevize === 'hromosvod' ? 'Hromosvod' : 'Stroje'}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                            r.stav === 'dokončeno' ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' :
+                            r.stav === 'rozpracováno' ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300' :
+                            'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
+                          }`}>{r.stav}</span>
+                        </div>
+                      </div>
+                      <p className="font-semibold text-[var(--text)] text-sm leading-snug mb-1">{r.nazev}</p>
+                      <p className="text-xs text-[var(--text-secondary)] mb-3">{r.adresa}</p>
+                      <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
+                        <span>{r.cisloRevize}</span>
+                        <span>{new Date(r.datum).toLocaleDateString('cs-CZ')}</span>
+                      </div>
+                    </Link>
+                  )}
                   <div className="border-t border-[var(--border-subtle)] px-4 py-2 flex items-center justify-between gap-2">
                     <span className="text-xs text-[var(--text-muted)] truncate">{r.typRevize}</span>
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <button
-                        onClick={() => navigate(`/revize/${r.id}/nahled`)}
-                        className="p-1 rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
-                        title="Náhled tisku"
+                        onClick={() => !isOfflineId(r.id) && navigate(`/revize/${r.id}/nahled`)}
+                        className={`p-1 rounded transition-colors ${
+                          isOfflineId(r.id)
+                            ? 'text-[var(--text-muted)] opacity-30 cursor-not-allowed'
+                            : 'hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)]'
+                        }`}
+                        title={isOfflineId(r.id) ? 'Náhled dostupný po synchronizaci' : 'Náhled tisku'}
+                        disabled={isOfflineId(r.id)}
                       >
                         <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                           <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
@@ -853,8 +883,17 @@ export function RevizePage() {
                 <span className="text-base">✏️</span> Upravit
               </button>
               <button
-                onClick={() => { const a = actionSheetRevize; setActionSheetRevize(null); openDuplikatModal(a.id, a.cisloRevize); }}
-                className="w-full text-left px-4 py-3.5 text-sm text-[var(--text)] active:bg-[var(--bg-hover)] flex items-center gap-3"
+                onClick={() => {
+                  if (isOfflineId(actionSheetRevize?.id)) return;
+                  const a = actionSheetRevize; setActionSheetRevize(null); openDuplikatModal(a!.id, a!.cisloRevize);
+                }}
+                disabled={isOfflineId(actionSheetRevize?.id)}
+                className={`w-full text-left px-4 py-3.5 text-sm flex items-center gap-3 ${
+                  isOfflineId(actionSheetRevize?.id)
+                    ? 'text-[var(--text-muted)] opacity-40'
+                    : 'text-[var(--text)] active:bg-[var(--bg-hover)]'
+                }`}
+                title={isOfflineId(actionSheetRevize?.id) ? 'Dostupné po synchronizaci' : undefined}
               >
                 <span className="text-base">📋</span> Kopírovat revizi
               </button>
@@ -951,8 +990,14 @@ export function RevizePage() {
           style={{ top: dropdownPos.top, right: dropdownPos.right }}
         >
           <button
-            onClick={() => { setOpenMenuId(null); navigate(`/revize/${openRevize.id}/nahled`); }}
-            className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+            onClick={() => { if (isOfflineId(openRevize.id)) return; setOpenMenuId(null); navigate(`/revize/${openRevize.id}/nahled`); }}
+            disabled={isOfflineId(openRevize.id)}
+            title={isOfflineId(openRevize.id) ? 'Dostupné po synchronizaci' : undefined}
+            className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 ${
+              isOfflineId(openRevize.id)
+                ? 'text-[var(--text-muted)] opacity-40 cursor-not-allowed'
+                : 'text-[var(--text)] hover:bg-[var(--bg-hover)]'
+            }`}
           >
             <span>👁️</span> Náhled tisku
           </button>
@@ -964,14 +1009,26 @@ export function RevizePage() {
             <span>✏️</span> Upravit
           </button>
           <button
-            onClick={() => { setOpenMenuId(null); openDuplikatModal(openRevize.id!, openRevize.cisloRevize); }}
-            className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+            onClick={() => { if (isOfflineId(openRevize.id)) return; setOpenMenuId(null); openDuplikatModal(openRevize.id!, openRevize.cisloRevize); }}
+            disabled={isOfflineId(openRevize.id)}
+            title={isOfflineId(openRevize.id) ? 'Dostupné po synchronizaci' : undefined}
+            className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 ${
+              isOfflineId(openRevize.id)
+                ? 'text-[var(--text-muted)] opacity-40 cursor-not-allowed'
+                : 'text-[var(--text)] hover:bg-[var(--bg-hover)]'
+            }`}
           >
             <span>📋</span> Kopírovat revizi
           </button>
           <button
-            onClick={() => { setOpenMenuId(null); openHistorieModal(openRevize.id!, openRevize.cisloRevize); }}
-            className="w-full text-left px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+            onClick={() => { if (isOfflineId(openRevize.id)) return; setOpenMenuId(null); openHistorieModal(openRevize.id!, openRevize.cisloRevize); }}
+            disabled={isOfflineId(openRevize.id)}
+            title={isOfflineId(openRevize.id) ? 'Dostupné po synchronizaci' : undefined}
+            className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 ${
+              isOfflineId(openRevize.id)
+                ? 'text-[var(--text-muted)] opacity-40 cursor-not-allowed'
+                : 'text-[var(--text)] hover:bg-[var(--bg-hover)]'
+            }`}
           >
             <span>🕐</span> Historie
           </button>

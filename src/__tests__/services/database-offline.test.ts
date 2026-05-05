@@ -158,14 +158,15 @@ describe('revizeService – offline', () => {
     expect(safeApiRequest).toHaveBeenCalled();
   });
 
-  it('delete – smaže z cache', async () => {
+  it('delete – soft-delete: označí _pendingDelete v cache', async () => {
     await db.revizeCache.put({ id: 1, data: revize1, updatedAt: Date.now() });
     setOffline();
 
     await revizeService.delete(1);
 
     const cached = await db.revizeCache.get(1);
-    expect(cached).toBeUndefined();
+    expect(cached).toBeDefined();
+    expect(cached!.data._pendingDelete).toBe(true);
     expect(safeApiRequest).toHaveBeenCalled();
   });
 

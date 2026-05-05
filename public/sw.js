@@ -116,6 +116,46 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // API write operations – po úspěchu invaliduj odpovídající GET cache
+  if (
+    ['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method) &&
+    (() => {
+      try {
+        const url = new URL(request.url);
+        return (
+          url.origin === self.location.origin &&
+          CACHED_API_ENDPOINTS.some(ep => url.pathname.startsWith(ep))
+        );
+      } catch { return false; }
+    })()
+  ) {
+    event.respondWith(
+      fetch(request).then(response => {
+        if (response.ok) {
+          try {
+            const url = new URL(request.url);
+            const matchingEndpoint = CACHED_API_ENDPOINTS.find(ep => url.pathname.startsWith(ep));
+            if (matchingEndpoint) {
+              caches.open(API_CACHE).then(async cache => {
+                const keys = await cache.keys();
+                for (const key of keys) {
+                  try {
+                    const keyUrl = new URL(key.url);
+                    if (keyUrl.pathname.startsWith(matchingEndpoint)) {
+                      await cache.delete(key);
+                    }
+                  } catch { /* ignoruj nevalidní URL */ }
+                }
+              });
+            }
+          } catch { /* ignoruj chyby při invalidaci */ }
+        }
+        return response;
+      })
+    );
+    return;
+  }
+
   // Ostatní požadavky – default (přeposlat dál)
   // (lze rozšířit dle potřeby)
 });

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
+import { FormBuilderPage } from './template/form-builder';
 import OfflineBanner from './components/OfflineBanner';
 import {
   Dashboard,
@@ -129,6 +130,7 @@ function App() {
               <Route path="zakaznici" element={<ZakazniciPage />} />
               <Route path="planovani" element={<PlanovaniPage />} />
               <Route path="nastaveni" element={<NastaveniPage />} />
+              <Route path="form-builder" element={<FormBuilderPage />} />
             </Route>
           </Routes>
         </BrowserRouter>
