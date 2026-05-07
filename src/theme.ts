@@ -63,7 +63,7 @@ export const themes: Record<ThemeName, ThemeVars> = {
     '--border-subtle':       'rgba(21,27,38,0.06)',
     '--border-medium':       'rgba(21,27,38,0.13)',
     '--border-strong':       'rgba(21,27,38,0.20)',
-    '--bg-surface':          'rgba(255,255,255,0.70)',
+    '--bg-surface':          'rgba(21,27,38,0.04)',
     '--bg-input':            '#FFFFFF',
     '--bg-hover':            'rgba(21,27,38,0.05)',
     '--bg-hover-strong':     'rgba(21,27,38,0.10)',
