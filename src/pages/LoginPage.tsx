@@ -1,8 +1,8 @@
 ﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const RED = '#92c43b';
-const RED_DARK = '#759d2f';
+const BLUE = '#2B88FF';
+const BLUE_DARK = '#1E6FE6';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -40,14 +40,14 @@ export default function LoginPage() {
 
   const baseInput: React.CSSProperties = {
     width: '100%', padding: '11px 14px',
-    border: '1px solid rgba(226,225,233,0.10)',
+    border: '1px solid rgba(255,255,255,0.10)',
     borderRadius: 10, fontSize: 14, color: '#e2e8f0',
-    background: 'rgba(226,225,233,0.05)', outline: 'none',
+    background: 'rgba(255,255,255,0.05)', outline: 'none',
     transition: 'all .18s', boxSizing: 'border-box', fontFamily: 'inherit',
   };
   const getInputStyle = (name: string): React.CSSProperties =>
     focusedField === name
-      ? { ...baseInput, borderColor: 'rgba(146,196,59,0.5)', background: 'rgba(146,196,59,0.06)', boxShadow: '0 0 0 3px rgba(146,196,59,0.12)' }
+      ? { ...baseInput, borderColor: 'rgba(43,136,255,0.5)', background: 'rgba(43,136,255,0.06)', boxShadow: '0 0 0 3px rgba(43,136,255,0.12)' }
       : baseInput;
 
   const features = [
@@ -61,7 +61,7 @@ export default function LoginPage() {
     <div style={{
       background: 'rgba(30,30,46,0.85)',
       backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-      border: '1px solid rgba(226,225,233,0.08)',
+      border: '1px solid rgba(255,255,255,0.08)',
       borderRadius: 20, padding: '40px 36px 36px',
       boxShadow: '0 8px 40px rgba(0,0,0,0.45)',
       width: '100%',
@@ -70,9 +70,9 @@ export default function LoginPage() {
       <div className="login-mobile-brand" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
         <div style={{
           width: 36, height: 36,
-          background: `linear-gradient(135deg, ${RED} 0%, ${RED_DARK} 100%)`,
+          background: `linear-gradient(135deg, ${BLUE} 0%, ${BLUE_DARK} 100%)`,
           borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 0 18px rgba(146,196,59,0.45)',
+          boxShadow: '0 0 18px rgba(43,136,255,0.45)',
         }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -117,11 +117,11 @@ export default function LoginPage() {
 
         <button type="submit" disabled={loading} style={{
           width: '100%', padding: 13,
-          background: `linear-gradient(135deg, ${RED} 0%, ${RED_DARK} 100%)`,
+          background: `linear-gradient(135deg, ${BLUE} 0%, ${BLUE_DARK} 100%)`,
           color: 'white', border: 'none', borderRadius: 10,
           fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
           opacity: loading ? 0.65 : 1,
-          boxShadow: '0 4px 20px rgba(146,196,59,0.38)',
+          boxShadow: '0 4px 20px rgba(43,136,255,0.38)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           transition: 'all .18s', fontFamily: 'inherit',
         }}>
@@ -165,43 +165,43 @@ export default function LoginPage() {
         {/* LEVÝ PANEL */}
         <div className="login-left" style={{
           width: '42%', minWidth: 340,
-          background: '#0d1306',
+          background: '#080C12',
           flexDirection: 'column', justifyContent: 'space-between',
           padding: '48px 44px',
           position: 'relative', overflow: 'hidden',
         }}>
           <div style={{
             position: 'absolute', inset: 0, pointerEvents: 'none',
-            backgroundImage: 'linear-gradient(rgba(146,196,59,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(146,196,59,0.035) 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(rgba(43,136,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(43,136,255,0.04) 1px, transparent 1px)',
             backgroundSize: '40px 40px',
           }} />
           <div style={{
             position: 'absolute', top: '5%', right: '-10%',
             width: 380, height: 380, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(146,196,59,0.14) 0%, transparent 65%)',
+            background: 'radial-gradient(circle, rgba(43,136,255,0.14) 0%, transparent 65%)',
             pointerEvents: 'none',
           }} />
           <div style={{
             position: 'absolute', bottom: '-5%', left: '-8%',
             width: 300, height: 300, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(146,196,59,0.10) 0%, transparent 65%)',
+            background: 'radial-gradient(circle, rgba(43,136,255,0.10) 0%, transparent 65%)',
             pointerEvents: 'none',
           }} />
           <svg style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.22, width: '100%', height: '100%' }}
             viewBox="0 0 600 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-            <g stroke={RED} strokeWidth="1" fill="none">
+            <g stroke={BLUE} strokeWidth="1" fill="none">
               <polyline points="40,40 40,140 140,140 140,80 280,80" />
-              <circle cx="40" cy="40" r="4" fill={RED} />
-              <circle cx="140" cy="140" r="3" fill={RED} opacity="0.5" />
-              <circle cx="280" cy="80" r="4" fill={RED} />
-              <rect x="276" y="76" width="8" height="8" fill="none" stroke={RED} />
+              <circle cx="40" cy="40" r="4" fill={BLUE} />
+              <circle cx="140" cy="140" r="3" fill={BLUE} opacity="0.5" />
+              <circle cx="280" cy="80" r="4" fill={BLUE} />
+              <rect x="276" y="76" width="8" height="8" fill="none" stroke={BLUE} />
               <polyline points="560,860 560,740 420,740 420,820 220,820" />
-              <circle cx="560" cy="860" r="4" fill={RED} />
-              <circle cx="420" cy="740" r="3" fill={RED} opacity="0.5" />
-              <circle cx="220" cy="820" r="4" fill={RED} />
-              <rect x="216" y="816" width="8" height="8" fill="rgba(146,196,59,0.15)" stroke={RED} />
+              <circle cx="560" cy="860" r="4" fill={BLUE} />
+              <circle cx="420" cy="740" r="3" fill={BLUE} opacity="0.5" />
+              <circle cx="220" cy="820" r="4" fill={BLUE} />
+              <rect x="216" y="816" width="8" height="8" fill="rgba(43,136,255,0.15)" stroke={BLUE} />
               <polyline points="30,440 120,440 120,520" />
-              <circle cx="30" cy="440" r="3" fill={RED} opacity="0.4" />
+              <circle cx="30" cy="440" r="3" fill={BLUE} opacity="0.4" />
             </g>
           </svg>
 
@@ -210,9 +210,9 @@ export default function LoginPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{
                 width: 42, height: 42,
-                background: `linear-gradient(135deg, ${RED} 0%, ${RED_DARK} 100%)`,
+                background: `linear-gradient(135deg, ${BLUE} 0%, ${BLUE_DARK} 100%)`,
                 borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 0 24px rgba(146,196,59,0.50)',
+                boxShadow: '0 0 24px rgba(43,136,255,0.50)',
               }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -229,7 +229,7 @@ export default function LoginPage() {
           <div style={{ position: 'relative', zIndex: 1 }}>
             <h2 style={{ fontSize: 30, fontWeight: 700, color: '#f1f5f9', lineHeight: 1.25, marginBottom: 14 }}>
               Digitální správa<br />
-              <span style={{ color: RED }}>revizních zpráv</span>
+              <span style={{ color: BLUE }}>revizních zpráv</span>
             </h2>
             <p style={{ color: '#64748b', fontSize: 14, lineHeight: 1.7, marginBottom: 36 }}>
               Komplexní systém pro revizní techniky. Plánujte, dokumentujte a archivujte revize na jednom místě.
@@ -239,10 +239,10 @@ export default function LoginPage() {
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{
                     width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-                    background: 'rgba(146,196,59,0.10)', border: '1px solid rgba(146,196,59,0.20)',
+                    background: 'rgba(43,136,255,0.10)', border: '1px solid rgba(43,136,255,0.20)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={RED} strokeWidth="2">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={BLUE} strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d={f.icon} />
                     </svg>
                   </div>
@@ -255,7 +255,7 @@ export default function LoginPage() {
           {/* Footer */}
           <div style={{ position: 'relative', zIndex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 6px #22c55e' }} />
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00B341', boxShadow: '0 0 6px #00B341' }} />
               <span style={{ fontSize: 12, color: '#334155' }}>Systém online · v2.0</span>
             </div>
           </div>
@@ -263,13 +263,13 @@ export default function LoginPage() {
 
         {/* PRAVÝ PANEL */}
         <div className="login-right" style={{
-          flex: 1, background: '#141b08',
+          flex: 1, background: '#0A0E14',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: '48px 40px', position: 'relative',
         }}>
           <div style={{
             position: 'absolute', inset: 0, pointerEvents: 'none',
-            background: 'radial-gradient(ellipse at 60% 40%, rgba(146,196,59,0.07) 0%, transparent 60%)',
+            background: 'radial-gradient(ellipse at 60% 40%, rgba(43,136,255,0.08) 0%, transparent 60%)',
           }} />
           <div className="login-card-wrap" style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 420 }}>
             {formCard}

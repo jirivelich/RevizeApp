@@ -123,7 +123,7 @@ function GanttRow({ zakazka: z, days, onClick, onAddDay, onRemoveDay, isDragging
               {/* Odevzdání zprávy */}
               {isOdevzdani && (
                 <div
-                  className="absolute inset-y-2 left-1/2 -translate-x-1/2 w-1.5 rounded-full bg-green-500"
+                  className="absolute inset-y-2 left-1/2 -translate-x-1/2 w-1.5 rounded-full bg-blue-400"
                   title={`Odevzdání zprávy: ${z.nazev}`}
                 />
               )}
@@ -273,7 +273,7 @@ export function GanttView({ zakazky, onZakazkaClick, onMove, onAddDay, onRemoveD
       <div className="flex gap-4 mb-3 text-xs text-[var(--text-secondary)] flex-wrap">
         <span className="flex items-center gap-1.5"><span className="inline-block w-4 h-3 rounded bg-blue-500"></span>Realizace</span>
         <span className="flex items-center gap-1.5"><span className="inline-block w-4 h-3 rounded bg-amber-400"></span>Deadline zprávy</span>
-        <span className="flex items-center gap-1.5"><span className="inline-block w-1.5 h-4 rounded-full bg-green-500"></span>Odevzdání</span>
+        <span className="flex items-center gap-1.5"><span className="inline-block w-1.5 h-4 rounded-full bg-blue-400"></span>Odevzdání</span>
       </div>
 
       {/* Grid */}

@@ -79,9 +79,9 @@ export default function ZmenaHeslaModal({ onClose }: ZmenaHeslaModalProps) {
   };
   const focusedInput: React.CSSProperties = {
     ...baseInput,
-    borderColor: 'rgba(146,196,59,0.5)',
-    background: 'rgba(146,196,59,0.05)',
-    boxShadow: '0 0 0 3px rgba(146,196,59,0.10)',
+    borderColor: 'rgba(43,136,255,0.5)',
+    background: 'rgba(43,136,255,0.05)',
+    boxShadow: '0 0 0 3px rgba(43,136,255,0.10)',
   };
   const inputStyle = (name: string) => focused === name ? focusedInput : baseInput;
 
@@ -119,10 +119,10 @@ export default function ZmenaHeslaModal({ onClose }: ZmenaHeslaModalProps) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
               width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-              background: 'rgba(146,196,59,0.12)', border: '1px solid rgba(146,196,59,0.22)',
+              background: 'rgba(43,136,255,0.12)', border: '1px solid rgba(43,136,255,0.22)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <svg width="15" height="15" fill="none" stroke="#92c43b" viewBox="0 0 24 24" strokeWidth={2}>
+              <svg width="15" height="15" fill="none" stroke="#2B88FF" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
@@ -233,13 +233,13 @@ export default function ZmenaHeslaModal({ onClose }: ZmenaHeslaModalProps) {
                 type="submit" disabled={loading}
                 style={{
                   flex: 1, padding: '10px 0',
-                  background: 'linear-gradient(135deg, #92c43b 0%, #759d2f 100%)',
+                  background: 'linear-gradient(135deg, #2B88FF 0%, #1E6FE6 100%)',
                   border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600,
                   color: 'white', cursor: loading ? 'not-allowed' : 'pointer',
                   opacity: loading ? 0.65 : 1,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   fontFamily: 'inherit', transition: 'all .15s',
-                  boxShadow: '0 2px 10px rgba(146,196,59,0.30)',
+                  boxShadow: '0 2px 10px rgba(43,136,255,0.30)',
                 }}
               >
                 {loading ? (

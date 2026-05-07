@@ -38,8 +38,8 @@ export function Layout() {
       <main className="lg:ml-56 h-screen flex flex-col" style={{
         backgroundColor: 'var(--background)',
         backgroundImage: [
-          'radial-gradient(ellipse 70% 55% at 8% 0%, rgba(146,196,59,0.10) 0%, transparent 50%)',
-          'radial-gradient(ellipse 60% 50% at 92% 95%, rgba(146,196,59,0.08) 0%, transparent 50%)',
+          'radial-gradient(ellipse 70% 55% at 8% 0%, rgba(43,136,255,0.08) 0%, transparent 50%)',
+          'radial-gradient(ellipse 60% 50% at 92% 95%, rgba(255,183,77,0.06) 0%, transparent 50%)',
         ].join(', ')
       }}>
         {/* Mobilní header s menu tlačítkem */}

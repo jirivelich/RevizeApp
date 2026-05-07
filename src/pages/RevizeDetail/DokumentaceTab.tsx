@@ -291,7 +291,7 @@ export function DokumentaceTab({
               </thead>
               <tbody>
                 {pouzitePristroje.map((p) => (
-                  <tr key={p.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#759d2f] hover:bg-[rgba(117,157,47,0.03)] group">
+                  <tr key={p.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[var(--primary)] hover:bg-[var(--bg-hover)] group">
                     <td className={TW.td + ' font-medium'}>{p.nazev}</td>
                     <td className={TW.td}>{p.vyrobce} {p.model}</td>
                     <td className={TW.td + ' font-mono'}>{p.vyrobniCislo}</td>

@@ -419,7 +419,7 @@ export function RevizePage() {
               </thead>
               <tbody>
                 {paginatedRevize.map((r) => (
-                  <tr key={r.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#759d2f] hover:bg-[rgba(117,157,47,0.07)] group">
+                  <tr key={r.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[var(--primary)] hover:bg-[var(--bg-hover)] group">
                     <td className="py-2 px-3">
                       {isOfflineId(r.id) ? (
                         <span className="text-xs text-[var(--text-muted)] font-medium flex items-center gap-1.5">
@@ -427,7 +427,7 @@ export function RevizePage() {
                           <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/20 text-amber-600 dark:text-amber-400">⏳ offline</span>
                         </span>
                       ) : (
-                        <Link to={`/revize/${r.id}`} className="text-xs text-[var(--text)] group-hover:text-[#759d2f] font-medium hover:underline transition-colors">
+                        <Link to={`/revize/${r.id}`} className="text-xs text-[var(--text)] group-hover:text-[var(--primary)] font-medium hover:underline transition-colors">
                           {r.cisloRevize}
                         </Link>
                       )}
@@ -491,7 +491,7 @@ export function RevizePage() {
           <div className={`${viewMode === 'grid' ? 'hidden md:block' : 'hidden'} px-6 pb-4 flex-1 min-h-0 overflow-auto`}>
             <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 py-2">
               {paginatedRevize.map((r) => (
-                <div key={r.id} className="bg-[var(--glass-bg)] backdrop-blur-sm rounded-xl border border-[var(--glass-border)] flex flex-col relative hover:border-[rgba(146,196,59,0.35)] transition-all duration-200 group hover:shadow-[0_4px_20px_rgba(146,196,59,0.12)]">
+                <div key={r.id} className="bg-[var(--surface)] rounded-xl border border-[var(--border-medium)] flex flex-col relative hover:border-[rgba(43,136,255,0.35)] transition-all duration-200 group hover:shadow-[0_4px_20px_rgba(43,136,255,0.12)]">
                   {isOfflineId(r.id) ? (
                     <div className="flex-1 p-4">
                       <div className="flex items-center gap-1.5 mb-2">
@@ -506,7 +506,7 @@ export function RevizePage() {
                     </div>
                   ) : (
                     <Link to={`/revize/${r.id}`} className="flex-1 p-4 block">
-                      <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#759d2f] opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[var(--primary)] opacity-0 group-hover:opacity-100 transition-opacity" />
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">

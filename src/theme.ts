@@ -46,7 +46,7 @@ export const themes: Record<ThemeName, ThemeVars> = {
     '--shadow-elevated':     '0 2px 4px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.45), 0 20px 48px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.06)',
   },
   light: {
-    '--background':          '#F3F4F6',
+    '--background':          '#EEF4FF',
     '--surface':             '#FFFFFF',
     '--text':                '#151B26',
     '--text-muted':          '#6B7280',

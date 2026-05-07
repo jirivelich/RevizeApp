@@ -150,7 +150,7 @@ function RevizeBarChart({ revize }: { revize: Revize[] }) {
                         ? 'var(--primary)'
                         : b.count === 0
                         ? 'var(--border)'
-                        : 'rgba(146,196,59,0.45)',
+                        : 'rgba(43,136,255,0.45)',
                       minHeight: b.count === 0 ? 2 : 4,
                     }}
                   />

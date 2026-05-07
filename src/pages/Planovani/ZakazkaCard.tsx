@@ -71,7 +71,7 @@ export function ZakazkaCard({ zakazka: z, onEdit, onUpdateStav, onDelete, onCrea
           </span>
         )}
         {z.datumOdevzdaniZpravy && z.stav !== 'zrušeno' && (
-          <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 shrink-0">
+          <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[var(--bg-accent)] text-[var(--nav-text-active)] shrink-0">
             ✓ Odevzdáno
           </span>
         )}

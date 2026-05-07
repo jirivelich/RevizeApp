@@ -180,7 +180,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
             </thead>
             <tbody>
               {zavady.map((z) => (
-                <tr key={z.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#759d2f] hover:bg-[rgba(117,157,47,0.03)] group">
+                <tr key={z.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[var(--primary)] hover:bg-[var(--bg-hover)] group">
                   <td className="py-2 pr-3 font-medium">{z.popis}</td>
                   <td className="py-2 pr-3">
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${

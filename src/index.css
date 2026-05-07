@@ -126,7 +126,7 @@ button, a, [role="button"] {
   position: absolute;
   width: 12px;
   height: 12px;
-  background: #92c43b;
+  background: var(--primary);
   border: 2px solid white;
   border-radius: 50%;
   z-index: 50;
@@ -134,7 +134,7 @@ button, a, [role="button"] {
 }
 
 .react-resizable-handle:hover {
-  background: #759d2f;
+  background: var(--primary-hover);
   transform: scale(1.2);
 }
 

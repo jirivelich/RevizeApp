@@ -892,7 +892,7 @@ export function RevizeDetailPage() {
             onClick={() => setActiveTab(tab.id as any)}
             className={`px-4 py-3 font-medium transition-all duration-200 border-b-2 whitespace-nowrap flex-shrink-0 ${
               activeTab === tab.id
-                ? 'border-[var(--primary)] text-[var(--nav-text-active)] drop-shadow-[0_0_6px_rgba(146,196,59,0.5)]'
+                ? 'border-[var(--primary)] text-[var(--nav-text-active)] drop-shadow-[0_0_6px_rgba(43,136,255,0.5)]'
                 : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text)]'
             }`}
           >
@@ -1297,7 +1297,7 @@ export function RevizeDetailPage() {
                         />
                         <div className="flex gap-1 justify-end">
                           <button type="button" onClick={() => setAdding(false)} className="px-2 py-0.5 text-xs text-[var(--text-muted)] hover:bg-slate-100 rounded cursor-pointer">Zrušit</button>
-                          <button type="button" onClick={handleAdd} className="px-2 py-0.5 text-xs bg-[#759d2f] text-white rounded hover:bg-[#587623] cursor-pointer" disabled={!newNazev.trim() || !newText.trim()}>Uložit</button>
+                          <button type="button" onClick={handleAdd} className="px-2 py-0.5 text-xs bg-[var(--primary)] text-white rounded hover:bg-[var(--primary-hover)] cursor-pointer" disabled={!newNazev.trim() || !newText.trim()}>Uložit</button>
                         </div>
                       </div>
                     )}
@@ -1450,7 +1450,7 @@ export function RevizeDetailPage() {
                 </thead>
                 <tbody>
                   {pouzitePristroje.map((p) => (
-                    <tr key={p.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#759d2f] hover:bg-[rgba(117,157,47,0.03)] group">
+                    <tr key={p.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[var(--primary)] hover:bg-[var(--bg-hover)] group">
                       <td className="border-b border-r border-slate-200 px-4 py-1.5 font-medium">{p.nazev}</td>
                       <td className="border-b border-r border-slate-200 px-4 py-1.5">{p.vyrobce} {p.model}</td>
                       <td className="border-b border-r border-slate-200 px-4 py-1.5 font-mono">{p.vyrobniCislo}</td>
@@ -1960,7 +1960,7 @@ export function RevizeDetailPage() {
                       </thead>
                       <tbody>
                         {zarizeni.map((z) => (
-                          <tr key={z.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[#759d2f] hover:bg-[rgba(117,157,47,0.03)] group">
+                          <tr key={z.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[var(--primary)] hover:bg-[var(--bg-hover)] group">
                             <td className="py-2 px-3">
                               <p className="font-medium">{z.nazev}</p>
                               {z.oznaceni && <p className="text-xs text-[var(--text-secondary)]">{z.oznaceni}</p>}
@@ -2512,7 +2512,7 @@ export function RevizeDetailPage() {
       {(activeTab === 'info' || activeTab === 'dokumentace') && (
         <div className="fixed bottom-0 left-0 lg:left-64 right-0 z-50 bg-[var(--glass-bg-strong)] backdrop-blur-md border-t border-[var(--glass-border)] shadow-[0_-4px_20px_rgba(0,0,0,0.35)]">
           <div className="max-w-4xl mx-auto px-4 py-1 flex justify-center">
-            <button onClick={handleSave} className="px-6 py-1 bg-[#759d2f] hover:bg-[#587623] text-white text-sm font-semibold rounded transition-colors cursor-pointer">💾 Uložit změny</button>
+            <button onClick={handleSave} className="px-6 py-1 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-sm font-semibold rounded transition-colors cursor-pointer">💾 Uložit změny</button>
           </div>
         </div>
       )}

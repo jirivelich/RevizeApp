@@ -49,6 +49,7 @@ const sidebarStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   position: 'relative',
+  overflow: 'hidden',
   flexShrink: 0,
 };
 
@@ -137,7 +138,55 @@ export function Sidebar({ onClose }: SidebarProps) {
         }
       `}</style>
       <aside style={sidebarStyle}>
-        {/* Header */}
+        {/* Decorative electrical schematic background */}
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 224 900"
+          preserveAspectRatio="xMidYMin slice"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            opacity: 0.13,
+            pointerEvents: 'none',
+            zIndex: 0,
+          }}
+        >
+          <g stroke="var(--primary)" strokeWidth="1" fill="none">
+            <polyline points="18,40 18,140 60,140 60,210" />
+            <polyline points="60,210 110,210 110,300 170,300" />
+            <polyline points="170,300 170,400 90,400 90,500" />
+            <polyline points="90,500 30,500 30,620 130,620 130,720" />
+            <polyline points="130,720 200,720 200,820" />
+            <polyline points="200,820 80,820 80,880" />
+            <polyline points="206,40 206,120 150,120 150,180" />
+            <polyline points="150,180 200,180 200,260" />
+          </g>
+          <g fill="var(--primary)">
+            <circle cx="18" cy="40" r="2.5" />
+            <circle cx="60" cy="210" r="2.5" />
+            <circle cx="110" cy="300" r="2.5" />
+            <circle cx="170" cy="400" r="2.5" />
+            <circle cx="90" cy="500" r="2.5" />
+            <circle cx="30" cy="620" r="2.5" />
+            <circle cx="130" cy="720" r="2.5" />
+            <circle cx="200" cy="820" r="2.5" />
+            <circle cx="80" cy="880" r="2.5" />
+            <circle cx="206" cy="40" r="2.5" />
+            <circle cx="150" cy="180" r="2.5" />
+            <circle cx="200" cy="260" r="2.5" />
+          </g>
+          <g stroke="var(--primary)" strokeWidth="1" fill="none">
+            <rect x="54" y="168" width="12" height="6" />
+            <rect x="104" y="258" width="12" height="6" />
+            <rect x="164" y="348" width="12" height="6" />
+            <rect x="84" y="458" width="12" height="6" />
+            <rect x="24" y="568" width="12" height="6" />
+            <rect x="124" y="678" width="12" height="6" />
+            <rect x="194" y="778" width="12" height="6" />
+          </g>
+        </svg>
         <div style={{ padding: '16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{

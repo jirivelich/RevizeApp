@@ -17,7 +17,7 @@ const WEEKEND_INDICES = new Set([5, 6]);
 const LEGEND_ITEMS = [
   { color: 'bg-purple-400/70', label: 'Realizace' },
   { color: 'bg-amber-400/80', label: 'Deadline zprávy' },
-  { color: 'bg-green-400/80', label: 'Odevzdání' },
+  { color: 'bg-blue-400/80', label: 'Odevzdání' },
 ] as const;
 
 function getISOWeek(date: Date): number {
@@ -206,7 +206,7 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
               {odevzdani.map((z) => (
                 <div
                   key={`ov-${z.id}`}
-                  className="text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 flex items-center bg-green-500/20 text-green-300"
+                  className="text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 flex items-center bg-blue-500/20 text-blue-300"
                   title={`Odevzdání: ${z.nazev} — ${z.klient}`}
                   onClick={(e) => { e.stopPropagation(); onZakazkaClick(z); }}
                 >

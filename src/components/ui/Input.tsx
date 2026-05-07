@@ -21,7 +21,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             px-2 py-1.5 border rounded-lg
             bg-[var(--glass-bg)] backdrop-blur-sm text-[var(--text)] placeholder:text-[var(--text-muted)]
             transition-all duration-200
-            focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[rgba(146,196,59,0.4)] focus:shadow-[0_0_0_3px_rgba(146,196,59,0.12)]
+            focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[rgba(43,136,255,0.4)] focus:shadow-[0_0_0_3px_rgba(43,136,255,0.12)]
             text-xs
             ${error ? 'border-red-500/[0.5]' : 'border-[var(--glass-border)]'}
             ${className}

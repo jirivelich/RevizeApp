@@ -659,7 +659,7 @@ export function HromosvodPrintPage() {
             {pageCount > 0 && (
               <span className="text-xs text-slate-400">{pageCount} {pageCount === 1 ? 'strana' : pageCount < 5 ? 'strany' : 'stran'}</span>
             )}
-            <button onClick={handleWordExport} className="px-4 py-2 bg-[#759d2f] text-white rounded-lg hover:bg-[#587623] text-sm font-medium flex items-center gap-2 transition">
+            <button onClick={handleWordExport} className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg hover:bg-[var(--primary-hover)] text-sm font-medium flex items-center gap-2 transition">
               <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M3 3.5A1.5 1.5 0 0 1 4.5 2h6.879a1.5 1.5 0 0 1 1.06.44l4.122 4.12A1.5 1.5 0 0 1 17 7.622V16.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 3 16.5v-13ZM13.25 9a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5a.75.75 0 0 1 .75-.75Zm-6.5 0a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 6.75 9Zm4 0a.75.75 0 0 1 .624.334l1.25 1.876a.75.75 0 0 1-1.248.832L10.75 11.1l-.626.938a.75.75 0 1 1-1.248-.832l1.25-1.876A.75.75 0 0 1 10.75 9Z" /></svg>
               Word
             </button>
