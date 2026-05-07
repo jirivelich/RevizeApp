@@ -1,24 +1,24 @@
 ﻿.sidebar-light {
-  background: #f4f6fb;
-  color: #222;
-  border-right: 1px solid #e2e8f0;
+  background: #E0EAFF;
+  color: #151B26;
+  border-right: 1px solid rgba(21,27,38,0.12);
 }
 .sidebar-light .active {
-  background: rgba(146,196,59,0.10);
-  color: #92c43b;
+  background: rgba(0,82,204,0.10);
+  color: #0052CC;
 }
 .sidebar-light .sidebar-header {
-  background: rgba(146,196,59,0.08);
-  color: #92c43b;
+  background: rgba(0,82,204,0.08);
+  color: #0052CC;
 }
 .sidebar-light .sidebar-link {
-  color: #444;
+  color: #4B5563;
 }
 .sidebar-light .sidebar-link:hover {
-  background: rgba(146,196,59,0.06);
-  color: #92c43b;
+  background: rgba(0,82,204,0.06);
+  color: #0052CC;
 }
 .sidebar-light .sidebar-footer {
-  border-top: 1px solid #e2e8f0;
-  color: #888;
+  border-top: 1px solid rgba(21,27,38,0.12);
+  color: #6B7280;
 }
