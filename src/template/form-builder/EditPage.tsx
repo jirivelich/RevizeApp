@@ -90,3 +90,4 @@ export function EditPage({ pg, pi, selBlk, onSelBlk, doc }: EditPageProps) {
       )}
     </div>
   );
+}
