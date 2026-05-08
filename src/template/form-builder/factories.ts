@@ -1,6 +1,6 @@
 // ─── Tovární funkce pro tvorbu datových objektů ──────────────────────────────
 
-import type { Field, FieldItem, TableItem, TableCol, TableRow, SectionBlock, TableBlock, FreetextBlock, Page, Doc } from './types';
+import type { Field, FieldItem, TableItem, TableCol, TableRow, SectionBlock, TableBlock, FreetextBlock, ImageBlock, SignatureBlock, PageBreakBlock, AutoDateBlock, Page, Doc } from './types';
 
 export const FIELD_TYPES = ['text', 'number', 'date', 'textarea', 'checkbox', 'select'] as const;
 
@@ -60,6 +60,25 @@ export const mkTable = (r = 3, c = 3): TableBlock => {
 export const mkFreetext = (): FreetextBlock => ({
   id: uid(), kind: 'freetext',
   text: 'Nadpis / popis', style: 'h2',
+});
+
+export const mkImage = (): ImageBlock => ({
+  id: uid(), kind: 'image',
+  src: '', caption: '', widthPct: 80,
+});
+
+export const mkSignature = (): SignatureBlock => ({
+  id: uid(), kind: 'signature',
+  label: 'Podpis', width: 280, height: 100,
+});
+
+export const mkPageBreak = (): PageBreakBlock => ({
+  id: uid(), kind: 'pagebreak',
+});
+
+export const mkAutoDate = (): AutoDateBlock => ({
+  id: uid(), kind: 'autodate',
+  format: 'cs', prefix: 'V Praze dne ',
 });
 
 export const mkPage = (n = 1): Page => ({

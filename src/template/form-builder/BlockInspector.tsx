@@ -1,6 +1,6 @@
 // ─── Inspektor bloků – pravý panel editoru ───────────────────────────────────
 
-import type { Block, SectionBlock, TableBlock, FreetextBlock, FieldItem, TableItem, FieldType } from './types';
+import type { Block, SectionBlock, TableBlock, FreetextBlock, FieldItem, TableItem, FieldType, ImageBlock, SignatureBlock, AutoDateBlock } from './types';
 import { C, T } from './styles';
 import { mkFieldItem, mkTableItem, mkRow, uid, FIELD_TYPES } from './factories';
 
@@ -35,13 +35,24 @@ export function BlockInspector({ block, onChange, onDelete, onMove }: BlockInspe
   const updSection  = (fn: (b: SectionBlock)  => void) => onChange(b => fn(b as SectionBlock));
   const updTable    = (fn: (b: TableBlock)    => void) => onChange(b => fn(b as TableBlock));
   const updFreetext = (fn: (b: FreetextBlock) => void) => onChange(b => fn(b as FreetextBlock));
+  const updImage    = (fn: (b: ImageBlock)    => void) => onChange(b => fn(b as ImageBlock));
+  const updSignature= (fn: (b: SignatureBlock)=> void) => onChange(b => fn(b as SignatureBlock));
+  const updAutoDate = (fn: (b: AutoDateBlock) => void) => onChange(b => fn(b as AutoDateBlock));
+
+  const labelMap: Record<Block['kind'], string> = {
+    section: '✦ Oddíl',
+    table: '▦ Tabulka',
+    freetext: 'T Text/Nadpis',
+    image: '▤ Obrázek',
+    signature: '✍ Podpis',
+    pagebreak: '⤵ Zalomení',
+    autodate: '📅 Datum',
+  };
 
   return (
     <div style={T.sSection}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <div style={T.sTitle}>
-          {block.kind === 'section' ? '✦ Oddíl' : block.kind === 'table' ? '▦ Tabulka' : 'T Text/Nadpis'}
-        </div>
+        <div style={T.sTitle}>{labelMap[block.kind]}</div>
         <div style={{ display: 'flex', gap: 4 }}>
           <button style={T.sIconBtn} onClick={() => onMove(-1)}>↑</button>
           <button style={T.sIconBtn} onClick={() => onMove(1)}>↓</button>
@@ -49,9 +60,13 @@ export function BlockInspector({ block, onChange, onDelete, onMove }: BlockInspe
         </div>
       </div>
 
-      {block.kind === 'freetext' && <FreetextInspector b={block} upd={updFreetext} />}
-      {block.kind === 'section'  && <SectionInspector  b={block} upd={updSection} />}
-      {block.kind === 'table'    && <TableInspector    b={block} upd={updTable} />}
+      {block.kind === 'freetext'  && <FreetextInspector b={block} upd={updFreetext} />}
+      {block.kind === 'section'   && <SectionInspector  b={block} upd={updSection} />}
+      {block.kind === 'table'     && <TableInspector    b={block} upd={updTable} />}
+      {block.kind === 'image'     && <ImageInspector    b={block} upd={updImage} />}
+      {block.kind === 'signature' && <SignatureInspector b={block} upd={updSignature} />}
+      {block.kind === 'autodate'  && <AutoDateInspector b={block} upd={updAutoDate} />}
+      {block.kind === 'pagebreak' && <div style={{ fontSize: 11, color: C.muted }}>Zalomení stránky — nemá nastavení.</div>}
     </div>
   );
 }
@@ -285,6 +300,72 @@ function TableInspector({ b, upd }: TableInspectorProps) {
         <button style={T.sBtnAdd} onClick={addRow}>+ Řádek</button>
         <button style={{ ...T.sBtnAdd, color: C.danger, borderColor: C.danger }} onClick={() => delRow(b.rows.length - 1)}>– Řádek</button>
       </div>
+    </>
+  );
+}
+
+// ─── ImageInspector ──────────────────────────────────────────────────────────
+
+function ImageInspector({ b, upd }: { b: ImageBlock; upd: (fn: (b: ImageBlock) => void) => void }) {
+  const onFile = (file: File | null) => {
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = () => upd(x => { x.src = String(r.result ?? ''); });
+    r.readAsDataURL(file);
+  };
+  return (
+    <>
+      <label style={T.lbl}>Obrázek</label>
+      <input type="file" accept="image/*" onChange={e => onFile(e.target.files?.[0] ?? null)} style={{ ...T.sInp, padding: 4 }} />
+      {b.src && (
+        <div style={{ marginTop: 6, textAlign: 'center' }}>
+          <img src={b.src} alt="" style={{ maxWidth: '100%', maxHeight: 100, border: `1px solid ${C.border}`, borderRadius: 4 }} />
+          <button style={{ ...T.sBtnAdd, color: C.danger, borderColor: C.danger, marginTop: 4 }} onClick={() => upd(x => { x.src = ''; })}>× Odstranit</button>
+        </div>
+      )}
+      <label style={T.lbl}>Popisek (volitelný)</label>
+      <input style={T.sInp} value={b.caption} onChange={e => upd(x => { x.caption = e.target.value; })} />
+      <label style={T.lbl}>Šířka (% stránky)</label>
+      <input
+        type="range" min={10} max={100} step={5}
+        value={b.widthPct}
+        onChange={e => upd(x => { x.widthPct = parseInt(e.target.value, 10); })}
+        style={{ width: '100%' }}
+      />
+      <div style={{ fontSize: 10, color: C.muted, textAlign: 'right' }}>{b.widthPct}%</div>
+    </>
+  );
+}
+
+// ─── SignatureInspector ──────────────────────────────────────────────────────
+
+function SignatureInspector({ b, upd }: { b: SignatureBlock; upd: (fn: (b: SignatureBlock) => void) => void }) {
+  return (
+    <>
+      <label style={T.lbl}>Popisek</label>
+      <input style={T.sInp} value={b.label} onChange={e => upd(x => { x.label = e.target.value; })} />
+      <label style={T.lbl}>Šířka (px)</label>
+      <input type="number" min={80} max={500} style={T.sInp} value={b.width} onChange={e => upd(x => { x.width = parseInt(e.target.value, 10) || 280; })} />
+      <label style={T.lbl}>Výška (px)</label>
+      <input type="number" min={40} max={300} style={T.sInp} value={b.height} onChange={e => upd(x => { x.height = parseInt(e.target.value, 10) || 100; })} />
+    </>
+  );
+}
+
+// ─── AutoDateInspector ───────────────────────────────────────────────────────
+
+function AutoDateInspector({ b, upd }: { b: AutoDateBlock; upd: (fn: (b: AutoDateBlock) => void) => void }) {
+  return (
+    <>
+      <label style={T.lbl}>Prefix textu</label>
+      <input style={T.sInp} value={b.prefix} onChange={e => upd(x => { x.prefix = e.target.value; })} placeholder="V Praze dne " />
+      <label style={T.lbl}>Formát data</label>
+      <select style={T.sInp} value={b.format} onChange={e => upd(x => { x.format = e.target.value as AutoDateBlock['format']; })}>
+        <option value="cs">Český (1. května 2026)</option>
+        <option value="short">Krátký (01.05.2026)</option>
+        <option value="iso">ISO (2026-05-01)</option>
+      </select>
+      <div style={{ fontSize: 10, color: C.muted, marginTop: 4 }}>Datum se vyplní automaticky při tisku.</div>
     </>
   );
 }

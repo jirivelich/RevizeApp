@@ -86,13 +86,59 @@ export interface FreetextBlock {
   style: FreetextStyle;
 }
 
+// ─── Nové typy bloků (Fáze 4) ────────────────────────────────────────────────
+
+export interface ImageBlock {
+  id: string;
+  kind: 'image';
+  /** base64 data URL nebo URL k obrázku */
+  src: string;
+  /** Volitelný popis pod obrázkem */
+  caption: string;
+  /** Šířka v % (10–100) — vždy zarovnáno na střed */
+  widthPct: number;
+}
+
+export interface SignatureBlock {
+  id: string;
+  kind: 'signature';
+  label: string;
+  /** Šířka pole v px (default 280) */
+  width: number;
+  /** Výška pole v px (default 100) */
+  height: number;
+}
+
+export interface PageBreakBlock {
+  id: string;
+  kind: 'pagebreak';
+}
+
+export interface AutoDateBlock {
+  id: string;
+  kind: 'autodate';
+  /** Formát: 'cs' = "1. května 2026" | 'iso' = "2026-05-01" | 'short' = "01.05.2026" */
+  format: 'cs' | 'iso' | 'short';
+  /** Volitelný prefix textu */
+  prefix: string;
+}
+
 /** Diskriminovaná unie všech typů bloků */
-export type Block = SectionBlock | TableBlock | FreetextBlock;
+export type Block = SectionBlock | TableBlock | FreetextBlock | ImageBlock | SignatureBlock | PageBreakBlock | AutoDateBlock;
+
+export interface PageMargins {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
 
 export interface Page {
   id: string;
   label: string;
   overflow: boolean;
+  /** Volitelné okraje stránky v px (default 64/72/64/72) */
+  margins?: PageMargins;
   blocks: Block[];
 }
 

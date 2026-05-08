@@ -2,7 +2,7 @@
 
 import type { Doc } from './types';
 
-const SK = 'fb_doc_v4';
+const SK = 'fb_doc_v5';
 
 export const load = (): Doc | null => {
   try {

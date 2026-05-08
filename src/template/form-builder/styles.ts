@@ -1,8 +1,8 @@
-// ─── Barevné tokeny, UI styly, Print CSS ─────────────────────────────────────
+// ─── Barevné tokeny, UI styly, dokument-style tokeny, Print CSS ──────────────
 
 import type { CSSProperties } from 'react';
 
-// ─── Barvy ───────────────────────────────────────────────────────────────────
+// ─── Barvy (UI editoru) ──────────────────────────────────────────────────────
 export const C = {
   bg:      '#0d1117',
   surface: '#161b26',
@@ -15,7 +15,86 @@ export const C = {
   success: '#3ecf8e',
 } as const;
 
-// ─── UI tokeny ────────────────────────────────────────────────────────────────
+// ─── DOC — sdílené tokeny pro renderování dokumentu ──────────────────────────
+// Hodnoty v px (pro screen). Při tisku Chrome převede 1px = 1/96in fyzicky.
+// A4 = 794×1123 px (96dpi). Pro WYSIWYG používáme STEJNÉ hodnoty v editoru,
+// fill módu i tisku.
+export const DOC = {
+  pageWidth:    794,
+  pageHeight:   1123,
+  marginTop:    64,
+  marginRight:  72,
+  marginBottom: 64,
+  marginLeft:   72,
+
+  fontFamily:   "'Georgia','Times New Roman',serif",
+  fontSize:     13,
+  lineHeight:   1.55,
+  textColor:    '#111',
+  fieldUnderline: '1px solid #aaa',
+
+  docTitleSize: 20,
+  docMetaSize:  11,
+
+  secTitleSize: 12,
+  secMargin:    16,
+  secGapY:      10,
+  secGapX:      18,
+
+  fieldLabelSize: 10,
+
+  ft: {
+    h1:   { size: 20, weight: 700, mt: 8, mb: 4, italic: false },
+    h2:   { size: 16, weight: 700, mt: 6, mb: 3, italic: false },
+    h3:   { size: 13, weight: 700, mt: 5, mb: 2, italic: true  },
+    body: { size: 13, weight: 400, mt: 3, mb: 3, italic: false },
+  },
+
+  tableHeaderBg:   '#f0f0f0',
+  tableBorder:     '1px solid #bbb',
+  tableHeaderSize: 10,
+  tableCellSize:   12,
+} as const;
+
+// ─── DS — sdílené document styly (objekt → spread do inline style) ───────────
+export const DS = {
+  page: (overflow: boolean, margins?: { top: number; right: number; bottom: number; left: number }): CSSProperties => ({
+    width: DOC.pageWidth,
+    minHeight: overflow ? 'auto' : DOC.pageHeight,
+    background: '#fff',
+    color: DOC.textColor,
+    fontFamily: DOC.fontFamily,
+    fontSize: DOC.fontSize,
+    lineHeight: DOC.lineHeight,
+    padding: `${margins?.top ?? DOC.marginTop}px ${margins?.right ?? DOC.marginRight}px ${margins?.bottom ?? DOC.marginBottom}px ${margins?.left ?? DOC.marginLeft}px`,
+    boxSizing: 'border-box',
+  }),
+  docHeader: { textAlign: 'center', marginBottom: 20, borderBottom: '1px solid #ccc', paddingBottom: 12 } as CSSProperties,
+  docTitle:  { fontSize: DOC.docTitleSize, fontWeight: 700 } as CSSProperties,
+  docDesc:   { fontSize: DOC.docMetaSize, color: '#888', marginTop: 3 } as CSSProperties,
+  docMeta:   { fontSize: DOC.docMetaSize, color: '#999', marginTop: 4 } as CSSProperties,
+
+  blockWrap: { marginBottom: DOC.secMargin } as CSSProperties,
+  secTitle:  { fontSize: DOC.secTitleSize, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', borderBottom: '1.5px solid #222', paddingBottom: 5, marginBottom: 10 } as CSSProperties,
+  fieldsGrid: (cols: 1 | 2 | 3): CSSProperties => ({
+    display: 'grid',
+    gridTemplateColumns: ['1fr', '1fr 1fr', '1fr 1fr 1fr'][cols - 1] ?? '1fr',
+    gap: `${DOC.secGapY}px ${DOC.secGapX}px`,
+  }),
+  fieldLabel: { fontSize: DOC.fieldLabelSize, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 3 } as CSSProperties,
+  fieldInput: {
+    width: '100%', border: 'none', borderBottom: DOC.fieldUnderline,
+    background: 'transparent', color: DOC.textColor, fontSize: DOC.fontSize,
+    padding: '3px 2px', outline: 'none',
+    fontFamily: DOC.fontFamily, boxSizing: 'border-box',
+  } as CSSProperties,
+  fieldStatic: {
+    borderBottom: DOC.fieldUnderline, minHeight: 22, padding: '3px 2px',
+    fontSize: DOC.fontSize, color: DOC.textColor, boxSizing: 'border-box',
+  } as CSSProperties,
+};
+
+// ─── UI tokeny (editor chrome — sidebar, header) ─────────────────────────────
 export const T: Record<string, CSSProperties> = {
   app:         { minHeight: '100vh', background: C.bg, color: C.text, fontFamily: "'IBM Plex Sans','Segoe UI',system-ui,sans-serif" },
   hdr:         { background: C.surface, borderBottom: `1px solid ${C.border}`, position: 'sticky', top: 0, zIndex: 200 },
@@ -45,52 +124,31 @@ export const T: Record<string, CSSProperties> = {
   pgLabel:     { width: 794, display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#6b7490', marginBottom: 6, padding: '0 4px' },
 };
 
-// ─── Print CSS (injektovaný do <head> při mountu) ─────────────────────────────
+// ─── Print CSS ───────────────────────────────────────────────────────────────
+// Minimální: jen page size + hide UI + page-break. Vizuální styly přebírá
+// inline z DS (DOC_STYLES) → garantovaný WYSIWYG s editorem a fill módem.
 export const PRINT_CSS = `
-@page { size:A4 portrait; margin:0; }
+@page { size: A4 portrait; margin: 0; }
 @media print {
-  html,body { margin:0; padding:0; background:white; }
-  body > * { display:none !important; }
-  #PRINTROOT { display:block !important; }
-  .noprint { display:none !important; }
+  html, body { margin: 0; padding: 0; background: white; }
+  body > * { display: none !important; }
+  #PRINTROOT { display: block !important; }
+  .noprint { display: none !important; }
   .a4 {
-    width:210mm; min-height:297mm; padding:16mm 18mm;
-    background:white; color:#111;
-    font-family:'Georgia','Times New Roman',serif;
-    font-size:11pt; line-height:1.55; box-sizing:border-box;
-    page-break-after:always; break-after:page;
+    page-break-after: always;
+    break-after: page;
+    box-shadow: none !important;
+    margin: 0 !important;
   }
-  .a4.overflow { min-height:unset; page-break-after:auto; break-after:auto; }
-  .sec-title { font-size:10.5pt; font-weight:bold; text-transform:uppercase;
-    letter-spacing:.07em; border-bottom:1pt solid #222; padding-bottom:3pt; margin:12pt 0 7pt; }
-  .fields-grid { display:grid; gap:8pt; }
-  .cols-1 { grid-template-columns:1fr; }
-  .cols-2 { grid-template-columns:1fr 1fr; }
-  .cols-3 { grid-template-columns:1fr 1fr 1fr; }
-  .flabel { font-size:7.5pt; font-weight:bold; color:#555;
-    text-transform:uppercase; letter-spacing:.05em; display:block; margin-bottom:2pt; }
-  .fvalue { border-bottom:.75pt solid #999; min-height:16pt; padding:1pt 2pt;
-    font-size:10.5pt; display:block; width:100%; box-sizing:border-box;
-    background:transparent; color:#111; font-family:inherit;
-    border-top:none; border-left:none; border-right:none; outline:none; }
-  .fvalue.ta { min-height:36pt; }
-  .chk { display:flex; align-items:center; gap:5pt; margin-top:4pt; }
-  .chkbox { width:11pt; height:11pt; border:.75pt solid #444; flex-shrink:0;
-    display:inline-flex; align-items:center; justify-content:center; font-size:9pt; font-weight:bold; }
-  .doc-title { font-size:17pt; font-weight:bold; text-align:center; margin-bottom:3pt; }
-  .doc-meta  { font-size:8.5pt; color:#666; text-align:center;
-    border-bottom:.5pt solid #ccc; padding-bottom:7pt; margin-bottom:18pt; }
-  .ft-h1 { font-size:16pt; font-weight:bold; margin:10pt 0 4pt; }
-  .ft-h2 { font-size:13pt; font-weight:bold; margin:8pt 0 4pt; }
-  .ft-h3 { font-size:10.5pt; font-weight:bold; font-style:italic; margin:6pt 0 3pt; }
-  .ft-body { font-size:10.5pt; margin:4pt 0; }
-  table.ftable { border-collapse:collapse; width:100%; margin:8pt 0; font-size:10pt; }
-  table.ftable th { background:#f0f0f0; font-weight:bold; border:.75pt solid #999; padding:3pt 5pt; font-size:9pt; text-align:left; }
-  table.ftable td { border:.75pt solid #bbb; padding:2pt 4pt; min-height:16pt; vertical-align:top; }
-  table.ftable td input { border:none; outline:none; background:transparent; width:100%; font-size:10pt; font-family:inherit; }
-  .tbl-title { font-size:10.5pt; font-weight:bold; text-transform:uppercase;
-    letter-spacing:.07em; border-bottom:1pt solid #222; padding-bottom:3pt; margin:12pt 0 5pt; }
-  .sig-row { display:flex; justify-content:space-between; margin-top:28pt; }
-  .sig-label { font-size:7.5pt; color:#666; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4pt; }
-  .sig-line { border-bottom:.75pt solid #888; height:22pt; }
+  .a4.overflow,
+  .a4.last { page-break-after: auto; break-after: auto; min-height: unset !important; }
+  .pagebreak { page-break-after: always; break-after: page; height: 0; }
+  input, textarea, select {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent !important;
+  }
+  input[type="checkbox"] { -webkit-appearance: checkbox; appearance: checkbox; }
 }`;
+// ─── Barevné tokeny, UI styly, Print CSS ─────────────────────────────────────
+

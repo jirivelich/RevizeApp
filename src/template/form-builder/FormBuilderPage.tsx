@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { DndContext, PointerSensor, useSensor, useSensors, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 import type { Doc, Block, SelBlk, FillData, RepeatCounts } from './types';
-import { mkPage, mkSection, mkTable, mkFreetext, defaultDoc } from './factories';
+import { mkPage, mkSection, mkTable, mkFreetext, mkImage, mkSignature, mkPageBreak, mkAutoDate, defaultDoc } from './factories';
 import { load, save, clone } from './persistence';
 import { C, T, PRINT_CSS } from './styles';
 import { EditPage } from './EditPage';
@@ -69,6 +70,33 @@ export function FormBuilderPage() {
   });
   const updBlock  = (pi: number, bi: number, fn: (b: Block) => void) =>
     updDoc(d => fn(d.pages[pi].blocks[bi]));
+
+  // ── Drag & Drop — reorder bloků v rámci stránky i mezi stránkami ───────────
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+
+  const findBlock = (d: Doc, id: string): { pi: number; bi: number } | null => {
+    for (let pi = 0; pi < d.pages.length; pi++) {
+      const bi = d.pages[pi].blocks.findIndex(b => b.id === id);
+      if (bi >= 0) return { pi, bi };
+    }
+    return null;
+  };
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    updDoc(d => {
+      const from = findBlock(d, String(active.id));
+      const to   = findBlock(d, String(over.id));
+      if (!from || !to) return;
+      const [moved] = d.pages[from.pi].blocks.splice(from.bi, 1);
+      // Pokud měníme stánku a výsledný index by přeskočil cíl, koriguj
+      let toBi = to.bi;
+      if (from.pi === to.pi && from.bi < to.bi) toBi = to.bi - 1;
+      d.pages[to.pi].blocks.splice(toBi, 0, moved);
+      setSelBlk({ pgIdx: to.pi, blkIdx: toBi });
+    });
+  };
 
   // Inicializuje data formuláře a přepne do fill módu
   const enterFill = () => {
@@ -189,6 +217,33 @@ export function FormBuilderPage() {
                   <button style={T.sBtnBlk} onClick={() => addBlock(selPg, mkSection())}>＋ Oddíl (sekce s poli)</button>
                   <button style={T.sBtnBlk} onClick={() => addBlock(selPg, mkTable())}>＋ Tabulka</button>
                   <button style={T.sBtnBlk} onClick={() => addBlock(selPg, mkFreetext())}>＋ Nadpis / text</button>
+                  <button style={T.sBtnBlk} onClick={() => addBlock(selPg, mkImage())}>＋ Obrázek</button>
+                  <button style={T.sBtnBlk} onClick={() => addBlock(selPg, mkSignature())}>＋ Podpis</button>
+                  <button style={T.sBtnBlk} onClick={() => addBlock(selPg, mkAutoDate())}>＋ Datum (auto)</button>
+                  <button style={T.sBtnBlk} onClick={() => addBlock(selPg, mkPageBreak())}>＋ Zalomení stránky</button>
+                </div>
+
+                {/* Okraje stránky */}
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>Okraje (px):</div>
+                  {(['top', 'right', 'bottom', 'left'] as const).map(side => {
+                    const defaults = { top: 64, right: 72, bottom: 64, left: 72 };
+                    const val = doc.pages[selPg].margins?.[side] ?? defaults[side];
+                    return (
+                      <div key={side} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                        <span style={{ fontSize: 11, color: C.muted, width: 50 }}>{side}:</span>
+                        <input
+                          type="number" min={0} max={200}
+                          style={{ ...T.sInp, flex: 1 }}
+                          value={val}
+                          onChange={e => updPage(selPg, p => {
+                            const n = parseInt(e.target.value, 10) || 0;
+                            p.margins = { ...defaults, ...(p.margins ?? {}), [side]: n };
+                          })}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -207,24 +262,26 @@ export function FormBuilderPage() {
 
           {/* A4 canvas */}
           <div style={T.canvas}>
-            <div style={T.canvasInner}>
-              {doc.pages.map((pg, pi) => (
-                <div key={pg.id} style={{ marginBottom: 40 }}>
-                  <div style={T.pgLabel} className="noprint">
-                    <span>Strana {pi + 1}{pg.label ? ` — ${pg.label}` : ''}</span>
-                    <span style={{ color: pg.overflow ? C.accent : C.muted, fontSize: 11 }}>
-                      {pg.overflow ? 'přetékání povoleno' : 'pevná A4'}
-                    </span>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <div style={T.canvasInner}>
+                {doc.pages.map((pg, pi) => (
+                  <div key={pg.id} style={{ marginBottom: 40 }}>
+                    <div style={T.pgLabel} className="noprint">
+                      <span>Strana {pi + 1}{pg.label ? ` — ${pg.label}` : ''}</span>
+                      <span style={{ color: pg.overflow ? C.accent : C.muted, fontSize: 11 }}>
+                        {pg.overflow ? 'přetékání povoleno' : 'pevná A4'}
+                      </span>
+                    </div>
+                    <EditPage
+                      pg={pg} pi={pi}
+                      selBlk={selBlk}
+                      onSelBlk={bi => setSelBlk({ pgIdx: pi, blkIdx: bi })}
+                      doc={doc}
+                    />
                   </div>
-                  <EditPage
-                    pg={pg} pi={pi}
-                    selBlk={selBlk}
-                    onSelBlk={bi => setSelBlk({ pgIdx: pi, blkIdx: bi })}
-                    doc={doc}
-                  />
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </DndContext>
           </div>
         </div>
       )}
