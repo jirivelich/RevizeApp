@@ -37,14 +37,15 @@ export function BottomSheet({ isOpen, onClose, title, children, footer }: Bottom
           <div className="w-10 h-1 rounded-full bg-[var(--border-strong)]" />
         </div>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)] flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-subtle)] flex-shrink-0">
           <h2 className="text-sm font-semibold text-[var(--text)]">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 text-[var(--text-secondary)] hover:text-slate-600 transition-colors"
+            aria-label="Zavřít"
+            className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
           >
-            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
@@ -54,7 +55,7 @@ export function BottomSheet({ isOpen, onClose, title, children, footer }: Bottom
         </div>
         {/* Footer */}
         {footer && (
-          <div className="flex flex-col-reverse gap-2 px-5 py-4 border-t border-[var(--border)] flex-shrink-0 [&>button]:w-full">
+          <div className="flex flex-col-reverse gap-2 px-5 py-4 border-t border-[var(--border-subtle)] bg-[var(--bg-faint)] flex-shrink-0 [&>button]:w-full">
             {footer}
           </div>
         )}
