@@ -107,11 +107,11 @@ export default function ZmenaHeslaModal({ onClose }: ZmenaHeslaModalProps) {
           transform: 'translate(-50%, -50%)',
           zIndex: 1001,
           width: '100%', maxWidth: 400,
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          borderRadius: 14,
+          background: 'var(--surface)',
+          border: '1px solid var(--border-medium)',
+          borderRadius: 16,
           padding: '28px 28px 24px',
-          boxShadow: '0 16px 48px rgba(0,0,0,0.40)',
+          boxShadow: 'var(--shadow-elevated)',
         }}
       >
         {/* Header */}
@@ -221,7 +221,7 @@ export default function ZmenaHeslaModal({ onClose }: ZmenaHeslaModalProps) {
                 type="button" onClick={onClose}
                 style={{
                   flex: 1, padding: '10px 0',
-                  background: 'var(--bg-surface)', border: '1px solid var(--border)',
+                  background: 'var(--bg-surface)', border: '1px solid var(--border-medium)',
                   borderRadius: 8, fontSize: 13, fontWeight: 500,
                   color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit',
                   transition: 'all .15s',
@@ -233,7 +233,7 @@ export default function ZmenaHeslaModal({ onClose }: ZmenaHeslaModalProps) {
                 type="submit" disabled={loading}
                 style={{
                   flex: 1, padding: '10px 0',
-                  background: 'linear-gradient(135deg, #2B88FF 0%, #1E6FE6 100%)',
+                  background: 'var(--primary)',
                   border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600,
                   color: 'white', cursor: loading ? 'not-allowed' : 'pointer',
                   opacity: loading ? 0.65 : 1,
