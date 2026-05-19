@@ -37,27 +37,34 @@ export function useNotifications() {
     const thresholdKalibrace = nastaveni?.upozorneniKalibraceDni ?? 30;
     const thresholdZprava = nastaveni?.upozorneniZpravaDni ?? 3;
     const thresholdTechnik = nastaveni?.upozorneniTechnikDni ?? 60;
+    const thresholdPlatnostRevize = nastaveni?.upozorneniPlatnostRevizeDni ?? 60;
 
     const items: AppNotification[] = [];
 
-    // 1. Plánované zakázky – datum nastávající do N dní (pouze pokud nejsou dokončené)
+    // 1. Plánované zakázky – datum nastávající do N dní (kontroluje všechny dny realizace)
     for (const z of zakazky) {
       if (z.stav !== 'plánováno') continue;
-      const days = daysUntil(z.datumPlanovany);
-      if (days <= thresholdZakazka) {
-        const d = new Date(z.datumPlanovany);
+      const allDays = [z.datumPlanovany, ...(z.datumyRealizace ?? [])];
+      let minDays = Infinity;
+      let nearestDay = z.datumPlanovany;
+      for (const day of allDays) {
+        const d = daysUntil(day);
+        if (d < minDays) { minDays = d; nearestDay = day; }
+      }
+      if (minDays <= thresholdZakazka) {
+        const d = new Date(nearestDay);
         const label = d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' });
         items.push({
           id: `zakazka-${z.id}`,
           type: 'zakazka_upcoming',
-          severity: severity(days),
+          severity: severity(minDays),
           title: z.nazev,
-          description: days < 0
+          description: minDays < 0
             ? `Zakázka měla proběhnout ${label}`
-            : days === 0
+            : minDays === 0
               ? 'Zakázka je naplánovaná na dnes'
               : `Zakázka naplánovaná na ${label}`,
-          daysUntil: days,
+          daysUntil: minDays,
           link: '/planovani',
         });
       }
@@ -83,10 +90,8 @@ export function useNotifications() {
       }
     }
 
-    // 3. Deadline odevzdání zprávy po zakázce (pouze pokud není dokončeno a není nastaveno datum odevzdání)
+    // 3. Deadline odevzdání zprávy po zakázce
     for (const z of zakazky) {
-      // Pokud je zakázka dokončená a má nastavené datum odevzdání, neupozorňovat
-      if (z.stav === 'dokončeno' && z.datumOdevzdaniZpravy) continue;
       // Explicitně nastavené datum odevzdání
       if (z.datumOdevzdaniZpravy) {
         const days = daysUntil(z.datumOdevzdaniZpravy);
@@ -173,6 +178,28 @@ export function useNotifications() {
             : `Platnost vyprší ${dateLabel}`,
           daysUntil: days,
           link: '/nastaveni',
+        });
+      }
+    }
+
+    // 6. Expirace platnosti dokončené revize (datumPlatnosti)
+    for (const r of revize) {
+      if (r.stav !== 'dokončeno' && r.stav !== 'schváleno') continue;
+      if (!r.datumPlatnosti) continue;
+      const days = daysUntil(r.datumPlatnosti);
+      if (days <= thresholdPlatnostRevize) {
+        const d = new Date(r.datumPlatnosti);
+        const label = d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric', year: 'numeric' });
+        items.push({
+          id: `platnost-${r.id}`,
+          type: 'revize_platnost_expiry',
+          severity: severity(days),
+          title: r.nazev || `Revize č. ${r.cisloRevize || r.id}`,
+          description: days < 0
+            ? `Platnost revize vypršela ${label}`
+            : `Platnost revize vyprší ${label}`,
+          daysUntil: days,
+          link: `/revize/${r.id}`,
         });
       }
     }

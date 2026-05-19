@@ -94,13 +94,11 @@ export function getLastDay(z: Zakazka): string {
   return days[days.length - 1];
 }
 
-/** Vrátí deadline pro odevzdání revizní zprávy – jen pokud je po termínu a zpráva nebyla odevzdána. */
+/** Vrátí deadline pro odevzdání revizní zprávy, pokud zpráva nebyla odevzdána (dokončeno bez datumOdevzdaniZpravy). */
 export function getReportDeadline(z: Zakazka): string | null {
   if (z.stav !== 'dokončeno') return null;
   if (z.datumOdevzdaniZpravy) return null;
-  const deadline = addDays(getLastDay(z), z.lhutaZpravyDni ?? 4);
-  if (!isOverdue(deadline)) return null;
-  return deadline;
+  return addDays(getLastDay(z), z.lhutaZpravyDni ?? 4);
 }
 
 /** Vrátí true pokud se zakázka realizuje v daný den. */

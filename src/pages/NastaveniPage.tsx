@@ -770,7 +770,7 @@ export function NastaveniPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
-                  Expirace oprávnění / osvědčení technika — upozornit X dní dopředu
+                  Expirace oprávění / osvědčení technika — upozornit X dní dopředu
                 </label>
                 <input
                   type="number"
@@ -778,6 +778,20 @@ export function NastaveniPage() {
                   max={365}
                   value={nastaveni.upozorneniTechnikDni ?? 60}
                   onChange={(e) => setNastaveni({ ...nastaveni, upozorneniTechnikDni: Number(e.target.value) })}
+                  className="w-full bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]"
+                />
+                <p className="text-[11px] text-[var(--text-secondary)] mt-1">Výchozí: 60 dní</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                  Expirace platnosti revize — upozornit X dní dopředu
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={365}
+                  value={nastaveni.upozorneniPlatnostRevizeDni ?? 60}
+                  onChange={(e) => setNastaveni({ ...nastaveni, upozorneniPlatnostRevizeDni: Number(e.target.value) })}
                   className="w-full bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]"
                 />
                 <p className="text-[11px] text-[var(--text-secondary)] mt-1">Výchozí: 60 dní</p>
@@ -795,8 +809,7 @@ export function NastaveniPage() {
               <li className="flex gap-2"><span className="text-amber-500 mt-0.5">•</span><span><strong>Rozpracované revize</strong> — upozorní na revize ve stavu „Rozpracováno“, které nebyly dokončeny delší dobu než nastavený počet dní.</span></li>
               <li className="flex gap-2"><span className="text-red-500 mt-0.5">•</span><span><strong>Deadline zprávy</strong> — upozorní na přiblížející se (nebo promekaný) deadline odevzdání revizní zprávy po dokončené zakázce.</span></li>
               <li className="flex gap-2"><span className="text-red-500 mt-0.5">•</span><span><strong>Kalibrace přístrojů</strong> — upozorní, když se blíží konec platnosti kalibrace měřicího přístroje.</span></li>
-              <li className="flex gap-2"><span className="text-red-500 mt-0.5">•</span><span><strong>Expirace dokladů technika</strong> — upozorní na končec platnosti oprávnění či osvědčení revizního technika (nastaveného v záložce Revizní technik).</span></li>
-            </ul>
+              <li className="flex gap-2"><span className="text-red-500 mt-0.5">•</span><span><strong>Expirace dokladů technika</strong> — upozorní na končec platnosti oprávnění či osvědčení revizního technika (nastaveného v záložce Revizní technik).</span></li>              <li className="flex gap-2"><span className="text-red-500 mt-0.5">•</span><span><strong>Expirace platnosti revize</strong> — upozorní, když se blíží datum, do kterého musí být provedena nová revize (pole "Platnost do" na dokončené revizi).</span></li>            </ul>
             <p className="text-xs text-[var(--text-secondary)] mt-3">Upozornění jsou barevně rozlišena: červená = po termínu, jantárová = do 3 dní, modrá = před termínem. Zobrazuju se v reálném čase ve zvončku v bočním panelu.</p>
           </Card>
         </div>

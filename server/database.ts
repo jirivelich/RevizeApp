@@ -487,6 +487,7 @@ export async function initializeDatabase() {
       'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "upozorneniKalibraceDni" INTEGER DEFAULT 30',
       'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "upozorneniZpravaDni" INTEGER DEFAULT 3',
       'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "upozorneniTechnikDni" INTEGER DEFAULT 60',
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "upozorneniPlatnostRevizeDni" INTEGER DEFAULT 60',
       // Náčrt LPS – base64 PNG
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodNacrt" TEXT',
       // Přílohy – textový seznam příloh

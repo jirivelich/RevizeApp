@@ -311,6 +311,7 @@ export interface Nastaveni {
   upozorneniKalibraceDni?: number;
   upozorneniZpravaDni?: number;
   upozorneniTechnikDni?: number;
+  upozorneniPlatnostRevizeDni?: number;
 }
 
 export type NotificationType =
@@ -318,7 +319,8 @@ export type NotificationType =
   | 'revize_overdue'
   | 'report_deadline'
   | 'kalibrace_expiring'
-  | 'technik_expiry';
+  | 'technik_expiry'
+  | 'revize_platnost_expiry';
 
 export type NotificationSeverity = 'critical' | 'warning' | 'info';
 
