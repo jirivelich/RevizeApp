@@ -92,6 +92,8 @@ export function useNotifications() {
 
     // 3. Deadline odevzdání zprávy po zakázce
     for (const z of zakazky) {
+      // Dokončeno + datum odevzdání nastaveno = zpráva již odevzdána (ZakazkaCard zobrazuje "✓ Odevzdáno")
+      if (z.stav === 'dokončeno' && z.datumOdevzdaniZpravy) continue;
       // Explicitně nastavené datum odevzdání
       if (z.datumOdevzdaniZpravy) {
         const days = daysUntil(z.datumOdevzdaniZpravy);
