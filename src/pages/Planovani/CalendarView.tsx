@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import type { Zakazka } from '../../types';
 import { Card } from '../../components/ui';
@@ -51,7 +51,6 @@ function IconCheck() {
 
 interface DayPopoverProps {
   dateStr: string;
-  rect: DOMRect;
   allZakazky: Zakazka[];
   onZakazkaClick: (z: Zakazka) => void;
   onAddClick: () => void;
@@ -59,7 +58,7 @@ interface DayPopoverProps {
   onMouseLeave: () => void;
 }
 
-function DayPopover({ dateStr, rect, allZakazky, onZakazkaClick, onAddClick, onMouseEnter, onMouseLeave }: DayPopoverProps) {
+function DayPopover({ dateStr, allZakazky, onZakazkaClick, onAddClick, onMouseEnter, onMouseLeave }: DayPopoverProps) {
   const dayZakazky = allZakazky.filter(z => getRealizaceDays(z).includes(dateStr));
   const deadlineZpravy = allZakazky.filter(z => getReportDeadline(z) === dateStr);
   const odevzdani = allZakazky.filter(z => z.datumOdevzdaniZpravy === dateStr);
@@ -67,17 +66,27 @@ function DayPopover({ dateStr, rect, allZakazky, onZakazkaClick, onAddClick, onM
   const popWidth = 260;
   const popMaxHeight = 280;
 
-  let left = rect.left;
-  if (left + popWidth > window.innerWidth - 8) left = Math.max(8, rect.right - popWidth);
-  let top = rect.bottom + 4;
-  if (top + popMaxHeight > window.innerHeight - 8) top = Math.max(8, rect.top - popMaxHeight - 4);
+  const [style, setStyle] = useState<React.CSSProperties>({
+    top: -9999, left: -9999, width: popWidth, visibility: 'hidden',
+  });
+
+  useLayoutEffect(() => {
+    const cell = document.querySelector<HTMLElement>(`[data-datestr="${dateStr}"]`);
+    if (!cell) return;
+    const r = cell.getBoundingClientRect();
+    let left = r.left;
+    if (left + popWidth > window.innerWidth - 8) left = Math.max(8, r.right - popWidth);
+    let top = r.bottom + 4;
+    if (top + popMaxHeight > window.innerHeight - 8) top = Math.max(8, r.top - popMaxHeight - 4);
+    setStyle({ top, left, width: popWidth, visibility: 'visible' });
+  }, [dateStr]);
 
   const dateLabel = new Date(dateStr + 'T00:00:00').toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' });
 
   return createPortal(
     <div
       className="fixed z-[9000] bg-[var(--surface)] border border-[var(--border-strong)] rounded-xl overflow-hidden"
-      style={{ top, left, width: popWidth, boxShadow: 'var(--shadow-elevated)' }}
+      style={{ ...style, boxShadow: 'var(--shadow-elevated)' }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
@@ -145,7 +154,7 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
   const today = new Date();
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
-  const [hoveredCell, setHoveredCell] = useState<{ dateStr: string; rect: DOMRect } | null>(null);
+  const [hoveredCell, setHoveredCell] = useState<string | null>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const goToPreviousMonth = () => {
@@ -244,6 +253,7 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
         rows.push(
           <div
             key={day}
+            data-datestr={dateStr}
             className={`p-2 min-h-[90px] border border-[var(--border)] cursor-pointer hover:bg-blue-500/[0.06] transition-colors ${
               todayClass
                 ? 'bg-blue-500/[0.12] ring-2 ring-blue-500/[0.40] ring-inset'
@@ -252,10 +262,10 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
                 : 'bg-[var(--bg-faint)]'
             }`}
             onClick={() => onDayClick(dateStr)}
-            onMouseEnter={(e) => {
+            onMouseEnter={() => {
               if (dayZakazky.length === 0 && deadlineZpravy.length === 0 && odevzdani.length === 0) return;
               if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-              setHoveredCell({ dateStr, rect: e.currentTarget.getBoundingClientRect() });
+              setHoveredCell(dateStr);
             }}
             onMouseLeave={() => {
               hoverTimeoutRef.current = setTimeout(() => setHoveredCell(null), 80);
@@ -390,11 +400,10 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
     </Card>
     {hoveredCell && (
       <DayPopover
-        dateStr={hoveredCell.dateStr}
-        rect={hoveredCell.rect}
+        dateStr={hoveredCell}
         allZakazky={zakazky}
         onZakazkaClick={(z) => { setHoveredCell(null); onZakazkaClick(z); }}
-        onAddClick={() => { setHoveredCell(null); onDayClick(hoveredCell.dateStr); }}
+        onAddClick={() => { setHoveredCell(null); onDayClick(hoveredCell); }}
         onMouseEnter={() => { if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current); }}
         onMouseLeave={() => setHoveredCell(null)}
       />
