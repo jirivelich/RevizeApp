@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import type { Zakazka } from '../../types';
 import { Card } from '../../components/ui';
-import { getPriorityColor, getRealizaceDays, getReportDeadline, isOverdue } from './utils';
+import { getPriorityColor, getStatusColor, getRealizaceDays, getReportDeadline, isOverdue } from './utils';
 
 interface CalendarViewProps {
   zakazky: Zakazka[];
@@ -46,10 +47,106 @@ function IconCheck() {
   );
 }
 
+// ========== DayPopover ==========
+
+interface DayPopoverProps {
+  dateStr: string;
+  rect: DOMRect;
+  allZakazky: Zakazka[];
+  onZakazkaClick: (z: Zakazka) => void;
+  onAddClick: () => void;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+}
+
+function DayPopover({ dateStr, rect, allZakazky, onZakazkaClick, onAddClick, onMouseEnter, onMouseLeave }: DayPopoverProps) {
+  const dayZakazky = allZakazky.filter(z => getRealizaceDays(z).includes(dateStr));
+  const deadlineZpravy = allZakazky.filter(z => getReportDeadline(z) === dateStr);
+  const odevzdani = allZakazky.filter(z => z.datumOdevzdaniZpravy === dateStr);
+
+  const popWidth = 260;
+  const popMaxHeight = 280;
+
+  let left = rect.left;
+  if (left + popWidth > window.innerWidth - 8) left = Math.max(8, rect.right - popWidth);
+  let top = rect.bottom + 4;
+  if (top + popMaxHeight > window.innerHeight - 8) top = Math.max(8, rect.top - popMaxHeight - 4);
+
+  const dateLabel = new Date(dateStr + 'T00:00:00').toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  return createPortal(
+    <div
+      className="fixed z-[9000] bg-[var(--bg-surface)] border border-[var(--border-strong)] rounded-xl shadow-2xl overflow-hidden"
+      style={{ top, left, width: popWidth }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-subtle)]">
+        <p className="text-[11px] font-semibold text-[var(--text)] capitalize truncate">{dateLabel}</p>
+        <button onClick={onAddClick} className="text-[10px] text-[var(--primary)] hover:underline whitespace-nowrap ml-2 shrink-0">+ Přidat</button>
+      </div>
+      <div className="overflow-y-auto p-1.5 space-y-1" style={{ maxHeight: popMaxHeight - 40 }}>
+        {dayZakazky.map((z) => {
+          const realizaceDays = getRealizaceDays(z);
+          const isFirst = realizaceDays[0] === dateStr;
+          return (
+            <div
+              key={z.id}
+              onClick={() => onZakazkaClick(z)}
+              className="px-2 py-1.5 rounded-lg cursor-pointer hover:bg-white/[0.08] transition-colors"
+            >
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className={`shrink-0 px-1 py-0.5 rounded text-[9px] font-medium ${getPriorityColor(z.priorita)}`}>{z.priorita}</span>
+                <p className="text-[12px] font-medium text-[var(--text)] truncate">{z.nazev}</p>
+              </div>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-[10px] text-[var(--text-secondary)] truncate flex-1">{z.klient}</p>
+                {z.casPlanovany && isFirst && (
+                  <span className="text-[10px] text-[var(--text-muted)] shrink-0">{z.casPlanovany}</span>
+                )}
+                <span className={`text-[9px] font-medium px-1 py-0.5 rounded shrink-0 ${getStatusColor(z.stav)}`}>{z.stav}</span>
+              </div>
+            </div>
+          );
+        })}
+        {deadlineZpravy.map((z) => (
+          <div
+            key={`dl-${z.id}`}
+            onClick={() => onZakazkaClick(z)}
+            className={`px-2 py-1.5 rounded-lg cursor-pointer hover:bg-white/[0.08] transition-colors flex items-start gap-1.5 ${isOverdue(dateStr) ? 'text-red-300' : 'text-amber-300'}`}
+          >
+            <IconClipboard />
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium truncate">Zpráva: {z.nazev}</p>
+              <p className="text-[10px] opacity-70 truncate">{z.klient}</p>
+            </div>
+          </div>
+        ))}
+        {odevzdani.map((z) => (
+          <div
+            key={`ov-${z.id}`}
+            onClick={() => onZakazkaClick(z)}
+            className="px-2 py-1.5 rounded-lg cursor-pointer hover:bg-white/[0.08] transition-colors flex items-start gap-1.5 text-blue-300"
+          >
+            <IconCheck />
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium truncate">Odevzdání: {z.nazev}</p>
+              <p className="text-[10px] opacity-70 truncate">{z.klient}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarViewProps) {
   const today = new Date();
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
+  const [hoveredCell, setHoveredCell] = useState<{ dateStr: string; rect: DOMRect } | null>(null);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const goToPreviousMonth = () => {
     if (currentMonth === 0) {
@@ -155,6 +252,14 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
                 : 'bg-[var(--bg-faint)]'
             }`}
             onClick={() => onDayClick(dateStr)}
+            onMouseEnter={(e) => {
+              if (dayZakazky.length === 0 && deadlineZpravy.length === 0 && odevzdani.length === 0) return;
+              if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+              setHoveredCell({ dateStr, rect: e.currentTarget.getBoundingClientRect() });
+            }}
+            onMouseLeave={() => {
+              hoverTimeoutRef.current = setTimeout(() => setHoveredCell(null), 80);
+            }}
           >
             <span
               className={`text-sm font-medium inline-flex items-center justify-center w-7 h-7 rounded-full ${
@@ -221,6 +326,7 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
   }
 
   return (
+    <>
     <Card>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
@@ -282,5 +388,17 @@ export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarVi
         <span className="ml-auto text-xs text-[var(--text-muted)] opacity-50">← T →</span>
       </div>
     </Card>
+    {hoveredCell && (
+      <DayPopover
+        dateStr={hoveredCell.dateStr}
+        rect={hoveredCell.rect}
+        allZakazky={zakazky}
+        onZakazkaClick={(z) => { setHoveredCell(null); onZakazkaClick(z); }}
+        onAddClick={() => { setHoveredCell(null); onDayClick(hoveredCell.dateStr); }}
+        onMouseEnter={() => { if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current); }}
+        onMouseLeave={() => setHoveredCell(null)}
+      />
+    )}
+    </>
   );
 }

@@ -256,44 +256,6 @@ function getMonthGrid(year: number, month: number): (Date | null)[] {
   return cells;
 }
 
-function DayPopup({ day, zakazky, onClose }: { day: Date; zakazky: Zakazka[]; onClose: () => void }) {
-  const label = day.toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' });
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60" />
-      <div
-        className="relative z-10 w-full max-w-sm rounded-xl border border-[var(--border-medium)] bg-[var(--surface)] shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
-          <p className="text-[13px] font-semibold text-[var(--text)] capitalize">{label}</p>
-          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text)] transition-colors text-lg leading-none">×</button>
-        </div>
-        <div className="p-3 space-y-1.5 max-h-72 overflow-y-auto">
-          {zakazky.map((z) => {
-            const priorityBorder = z.priorita === 'vysoká' ? 'border-l-red-500' : z.priorita === 'střední' ? 'border-l-amber-400' : 'border-l-blue-400';
-            const stavColor = z.stav === 'dokončeno' ? 'text-[var(--text-muted)]' : z.stav === 'v realizaci' ? 'text-amber-400' : 'text-blue-400';
-            return (
-              <Link
-                key={z.id}
-                to="/planovani"
-                onClick={onClose}
-                className={`block rounded-lg border border-[var(--border)] border-l-[3px] ${priorityBorder} bg-[var(--bg-surface)] px-3 py-2 hover:bg-white/[0.07] transition-colors`}
-              >
-                <p className="text-[13px] font-medium text-[var(--text)] truncate">{z.nazev}</p>
-                <div className="flex items-center justify-between mt-0.5">
-                  <p className="text-[11px] text-[var(--text-secondary)] truncate">{z.klient}</p>
-                  <span className={`text-[10px] font-medium capitalize ${stavColor}`}>{z.stav}</span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 const LEGEND_ITEMS = [
   { color: 'bg-red-500', label: 'Vysoká priorita' },
   { color: 'bg-amber-400', label: 'Střední' },
@@ -304,7 +266,7 @@ const LEGEND_ITEMS = [
 function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
   const today = new Date();
   const [offset, setOffset] = useState(0);
-  const [selectedDay, setSelectedDay] = useState<{ day: Date; zakazky: Zakazka[] } | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(today);
   const navigate = useNavigate();
 
   // Klávesová navigace: ← → pro měsíce, T pro dnešek
@@ -350,6 +312,10 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
 
   const monthLabel = viewDate.toLocaleDateString('cs-CZ', { month: 'long', year: 'numeric' });
 
+  const selectedDayZakazky = zakazkyByDay.get(selectedDate.toDateString()) ?? [];
+  const selectedDateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+  const selectedDayLabel = selectedDate.toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' });
+
   return (
     <>
     <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] shadow-[var(--shadow-elevated)]">
@@ -363,7 +329,7 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
         </h2>
         <div className="flex items-center gap-1">
           <button title="Předchozí měsíc (←)" onClick={() => setOffset(o => o - 1)} className="h-6 w-6 flex items-center justify-center rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors text-xs">‹</button>
-          <button onClick={() => setOffset(0)} className="px-2 py-0.5 rounded text-[10px] font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors">Dnes</button>
+          <button onClick={() => { setOffset(0); setSelectedDate(today); }} className="px-2 py-0.5 rounded text-[10px] font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors">Dnes</button>
           <button title="Další měsíc (→)" onClick={() => setOffset(o => o + 1)} className="h-6 w-6 flex items-center justify-center rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors text-xs">›</button>
         </div>
       </div>
@@ -391,22 +357,16 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
               const isWeekend = col >= 5;
               const dayZ = zakazkyByDay.get(day.toDateString()) ?? [];
               const hasEvents = dayZ.length > 0;
-              const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+              const isSelected = isSameDay(day, selectedDate);
               return (
                 <div
                   key={i}
-                  onClick={() => {
-                    if (hasEvents) {
-                      setSelectedDay({ day, zakazky: dayZ });
-                    } else {
-                      navigate(`/planovani?datum=${dateStr}`);
-                    }
-                  }}
+                  onClick={() => setSelectedDate(day)}
                   className={`relative min-h-[36px] border-t border-r border-[var(--border-subtle)] px-0.5 py-1 flex flex-col items-center cursor-pointer transition-colors ${
                     isToday ? 'bg-[var(--bg-surface)]' : isWeekend ? 'bg-white/[0.015]' : ''
                   } ${isPast && !hasEvents ? 'opacity-30' : isPast ? 'opacity-60' : ''} ${
                     hasEvents ? 'hover:bg-[var(--bg-accent)]' : 'hover:bg-white/[0.04]'
-                  }`}
+                  } ${isSelected && !isToday ? 'ring-2 ring-inset ring-[var(--primary)]/50' : ''}`}
                 >
                   <p className={`text-center text-[11px] font-medium leading-none ${
                     isToday
@@ -447,13 +407,41 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
         <span className="ml-auto text-[9px] text-[var(--text-muted)] opacity-50">← T →</span>
       </div>
     </div>
-    {selectedDay && (
-      <DayPopup
-        day={selectedDay.day}
-        zakazky={selectedDay.zakazky}
-        onClose={() => setSelectedDay(null)}
-      />
-    )}
+    {/* Panel zakázek pro vybraný den */}
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] mt-2">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-subtle)]">
+        <p className="text-[12px] font-semibold text-[var(--text)] capitalize">{selectedDayLabel}</p>
+        <button
+          onClick={() => navigate(`/planovani?datum=${selectedDateStr}`)}
+          className="text-[10px] font-medium text-[var(--primary)] hover:underline transition-colors whitespace-nowrap"
+        >
+          + Naplánovat
+        </button>
+      </div>
+      {selectedDayZakazky.length > 0 ? (
+        <div className="p-2 space-y-1 max-h-48 overflow-y-auto">
+          {selectedDayZakazky.map((z) => {
+            const priorityBorder = z.priorita === 'vysoká' ? 'border-l-red-500' : z.priorita === 'střední' ? 'border-l-amber-400' : 'border-l-blue-400';
+            const stavColor = z.stav === 'dokončeno' ? 'text-[var(--text-muted)]' : z.stav === 'v realizaci' ? 'text-amber-400' : 'text-blue-400';
+            return (
+              <Link
+                key={z.id}
+                to="/planovani"
+                className={`block rounded border border-[var(--border)] border-l-[3px] ${priorityBorder} bg-[var(--bg-faint)] px-2.5 py-1.5 hover:bg-white/[0.07] transition-colors`}
+              >
+                <p className="text-[12px] font-medium text-[var(--text)] truncate">{z.nazev}</p>
+                <div className="flex items-center justify-between mt-0.5">
+                  <p className="text-[10px] text-[var(--text-secondary)] truncate">{z.klient}</p>
+                  <span className={`text-[10px] font-medium capitalize ${stavColor}`}>{z.stav}</span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="text-[11px] text-[var(--text-muted)] text-center py-4">Žádné zakázky pro tento den</p>
+      )}
+    </div>
     </>
   );
 }
