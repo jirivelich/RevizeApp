@@ -76,8 +76,8 @@ function DayPopover({ dateStr, rect, allZakazky, onZakazkaClick, onAddClick, onM
 
   return createPortal(
     <div
-      className="fixed z-[9000] bg-[var(--bg-surface)] border border-[var(--border-strong)] rounded-xl shadow-2xl overflow-hidden"
-      style={{ top, left, width: popWidth }}
+      className="fixed z-[9000] bg-[var(--surface)] border border-[var(--border-strong)] rounded-xl overflow-hidden"
+      style={{ top, left, width: popWidth, boxShadow: 'var(--shadow-elevated)' }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
