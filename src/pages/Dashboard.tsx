@@ -78,7 +78,7 @@ function SectionCard({ title, icon: _icon, count, viewAllLink, viewAllLabel, emp
   children: React.ReactNode[];
 }) {
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] shadow-[var(--shadow-elevated)]">
+    <div className="h-full flex flex-col rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)]">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border-subtle)]">
         <h2 className="text-[13px] font-semibold text-[var(--text)]">{title}</h2>
         <div className="flex items-center gap-2">
@@ -90,7 +90,7 @@ function SectionCard({ title, icon: _icon, count, viewAllLink, viewAllLabel, emp
           </Link>
         </div>
       </div>
-      <div className="p-3">
+      <div className="flex-1 p-3">
         {children.length > 0 ? (
           <div className="space-y-1.5">{children}</div>
         ) : (
@@ -524,7 +524,7 @@ export function Dashboard() {
       </div>
 
       {/* ═══ Hlavní grid ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
         <SectionCard
           title="Rozpracované revize"
           icon=""
