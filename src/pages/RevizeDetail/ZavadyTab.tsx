@@ -188,9 +188,9 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                   <td className="py-2 pr-3 font-medium">{z.popis}</td>
                   <td className="py-2 pr-3">
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                      z.zavaznost === 'C1' ? 'bg-red-100 text-red-700' :
-                      z.zavaznost === 'C2' ? 'bg-orange-500/10 text-orange-400' :
-                      'bg-amber-500/10 text-amber-400'
+                      z.zavaznost === 'C1' ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]' :
+                      z.zavaznost === 'C2' ? 'bg-[var(--warning-bg)] text-[var(--warning-text)]' :
+                      'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
                     }`}>{z.zavaznost}</span>
                   </td>
                   <td className="py-2 pr-3">
@@ -323,9 +323,9 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
               </div>
               <div className="flex items-center gap-3">
                 <span className={`px-2 py-1 rounded text-xs font-medium ${
-                  z.zavaznost === 'C1' ? 'bg-red-100 text-red-700' :
-                  z.zavaznost === 'C2' ? 'bg-orange-500/10 text-orange-400' :
-                  'bg-amber-500/10 text-amber-400'
+                  z.zavaznost === 'C1' ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]' :
+                  z.zavaznost === 'C2' ? 'bg-[var(--warning-bg)] text-[var(--warning-text)]' :
+                  'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
                 }`}>{z.zavaznost}</span>
                 <div className="flex gap-1">
                   <Button size="sm" variant="secondary" onClick={() => handleEditZavada(z)}>Upravit</Button>

@@ -460,7 +460,7 @@ export function DokumentaceTab({
             />
           </div>
           {aiError && (
-            <p className="text-xs font-medium text-[var(--danger)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2 mb-1">
+            <p className="text-xs font-medium text-[var(--danger-text)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2 mb-1">
               {aiError}
             </p>
           )}
@@ -546,7 +546,7 @@ export function DokumentaceTab({
                     Platnost kalibrace: {new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}
                   </p>
                 </div>
-                <span className="text-blue-600">+ Přidat</span>
+                <span className="text-[var(--primary)]">+ Přidat</span>
               </div>
             ))
         ) : (
@@ -556,7 +556,7 @@ export function DokumentaceTab({
                 ? 'Nemáte žádné měřící přístroje.'
                 : 'Všechny přístroje jsou již přiřazeny.'}
             </p>
-            <Link to="/pristroje" className="text-blue-600 hover:underline">
+            <Link to="/pristroje" className="text-[var(--primary)] hover:underline">
               Přejít na správu přístrojů
             </Link>
           </div>

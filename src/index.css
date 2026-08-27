@@ -9,6 +9,12 @@
   --success: #00B341;
   --warning: #FF8F00;
   --danger: #E53E3E;
+  --success-text: #34D399;
+  --warning-text: #FFB74D;
+  --danger-text: #F87171;
+  --success-bg: rgba(0,179,65,0.15);
+  --warning-bg: rgba(255,183,77,0.15);
+  --danger-bg: rgba(229,62,62,0.15);
   --background: #0A0E14;
   --surface: #151B26;
   --text: #F3F4F6;

@@ -11,7 +11,7 @@ export const HromosvodNacrtTab: React.FC<Props> = ({ formData, setFormData }) =>
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-semibold text-slate-800 mb-1">Náčrt LPS schématu</h3>
+        <h3 className="text-lg font-semibold text-[var(--text)] mb-1">Náčrt LPS schématu</h3>
         <p className="text-sm text-[var(--text-muted)]">
           Nakreslete schéma systému ochrany před bleskem na půdorys nebo obrys objektu.
           Umístěte symboly jímačů, svodů a uzemnění a propojte je vedením hromosvodu.

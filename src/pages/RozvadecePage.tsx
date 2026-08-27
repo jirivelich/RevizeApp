@@ -449,7 +449,7 @@ export function RozvadecDetailPage() {
                     <td className="py-2 px-3 font-medium text-[var(--text)]">{c.cislo}</td>
                     <td className="py-2 px-3 text-[var(--text)]">{c.nazev}</td>
                     <td className="py-2 px-3">
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-[var(--bg-accent-badge)] text-blue-300">
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-[var(--bg-accent-badge)] text-[var(--primary)]">
                         {c.typ}
                       </span>
                     </td>

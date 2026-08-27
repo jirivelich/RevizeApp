@@ -190,7 +190,7 @@ export function ZakazkaCard({ zakazka: z, onEdit, onUpdateStav, onDelete, onCrea
           <div className="border-t border-[var(--border-subtle)] my-1" />
           <button
             onClick={() => { onDelete(z.id!); setMenuOpen(false); }}
-            className="w-full text-left px-3 py-2 text-sm text-[var(--danger)] hover:bg-red-500/[0.10] flex items-center gap-2"
+            className="w-full text-left px-3 py-2 text-sm text-[var(--danger-text)] hover:bg-red-500/[0.10] flex items-center gap-2"
           ><IconTrash /> Smazat</button>
         </div>,
         document.body

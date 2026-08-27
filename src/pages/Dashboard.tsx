@@ -20,10 +20,10 @@ function daysUntil(dateStr: string) {
 type StatTint = 'blue' | 'amber' | 'danger' | 'success';
 
 const tintClasses: Record<StatTint, string> = {
-  blue: 'bg-blue-500/[0.12] text-blue-400',
-  amber: 'bg-amber-500/[0.14] text-amber-400',
-  danger: 'bg-red-500/[0.12] text-red-400',
-  success: 'bg-emerald-500/[0.13] text-emerald-400',
+  blue: 'bg-[var(--bg-accent-badge)] text-[var(--primary)]',
+  amber: 'bg-[var(--warning-bg)] text-[var(--warning-text)]',
+  danger: 'bg-[var(--danger-bg)] text-[var(--danger-text)]',
+  success: 'bg-[var(--success-bg)] text-[var(--success-text)]',
 };
 
 function StatCard({ title, value, subtitle, icon, tint, link }: {
@@ -52,7 +52,7 @@ function RevizeRow({ r }: { r: Revize }) {
   return (
     <Link to={`/revize/${r.id}`} className="group flex items-center gap-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-faint)] px-2.5 py-2 transition-all hover:border-[var(--border-strong)]">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-medium text-[var(--text)] group-hover:text-slate-100 transition-colors">{r.nazev}</p>
+        <p className="truncate text-[13px] font-medium text-[var(--text)] transition-colors">{r.nazev}</p>
         <p className="text-[11px] text-[var(--text-secondary)]">{r.cisloRevize} · {formatDate(r.datum)}</p>
       </div>
       <Badge variant={STAV_BADGE_VARIANT[r.stav] ?? 'neutral'}>{r.stav}</Badge>
@@ -72,7 +72,7 @@ function ZakazkaRow({ z }: { z: Zakazka }) {
   return (
     <Link to={`/planovani`} className={`group flex items-center gap-2.5 rounded-lg border border-[var(--border)] border-l-[3px] ${prioritaColor} bg-[var(--bg-faint)] px-2.5 py-2 transition-all hover:border-[var(--border-strong)]`}>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-medium text-[var(--text)] group-hover:text-slate-100 transition-colors">{z.nazev}</p>
+        <p className="truncate text-[13px] font-medium text-[var(--text)] transition-colors">{z.nazev}</p>
         <p className="text-[11px] text-[var(--text-secondary)]">{z.klient}</p>
       </div>
       <Badge variant={urgencyVariant}>{days < 0 ? `${Math.abs(days)}d po` : days === 0 ? 'Dnes' : `za ${days}d`}</Badge>
@@ -234,7 +234,7 @@ function WeatherInline() {
       <span className="text-xl leading-none">{wmoToEmoji(day.code)}</span>
       <span className="text-[14px] font-semibold text-[var(--text)]">{day.max}°</span>
       <span className="text-[13px] text-[var(--text-muted)]">{day.min}°</span>
-      {day.precip > 0 && <span className="text-[11px] text-blue-400">💧{day.precip}%</span>}
+      {day.precip > 0 && <span className="text-[11px] text-[var(--primary)]">💧{day.precip}%</span>}
       <span className="text-[11px] text-[var(--text-muted)]">Tachov</span>
     </div>
   );
@@ -360,7 +360,7 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
             </div>,
             ...cells.slice(r * 7, r * 7 + 7).map((day, col) => {
               const i = r * 7 + col;
-              if (!day) return <div key={`e${i}`} className="min-h-[36px] bg-white/[0.01]" />;
+              if (!day) return <div key={`e${i}`} className="min-h-[36px] bg-[var(--bg-faint)]" />;
               const isToday = isSameDay(day, today);
               const isPast = day < today && !isToday;
               const isWeekend = col >= 5;
@@ -372,9 +372,9 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
                   key={i}
                   onClick={() => setSelectedDate(day)}
                   className={`relative min-h-[36px] border-t border-r border-[var(--border-subtle)] px-0.5 py-1 flex flex-col items-center cursor-pointer transition-colors ${
-                    isToday ? 'bg-[var(--bg-surface)]' : isWeekend ? 'bg-white/[0.015]' : ''
+                    isToday ? 'bg-[var(--bg-surface)]' : isWeekend ? 'bg-[var(--bg-faint)]' : ''
                   } ${isPast && !hasEvents ? 'opacity-30' : isPast ? 'opacity-60' : ''} ${
-                    hasEvents ? 'hover:bg-[var(--bg-accent)]' : 'hover:bg-white/[0.04]'
+                    hasEvents ? 'hover:bg-[var(--bg-accent)]' : 'hover:bg-[var(--bg-hover)]'
                   } ${isSelected && !isToday ? 'ring-2 ring-inset ring-[var(--primary)]/50' : ''}`}
                 >
                   <p className={`text-center text-[11px] font-medium leading-none ${
@@ -431,12 +431,12 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
         <div className="p-2 space-y-1 max-h-48 overflow-y-auto">
           {selectedDayZakazky.map((z) => {
             const priorityBorder = z.priorita === 'vysoká' ? 'border-l-red-500' : z.priorita === 'střední' ? 'border-l-amber-400' : 'border-l-blue-400';
-            const stavColor = z.stav === 'dokončeno' ? 'text-[var(--text-muted)]' : z.stav === 'v realizaci' ? 'text-amber-400' : 'text-blue-400';
+            const stavColor = z.stav === 'dokončeno' ? 'text-[var(--text-muted)]' : z.stav === 'v realizaci' ? 'text-[var(--warning-text)]' : 'text-[var(--primary)]';
             return (
               <Link
                 key={z.id}
                 to="/planovani"
-                className={`block rounded border border-[var(--border)] border-l-[3px] ${priorityBorder} bg-[var(--bg-faint)] px-2.5 py-1.5 hover:bg-white/[0.07] transition-colors`}
+                className={`block rounded border border-[var(--border)] border-l-[3px] ${priorityBorder} bg-[var(--bg-faint)] px-2.5 py-1.5 hover:bg-[var(--bg-hover)] transition-colors`}
               >
                 <p className="text-[12px] font-medium text-[var(--text)] truncate">{z.nazev}</p>
                 <div className="flex items-center justify-between mt-0.5">
@@ -496,8 +496,8 @@ export function Dashboard() {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <div className="relative h-12 w-12">
-          <div className="absolute inset-0 rounded-full border-4 border-slate-200" />
-          <div className="absolute inset-0 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+          <div className="absolute inset-0 rounded-full border-4 border-[var(--border-medium)]" />
+          <div className="absolute inset-0 animate-spin rounded-full border-4 border-[var(--primary)] border-t-transparent" />
         </div>
         <p className="mt-4 text-sm font-medium text-[var(--text-muted)]">Načítání dashboardu…</p>
       </div>
@@ -523,7 +523,7 @@ export function Dashboard() {
           <WeatherInline />
         </div>
         <div className="flex gap-1.5 shrink-0 mt-1">
-          <Link to="/revize" className="inline-flex items-center rounded border border-[var(--border-strong)] bg-[var(--bg-surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--text)] hover:bg-white/[0.09] transition-colors">
+          <Link to="/revize" className="inline-flex items-center rounded border border-[var(--border-strong)] bg-[var(--bg-surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--text)] hover:bg-[var(--bg-hover-strong)] transition-colors">
             + Revize
           </Link>
           <Link to="/planovani" className="inline-flex items-center rounded border border-[var(--primary)] bg-[var(--primary)] px-2.5 py-1 text-[11px] font-medium text-white hover:opacity-90 transition-opacity">

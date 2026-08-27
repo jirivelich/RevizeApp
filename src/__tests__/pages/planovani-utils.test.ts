@@ -29,42 +29,44 @@ describe('emptyFormData', () => {
 });
 
 describe('getStatusColor', () => {
-  it('should return blue for plánováno', () => {
-    expect(getStatusColor('plánováno')).toContain('blue');
+  // Barvy jsou vázané na CSS proměnné z theme.ts (--primary/--warning-*/--success-*),
+  // aby se badge správně přizpůsoboval světlému i tmavému motivu.
+  it('should return primary (info) tone for plánováno', () => {
+    expect(getStatusColor('plánováno')).toContain('--primary');
   });
 
-  it('should return amber for v realizaci', () => {
-    expect(getStatusColor('v realizaci')).toContain('amber');
+  it('should return warning tone for v realizaci', () => {
+    expect(getStatusColor('v realizaci')).toContain('--warning');
   });
 
-  it('should return green for dokončeno', () => {
-    expect(getStatusColor('dokončeno')).toContain('green');
+  it('should return success tone for dokončeno', () => {
+    expect(getStatusColor('dokončeno')).toContain('--success');
   });
 
-  it('should return slate for zrušeno', () => {
-    expect(getStatusColor('zrušeno')).toContain('slate');
+  it('should return neutral tone for zrušeno', () => {
+    expect(getStatusColor('zrušeno')).toContain('--text-secondary');
   });
 
-  it('should return default for unknown status', () => {
-    expect(getStatusColor('neznámý' as any)).toContain('slate');
+  it('should return default (neutral) for unknown status', () => {
+    expect(getStatusColor('neznámý' as any)).toContain('--text-secondary');
   });
 });
 
 describe('getPriorityColor', () => {
-  it('should return red for vysoká', () => {
-    expect(getPriorityColor('vysoká')).toContain('red');
+  it('should return danger tone for vysoká', () => {
+    expect(getPriorityColor('vysoká')).toContain('--danger');
   });
 
-  it('should return amber for střední', () => {
-    expect(getPriorityColor('střední')).toContain('amber');
+  it('should return warning tone for střední', () => {
+    expect(getPriorityColor('střední')).toContain('--warning');
   });
 
-  it('should return green for nizká', () => {
-    expect(getPriorityColor('nizká')).toContain('green');
+  it('should return primary (info) tone for nizká', () => {
+    expect(getPriorityColor('nizká')).toContain('--primary');
   });
 
-  it('should return default for unknown priority', () => {
-    expect(getPriorityColor('neznámá' as any)).toContain('slate');
+  it('should return default (neutral) for unknown priority', () => {
+    expect(getPriorityColor('neznámá' as any)).toContain('--text-secondary');
   });
 });
 

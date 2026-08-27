@@ -125,7 +125,7 @@ function CB({ val, active, label, onClick }: { val: string; active: boolean; lab
   const cls = active
     ? val === 'V' ? `${base} bg-emerald-50 border-emerald-500 text-emerald-600`
     : val === 'N' ? `${base} bg-red-50 border-red-500 text-red-600`
-    : `${base} bg-slate-100 border-slate-400 text-[var(--text-muted)]`
+    : `${base} bg-[var(--bg-hover-strong)] border-[var(--border-strong)] text-[var(--text)]`
     : `${base} border-[var(--border-input)] bg-[var(--bg-input)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text)]`;
   return <button className={cls} onClick={onClick} type="button">{label}</button>;
 }
@@ -252,7 +252,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ 01 – IDENTIFIKACE STROJE ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
         <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-          <span className="text-blue-400">01</span> Identifikace strojního zařízení – štítek
+          <span className="text-[var(--primary)]">01</span> Identifikace strojního zařízení – štítek
         </div>
         <div className="p-4">
           <div className="grid grid-cols-3 max-sm:grid-cols-1 gap-2.5">
@@ -299,7 +299,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ 02 – JIŠTĚNÍ ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
         <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-          <span className="text-blue-400">02</span> Jištění strojního zařízení
+          <span className="text-[var(--primary)]">02</span> Jištění strojního zařízení
         </div>
         <div className="p-4">
           <table className="w-full text-sm border-collapse mt-1">
@@ -334,7 +334,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ 03 – IZOLAČNÍ ODPOR ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
         <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-          <span className="text-blue-400">03</span> Měření izolačního odporu (ČSN EN 60204-1)
+          <span className="text-[var(--primary)]">03</span> Měření izolačního odporu (ČSN EN 60204-1)
         </div>
         <div className="p-4">
           <table className="w-full text-sm border-collapse mt-1">
@@ -370,7 +370,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ 04 – SPOJITOST PE ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
         <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-          <span className="text-blue-400">04</span> Měření spojitosti ochranných vodičů (PE)
+          <span className="text-[var(--primary)]">04</span> Měření spojitosti ochranných vodičů (PE)
         </div>
         <div className="p-4">
           <table className="w-full text-sm border-collapse mt-1">
@@ -406,7 +406,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ 05 – IMPEDANCE PORUCHOVÉ SMYČKY ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
         <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-          <span className="text-blue-400">05</span> Měření impedance poruchové smyčky
+          <span className="text-[var(--primary)]">05</span> Měření impedance poruchové smyčky
         </div>
         <div className="p-4">
           <table className="w-full text-sm border-collapse mt-1">
@@ -440,7 +440,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ 06 – RCD ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
         <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-          <span className="text-blue-400">06</span> Měření proudových chráničů (RCD)
+          <span className="text-[var(--primary)]">06</span> Měření proudových chráničů (RCD)
         </div>
         <div className="p-4">
           <table className="w-full text-sm border-collapse mt-1">
@@ -473,7 +473,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ 07 – FUNKČNÍ KONTROLY ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
         <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-          <span className="text-blue-400">07</span> Funkční kontroly
+          <span className="text-[var(--primary)]">07</span> Funkční kontroly
         </div>
         <div className="p-4">
           <table className="w-full text-sm border-collapse mt-1">
@@ -487,7 +487,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
                 <tr key={i} className="even:bg-[var(--bg-surface)]">
                   <td className={TW.td}>{r.editable
                     ? <input className={TW.tblInput} value={r.nazev} onChange={e => updRow('kontroly', i, 'nazev', e.target.value)} />
-                    : <span className="text-sm text-slate-700">{r.nazev}</span>
+                    : <span className="text-sm text-[var(--text)]">{r.nazev}</span>
                   }</td>
                   <td className={TW.td}><div className="flex gap-1.5">
                     <CB val="V" label="Vyhovuje" active={r.vysledek==='V'} onClick={() => toggleCheck('kontroly',i,'vysledek','V')} />
@@ -505,7 +505,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ 08 – MĚŘICÍ PŘÍSTROJE ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
         <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-          <span className="text-blue-400">08</span> Použité měřicí přístroje
+          <span className="text-[var(--primary)]">08</span> Použité měřicí přístroje
           <button
             type="button"
             onClick={() => setIsPristrojModalOpen(true)}
@@ -605,10 +605,10 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
                       });
                     }
                   }}
-                  className="px-3.5 py-2.5 border-b border-slate-200 cursor-pointer flex justify-between items-center hover:bg-[var(--bg-surface)] transition-colors"
+                  className="px-3.5 py-2.5 border-b border-[var(--border)] cursor-pointer flex justify-between items-center hover:bg-[var(--bg-surface)] transition-colors"
                 >
                   <div>
-                    <div className="font-semibold text-sm text-slate-800 mb-0.5">{p.nazev}</div>
+                    <div className="font-semibold text-sm text-[var(--text)] mb-0.5">{p.nazev}</div>
                     <div className="text-xs text-[var(--text-muted)]">
                       {p.vyrobce} {p.model} • V.č.: {p.vyrobniCislo}
                       {p.platnostKalibrace && ` • Kalibrace: ${new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}`}
@@ -620,7 +620,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
           ) : (
             <div className="p-5 text-center text-[var(--text-muted)]">
               <p className="mb-2 text-sm">{vsechnyPristroje.length === 0 ? 'Nemáte žádné měřicí přístroje v systému.' : 'Všechny přístroje jsou již přiřazeny k této revizi.'}</p>
-              <Link to="/pristroje" className="text-blue-600 underline text-sm">Přejít na správu přístrojů</Link>
+              <Link to="/pristroje" className="text-[var(--primary)] underline text-sm">Přejít na správu přístrojů</Link>
             </div>
           )}
         </div>
@@ -629,7 +629,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ 09 – POSUDEK ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
         <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-          <span className="text-blue-400">09</span> Posudek
+          <span className="text-[var(--primary)]">09</span> Posudek
         </div>
         <div className="p-4">
           <div className="mb-3.5">
@@ -639,21 +639,21 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
             <div className="flex gap-3 mb-3.5">
               <button
                 className={`flex-1 py-3 px-4 border-2 rounded-lg cursor-pointer text-xs font-bold text-center transition-all tracking-wide ${
-                  fd.verdikt === 'pass' ? 'bg-emerald-50 border-emerald-500 text-emerald-600' : 'border-slate-300 bg-white text-[var(--text-muted)] hover:border-slate-400'
+                  fd.verdikt === 'pass' ? 'bg-emerald-50 border-emerald-500 text-emerald-600' : 'border-[var(--border-medium)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-strong)]'
                 }`}
                 onClick={() => upd('verdikt', fd.verdikt === 'pass' ? '' : 'pass')} type="button">
                 ✓ &nbsp; VYHOVUJE
               </button>
               <button
                 className={`flex-1 py-3 px-4 border-2 rounded-lg cursor-pointer text-xs font-bold text-center transition-all tracking-wide ${
-                  fd.verdikt === 'fail' ? 'bg-red-50 border-red-500 text-red-600' : 'border-slate-300 bg-white text-[var(--text-muted)] hover:border-slate-400'
+                  fd.verdikt === 'fail' ? 'bg-red-50 border-red-500 text-red-600' : 'border-[var(--border-medium)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-strong)]'
                 }`}
                 onClick={() => upd('verdikt', fd.verdikt === 'fail' ? '' : 'fail')} type="button">
                 ✗ &nbsp; NEVYHOVUJE – vyžadována nápravná opatření
               </button>
             </div>
           </div>
-          <hr className="border-t border-dashed border-slate-200 my-2.5" />
+          <hr className="border-t border-dashed border-[var(--border-medium)] my-2.5" />
           <div className="grid gap-2.5 mt-2.5">
             <div className="flex flex-col gap-1"><label className={TW.label}>Zjištěné závady / nedostatky</label>
               <textarea rows={3} className={`${TW.input} resize-y min-h-[70px]`} value={fd.posudekZavady} onChange={e => upd('posudekZavady', e.target.value)} /></div>
@@ -664,8 +664,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
 
           </div>
           <div className="grid grid-cols-2 gap-8 pt-5 pb-1">
-            <div className="flex flex-col gap-1"><div className="border-b-2 border-slate-400 h-10" /><div className="text-xs uppercase tracking-wide text-[var(--text-muted)] text-center mt-1">Revizní technik – jméno, podpis, razítko</div></div>
-            <div className="flex flex-col gap-1"><div className="border-b-2 border-slate-400 h-10" /><div className="text-xs uppercase tracking-wide text-[var(--text-muted)] text-center mt-1">Zástupce objednatele – jméno, podpis</div></div>
+            <div className="flex flex-col gap-1"><div className="border-b-2 border-[var(--border-strong)] h-10" /><div className="text-xs uppercase tracking-wide text-[var(--text-muted)] text-center mt-1">Revizní technik – jméno, podpis, razítko</div></div>
+            <div className="flex flex-col gap-1"><div className="border-b-2 border-[var(--border-strong)] h-10" /><div className="text-xs uppercase tracking-wide text-[var(--text-muted)] text-center mt-1">Zástupce objednatele – jméno, podpis</div></div>
           </div>
         </div>
       </div>

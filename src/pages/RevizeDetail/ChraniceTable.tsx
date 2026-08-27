@@ -32,7 +32,7 @@ export function ChraniceTable({ chranice, onEdit, onDelete }: ChraniceTableProps
               <td className="py-1 px-2 text-xs font-medium text-[var(--text)]">{c.cislo}</td>
               <td className="py-1 px-2 text-xs text-[var(--text)]">{c.nazev}</td>
               <td className="py-1 px-2 text-xs">
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--bg-accent-badge)] text-blue-300">{c.typ}</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--bg-accent-badge)] text-[var(--primary)]">{c.typ}</span>
               </td>
               <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{c.proud}</td>
               <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{c.citlivostMa}</td>

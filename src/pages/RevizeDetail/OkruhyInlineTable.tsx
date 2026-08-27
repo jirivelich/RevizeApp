@@ -147,7 +147,7 @@ export function OkruhyInlineTable({ rozvadecId, okruhy, onEdit, onDelete, onSave
                   <button type="button" title="Upravit" onClick={() => onEdit(o)}
                     className="w-6 h-6 flex items-center justify-center rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] text-xs">✎</button>
                   <button type="button" title="Smazat" onClick={() => onDelete(o.id!)}
-                    className="w-6 h-6 flex items-center justify-center rounded hover:bg-red-500/[0.08] text-[var(--text-secondary)] hover:text-red-400 text-xs">✕</button>
+                    className="w-6 h-6 flex items-center justify-center rounded hover:bg-[var(--danger-bg)] text-[var(--text-secondary)] hover:text-[var(--danger-text)] text-xs">✕</button>
                 </div>
               </td>
             </tr>

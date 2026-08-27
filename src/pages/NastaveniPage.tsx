@@ -395,7 +395,7 @@ export function NastaveniPage() {
 
       {saveMessage && (
         <div className={`p-4 rounded-lg ${
-          saveMessage.includes('Chyba') ? 'bg-red-500/[0.12] text-red-300' : 'bg-green-500/[0.12] text-green-300'
+          saveMessage.includes('Chyba') ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]' : 'bg-[var(--success-bg)] text-[var(--success-text)]'
         }`}>
           {saveMessage}
         </div>
@@ -614,7 +614,7 @@ export function NastaveniPage() {
                         <td className="py-2 pr-4 text-[var(--text-secondary)] whitespace-nowrap">
                           {h.platOd || '—'}
                           {idx === 0 && (
-                            <span className="ml-2 px-1.5 py-0.5 text-[10px] bg-emerald-500/[0.15] text-emerald-300 rounded font-medium">Aktuální</span>
+                            <span className="ml-2 px-1.5 py-0.5 text-[10px] bg-[var(--success-bg)] text-[var(--success-text)] rounded font-medium">Aktuální</span>
                           )}
                         </td>
                         <td className="py-2 pr-4">{h.reviznniTechnikCisloOpravneni || '—'}</td>
@@ -624,7 +624,7 @@ export function NastaveniPage() {
                         <td className="py-2">
                           <button
                             onClick={() => h.id !== undefined && handleDeleteDoklad(h.id)}
-                            className="text-[var(--text-secondary)] hover:text-red-400 hover:bg-red-500/[0.08] px-2 py-1 rounded text-xs transition-colors cursor-pointer"
+                            className="text-[var(--text-secondary)] hover:text-[var(--danger-text)] hover:bg-[var(--danger-bg)] px-2 py-1 rounded text-xs transition-colors cursor-pointer"
                             title="Smazat"
                           >×</button>
                         </td>
@@ -693,8 +693,8 @@ export function NastaveniPage() {
             <div
               className={`p-4 rounded-lg border ${
                 backupMessage.type === 'success'
-                  ? 'border-green-500/[0.20] bg-green-500/[0.10] text-green-300'
-                  : 'border-red-500/[0.20] bg-red-500/[0.10] text-red-300'
+                  ? 'border-green-500/[0.20] bg-[var(--success-bg)] text-[var(--success-text)]'
+                  : 'border-red-500/[0.20] bg-[var(--danger-bg)] text-[var(--danger-text)]'
               }`}
             >
               {backupMessage.text}
@@ -751,7 +751,7 @@ export function NastaveniPage() {
           {/* Import */}
           <Card title="Import databáze">
             <div className="space-y-4">
-              <p className="text-slate-600">
+              <p className="text-[var(--text-secondary)]">
                 Nahrajte JSON soubor s daty. Vyberte režim importu:
               </p>
 
@@ -823,7 +823,7 @@ export function NastaveniPage() {
               <p><strong>Umístění:</strong> Server (víceuživatelský přístup)</p>
               <p><strong>Formát zálohy:</strong> JSON (všechny tabulky včetně vazeb)</p>
               <p><strong>Verze exportu:</strong> 2.0.0</p>
-                <p className="text-xs text-amber-300 bg-amber-500/[0.10] p-2 rounded border border-amber-500/[0.20] mt-2">
+                <p className="text-xs text-[var(--warning-text)] bg-[var(--warning-bg)] p-2 rounded border border-amber-500/[0.20] mt-2">
                 Tip: Pravidelně exportujte zálohu. Doporučujeme provádět zálohu alespoň jednou týdně nebo před každým důležitým importem.
               </p>
             </div>
@@ -951,8 +951,8 @@ export function NastaveniPage() {
           {gcMessage && (
             <div className={`p-4 rounded-lg text-sm ${
               gcMessage.type === 'success'
-                ? 'bg-green-500/[0.12] text-green-300'
-                : 'bg-red-500/[0.12] text-red-400'
+                ? 'bg-[var(--success-bg)] text-[var(--success-text)]'
+                : 'bg-[var(--danger-bg)] text-[var(--danger-text)]'
             }`}>
               {gcMessage.text}
             </div>
@@ -1039,7 +1039,7 @@ export function NastaveniPage() {
             <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
               <li className="flex gap-2"><span className="text-blue-500 mt-0.5">•</span><span>Každá zakázka ve stavu <em>Plánováno</em> nebo <em>V realizaci</em> se přenese jako událost do zvoleného Google Kalendáře.</span></li>
               <li className="flex gap-2"><span className="text-blue-500 mt-0.5">•</span><span>Při opakované synchronizaci se existující události aktualizují, nové se vytvoří — nic se nesmaže.</span></li>
-              <li className="flex gap-2"><span className="text-blue-500 mt-0.5">•</span><span>Barva události odpovídá prioritě: <span className="text-green-400">zelená</span> = nízká, <span className="text-amber-400">žlutá</span> = střední, <span className="text-red-400">červená</span> = vysoká.</span></li>
+              <li className="flex gap-2"><span className="text-[var(--primary)] mt-0.5">•</span><span>Barva události odpovídá prioritě: <span className="text-[var(--success-text)]">zelená</span> = nízká, <span className="text-[var(--warning-text)]">žlutá</span> = střední, <span className="text-[var(--danger-text)]">červená</span> = vysoká.</span></li>
               <li className="flex gap-2"><span className="text-blue-500 mt-0.5">•</span><span>Synchronizaci spusťte ručně kdykoli z tohoto nastavení nebo přes tlačítko na stránce Plánování.</span></li>
             </ul>
           </Card>
@@ -1151,7 +1151,7 @@ export function NastaveniPage() {
                                   >Upravit</button>
                                   <button
                                     onClick={() => t.id && handleDeleteText(t.id)}
-                                    className="p-1.5 text-[var(--text-secondary)] hover:text-red-400 hover:bg-red-500/[0.08] rounded transition-colors cursor-pointer text-xs"
+                                    className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--danger-text)] hover:bg-[var(--danger-bg)] rounded transition-colors cursor-pointer text-xs"
                                     title="Smazat"
                                   >×</button>
                                 </div>

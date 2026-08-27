@@ -285,7 +285,7 @@ export function WeekView({ zakazky: allZakazky, onZakazkaClick, onSlotClick, onM
           <h2 className="text-lg font-semibold text-[var(--text)]">{weekLabel}</h2>
           <button
             onClick={goToToday}
-            className="text-xs px-2 py-1 rounded bg-[var(--bg-accent-badge)] text-blue-300 hover:bg-blue-500/[0.25] transition-colors"
+            className="text-xs px-2 py-1 rounded bg-[var(--bg-accent-badge)] text-[var(--primary)] hover:bg-blue-500/[0.25] transition-colors"
           >
             Tento týden
           </button>
@@ -316,7 +316,7 @@ export function WeekView({ zakazky: allZakazky, onZakazkaClick, onSlotClick, onM
                 >
                   <div className="text-xs text-[var(--text-muted)]">{DAY_NAMES_SHORT[i]}</div>
                   <div className={`text-sm font-semibold ${
-                    isToday_ ? 'text-blue-300 font-bold' : 'text-[var(--text)]'
+                    isToday_ ? 'text-[var(--primary)] font-bold' : 'text-[var(--text)]'
                   }`}>
                     {day.getDate()}
                   </div>

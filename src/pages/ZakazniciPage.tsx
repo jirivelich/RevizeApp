@@ -1,5 +1,6 @@
 ﻿import React, { useState } from 'react';
-import { Button, Card, Input, Modal, ConfirmDialog } from '../components/ui';
+import { Button, Card, Input, Modal, ConfirmDialog, Badge } from '../components/ui';
+import type { BadgeVariant } from '../components/ui';
 import { zakazniciService } from '../services/database';
 import { useZakaznici, useCreateZakaznik, useUpdateZakaznik, useDeleteZakaznik } from '../hooks/useQueries';
 import type { Zakaznik, Revize } from '../types';
@@ -138,7 +139,7 @@ const ZakazniciPage: React.FC = () => {
       </div>
 
       {formError && (
-        <p className="text-xs font-medium text-[var(--danger)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+        <p className="text-xs font-medium text-[var(--danger-text)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
           {formError}
         </p>
       )}
@@ -285,7 +286,7 @@ const ZakazniciPage: React.FC = () => {
           </div>
 
           {formError && isModalOpen && (
-            <p className="text-xs font-medium text-[var(--danger)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+            <p className="text-xs font-medium text-[var(--danger-text)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
               {formError}
             </p>
           )}
@@ -311,29 +312,31 @@ const ZakazniciPage: React.FC = () => {
           {selectedZakaznikRevize.length === 0 ? (
             <p className="text-[var(--text-secondary)] text-center py-4">Žádné revize</p>
           ) : (
-            selectedZakaznikRevize.map((revize) => (
-              <div key={revize.id} className="p-3 border rounded-lg hover:bg-slate-50">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <span className="font-medium">{revize.cisloRevize || `Revize #${revize.id}`}</span>
-                    <span className="text-[var(--text-secondary)] ml-2">
-                      {revize.datum ? new Date(revize.datum).toLocaleDateString('cs-CZ') : 'Bez data'}
-                    </span>
+            selectedZakaznikRevize.map((revize) => {
+              const stavVariant: BadgeVariant =
+                revize.stav === 'dokončeno' ? 'success' :
+                revize.stav === 'rozpracováno' ? 'warning' :
+                'neutral';
+              return (
+                <div key={revize.id} className="p-3 border border-[var(--border)] rounded-lg hover:bg-[var(--bg-hover)]">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="font-medium text-[var(--text)]">{revize.cisloRevize || `Revize #${revize.id}`}</span>
+                      <span className="text-[var(--text-secondary)] ml-2">
+                        {revize.datum ? new Date(revize.datum).toLocaleDateString('cs-CZ') : 'Bez data'}
+                      </span>
+                    </div>
+                    <Badge variant={stavVariant}>
+                      {revize.stav === 'dokončeno' ? 'Dokončeno' :
+                       revize.stav === 'rozpracováno' ? 'Rozpracováno' : revize.stav}
+                    </Badge>
                   </div>
-                  <span className={`px-2 py-1 text-xs rounded ${
-                    revize.stav === 'dokončeno' ? 'bg-emerald-50 text-emerald-600' :
-                    revize.stav === 'rozpracováno' ? 'bg-amber-50 text-amber-600' :
-                    'bg-slate-100 text-slate-600'
-                  }`}>
-                    {revize.stav === 'dokončeno' ? 'Dokončeno' :
-                     revize.stav === 'rozpracováno' ? 'Rozpracováno' : revize.stav}
-                  </span>
+                  {revize.nazev && (
+                    <p className="text-sm text-[var(--text-muted)] mt-1">{revize.nazev}</p>
+                  )}
                 </div>
-                {revize.nazev && (
-                  <p className="text-sm text-[var(--text-muted)] mt-1">{revize.nazev}</p>
-                )}
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </Modal>

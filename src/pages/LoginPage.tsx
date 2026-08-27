@@ -87,20 +87,20 @@ export default function LoginPage() {
         <h1 style={{ fontSize: 21, fontWeight: 700, color: '#f1f5f9', marginBottom: 4 }}>
           Přihlášení
         </h1>
-        <p style={{ fontSize: 13, color: '#475569' }}>
+        <p style={{ fontSize: 13, color: '#94A3B8' }}>
           Zadejte přihlašovací údaje
         </p>
       </div>
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#64748b', marginBottom: 6 }}>Uživatelské jméno</label>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#9CA3AF', marginBottom: 6 }}>Uživatelské jméno</label>
           <input type="text" name="username" value={formData.username} onChange={handleChange}
             required placeholder="jan.novak" autoComplete="username" style={getInputStyle('username')}
             onFocus={() => setFocusedField('username')} onBlur={() => setFocusedField(null)} />
         </div>
         <div style={{ marginBottom: 22 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#64748b', marginBottom: 6 }}>Heslo</label>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#9CA3AF', marginBottom: 6 }}>Heslo</label>
           <input type="password" name="password" value={formData.password} onChange={handleChange}
             required placeholder="••••••••" autoComplete="current-password" style={getInputStyle('password')}
             onFocus={() => setFocusedField('password')} onBlur={() => setFocusedField(null)} />
@@ -219,7 +219,7 @@ export default function LoginPage() {
               </div>
               <div>
                 <div style={{ fontSize: 20, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.4px' }}>JV Revize</div>
-                <div style={{ fontSize: 11, color: '#475569', marginTop: 1 }}>Správa elektro revizí</div>
+                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>Správa elektro revizí</div>
               </div>
             </div>
           </div>
@@ -230,7 +230,7 @@ export default function LoginPage() {
               Digitální správa<br />
               <span style={{ color: BLUE }}>revizních zpráv</span>
             </h2>
-            <p style={{ color: '#64748b', fontSize: 14, lineHeight: 1.7, marginBottom: 36 }}>
+            <p style={{ color: '#9CA3AF', fontSize: 14, lineHeight: 1.7, marginBottom: 36 }}>
               Komplexní systém pro revizní techniky. Plánujte, dokumentujte a archivujte revize na jednom místě.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

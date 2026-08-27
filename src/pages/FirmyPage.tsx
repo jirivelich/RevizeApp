@@ -102,7 +102,7 @@ export function FirmyPage() {
       {firmy.length === 0 ? (
         <Card>
           <div className="text-center py-12">
-            <h3 className="text-xs font-medium text-slate-700 mb-2">
+            <h3 className="text-xs font-medium text-[var(--text)] mb-2">
               Zatím nemáte žádné firmy
             </h3>
             <p className="text-xs text-[var(--text-secondary)] mb-4">
@@ -240,7 +240,7 @@ export function FirmyPage() {
           </div>
 
           {formError && (
-            <p className="text-xs font-medium text-[var(--danger)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+            <p className="text-xs font-medium text-[var(--danger-text)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
               {formError}
             </p>
           )}

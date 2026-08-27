@@ -216,7 +216,7 @@ export function ImportZFotografiiModal({
           </p>
 
           {error && (
-            <div className="px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg text-xs text-red-400">
+            <div className="px-3 py-2 bg-[var(--danger-bg)] border border-red-500/30 rounded-lg text-xs text-[var(--danger-text)]">
               {error}
             </div>
           )}
@@ -296,7 +296,7 @@ export function ImportZFotografiiModal({
       {step === 'review' && (
         <div className="p-4 space-y-3">
           {error && (
-            <div className="px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg text-xs text-red-400">
+            <div className="px-3 py-2 bg-[var(--danger-bg)] border border-red-500/30 rounded-lg text-xs text-[var(--danger-text)]">
               {error}
             </div>
           )}
@@ -422,7 +422,7 @@ export function ImportZFotografiiModal({
                             onChange={(e) =>
                               handleConflictAction(idx, e.target.value as 'add' | 'replace' | 'skip')
                             }
-                            className="w-full px-1 py-0.5 border border-yellow-500/50 rounded bg-yellow-500/10 text-yellow-400 text-[10px] focus:outline-none focus:ring-1 focus:ring-yellow-500/50"
+                            className="w-full px-1 py-0.5 border border-yellow-500/50 rounded bg-[var(--warning-bg)] text-[var(--warning-text)] text-[10px] focus:outline-none focus:ring-1 focus:ring-yellow-500/50"
                           >
                             <option value="replace">✏️ Nahradit</option>
                             <option value="add">➕ Přidat nový</option>
@@ -440,7 +440,7 @@ export function ImportZFotografiiModal({
           </div>
 
           {existingCisla.size > 0 && navrhyOkruhu.some((n) => existingCisla.has(n.cislo)) && (
-            <p className="text-[10px] text-yellow-400/80">
+            <p className="text-[10px] text-[var(--warning-text)] opacity-80">
               ✱ Žluté řádky označují kolizi s existujícím okruhem (stejné číslo).
             </p>
           )}

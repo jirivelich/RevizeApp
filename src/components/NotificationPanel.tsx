@@ -9,11 +9,11 @@ interface Props {
 function severityStyles(s: NotificationSeverity): { border: string; badge: string; icon: string } {
   switch (s) {
     case 'critical':
-      return { border: 'border-l-red-500/[0.7]', badge: 'bg-red-500/[0.12] text-red-400', icon: 'text-red-400' };
+      return { border: 'border-l-red-500/[0.7]', badge: 'bg-[var(--danger-bg)] text-[var(--danger-text)]', icon: 'text-[var(--danger-text)]' };
     case 'warning':
-      return { border: 'border-l-amber-500/[0.7]', badge: 'bg-amber-500/[0.12] text-amber-400', icon: 'text-amber-400' };
+      return { border: 'border-l-amber-500/[0.7]', badge: 'bg-[var(--warning-bg)] text-[var(--warning-text)]', icon: 'text-[var(--warning-text)]' };
     default:
-      return { border: 'border-l-blue-500/[0.7]', badge: 'bg-blue-500/[0.12] text-blue-400', icon: 'text-blue-400' };
+      return { border: 'border-l-blue-500/[0.7]', badge: 'bg-[var(--bg-accent-badge)] text-[var(--primary)]', icon: 'text-[var(--primary)]' };
   }
 }
 
@@ -84,7 +84,7 @@ export function NotificationPanel({ notifications, onClose }: Props) {
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded text-slate-600 hover:text-[var(--text-secondary)] transition-colors"
+          className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
           style={{ background: 'var(--bg-surface)' }}
           aria-label="Zavřít"
         >
@@ -97,7 +97,7 @@ export function NotificationPanel({ notifications, onClose }: Props) {
       {/* Obsah */}
       <div className="overflow-y-auto flex-1">
         {notifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 gap-2 text-slate-600">
+          <div className="flex flex-col items-center justify-center py-10 gap-2 text-[var(--text-muted)]">
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>

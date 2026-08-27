@@ -232,10 +232,10 @@ export function PristrojePage() {
                     </td>
                     <td className="py-2 px-3">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        isExpired(p.platnostKalibrace) 
-                          ? 'bg-red-500/[0.15] text-red-300'
+                        isExpired(p.platnostKalibrace)
+                          ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]'
                           : isExpiring(p.platnostKalibrace)
-                            ? 'bg-amber-500/[0.15] text-amber-300'
+                            ? 'bg-[var(--warning-bg)] text-[var(--warning-text)]'
                             : 'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
                       }`}>
                         {new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}
@@ -406,7 +406,7 @@ export function PristrojePage() {
           {/* Formulář nové kalibrace */}
           {isKalibraceModalOpen && (
             <div className="border border-blue-500/[0.20] bg-blue-500/[0.07] rounded-lg p-4 space-y-3">
-              <h4 className="text-sm font-semibold text-blue-300">Nový kalibraciční záznam</h4>
+              <h4 className="text-sm font-semibold text-[var(--primary)]">Nový kalibraciční záznam</h4>
               <div className="grid grid-cols-2 gap-3">
                 <Input
                   type="date"
@@ -488,7 +488,7 @@ export function PristrojePage() {
                       <tr key={k.id} className={`border-b border-[var(--border-subtle)] ${idx === 0 ? 'bg-emerald-500/[0.07]' : ''}`}>
                         <td className="py-2 px-3 font-medium text-[var(--text)]">
                           {new Date(k.datumKalibrace).toLocaleDateString('cs-CZ')}
-                          {idx === 0 && <span className="ml-1.5 text-[10px] px-1.5 py-0.5 bg-emerald-500/[0.15] text-emerald-300 rounded font-semibold">aktuální</span>}
+                          {idx === 0 && <span className="ml-1.5 text-[10px] px-1.5 py-0.5 bg-[var(--success-bg)] text-[var(--success-text)] rounded font-semibold">aktuální</span>}
                         </td>
                         <td className="py-2 px-3 text-[var(--text)]">{new Date(k.platnostKalibrace).toLocaleDateString('cs-CZ')}</td>
                         <td className="py-2 px-3 text-[var(--text-secondary)]">{k.provedl || '—'}</td>
@@ -497,7 +497,7 @@ export function PristrojePage() {
                         <td className="py-2 px-3 text-center">
                           <button
                             onClick={() => { if (k.id && historyPristroj?.id) deleteKalibrace.mutate({ id: k.id, pristrojId: historyPristroj.id }); }}
-                            className="text-red-400 hover:text-red-600 cursor-pointer text-xs"
+                            className="text-[var(--danger-text)] hover:opacity-75 cursor-pointer text-xs"
                             title="Smazat záznam"
                           >✕</button>
                         </td>

@@ -102,7 +102,7 @@ function DayPopover({ dateStr, allZakazky, onZakazkaClick, onAddClick, onMouseEn
             <div
               key={z.id}
               onClick={() => onZakazkaClick(z)}
-              className="px-2 py-1.5 rounded-lg cursor-pointer hover:bg-white/[0.08] transition-colors"
+              className="px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[var(--bg-hover)] transition-colors"
             >
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className={`shrink-0 px-1 py-0.5 rounded text-[9px] font-medium ${getPriorityColor(z.priorita)}`}>{z.priorita}</span>
@@ -122,7 +122,7 @@ function DayPopover({ dateStr, allZakazky, onZakazkaClick, onAddClick, onMouseEn
           <div
             key={`dl-${z.id}`}
             onClick={() => onZakazkaClick(z)}
-            className={`px-2 py-1.5 rounded-lg cursor-pointer hover:bg-white/[0.08] transition-colors flex items-start gap-1.5 ${isOverdue(dateStr) ? 'text-red-300' : 'text-amber-300'}`}
+            className={`px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[var(--bg-hover)] transition-colors flex items-start gap-1.5 ${isOverdue(dateStr) ? 'text-[var(--danger-text)]' : 'text-[var(--warning-text)]'}`}
           >
             <IconClipboard />
             <div className="min-w-0">
@@ -135,7 +135,7 @@ function DayPopover({ dateStr, allZakazky, onZakazkaClick, onAddClick, onMouseEn
           <div
             key={`ov-${z.id}`}
             onClick={() => onZakazkaClick(z)}
-            className="px-2 py-1.5 rounded-lg cursor-pointer hover:bg-white/[0.08] transition-colors flex items-start gap-1.5 text-blue-300"
+            className="px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[var(--bg-hover)] transition-colors flex items-start gap-1.5 text-[var(--primary)]"
           >
             <IconCheck />
             <div className="min-w-0">
@@ -313,7 +313,7 @@ export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }
               {deadlineZpravy.map((z) => (
                 <div
                   key={`dl-${z.id}`}
-                  className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 flex items-center ${isOverdue(dateStr) ? 'bg-red-500/20 text-red-300' : 'bg-amber-500/20 text-amber-300'}`}
+                  className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 flex items-center ${isOverdue(dateStr) ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]' : 'bg-[var(--warning-bg)] text-[var(--warning-text)]'}`}
                   title={`Zpráva: ${z.nazev} — ${z.klient}`}
                   onClick={(e) => { e.stopPropagation(); onZakazkaClick(z); }}
                 >
@@ -323,7 +323,7 @@ export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }
               {odevzdani.map((z) => (
                 <div
                   key={`ov-${z.id}`}
-                  className="text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 flex items-center bg-blue-500/20 text-blue-300"
+                  className="text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 flex items-center bg-[var(--bg-accent-badge)] text-[var(--primary)]"
                   title={`Odevzdání: ${z.nazev} — ${z.klient}`}
                   onClick={(e) => { e.stopPropagation(); onZakazkaClick(z); }}
                 >
@@ -358,7 +358,7 @@ export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }
           </h2>
           <button
             onClick={goToToday}
-            className="text-xs px-2 py-1 rounded bg-[var(--bg-accent-badge)] text-blue-300 hover:bg-blue-500/[0.25] transition-colors"
+            className="text-xs px-2 py-1 rounded bg-[var(--bg-accent-badge)] text-[var(--primary)] hover:bg-blue-500/[0.25] transition-colors"
             title="Dnešek (T)"
           >
             Dnes

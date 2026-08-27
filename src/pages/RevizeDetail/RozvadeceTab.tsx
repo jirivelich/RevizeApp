@@ -462,7 +462,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                       ? 'border-blue-500 bg-[var(--bg-accent)]'
                       : draggedRozvadec?.id === r.id
                         ? 'opacity-50 bg-[var(--bg-accent)] border-[var(--border)]'
-                        : 'border-[var(--border)] bg-[var(--bg-surface)] hover:border-white/[0.14]'
+                        : 'border-[var(--border)] bg-[var(--bg-surface)] hover:border-[var(--border-strong)]'
                   }`}
                   onClick={() => handleSelectRozvadec(r)}
                 >

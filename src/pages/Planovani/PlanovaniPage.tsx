@@ -261,18 +261,18 @@ export function PlanovaniPage() {
       </div>
       {gcMessage && (
         <div className={`text-sm px-4 py-2 rounded-lg ${
-          gcMessage.startsWith('✅') ? 'bg-green-500/[0.12] text-green-300' : 'bg-red-500/[0.12] text-red-400'
+          gcMessage.startsWith('✅') ? 'bg-[var(--success-bg)] text-[var(--success-text)]' : 'bg-[var(--danger-bg)] text-[var(--danger-text)]'
         }`}>
           {gcMessage}
         </div>
       )}
       {revizeError && (
-        <div className="text-sm px-4 py-2 rounded-lg bg-red-500/[0.12] text-red-400">
+        <div className="text-sm px-4 py-2 rounded-lg bg-[var(--danger-bg)] text-[var(--danger-text)]">
           {revizeError}
         </div>
       )}
       {mutationError && (
-        <div className="text-sm px-4 py-2 rounded-lg bg-red-500/[0.12] text-red-400">
+        <div className="text-sm px-4 py-2 rounded-lg bg-[var(--danger-bg)] text-[var(--danger-text)]">
           {mutationError}
         </div>
       )}

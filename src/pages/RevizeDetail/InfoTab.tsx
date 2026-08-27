@@ -205,9 +205,9 @@ export function InfoTab({
             <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded p-2">📋 Z nastavení: <strong>{nastaveni.firmaJmeno}</strong> | IČO: {nastaveni.firmaIco || '—'} | {nastaveni.firmaAdresa || '—'}</div>
           )}
           {selectedFirmaId === '' && (!nastaveni || (!nastaveni.firmaJmeno && !nastaveni.firmaIco)) && (
-            <p className="text-xs text-amber-600">⚠️ Nemáte výchozí firmu. <Link to="/nastaveni" className="underline font-medium">Nastavení</Link></p>
+            <p className="text-xs text-[var(--warning-text)]">⚠️ Nemáte výchozí firmu. <Link to="/nastaveni" className="underline font-medium">Nastavení</Link></p>
           )}
-          {firmy.length === 0 && <p className="text-xs text-amber-600">💡 Tip: Seznam firem → <Link to="/firmy" className="underline font-medium">Firmy</Link></p>}
+          {firmy.length === 0 && <p className="text-xs text-[var(--warning-text)]">💡 Tip: Seznam firem → <Link to="/firmy" className="underline font-medium">Firmy</Link></p>}
         </div>
       </div>
 

@@ -279,7 +279,7 @@ export function RevizePage() {
   if (error) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-600 text-sm font-medium mb-2">{error}</p>
+        <p className="text-[var(--danger-text)] text-sm font-medium mb-2">{error}</p>
         <Button variant="secondary" onClick={() => refetch()}>
           Zkusit znovu
         </Button>
@@ -374,8 +374,8 @@ export function RevizePage() {
                        r.kategorieRevize === 'stroje' ? 'Stroje' : r.kategorieRevize}
                     </span>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                      r.stav === 'dokončeno' ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' :
-                      r.stav === 'rozpracováno' ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300' :
+                      r.stav === 'dokončeno' ? 'bg-[var(--success-bg)] text-[var(--success-text)]' :
+                      r.stav === 'rozpracováno' ? 'bg-[var(--warning-bg)] text-[var(--warning-text)]' :
                       'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
                     }`}>{r.stav}</span>
                   </div>
@@ -427,7 +427,7 @@ export function RevizePage() {
                       {isOfflineId(r.id) ? (
                         <span className="text-xs text-[var(--text-muted)] font-medium flex items-center gap-1.5">
                           {r.cisloRevize}
-                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/20 text-amber-600 dark:text-amber-400">⏳ offline</span>
+                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-[var(--warning-bg)] text-[var(--warning-text)]">⏳ offline</span>
                         </span>
                       ) : (
                         <Link to={`/revize/${r.id}`} className="text-xs text-[var(--text)] group-hover:text-[var(--primary)] font-medium hover:underline transition-colors">
@@ -459,8 +459,8 @@ export function RevizePage() {
                     </td>
                     <td className="py-2 px-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        r.stav === 'dokončeno' ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' :
-                        r.stav === 'rozpracováno' ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300' :
+                        r.stav === 'dokončeno' ? 'bg-[var(--success-bg)] text-[var(--success-text)]' :
+                        r.stav === 'rozpracováno' ? 'bg-[var(--warning-bg)] text-[var(--warning-text)]' :
                         'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
                       }`}>
                         {r.stav}
@@ -498,7 +498,7 @@ export function RevizePage() {
                   {isOfflineId(r.id) ? (
                     <div className="flex-1 p-4">
                       <div className="flex items-center gap-1.5 mb-2">
-                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-600 dark:text-amber-400">⏳ Čeká na synchronizaci</span>
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--warning-bg)] text-[var(--warning-text)]">⏳ Čeká na synchronizaci</span>
                       </div>
                       <p className="font-semibold text-[var(--text)] text-sm leading-snug mb-1">{r.nazev}</p>
                       <p className="text-xs text-[var(--text-secondary)] mb-3">{r.adresa}</p>
@@ -517,8 +517,8 @@ export function RevizePage() {
                              r.kategorieRevize === 'hromosvod' ? 'Hromosvod' : 'Stroje'}
                           </span>
                           <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                            r.stav === 'dokončeno' ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' :
-                            r.stav === 'rozpracováno' ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300' :
+                            r.stav === 'dokončeno' ? 'bg-[var(--success-bg)] text-[var(--success-text)]' :
+                            r.stav === 'rozpracováno' ? 'bg-[var(--warning-bg)] text-[var(--warning-text)]' :
                             'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
                           }`}>{r.stav}</span>
                         </div>
@@ -668,7 +668,7 @@ export function RevizePage() {
                     <p className="font-semibold text-[var(--text)] group-hover:text-white">{kat.label}</p>
                     <p className="text-xs text-[var(--text-secondary)] mt-0.5">{kat.popis}</p>
                   </div>
-                  <div className="flex-shrink-0 ml-auto text-slate-600 group-hover:text-[var(--text)]">
+                  <div className="flex-shrink-0 ml-auto text-[var(--text-muted)] group-hover:text-[var(--text)]">
                     <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                     </svg>
@@ -780,7 +780,7 @@ export function RevizePage() {
       >
         {isLoadingHistorie ? (
           <div className="text-center py-8 text-[var(--text-muted)]">
-            <div className="animate-spin inline-block w-6 h-6 border-2 border-slate-300 border-t-blue-500 rounded-full mb-2"></div>
+            <div className="animate-spin inline-block w-6 h-6 border-2 border-[var(--border-medium)] border-t-[var(--primary)] rounded-full mb-2"></div>
             <p className="text-sm">Načítám historii…</p>
           </div>
         ) : historieData.length === 0 ? (
@@ -799,22 +799,22 @@ export function RevizePage() {
                   <div key={h.id} className={`flex items-start gap-3 pl-1 ${isCurrent ? 'opacity-100' : 'opacity-70'}`}>
                     <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center text-[10px] z-10 ${
                       isCurrent
-                        ? 'bg-blue-500 border-blue-600 text-white'
+                        ? 'bg-[var(--primary)] border-[var(--primary-hover)] text-white'
                         : h.stav === 'dokončeno' || h.stav === 'schváleno'
-                          ? 'bg-emerald-100 border-emerald-400 text-emerald-600'
+                          ? 'bg-[var(--success-bg)] border-emerald-400 text-[var(--success-text)]'
                           : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text-muted)]'
                     }`}>
                       {idx + 1}
                     </div>
-                    <div className={`flex-1 rounded border px-3 py-2 text-sm ${isCurrent ? 'bg-blue-50 border-blue-200' : 'bg-[var(--surface)] border-[var(--border-medium)]'}`}>
+                    <div className={`flex-1 rounded border px-3 py-2 text-sm ${isCurrent ? 'bg-[var(--bg-accent)] border-[var(--active-border)]' : 'bg-[var(--surface)] border-[var(--border-medium)]'}`}>
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-semibold text-[var(--text)]">
                           {h.cisloRevize}
-                          {isCurrent && <span className="ml-2 text-xs text-blue-600">(aktuální)</span>}
+                          {isCurrent && <span className="ml-2 text-xs text-[var(--primary)]">(aktuální)</span>}
                         </span>
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          h.stav === 'dokončeno' ? 'bg-emerald-50 text-emerald-600' :
-                          h.stav === 'rozpracováno' ? 'bg-amber-50 text-amber-600' :
+                          h.stav === 'dokončeno' ? 'bg-[var(--success-bg)] text-[var(--success-text)]' :
+                          h.stav === 'rozpracováno' ? 'bg-[var(--warning-bg)] text-[var(--warning-text)]' :
                           'bg-[var(--bg-surface)] text-[var(--text-secondary)]'
                         }`}>{h.stav}</span>
                       </div>
@@ -909,7 +909,7 @@ export function RevizePage() {
               <div className="border-t border-[var(--border-subtle)] mx-4 my-1" />
               <button
                 onClick={() => { const a = actionSheetRevize; setActionSheetRevize(null); handleDelete(a.id, a.cisloRevize); }}
-                className="w-full text-left px-4 py-3.5 text-sm text-red-600 active:bg-red-50 flex items-center gap-3"
+                className="w-full text-left px-4 py-3.5 text-sm text-[var(--danger-text)] active:bg-[var(--danger-bg)] flex items-center gap-3"
               >
                 <span className="text-base">🗑️</span> Smazat
               </button>
@@ -954,8 +954,8 @@ export function RevizePage() {
                 onClick={() => setDuplikatTyp('navazujici')}
                 className={`p-3 rounded-lg border-2 text-left transition-all ${
                   duplikatTyp === 'navazujici'
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-slate-200 hover:border-slate-400'
+                    ? 'border-[var(--primary)] bg-[var(--bg-accent-badge)]'
+                    : 'border-[var(--border-medium)] hover:border-[var(--border-strong)]'
                 }`}
               >
                 <p className="font-semibold text-sm">🔗 Navazující revize</p>
@@ -966,8 +966,8 @@ export function RevizePage() {
                 onClick={() => setDuplikatTyp('duplikat')}
                 className={`p-3 rounded-lg border-2 text-left transition-all ${
                   duplikatTyp === 'duplikat'
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-slate-200 hover:border-slate-400'
+                    ? 'border-[var(--primary)] bg-[var(--bg-accent-badge)]'
+                    : 'border-[var(--border-medium)] hover:border-[var(--border-strong)]'
                 }`}
               >
                 <p className="font-semibold text-sm">📋 Nezávislý duplikát</p>
@@ -984,7 +984,7 @@ export function RevizePage() {
           />
 
           {duplikatError && (
-            <p className="text-xs font-medium text-[var(--danger)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+            <p className="text-xs font-medium text-[var(--danger-text)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
               {duplikatError}
             </p>
           )}
@@ -1044,7 +1044,7 @@ export function RevizePage() {
           <div className="border-t border-[var(--border)] my-1" />
           <button
             onClick={() => { setOpenMenuId(null); handleDelete(openRevize.id!, openRevize.cisloRevize); }}
-            className="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/[0.08] flex items-center gap-2"
+            className="w-full text-left px-3 py-1.5 text-xs text-[var(--danger-text)] hover:bg-[var(--danger-bg)] flex items-center gap-2"
           >
             <span>🗑️</span> Smazat
           </button>

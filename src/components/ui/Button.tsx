@@ -10,9 +10,9 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const variantClasses = {
   primary: 'bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white shadow-[0_2px_10px_rgba(43,136,255,0.30)] hover:shadow-[0_4px_16px_rgba(43,136,255,0.45)]',
   secondary: 'bg-[var(--bg-surface)] hover:bg-[var(--bg-hover-strong)] text-[var(--text)] border border-[var(--border-medium)] hover:border-[var(--border-strong)]',
-  success: 'bg-emerald-500/[0.15] hover:bg-emerald-500/[0.22] text-emerald-400 border border-emerald-500/[0.25] hover:shadow-[0_2px_10px_rgba(34,197,94,0.20)]',
-  danger: 'bg-red-500/[0.12] hover:bg-red-500/[0.20] text-red-400 border border-red-500/[0.25] hover:shadow-[0_2px_10px_rgba(248,113,113,0.20)]',
-  warning: 'bg-amber-500/[0.12] hover:bg-amber-500/[0.20] text-amber-400 border border-amber-500/[0.25] hover:shadow-[0_2px_10px_rgba(245,158,11,0.20)]',
+  success: 'bg-[var(--success-bg)] hover:bg-emerald-500/[0.22] text-[var(--success-text)] border border-emerald-500/[0.25] hover:shadow-[0_2px_10px_rgba(34,197,94,0.20)]',
+  danger: 'bg-[var(--danger-bg)] hover:bg-red-500/[0.20] text-[var(--danger-text)] border border-red-500/[0.25] hover:shadow-[0_2px_10px_rgba(248,113,113,0.20)]',
+  warning: 'bg-[var(--warning-bg)] hover:bg-amber-500/[0.20] text-[var(--warning-text)] border border-amber-500/[0.25] hover:shadow-[0_2px_10px_rgba(245,158,11,0.20)]',
 };
 
 const sizeClasses = {

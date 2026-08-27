@@ -333,13 +333,13 @@ export function RevizeDetailPage() {
                 </span>
               )}
               {displayStatus === 'saved' && (
-                <span className="text-emerald-400">✓ Uloženo</span>
+                <span className="text-[var(--success-text)]">✓ Uloženo</span>
               )}
               {displayStatus === 'unsaved' && (
-                <span className="text-amber-400">Neuložené změny</span>
+                <span className="text-[var(--warning-text)]">Neuložené změny</span>
               )}
               {displayStatus === 'error' && (
-                <span className="text-red-400">Chyba ukládání</span>
+                <span className="text-[var(--danger-text)]">Chyba ukládání</span>
               )}
             </div>
             <button onClick={handleSave} className="px-4 py-1 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-sm font-medium rounded transition-colors cursor-pointer">Uložit</button>

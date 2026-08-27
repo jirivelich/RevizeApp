@@ -110,7 +110,7 @@ export function MistnostiPage() {
                     </button>
                     <button
                       onClick={() => handleDelete(m)}
-                      className="text-xs text-[var(--text-secondary)] hover:text-red-400"
+                      className="text-xs text-[var(--text-secondary)] hover:text-[var(--danger-text)]"
                     >
                       ×
                     </button>

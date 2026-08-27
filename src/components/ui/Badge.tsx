@@ -9,18 +9,18 @@ interface BadgeProps {
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  success: 'bg-emerald-500/[0.15] text-emerald-400',
-  warning: 'bg-amber-500/[0.15] text-amber-400',
-  danger: 'bg-red-500/[0.15] text-red-400',
-  info: 'bg-[var(--bg-accent-badge)] text-blue-400',
+  success: 'bg-[var(--success-bg)] text-[var(--success-text)]',
+  warning: 'bg-[var(--warning-bg)] text-[var(--warning-text)]',
+  danger: 'bg-[var(--danger-bg)] text-[var(--danger-text)]',
+  info: 'bg-[var(--bg-accent-badge)] text-[var(--primary)]',
   neutral: 'bg-[var(--bg-hover)] text-[var(--text-secondary)]',
 };
 
 const dotClasses: Record<BadgeVariant, string> = {
-  success: 'bg-emerald-400',
-  warning: 'bg-amber-400',
-  danger: 'bg-red-400',
-  info: 'bg-blue-400',
+  success: 'bg-[var(--success-text)]',
+  warning: 'bg-[var(--warning-text)]',
+  danger: 'bg-[var(--danger-text)]',
+  info: 'bg-[var(--primary)]',
   neutral: 'bg-[var(--text-muted)]',
 };
 

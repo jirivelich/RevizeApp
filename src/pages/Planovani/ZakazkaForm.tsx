@@ -146,7 +146,7 @@ export function ZakazkaForm({
               />
             </div>
             {deadlineZpravy && (
-              <div className="mb-2 text-xs text-amber-600 font-medium whitespace-nowrap">
+              <div className="mb-2 text-xs text-[var(--warning-text)] font-medium whitespace-nowrap">
                 → do {new Date(deadlineZpravy).toLocaleDateString('cs-CZ')}
               </div>
             )}
@@ -173,7 +173,7 @@ export function ZakazkaForm({
         <Input label="Poznámka" value={formData.poznamka} onChange={(e) => setFormData((prev) => ({ ...prev, poznamka: e.target.value }))} />
 
         {formError && (
-          <p className="text-xs font-medium text-[var(--danger)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+          <p className="text-xs font-medium text-[var(--danger-text)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
             {formError}
           </p>
         )}
