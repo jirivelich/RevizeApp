@@ -59,11 +59,11 @@ export function useNotifications() {
           type: 'zakazka_upcoming',
           severity: severity(minDays),
           title: z.nazev,
-          description: minDays < 0
+          description: (minDays < 0
             ? `Zakázka měla proběhnout ${label}`
             : minDays === 0
               ? 'Zakázka je naplánovaná na dnes'
-              : `Zakázka naplánovaná na ${label}`,
+              : `Zakázka naplánovaná na ${label}`) + (z.adresa ? ` — ${z.adresa}` : ''),
           daysUntil: minDays,
           link: '/planovani',
         });
@@ -83,7 +83,7 @@ export function useNotifications() {
           type: 'revize_overdue',
           severity: sev,
           title: r.nazev || `Revize č. ${r.cisloRevize || r.id}`,
-          description: `Rozpracovaná revize ze dne ${label} (${age} dní)`,
+          description: `Rozpracovaná revize ze dne ${label} (${age} dní)` + (r.adresa ? ` — ${r.adresa}` : ''),
           daysUntil: -age,
           link: `/revize/${r.id}`,
         });
@@ -197,9 +197,9 @@ export function useNotifications() {
           type: 'revize_platnost_expiry',
           severity: severity(days),
           title: r.nazev || `Revize č. ${r.cisloRevize || r.id}`,
-          description: days < 0
+          description: (days < 0
             ? `Platnost revize vypršela ${label}`
-            : `Platnost revize vyprší ${label}`,
+            : `Platnost revize vyprší ${label}`) + (r.adresa ? ` — ${r.adresa}` : ''),
           daysUntil: days,
           link: `/revize/${r.id}`,
         });
