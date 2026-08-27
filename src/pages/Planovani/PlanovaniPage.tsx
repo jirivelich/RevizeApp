@@ -71,6 +71,12 @@ export function PlanovaniPage() {
   const [gcMessage, setGcMessage] = useState<string | null>(null);
   const [revizeError, setRevizeError] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+
+  const onMutationError = (err: any) => {
+    setMutationError(err?.message || 'Operace se nezdařila. Zkuste to prosím znovu.');
+    setTimeout(() => setMutationError(null), 5000);
+  };
 
   const handleGcSync = async () => {
     setGcSyncing(true);
@@ -114,9 +120,9 @@ export function PlanovaniPage() {
           ...data,
           datumDokonceni: data.stav === 'dokončeno' ? new Date().toISOString().split('T')[0] : undefined,
         },
-      }, { onSuccess });
+      }, { onSuccess, onError: onMutationError });
     } else {
-      createZakazka.mutate(data, { onSuccess });
+      createZakazka.mutate(data, { onSuccess, onError: onMutationError });
     }
   };
 
@@ -134,7 +140,7 @@ export function PlanovaniPage() {
         stav,
         datumDokonceni: stav === 'dokončeno' ? new Date().toISOString().split('T')[0] : undefined,
       },
-    });
+    }, { onError: onMutationError });
   };
 
   // === Create Revize from Zakazka ===
@@ -184,7 +190,7 @@ export function PlanovaniPage() {
         datumPlanovany: newDate,
         casPlanovany: newCas,
       },
-    });
+    }, { onError: onMutationError });
   };
 
   // === Delete ===
@@ -192,7 +198,7 @@ export function PlanovaniPage() {
 
   const handleConfirmDelete = () => {
     if (deleteTargetId === null) return;
-    deleteZakazka.mutate(deleteTargetId);
+    deleteZakazka.mutate(deleteTargetId, { onError: onMutationError });
     setDeleteTargetId(null);
   };
 
@@ -263,6 +269,11 @@ export function PlanovaniPage() {
       {revizeError && (
         <div className="text-sm px-4 py-2 rounded-lg bg-red-500/[0.12] text-red-400">
           {revizeError}
+        </div>
+      )}
+      {mutationError && (
+        <div className="text-sm px-4 py-2 rounded-lg bg-red-500/[0.12] text-red-400">
+          {mutationError}
         </div>
       )}
 

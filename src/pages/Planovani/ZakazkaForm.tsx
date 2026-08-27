@@ -1,4 +1,5 @@
-﻿import { Input, Select, Modal, Button } from '../../components/ui';
+﻿import { useState } from 'react';
+import { Input, Select, Modal, Button } from '../../components/ui';
 import type { Revize } from '../../types';
 import type { ZakazkaFormData } from './utils';
 import { PRIORITA_OPTIONS, STAV_OPTIONS, addDays } from './utils';
@@ -22,8 +23,27 @@ export function ZakazkaForm({
   revize,
   isEditing,
 }: ZakazkaFormProps) {
+  const [formError, setFormError] = useState<string | null>(null);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.nazev.trim()) {
+      setFormError('Zadejte název zakázky');
+      return;
+    }
+    if (!formData.klient.trim()) {
+      setFormError('Zadejte klienta');
+      return;
+    }
+    if (!formData.adresa.trim()) {
+      setFormError('Zadejte adresu');
+      return;
+    }
+    if (!formData.datumPlanovany) {
+      setFormError('Zadejte 1. den realizace');
+      return;
+    }
+    setFormError(null);
     onSubmit(formData);
   };
 
@@ -151,6 +171,12 @@ export function ZakazkaForm({
           ]}
         />
         <Input label="Poznámka" value={formData.poznamka} onChange={(e) => setFormData((prev) => ({ ...prev, poznamka: e.target.value }))} />
+
+        {formError && (
+          <p className="text-xs font-medium text-[var(--danger)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+            {formError}
+          </p>
+        )}
       </form>
     </Modal>
   );

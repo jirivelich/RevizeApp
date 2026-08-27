@@ -156,7 +156,9 @@ interface WeekViewProps {
   onMove: (zakazkaId: number, newDate: string, newCas: string) => void;
 }
 
-export function WeekView({ zakazky, onZakazkaClick, onSlotClick, onMove }: WeekViewProps) {
+export function WeekView({ zakazky: allZakazky, onZakazkaClick, onSlotClick, onMove }: WeekViewProps) {
+  // Zrušené zakázky se v týdenním pohledu nezobrazují — termín už neplatí.
+  const zakazky = useMemo(() => allZakazky.filter((z) => z.stav !== 'zrušeno'), [allZakazky]);
   const today = new Date();
   const [weekStart, setWeekStart] = useState(() => getMonday(today));
   const [activeDrag, setActiveDrag] = useState<Zakazka | null>(null);

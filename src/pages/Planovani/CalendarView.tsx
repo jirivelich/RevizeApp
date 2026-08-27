@@ -150,7 +150,9 @@ function DayPopover({ dateStr, allZakazky, onZakazkaClick, onAddClick, onMouseEn
   );
 }
 
-export function CalendarView({ zakazky, onDayClick, onZakazkaClick }: CalendarViewProps) {
+export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }: CalendarViewProps) {
+  // Zrušené zakázky se v kalendáři nezobrazují — termín už neplatí.
+  const zakazky = useMemo(() => allZakazky.filter((z) => z.stav !== 'zrušeno'), [allZakazky]);
   const today = new Date();
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
