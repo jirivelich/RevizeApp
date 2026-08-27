@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import { pool, initializeDatabase } from './database';
 import { authMiddleware, loginUser, registerUser, logoutSession, changePassword, AuthRequest } from './auth';
 import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion, analyzeRozvadecPhotos } from './ai';
+import { getAuthUrl, exchangeCodeAndSave, deleteTokens, getTokens, saveTokens, listCalendars, syncZakazkyToCalendar } from './googleCalendar';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -1742,12 +1743,146 @@ async function startServer() {
     }
   });
 
+  // ==================== GOOGLE CALENDAR ====================
+
+  // Zahájit OAuth flow – vrátí URL pro přesměrování
+  app.get('/api/google/auth', authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      // State obsahuje userId (base64) pro callback
+      const state = Buffer.from(String(userId)).toString('base64');
+      const url = getAuthUrl(state);
+      res.json({ url });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // OAuth callback – Google přesměruje sem po přihlášení
+  app.get('/api/google/callback', async (req, res) => {
+    const { code, state, error } = req.query as Record<string, string>;
+
+    const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+    if (error) {
+      return res.redirect(`${frontendBase}/nastaveni?googleCalendar=error&reason=${encodeURIComponent(error)}`);
+    }
+
+    if (!code || !state) {
+      return res.redirect(`${frontendBase}/nastaveni?googleCalendar=error&reason=missing_params`);
+    }
+
+    try {
+      const userId = Number(Buffer.from(state, 'base64').toString('utf8'));
+      if (!userId || isNaN(userId)) throw new Error('Neplatný state parametr');
+      await exchangeCodeAndSave(code, userId);
+      return res.redirect(`${frontendBase}/nastaveni?googleCalendar=success`);
+    } catch (err: any) {
+      console.error('Google OAuth callback chyba:', err);
+      return res.redirect(`${frontendBase}/nastaveni?googleCalendar=error&reason=${encodeURIComponent(err.message)}`);
+    }
+  });
+
+  // Stav propojení – je uživatel propojen?
+  app.get('/api/google/status', authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const tokens = await getTokens(req.user!.id);
+      if (!tokens) {
+        return res.json({ connected: false, calendarId: null });
+      }
+      // Načíst uložený calendarId
+      const row = await pool.query(
+        'SELECT calendar_id FROM google_oauth_tokens WHERE user_id = $1',
+        [req.user!.id]
+      );
+      const calendarId = row.rows[0]?.calendar_id ?? 'primary';
+      res.json({ connected: true, calendarId });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Odpojit Google Calendar
+  app.delete('/api/google/disconnect', authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      await deleteTokens(req.user!.id);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Získat seznam kalendářů uživatele
+  app.get('/api/google/calendars', authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const calendars = await listCalendars(req.user!.id);
+      res.json({ calendars });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Uložit vybraný kalendář
+  app.post('/api/google/calendar', authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const { calendarId } = req.body;
+      if (!calendarId) return res.status(400).json({ error: 'calendarId je povinný' });
+      await pool.query(
+        'UPDATE google_oauth_tokens SET calendar_id = $1 WHERE user_id = $2',
+        [calendarId, req.user!.id]
+      );
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Synchronizovat zakázky do Google Calendar
+  app.post('/api/google/sync', authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const userId = req.user!.id;
+
+      // Načíst vybraný kalendář pro tohoto uživatele
+      const tokenRow = await pool.query(
+        'SELECT calendar_id FROM google_oauth_tokens WHERE user_id = $1',
+        [userId]
+      );
+      if (tokenRow.rows.length === 0) {
+        return res.status(400).json({ error: 'Google Calendar není propojen' });
+      }
+      const calendarId = tokenRow.rows[0].calendar_id || 'primary';
+
+      // Načíst všechny zakázky z DB
+      const zakazkyResult = await pool.query(`
+        SELECT id, nazev, klient, adresa, "datumPlanovany", "casPlanovany",
+               "datumDokonceni", "datumyRealizace", "datumOdevzdaniZpravy",
+               stav, priorita, poznamka
+        FROM zakazka
+        WHERE stav != 'zrušeno'
+        ORDER BY "datumPlanovany" DESC
+      `);
+
+      const zakazky = zakazkyResult.rows.map((r: any) => ({
+        ...r,
+        datumyRealizace: r.datumyRealizace
+          ? (typeof r.datumyRealizace === 'string' ? JSON.parse(r.datumyRealizace) : r.datumyRealizace)
+          : [],
+      }));
+
+      const result = await syncZakazkyToCalendar(userId, calendarId, zakazky);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      console.error('Google Calendar sync chyba:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // ==================== SPA FALLBACK ====================
   app.get('*', (req, res) => {
     if (req.path.startsWith('/api/')) {
       return res.status(404).json({ error: 'API endpoint nenalezen' });
     }
-    
+
     const possiblePaths = [
       path.join(__dirname, '..', 'dist', 'index.html'),
       path.join(process.cwd(), 'dist', 'index.html'),

@@ -9,6 +9,7 @@ import { ListView } from './ListView';
 import { CalendarView } from './CalendarView';
 import { WeekView } from './WeekView';
 import { ZakazkaForm } from './ZakazkaForm';
+import { googleCalendarService } from '../../services/googleCalendar';
 
 // Definice kategorií - sdílená s RevizePage
 const KATEGORIE_REVIZE: { value: KategorieRevize; label: string; popis: string; icon: React.ReactNode }[] = [
@@ -64,6 +65,23 @@ export function PlanovaniPage() {
   const [kategoriePickerOpen, setKategoriePickerOpen] = useState(false);
   const [pendingZakazka, setPendingZakazka] = useState<Zakazka | null>(null);
   const navigate = useNavigate();
+
+  // === Google Calendar sync ===
+  const [gcSyncing, setGcSyncing] = useState(false);
+  const [gcMessage, setGcMessage] = useState<string | null>(null);
+
+  const handleGcSync = async () => {
+    setGcSyncing(true);
+    setGcMessage(null);
+    try {
+      const result = await googleCalendarService.sync();
+      setGcMessage(`✅ Synchronizováno: ${result.created} nových, ${result.updated} aktualizováno.`);
+    } catch (err: any) {
+      setGcMessage(`❌ ${err.message}`);
+    }
+    setGcSyncing(false);
+    setTimeout(() => setGcMessage(null), 5000);
+  };
 
   // === Create / Edit ===
   const openCreate = (defaultDate?: string) => {
@@ -215,8 +233,27 @@ export function PlanovaniPage() {
 
           </div>
           <Button onClick={() => openCreate()}>+ Nová zakázka</Button>
+          <Button
+            variant="secondary"
+            onClick={handleGcSync}
+            disabled={gcSyncing}
+            title="Synchronizovat zakázky do Google Kalendáře"
+          >
+            <svg className="w-4 h-4 mr-1.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M23 4v6h-6M1 20v-6h6"/>
+              <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+            </svg>
+            {gcSyncing ? 'Sync...' : 'Google Kal.'}
+          </Button>
         </div>
       </div>
+      {gcMessage && (
+        <div className={`text-sm px-4 py-2 rounded-lg ${
+          gcMessage.startsWith('✅') ? 'bg-green-500/[0.12] text-green-300' : 'bg-red-500/[0.12] text-red-400'
+        }`}>
+          {gcMessage}
+        </div>
+      )}
 
       {/* Content */}
       {viewMode === 'week' ? (

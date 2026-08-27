@@ -347,6 +347,17 @@ export async function initializeDatabase() {
       )
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS google_oauth_tokens (
+        user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        access_token TEXT NOT NULL,
+        refresh_token TEXT,
+        expiry_date BIGINT,
+        calendar_id TEXT DEFAULT 'primary',
+        updated_at TEXT NOT NULL
+      )
+    `);
+
     // Vytvořit indexy (ignorovat chyby pokud existují)
     const indexes = [
       'CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)',
@@ -507,6 +518,16 @@ export async function initializeDatabase() {
       'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "chrCasOdpojeni2x" REAL',
       'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "chrZkouskaVypnuti2x" BOOLEAN',
       'ALTER TABLE okruh ADD COLUMN IF NOT EXISTS "chrSelektivita" BOOLEAN',
+      // Google Calendar integrace – uložení vybraného kalendáře
+      `CREATE TABLE IF NOT EXISTS google_oauth_tokens (
+        user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        access_token TEXT NOT NULL,
+        refresh_token TEXT,
+        expiry_date BIGINT,
+        calendar_id TEXT DEFAULT 'primary',
+        updated_at TEXT NOT NULL
+      )`,
+      'ALTER TABLE google_oauth_tokens ADD COLUMN IF NOT EXISTS calendar_id TEXT DEFAULT \'primary\'',
     ];
     
     for (const migration of migrations) {

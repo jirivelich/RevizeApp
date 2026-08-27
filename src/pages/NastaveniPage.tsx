@@ -1,5 +1,7 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { googleCalendarService, type GoogleCalendarStatus, type GoogleCalendarItem } from '../services/googleCalendar';
 import { Button, Card, Input } from '../components/ui';
 import { backupService } from '../services/database';
 import { useNastaveni, useSaveNastaveni, usePredvoleneTexty, useCreatePredvolenyText, useUpdatePredvolenyText, useDeletePredvolenyText, useDatabaseStats, useTechnikHistorie, useAddTechnikHistorie, useDeleteTechnikHistorie } from '../hooks/useQueries';
@@ -85,7 +87,8 @@ export function NastaveniPage() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
-  const [activeTab, setActiveTab] = useState<'obecne' | 'technik' | 'texty' | 'zalohy' | 'notifikace'>('obecne');
+  const [activeTab, setActiveTab] = useState<'obecne' | 'technik' | 'texty' | 'zalohy' | 'notifikace' | 'integrace'>('obecne');
+  const [searchParams, setSearchParams] = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Backup state
@@ -103,6 +106,13 @@ export function NastaveniPage() {
   const [newText, setNewText] = useState<{ pole: string; nazev: string; text: string } | null>(null);
   const [selectedKategorie, setSelectedKategorie] = useState<string>(POLE_KATEGORIE[0].key);
 
+  // Google Calendar – stav
+  const [gcStatus, setGcStatus] = useState<GoogleCalendarStatus | null>(null);
+  const [gcCalendars, setGcCalendars] = useState<GoogleCalendarItem[]>([]);
+  const [gcLoading, setGcLoading] = useState(false);
+  const [gcMessage, setGcMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [gcSyncing, setGcSyncing] = useState(false);
+
   // Doklady technika – UI state
   const [showNewDoklad, setShowNewDoklad] = useState(false);
   const [newDoklad, setNewDoklad] = useState<Omit<TechnikHistorie, 'id' | 'createdAt'>>(emptyDoklad);
@@ -111,6 +121,91 @@ export function NastaveniPage() {
   useEffect(() => {
     if (nastaveniData) setNastaveni(nastaveniData);
   }, [nastaveniData]);
+
+  // Zpracovat callback z Google OAuth (query param ?googleCalendar=success|error)
+  useEffect(() => {
+    const gcParam = searchParams.get('googleCalendar');
+    if (gcParam) {
+      setActiveTab('integrace');
+      if (gcParam === 'success') {
+        setGcMessage({ type: 'success', text: 'Google Calendar byl úspěšně propojen!' });
+      } else {
+        const reason = searchParams.get('reason') || 'Neznámá chyba';
+        setGcMessage({ type: 'error', text: `Propojení selhalo: ${reason}` });
+      }
+      // Odebrat query param z URL
+      setSearchParams({}, { replace: true });
+    }
+  }, []);
+
+  // Načíst stav Google Calendar při přepnutí na záložku
+  const loadGcStatus = useCallback(async () => {
+    try {
+      const status = await googleCalendarService.getStatus();
+      setGcStatus(status);
+      if (status.connected) {
+        const cals = await googleCalendarService.listCalendars();
+        setGcCalendars(cals);
+      }
+    } catch (err) {
+      // Ignorovat – např. chybí konfigurace na serveru
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'integrace') loadGcStatus();
+  }, [activeTab, loadGcStatus]);
+
+  const handleGcConnect = async () => {
+    setGcLoading(true);
+    setGcMessage(null);
+    try {
+      const url = await googleCalendarService.getAuthUrl();
+      window.location.href = url;
+    } catch (err: any) {
+      setGcMessage({ type: 'error', text: err.message || 'Nepodařilo se získat přihlašovací URL' });
+      setGcLoading(false);
+    }
+  };
+
+  const handleGcDisconnect = async () => {
+    if (!window.confirm('Opravdu chcete odpojit Google Calendar?')) return;
+    setGcLoading(true);
+    try {
+      await googleCalendarService.disconnect();
+      setGcStatus({ connected: false, calendarId: null });
+      setGcCalendars([]);
+      setGcMessage({ type: 'success', text: 'Google Calendar byl odpojen.' });
+    } catch (err: any) {
+      setGcMessage({ type: 'error', text: err.message });
+    }
+    setGcLoading(false);
+  };
+
+  const handleGcSelectCalendar = async (calendarId: string) => {
+    try {
+      await googleCalendarService.saveCalendar(calendarId);
+      setGcStatus((prev) => prev ? { ...prev, calendarId } : prev);
+      setGcMessage({ type: 'success', text: 'Kalendář byl uložen.' });
+    } catch (err: any) {
+      setGcMessage({ type: 'error', text: err.message });
+    }
+  };
+
+  const handleGcSync = async () => {
+    setGcSyncing(true);
+    setGcMessage(null);
+    try {
+      const result = await googleCalendarService.sync();
+      setGcMessage({
+        type: 'success',
+        text: `Synchronizace dokončena: ${result.created} nových, ${result.updated} aktualizováno${result.errors > 0 ? `, ${result.errors} chyb` : ''}.`,
+      });
+    } catch (err: any) {
+      setGcMessage({ type: 'error', text: err.message });
+    }
+    setGcSyncing(false);
+  };
 
   const handleSaveText = async (item: { id?: number; pole: string; nazev: string; text: string }) => {
     try {
@@ -335,6 +430,16 @@ export function NastaveniPage() {
           }`}
         >
           Notifikace
+        </button>
+        <button
+          onClick={() => setActiveTab('integrace')}
+          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors cursor-pointer ${
+            activeTab === 'integrace'
+              ? 'bg-[var(--bg-hover)] text-[var(--text)] border border-[var(--border-strong)] border-b-transparent -mb-px'
+              : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-input)]'
+          }`}
+        >
+          Integrace
         </button>
       </div>
 
@@ -811,6 +916,107 @@ export function NastaveniPage() {
               <li className="flex gap-2"><span className="text-red-500 mt-0.5">•</span><span><strong>Kalibrace přístrojů</strong> — upozorní, když se blíží konec platnosti kalibrace měřicího přístroje.</span></li>
               <li className="flex gap-2"><span className="text-red-500 mt-0.5">•</span><span><strong>Expirace dokladů technika</strong> — upozorní na končec platnosti oprávnění či osvědčení revizního technika (nastaveného v záložce Revizní technik).</span></li>              <li className="flex gap-2"><span className="text-red-500 mt-0.5">•</span><span><strong>Expirace platnosti revize</strong> — upozorní, když se blíží datum, do kterého musí být provedena nová revize (pole "Platnost do" na dokončené revizi).</span></li>            </ul>
             <p className="text-xs text-[var(--text-secondary)] mt-3">Upozornění jsou barevně rozlišena: červená = po termínu, jantárová = do 3 dní, modrá = před termínem. Zobrazuju se v reálném čase ve zvončku v bočním panelu.</p>
+          </Card>
+        </div>
+      )}
+
+      {/* ══════ TAB: INTEGRACE ══════ */}
+      {activeTab === 'integrace' && (
+        <div className="space-y-4">
+          {gcMessage && (
+            <div className={`p-4 rounded-lg text-sm ${
+              gcMessage.type === 'success'
+                ? 'bg-green-500/[0.12] text-green-300'
+                : 'bg-red-500/[0.12] text-red-400'
+            }`}>
+              {gcMessage.text}
+            </div>
+          )}
+
+          <Card title="Google Calendar">
+            <div className="space-y-4">
+              {/* Stav propojení */}
+              <div className="flex items-center gap-3">
+                <div className={`w-2.5 h-2.5 rounded-full ${gcStatus?.connected ? 'bg-green-400' : 'bg-[var(--text-muted)]'}`} />
+                <span className="text-sm text-[var(--text-secondary)]">
+                  {gcStatus === null
+                    ? 'Načítám stav...'
+                    : gcStatus.connected
+                      ? 'Propojeno s Google účtem'
+                      : 'Nepropojeno'}
+                </span>
+              </div>
+
+              {!gcStatus?.connected ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-[var(--text-secondary)]">
+                    Propojte aplikaci s Googlem a zakázky z plánování se automaticky synchronizují do vámi zvoleného Google Kalendáře.
+                  </p>
+                  <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg p-3 text-xs text-[var(--text-secondary)] space-y-1">
+                    <p className="font-medium text-[var(--text)]">Vyžaduje nastavení na serveru:</p>
+                    <p><code className="bg-[var(--bg-input)] px-1 rounded">GOOGLE_CLIENT_ID</code> a <code className="bg-[var(--bg-input)] px-1 rounded">GOOGLE_CLIENT_SECRET</code> z Google Cloud Console</p>
+                    <p><code className="bg-[var(--bg-input)] px-1 rounded">GOOGLE_REDIRECT_URI</code> = <code className="bg-[var(--bg-input)] px-1 rounded">{window.location.origin}/api/google/callback</code></p>
+                  </div>
+                  <Button onClick={handleGcConnect} disabled={gcLoading}>
+                    <svg className="w-4 h-4 mr-2 inline" viewBox="0 0 24 24" fill="none">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    {gcLoading ? 'Přesměrovávám...' : 'Přihlásit se přes Google'}
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Výběr kalendáře */}
+                  <div>
+                    <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
+                      Cílový kalendář
+                    </label>
+                    {gcCalendars.length === 0 ? (
+                      <p className="text-sm text-[var(--text-muted)]">Načítám kalendáře...</p>
+                    ) : (
+                      <select
+                        value={gcStatus.calendarId ?? 'primary'}
+                        onChange={(e) => handleGcSelectCalendar(e.target.value)}
+                        className="w-full bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]"
+                      >
+                        {gcCalendars.map((c) => (
+                          <option key={c.id} value={c.id}>{c.summary}</option>
+                        ))}
+                      </select>
+                    )}
+                    <p className="text-[11px] text-[var(--text-secondary)] mt-1">
+                      Vyberte kalendář, do kterého se budou synchronizovat zakázky (např. „Revize").
+                    </p>
+                  </div>
+
+                  {/* Tlačítka */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Button onClick={handleGcSync} disabled={gcSyncing}>
+                      <svg className="w-4 h-4 mr-2 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 4v6h-6M1 20v-6h6"/>
+                        <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                      </svg>
+                      {gcSyncing ? 'Synchronizuji...' : 'Synchronizovat zakázky'}
+                    </Button>
+                    <Button variant="secondary" onClick={handleGcDisconnect} disabled={gcLoading}>
+                      Odpojit Google Calendar
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          <Card title="Jak synchronizace funguje">
+            <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
+              <li className="flex gap-2"><span className="text-blue-500 mt-0.5">•</span><span>Každá zakázka ve stavu <em>Plánováno</em> nebo <em>V realizaci</em> se přenese jako událost do zvoleného Google Kalendáře.</span></li>
+              <li className="flex gap-2"><span className="text-blue-500 mt-0.5">•</span><span>Při opakované synchronizaci se existující události aktualizují, nové se vytvoří — nic se nesmaže.</span></li>
+              <li className="flex gap-2"><span className="text-blue-500 mt-0.5">•</span><span>Barva události odpovídá prioritě: <span className="text-green-400">zelená</span> = nízká, <span className="text-amber-400">žlutá</span> = střední, <span className="text-red-400">červená</span> = vysoká.</span></li>
+              <li className="flex gap-2"><span className="text-blue-500 mt-0.5">•</span><span>Synchronizaci spusťte ručně kdykoli z tohoto nastavení nebo přes tlačítko na stránce Plánování.</span></li>
+            </ul>
           </Card>
         </div>
       )}
