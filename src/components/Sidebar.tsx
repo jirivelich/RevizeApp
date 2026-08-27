@@ -2,6 +2,7 @@
 import type { CSSProperties } from 'react';
 import React from 'react';
 import { logoutApi } from '../services/api';
+import { getCurrentUser } from '../services/httpClient';
 import { NotificationBell } from './NotificationBell';
 import { useTheme } from '../context/ThemeContext';
 import ZmenaHeslaModal from './ZmenaHeslaModal';
@@ -74,7 +75,7 @@ export function Sidebar({ onClose }: SidebarProps) {
     navigate('/login');
   };
 
-  const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null;
+  const user = getCurrentUser<{ username: string; email: string }>();
   const initials = user?.username
     ? user.username.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)
     : 'U';

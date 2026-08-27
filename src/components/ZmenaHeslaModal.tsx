@@ -1,14 +1,5 @@
 ﻿import React, { useState } from 'react';
-
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
-
-function getAuthHeaders(): HeadersInit {
-  const token = localStorage.getItem('token');
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
+import { buildApiUrl, getAuthHeaders } from '../services/httpClient';
 
 interface ZmenaHeslaModalProps {
   onClose: () => void;
@@ -42,7 +33,7 @@ export default function ZmenaHeslaModal({ onClose }: ZmenaHeslaModalProps) {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE}/auth/change-password`, {
+      const response = await fetch(buildApiUrl('/auth/change-password'), {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({

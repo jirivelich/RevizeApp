@@ -1,5 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { buildApiUrl, setAuthState } from '../services/httpClient';
 
 const BLUE = '#2B88FF';
 const BLUE_DARK = '#1E6FE6';
@@ -21,16 +22,14 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || '/api';
-      const response = await fetch(`${API_BASE}/auth/login`, {
+      const response = await fetch(buildApiUrl('/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: formData.username, password: formData.password }),
       });
       const data = await response.json();
       if (!response.ok) { setError(data.error || 'Chyba při ověřování'); setLoading(false); return; }
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      setAuthState(data.token, data.user);
       navigate('/');
     } catch {
       setError('Chyba připojení k serveru');

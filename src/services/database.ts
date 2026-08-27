@@ -4,47 +4,14 @@
 import type { Revize, Rozvadec, Okruh, Chranic, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, MericiPristroj, Firma, ZavadaKatalog, Zakaznik, PredvolenyText, Kalibrace } from '../types';
 import { safeApiRequest } from './safeApiRequest';
 import { db } from '../db';
-
-// V produkci používáme relativní URL (frontend i backend na stejném serveru)
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
-
-// Získat token z localStorage
-function getToken(): string | null {
-  return localStorage.getItem('token');
-}
-
-// Vytvořit headers s tokenem
-function getAuthHeaders(): HeadersInit {
-  const token = getToken();
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-  };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  return headers;
-}
-
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (response.status === 401) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/login';
-    throw new Error('Sezení vypršelo. Přihlaste se znovu.');
-  }
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Neznámá chyba' }));
-    throw new Error(error.error || 'API chyba');
-  }
-  return response.json() as Promise<T>;
-}
+import { buildApiUrl, getAuthHeaders, handleResponse } from './httpClient';
 
 // ==================== REVIZE ====================
 export const revizeService = {
   async getAll(): Promise<Revize[]> {
     if (navigator.onLine) {
       try {
-        const revize = await fetch(`${API_BASE_URL}/revize`, {
+        const revize = await fetch(buildApiUrl('/revize'), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Revize[]>(res));
         // Cache all revize for offline
@@ -66,7 +33,7 @@ export const revizeService = {
   async getById(id: number): Promise<Revize | undefined> {
     if (navigator.onLine) {
       try {
-        const revize = await fetch(`${API_BASE_URL}/revize/${id}`, {
+        const revize = await fetch(buildApiUrl(`/revize/${id}`), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Revize | undefined>(res));
         if (revize) {
@@ -84,7 +51,7 @@ export const revizeService = {
   },
 
   async create(data: Omit<Revize, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
-    const url = `${API_BASE_URL}/revize`;
+    const url = buildApiUrl('/revize');
     const headers = getAuthHeaders();
     if (navigator.onLine) {
       try {
@@ -106,7 +73,7 @@ export const revizeService = {
   },
 
   async update(id: number, data: Partial<Revize>): Promise<number> {
-    const url = `${API_BASE_URL}/revize/${id}`;
+    const url = buildApiUrl(`/revize/${id}`);
     const headers = getAuthHeaders();
     if (navigator.onLine) {
       try {
@@ -138,14 +105,14 @@ export const revizeService = {
     if (cached) {
       await db.revizeCache.put({ ...cached, data: { ...cached.data, _pendingDelete: true } });
     }
-    await safeApiRequest({ url: `${API_BASE_URL}/revize/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/revize/${id}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 
   async duplikovat(id: number, cisloRevize: string, typ: 'navazujici' | 'duplikat' = 'navazujici'): Promise<{ id: number; skupinaRevizi: string }> {
     if (!navigator.onLine) {
       throw new Error('Duplikace revize není dostupná offline. Připojte se k internetu a zkuste znovu.');
     }
-    return fetch(`${API_BASE_URL}/revize/${id}/duplikovat`, {
+    return fetch(buildApiUrl(`/revize/${id}/duplikovat`), {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ cisloRevize, typ }),
@@ -154,7 +121,7 @@ export const revizeService = {
 
   async getHistorie(id: number): Promise<Partial<Revize>[]> {
     try {
-      return await fetch(`${API_BASE_URL}/revize/${id}/historie`, {
+      return await fetch(buildApiUrl(`/revize/${id}/historie`), {
         headers: getAuthHeaders(),
       }).then(res => handleResponse<Partial<Revize>[]>(res));
     } catch {
@@ -173,7 +140,7 @@ export const rozvadecService = {
   async getByRevize(revizeId: number): Promise<Rozvadec[]> {
     if (navigator.onLine) {
       try {
-        const rozvadece = await fetch(`${API_BASE_URL}/rozvadece/${revizeId}`, {
+        const rozvadece = await fetch(buildApiUrl(`/rozvadece/${revizeId}`), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Rozvadec[]>(res));
         if (rozvadece) {
@@ -193,7 +160,7 @@ export const rozvadecService = {
   },
 
   async create(data: Omit<Rozvadec, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
-    const url = `${API_BASE_URL}/rozvadece`;
+    const url = buildApiUrl('/rozvadece');
     const headers = getAuthHeaders();
     if (navigator.onLine) {
       try {
@@ -215,7 +182,7 @@ export const rozvadecService = {
   },
 
   async update(id: number, data: Partial<Rozvadec>): Promise<number> {
-    const url = `${API_BASE_URL}/rozvadece/${id}`;
+    const url = buildApiUrl(`/rozvadece/${id}`);
     const headers = getAuthHeaders();
     if (navigator.onLine) {
       try {
@@ -243,7 +210,7 @@ export const rozvadecService = {
 
   async delete(id: number): Promise<void> {
     await db.rozvadecCache.delete(id);
-    await safeApiRequest({ url: `${API_BASE_URL}/rozvadece/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/rozvadece/${id}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -252,7 +219,7 @@ export const okruhService = {
   async getByRozvadec(rozvadecId: number): Promise<Okruh[]> {
     if (navigator.onLine) {
       try {
-        const okruhy = await fetch(`${API_BASE_URL}/okruhy/${rozvadecId}`, {
+        const okruhy = await fetch(buildApiUrl(`/okruhy/${rozvadecId}`), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Okruh[]>(res));
         if (okruhy) {
@@ -272,7 +239,7 @@ export const okruhService = {
   },
 
   async create(data: Omit<Okruh, 'id'>): Promise<number> {
-    const url = `${API_BASE_URL}/okruhy`;
+    const url = buildApiUrl('/okruhy');
     const headers = getAuthHeaders();
     if (navigator.onLine) {
       try {
@@ -294,7 +261,7 @@ export const okruhService = {
   },
 
   async update(id: number, data: Partial<Okruh>): Promise<number> {
-    const url = `${API_BASE_URL}/okruhy/${id}`;
+    const url = buildApiUrl(`/okruhy/${id}`);
     const headers = getAuthHeaders();
     if (navigator.onLine) {
       try {
@@ -322,7 +289,7 @@ export const okruhService = {
 
   async delete(id: number): Promise<void> {
     await db.okruhCache.delete(id);
-    await safeApiRequest({ url: `${API_BASE_URL}/okruhy/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/okruhy/${id}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -331,7 +298,7 @@ export const cranicService = {
   async getByRozvadec(rozvadecId: number): Promise<Chranic[]> {
     if (navigator.onLine) {
       try {
-        const chranice = await fetch(`${API_BASE_URL}/chranice/${rozvadecId}`, {
+        const chranice = await fetch(buildApiUrl(`/chranice/${rozvadecId}`), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Chranic[]>(res));
         if (chranice) {
@@ -351,7 +318,7 @@ export const cranicService = {
   },
 
   async create(data: Omit<Chranic, 'id'>): Promise<number> {
-    const url = `${API_BASE_URL}/chranice`;
+    const url = buildApiUrl('/chranice');
     const headers = getAuthHeaders();
     if (navigator.onLine) {
       try {
@@ -373,7 +340,7 @@ export const cranicService = {
   },
 
   async update(id: number, data: Partial<Chranic>): Promise<number> {
-    const url = `${API_BASE_URL}/chranice/${id}`;
+    const url = buildApiUrl(`/chranice/${id}`);
     const headers = getAuthHeaders();
     if (navigator.onLine) {
       try {
@@ -401,14 +368,14 @@ export const cranicService = {
 
   async delete(id: number): Promise<void> {
     await db.cranicCache.delete(id);
-    await safeApiRequest({ url: `${API_BASE_URL}/chranice/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/chranice/${id}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
 // ==================== MISTNOSTI ====================
 export const mistnostService = {
   async getAll(): Promise<Mistnost[]> {
-    return fetch(`${API_BASE_URL}/mistnosti`, {
+    return fetch(buildApiUrl('/mistnosti'), {
       headers: getAuthHeaders(),
     }).then(res => handleResponse<Mistnost[]>(res));
   },
@@ -416,7 +383,7 @@ export const mistnostService = {
   async getByRevize(revizeId: number): Promise<Mistnost[]> {
     if (navigator.onLine) {
       try {
-        const mistnosti = await fetch(`${API_BASE_URL}/mistnosti/revize/${revizeId}`, {
+        const mistnosti = await fetch(buildApiUrl(`/mistnosti/revize/${revizeId}`), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Mistnost[]>(res));
         if (mistnosti) {
@@ -441,7 +408,7 @@ export const mistnostService = {
   },
 
   async create(data: Omit<Mistnost, 'id'>): Promise<number> {
-    const url = `${API_BASE_URL}/mistnosti`;
+    const url = buildApiUrl('/mistnosti');
     const headers = getAuthHeaders();
     if (navigator.onLine) {
       try {
@@ -463,7 +430,7 @@ export const mistnostService = {
   },
 
   async update(id: number, data: Partial<Mistnost>): Promise<number> {
-    const url = `${API_BASE_URL}/mistnosti/${id}`;
+    const url = buildApiUrl(`/mistnosti/${id}`);
     const headers = getAuthHeaders();
     if (navigator.onLine) {
       try {
@@ -491,7 +458,7 @@ export const mistnostService = {
 
   async delete(id: number): Promise<void> {
     await db.mistnostCache.delete(id);
-    await safeApiRequest({ url: `${API_BASE_URL}/mistnosti/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/mistnosti/${id}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -504,7 +471,7 @@ export const zarizeniService = {
   async getByMistnost(mistnostId: number): Promise<Zarizeni[]> {
     if (navigator.onLine) {
       try {
-        const zarizeni = await fetch(`${API_BASE_URL}/zarizeni/${mistnostId}`, {
+        const zarizeni = await fetch(buildApiUrl(`/zarizeni/${mistnostId}`), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Zarizeni[]>(res));
         for (const z of zarizeni) {
@@ -526,7 +493,7 @@ export const zarizeniService = {
   },
 
   async create(data: Omit<Zarizeni, 'id'>): Promise<number> {
-    const url = `${API_BASE_URL}/zarizeni`;
+    const url = buildApiUrl('/zarizeni');
     const headers = getAuthHeaders();
     if (navigator.onLine) {
       try {
@@ -548,7 +515,7 @@ export const zarizeniService = {
   },
 
   async update(id: number, data: Partial<Zarizeni>): Promise<number> {
-    const url = `${API_BASE_URL}/zarizeni/${id}`;
+    const url = buildApiUrl(`/zarizeni/${id}`);
     const headers = getAuthHeaders();
     if (navigator.onLine) {
       try {
@@ -576,7 +543,7 @@ export const zarizeniService = {
 
   async delete(id: number): Promise<void> {
     await db.zarizeniCache.delete(id);
-    await safeApiRequest({ url: `${API_BASE_URL}/zarizeni/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/zarizeni/${id}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 
   async deleteByMistnost(_mistnostId: number): Promise<void> {
@@ -587,7 +554,7 @@ export const zarizeniService = {
 // ==================== ZAVADY ====================
 export const zavadaService = {
   async getAll(): Promise<Zavada[]> {
-    return fetch(`${API_BASE_URL}/zavady`, {
+    return fetch(buildApiUrl('/zavady'), {
       headers: getAuthHeaders(),
     }).then(res => handleResponse<Zavada[]>(res));
   },
@@ -595,7 +562,7 @@ export const zavadaService = {
   async getByRevize(revizeId: number): Promise<Zavada[]> {
     if (navigator.onLine) {
       try {
-        const zavady = await fetch(`${API_BASE_URL}/zavady/revize/${revizeId}`, {
+        const zavady = await fetch(buildApiUrl(`/zavady/revize/${revizeId}`), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Zavada[]>(res));
         if (zavady) {
@@ -615,7 +582,7 @@ export const zavadaService = {
   },
 
   async create(data: Omit<Zavada, 'id'>): Promise<number> {
-    const url = `${API_BASE_URL}/zavady`;
+    const url = buildApiUrl('/zavady');
     const headers = getAuthHeaders();
     if (navigator.onLine) {
       try {
@@ -637,7 +604,7 @@ export const zavadaService = {
   },
 
   async update(id: number, data: Partial<Zavada>): Promise<number> {
-    const url = `${API_BASE_URL}/zavady/${id}`;
+    const url = buildApiUrl(`/zavady/${id}`);
     const headers = getAuthHeaders();
     if (navigator.onLine) {
       try {
@@ -665,7 +632,7 @@ export const zavadaService = {
 
   async delete(id: number): Promise<void> {
     await db.zavadaCache.delete(id);
-    await safeApiRequest({ url: `${API_BASE_URL}/zavady/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/zavady/${id}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -674,7 +641,7 @@ export const firmaService = {
   async getAll(): Promise<Firma[]> {
     if (navigator.onLine) {
       try {
-        const firmy = await fetch(`${API_BASE_URL}/firmy`, {
+        const firmy = await fetch(buildApiUrl('/firmy'), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Firma[]>(res));
         for (const f of firmy) {
@@ -694,7 +661,7 @@ export const firmaService = {
   async getById(id: number): Promise<Firma | undefined> {
     if (navigator.onLine) {
       try {
-        const firma = await fetch(`${API_BASE_URL}/firmy/${id}`, {
+        const firma = await fetch(buildApiUrl(`/firmy/${id}`), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Firma | undefined>(res));
         if (firma) await db.firmaCache.put({ id, data: firma, updatedAt: Date.now() });
@@ -712,7 +679,7 @@ export const firmaService = {
   async create(data: Omit<Firma, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
     if (navigator.onLine) {
       try {
-        const response = await fetch(`${API_BASE_URL}/firmy`, {
+        const response = await fetch(buildApiUrl('/firmy'), {
           method: 'POST',
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
@@ -726,7 +693,7 @@ export const firmaService = {
     {
       const tempId = Date.now() * -1;
       await db.firmaCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
-      await safeApiRequest({ url: `${API_BASE_URL}/firmy`, method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
+      await safeApiRequest({ url: buildApiUrl('/firmy'), method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
       return tempId;
     }
   },
@@ -734,7 +701,7 @@ export const firmaService = {
   async update(id: number, data: Partial<Firma>): Promise<number> {
     if (navigator.onLine) {
       try {
-        await fetch(`${API_BASE_URL}/firmy/${id}`, {
+        await fetch(buildApiUrl(`/firmy/${id}`), {
           method: 'PUT',
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
@@ -752,13 +719,13 @@ export const firmaService = {
     if (cached) {
       await db.firmaCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
     }
-    await safeApiRequest({ url: `${API_BASE_URL}/firmy/${id}`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/firmy/${id}`), method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
     await db.firmaCache.delete(id);
-    await safeApiRequest({ url: `${API_BASE_URL}/firmy/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/firmy/${id}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -767,7 +734,7 @@ export const zakazkaService = {
   async getAll(): Promise<Zakazka[]> {
     if (navigator.onLine) {
       try {
-        const zakazky = await fetch(`${API_BASE_URL}/zakazky`, {
+        const zakazky = await fetch(buildApiUrl('/zakazky'), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Zakazka[]>(res));
         for (const z of zakazky) {
@@ -792,7 +759,7 @@ export const zakazkaService = {
   async create(data: Omit<Zakazka, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
     if (navigator.onLine) {
       try {
-        const response = await fetch(`${API_BASE_URL}/zakazky`, {
+        const response = await fetch(buildApiUrl('/zakazky'), {
           method: 'POST',
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
@@ -806,7 +773,7 @@ export const zakazkaService = {
     {
       const tempId = Date.now() * -1;
       await db.zakazkaCache.put({ id: tempId, data: { ...data, id: tempId }, updatedAt: Date.now() });
-      await safeApiRequest({ url: `${API_BASE_URL}/zakazky`, method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
+      await safeApiRequest({ url: buildApiUrl('/zakazky'), method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
       return tempId;
     }
   },
@@ -814,7 +781,7 @@ export const zakazkaService = {
   async update(id: number, data: Partial<Zakazka>): Promise<number> {
     if (navigator.onLine) {
       try {
-        await fetch(`${API_BASE_URL}/zakazky/${id}`, {
+        await fetch(buildApiUrl(`/zakazky/${id}`), {
           method: 'PUT',
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
@@ -832,13 +799,13 @@ export const zakazkaService = {
     if (cached) {
       await db.zakazkaCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
     }
-    await safeApiRequest({ url: `${API_BASE_URL}/zakazky/${id}`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/zakazky/${id}`), method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
     await db.zakazkaCache.delete(id);
-    await safeApiRequest({ url: `${API_BASE_URL}/zakazky/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/zakazky/${id}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -847,7 +814,7 @@ export const pristrojService = {
   async getAll(): Promise<MericiPristroj[]> {
     if (navigator.onLine) {
       try {
-        const pristroje = await fetch(`${API_BASE_URL}/pristroje`, {
+        const pristroje = await fetch(buildApiUrl('/pristroje'), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<MericiPristroj[]>(res));
         for (const p of pristroje) {
@@ -865,7 +832,7 @@ export const pristrojService = {
   async getById(id: number): Promise<MericiPristroj | undefined> {
     if (navigator.onLine) {
       try {
-        const p = await fetch(`${API_BASE_URL}/pristroje/${id}`, {
+        const p = await fetch(buildApiUrl(`/pristroje/${id}`), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<MericiPristroj | undefined>(res));
         if (p && p.id) await db.pristrojCache.put({ id: p.id, data: p, updatedAt: Date.now() });
@@ -890,7 +857,7 @@ export const pristrojService = {
   async create(data: Omit<MericiPristroj, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
     if (navigator.onLine) {
       try {
-        const response = await fetch(`${API_BASE_URL}/pristroje`, {
+        const response = await fetch(buildApiUrl('/pristroje'), {
           method: 'POST',
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
@@ -904,7 +871,7 @@ export const pristrojService = {
     {
       const tempId = Date.now() * -1;
       await db.pristrojCache.put({ id: tempId, data: { ...data, id: tempId } as MericiPristroj, updatedAt: Date.now() });
-      await safeApiRequest({ url: `${API_BASE_URL}/pristroje`, method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
+      await safeApiRequest({ url: buildApiUrl('/pristroje'), method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
       return tempId;
     }
   },
@@ -912,7 +879,7 @@ export const pristrojService = {
   async update(id: number, data: Partial<MericiPristroj>): Promise<number> {
     if (navigator.onLine) {
       try {
-        await fetch(`${API_BASE_URL}/pristroje/${id}`, {
+        await fetch(buildApiUrl(`/pristroje/${id}`), {
           method: 'PUT',
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
@@ -930,13 +897,13 @@ export const pristrojService = {
     if (cached) {
       await db.pristrojCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
     }
-    await safeApiRequest({ url: `${API_BASE_URL}/pristroje/${id}`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/pristroje/${id}`), method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
     await db.pristrojCache.delete(id);
-    await safeApiRequest({ url: `${API_BASE_URL}/pristroje/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/pristroje/${id}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -945,7 +912,7 @@ export const revizePristrojService = {
   async getByRevize(revizeId: number): Promise<MericiPristroj[]> {
     if (navigator.onLine) {
       try {
-        return await fetch(`${API_BASE_URL}/revize-pristroje/${revizeId}`, {
+        return await fetch(buildApiUrl(`/revize-pristroje/${revizeId}`), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<MericiPristroj[]>(res));
       } catch {
@@ -959,7 +926,7 @@ export const revizePristrojService = {
   async addToRevize(revizeId: number, pristrojId: number): Promise<number> {
     if (navigator.onLine) {
       try {
-        const response = await fetch(`${API_BASE_URL}/revize-pristroje`, {
+        const response = await fetch(buildApiUrl('/revize-pristroje'), {
           method: 'POST',
           headers: getAuthHeaders(),
           body: JSON.stringify({ revizeId, pristrojId }),
@@ -969,12 +936,12 @@ export const revizePristrojService = {
         // Network error - queue offline
       }
     }
-    await safeApiRequest({ url: `${API_BASE_URL}/revize-pristroje`, method: 'POST', body: { revizeId, pristrojId }, headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl('/revize-pristroje'), method: 'POST', body: { revizeId, pristrojId }, headers: getAuthHeaders() as Record<string, string> });
     return Date.now() * -1;
   },
 
   async removeFromRevize(revizeId: number, pristrojId: number): Promise<void> {
-    await safeApiRequest({ url: `${API_BASE_URL}/revize-pristroje/${revizeId}/${pristrojId}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/revize-pristroje/${revizeId}/${pristrojId}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -982,7 +949,7 @@ export const revizePristrojService = {
 export const kalibraceService = {
   async getByPristroj(pristrojId: number): Promise<Kalibrace[]> {
     try {
-      return await fetch(`${API_BASE_URL}/kalibrace/${pristrojId}`, {
+      return await fetch(buildApiUrl(`/kalibrace/${pristrojId}`), {
         headers: getAuthHeaders(),
       }).then(res => handleResponse<Kalibrace[]>(res));
     } catch {
@@ -993,7 +960,7 @@ export const kalibraceService = {
   async create(data: Omit<Kalibrace, 'id' | 'createdAt'>): Promise<number> {
     if (navigator.onLine) {
       try {
-        const response = await fetch(`${API_BASE_URL}/kalibrace`, {
+        const response = await fetch(buildApiUrl('/kalibrace'), {
           method: 'POST',
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
@@ -1003,12 +970,12 @@ export const kalibraceService = {
         // Network error - queue offline
       }
     }
-    await safeApiRequest({ url: `${API_BASE_URL}/kalibrace`, method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl('/kalibrace'), method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
     return Date.now() * -1;
   },
 
   async delete(id: number): Promise<void> {
-    await safeApiRequest({ url: `${API_BASE_URL}/kalibrace/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/kalibrace/${id}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -1017,7 +984,7 @@ export const nastaveniService = {
   async get(): Promise<Nastaveni | undefined> {
     if (navigator.onLine) {
       try {
-        const nastaveni = await fetch(`${API_BASE_URL}/nastaveni`, {
+        const nastaveni = await fetch(buildApiUrl('/nastaveni'), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Nastaveni | undefined>(res));
         if (nastaveni) await db.nastaveniCache.put({ id: 1, data: nastaveni, updatedAt: Date.now() });
@@ -1035,7 +1002,7 @@ export const nastaveniService = {
   async save(data: Partial<Nastaveni>): Promise<void> {
     if (navigator.onLine) {
       try {
-        await fetch(`${API_BASE_URL}/nastaveni`, {
+        await fetch(buildApiUrl('/nastaveni'), {
           method: 'PUT',
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
@@ -1057,7 +1024,7 @@ export const nastaveniService = {
     } else {
       await db.nastaveniCache.put({ id: 1, data: data as Nastaveni, updatedAt: Date.now() });
     }
-    await safeApiRequest({ url: `${API_BASE_URL}/nastaveni`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl('/nastaveni'), method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -1066,7 +1033,7 @@ export const zavadaKatalogService = {
   async getAll(): Promise<ZavadaKatalog[]> {
     if (navigator.onLine) {
       try {
-        const items = await fetch(`${API_BASE_URL}/zavady-katalog`, {
+        const items = await fetch(buildApiUrl('/zavady-katalog'), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<ZavadaKatalog[]>(res));
         for (const item of items) {
@@ -1099,7 +1066,7 @@ export const zavadaKatalogService = {
   async create(data: Omit<ZavadaKatalog, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
     if (navigator.onLine) {
       try {
-        const response = await fetch(`${API_BASE_URL}/zavady-katalog`, {
+        const response = await fetch(buildApiUrl('/zavady-katalog'), {
           method: 'POST',
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
@@ -1113,7 +1080,7 @@ export const zavadaKatalogService = {
     {
       const tempId = Date.now() * -1;
       await db.zavadaKatalogCache.put({ id: tempId, data: { ...data, id: tempId } as ZavadaKatalog, updatedAt: Date.now() });
-      await safeApiRequest({ url: `${API_BASE_URL}/zavady-katalog`, method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
+      await safeApiRequest({ url: buildApiUrl('/zavady-katalog'), method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
       return tempId;
     }
   },
@@ -1121,7 +1088,7 @@ export const zavadaKatalogService = {
   async update(id: number, data: Partial<ZavadaKatalog>): Promise<number> {
     if (navigator.onLine) {
       try {
-        await fetch(`${API_BASE_URL}/zavady-katalog/${id}`, {
+        await fetch(buildApiUrl(`/zavady-katalog/${id}`), {
           method: 'PUT',
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
@@ -1139,13 +1106,13 @@ export const zavadaKatalogService = {
     if (cached) {
       await db.zavadaKatalogCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
     }
-    await safeApiRequest({ url: `${API_BASE_URL}/zavady-katalog/${id}`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/zavady-katalog/${id}`), method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
     await db.zavadaKatalogCache.delete(id);
-    await safeApiRequest({ url: `${API_BASE_URL}/zavady-katalog/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/zavady-katalog/${id}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 
   async getKategorie(): Promise<string[]> {
@@ -1181,7 +1148,7 @@ export const predvolenyTextService = {
   async getAll(): Promise<PredvolenyText[]> {
     if (navigator.onLine) {
       try {
-        const items = await fetch(`${API_BASE_URL}/predvolene-texty`, {
+        const items = await fetch(buildApiUrl('/predvolene-texty'), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<PredvolenyText[]>(res));
         for (const item of items) {
@@ -1199,7 +1166,7 @@ export const predvolenyTextService = {
   async getByPole(pole: string): Promise<PredvolenyText[]> {
     if (navigator.onLine) {
       try {
-        return await fetch(`${API_BASE_URL}/predvolene-texty/${pole}`, {
+        return await fetch(buildApiUrl(`/predvolene-texty/${pole}`), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<PredvolenyText[]>(res));
       } catch {
@@ -1213,7 +1180,7 @@ export const predvolenyTextService = {
   async create(data: { pole: string; nazev: string; text: string; poradi?: number }): Promise<number> {
     if (navigator.onLine) {
       try {
-        const response = await fetch(`${API_BASE_URL}/predvolene-texty`, {
+        const response = await fetch(buildApiUrl('/predvolene-texty'), {
           method: 'POST',
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
@@ -1227,7 +1194,7 @@ export const predvolenyTextService = {
     {
       const tempId = Date.now() * -1;
       await db.predvolenyTextCache.put({ id: tempId, data: { ...data, id: tempId } as PredvolenyText, updatedAt: Date.now() });
-      await safeApiRequest({ url: `${API_BASE_URL}/predvolene-texty`, method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
+      await safeApiRequest({ url: buildApiUrl('/predvolene-texty'), method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
       return tempId;
     }
   },
@@ -1235,7 +1202,7 @@ export const predvolenyTextService = {
   async update(id: number, data: { nazev: string; text: string; poradi?: number }): Promise<void> {
     if (navigator.onLine) {
       try {
-        await fetch(`${API_BASE_URL}/predvolene-texty/${id}`, {
+        await fetch(buildApiUrl(`/predvolene-texty/${id}`), {
           method: 'PUT',
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
@@ -1253,12 +1220,12 @@ export const predvolenyTextService = {
     if (cached) {
       await db.predvolenyTextCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
     }
-    await safeApiRequest({ url: `${API_BASE_URL}/predvolene-texty/${id}`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/predvolene-texty/${id}`), method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
   },
 
   async delete(id: number): Promise<void> {
     await db.predvolenyTextCache.delete(id);
-    await safeApiRequest({ url: `${API_BASE_URL}/predvolene-texty/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/predvolene-texty/${id}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
@@ -1267,7 +1234,7 @@ export const zakazniciService = {
   async getAll(): Promise<Zakaznik[]> {
     if (navigator.onLine) {
       try {
-        const zakaznici = await fetch(`${API_BASE_URL}/zakaznici`, {
+        const zakaznici = await fetch(buildApiUrl('/zakaznici'), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Zakaznik[]>(res));
         for (const z of zakaznici) {
@@ -1285,7 +1252,7 @@ export const zakazniciService = {
   async getById(id: number): Promise<Zakaznik | undefined> {
     if (navigator.onLine) {
       try {
-        const z = await fetch(`${API_BASE_URL}/zakaznici/${id}`, {
+        const z = await fetch(buildApiUrl(`/zakaznici/${id}`), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Zakaznik | undefined>(res));
         if (z && z.id) await db.zakaznikCache.put({ id: z.id, data: z, updatedAt: Date.now() });
@@ -1303,7 +1270,7 @@ export const zakazniciService = {
   async getRevize(zakaznikId: number): Promise<Revize[]> {
     if (navigator.onLine) {
       try {
-        return await fetch(`${API_BASE_URL}/zakaznici/${zakaznikId}/revize`, {
+        return await fetch(buildApiUrl(`/zakaznici/${zakaznikId}/revize`), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Revize[]>(res));
       } catch {
@@ -1317,7 +1284,7 @@ export const zakazniciService = {
   async create(data: Omit<Zakaznik, 'id' | 'pocetRevizi' | 'createdAt' | 'updatedAt'>): Promise<number> {
     if (navigator.onLine) {
       try {
-        const response = await fetch(`${API_BASE_URL}/zakaznici`, {
+        const response = await fetch(buildApiUrl('/zakaznici'), {
           method: 'POST',
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
@@ -1331,7 +1298,7 @@ export const zakazniciService = {
     {
       const tempId = Date.now() * -1;
       await db.zakaznikCache.put({ id: tempId, data: { ...data, id: tempId, pocetRevizi: 0 } as Zakaznik, updatedAt: Date.now() });
-      await safeApiRequest({ url: `${API_BASE_URL}/zakaznici`, method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
+      await safeApiRequest({ url: buildApiUrl('/zakaznici'), method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string> });
       return tempId;
     }
   },
@@ -1339,7 +1306,7 @@ export const zakazniciService = {
   async update(id: number, data: Partial<Zakaznik>): Promise<number> {
     if (navigator.onLine) {
       try {
-        await fetch(`${API_BASE_URL}/zakaznici/${id}`, {
+        await fetch(buildApiUrl(`/zakaznici/${id}`), {
           method: 'PUT',
           headers: getAuthHeaders(),
           body: JSON.stringify(data),
@@ -1357,20 +1324,20 @@ export const zakazniciService = {
     if (cached) {
       await db.zakaznikCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
     }
-    await safeApiRequest({ url: `${API_BASE_URL}/zakaznici/${id}`, method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/zakaznici/${id}`), method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
     return 1;
   },
 
   async delete(id: number): Promise<void> {
     await db.zakaznikCache.delete(id);
-    await safeApiRequest({ url: `${API_BASE_URL}/zakaznici/${id}`, method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
+    await safeApiRequest({ url: buildApiUrl(`/zakaznici/${id}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 
 // ==================== BACKUP ====================
 export const backupService = {
   async exportDatabase(): Promise<string> {
-    const data = await fetch(`${API_BASE_URL}/backup`, {
+    const data = await fetch(buildApiUrl('/backup'), {
       headers: getAuthHeaders(),
     }).then(res => handleResponse<unknown>(res));
     return JSON.stringify(data, null, 2);
@@ -1378,7 +1345,7 @@ export const backupService = {
 
   async importDatabase(jsonData: string, mergeMode: 'replace' | 'merge' = 'replace'): Promise<{ imported: number; errors: number }> {
     const data = JSON.parse(jsonData);
-    return fetch(`${API_BASE_URL}/backup/import`, {
+    return fetch(buildApiUrl('/backup/import'), {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ data, mode: mergeMode }),
@@ -1386,13 +1353,13 @@ export const backupService = {
   },
 
   async getDatabaseStats(): Promise<{ stats: Record<string, number>; sizeMB: string }> {
-    return fetch(`${API_BASE_URL}/backup/stats`, {
+    return fetch(buildApiUrl('/backup/stats'), {
       headers: getAuthHeaders(),
     }).then(res => handleResponse<{ stats: Record<string, number>; sizeMB: string }>(res));
   },
 
   async cleanOldData(daysOld: number = 365): Promise<{ deleted: number; message?: string }> {
-    return fetch(`${API_BASE_URL}/backup/clean`, {
+    return fetch(buildApiUrl('/backup/clean'), {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ daysOld }),

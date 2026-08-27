@@ -10,6 +10,7 @@ vi.stubEnv('VITE_API_URL', '/api');
 
 import { revizeService } from '../../services/database';
 import { db } from '../../db';
+import { clearAuthState, getAuthHeaders } from '../../services/httpClient';
 
 beforeEach(async () => {
   vi.restoreAllMocks();
@@ -20,6 +21,25 @@ beforeEach(async () => {
 });
 
 describe('handleResponse', () => {
+  it('should expose auth headers with bearer token', () => {
+    expect(getAuthHeaders()).toEqual({
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer test-token',
+    });
+  });
+
+  it('should clear persisted auth state through the shared helper', () => {
+    localStorage.setItem('token', 'test-token');
+    localStorage.setItem('user', JSON.stringify({ id: 1 }));
+    localStorage.setItem('lastActivity', 'now');
+
+    clearAuthState();
+
+    expect(localStorage.getItem('token')).toBeNull();
+    expect(localStorage.getItem('user')).toBeNull();
+    expect(localStorage.getItem('lastActivity')).toBeNull();
+  });
+
   it('should clear token on 401 response', async () => {
     (global.fetch as Mock).mockResolvedValueOnce({
       ok: false,

@@ -1,46 +1,12 @@
 // API service pro komunikaci s backendem
-// V produkci používáme relativní URL (frontend i backend na stejném serveru)
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
-
-// Získat token z localStorage
-function getToken(): string | null {
-  return localStorage.getItem('token');
-}
-
-// Vytvořit headers s tokenem
-function getAuthHeaders(): HeadersInit {
-  const token = getToken();
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-  };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  return headers;
-}
-
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (response.status === 401) {
-    // Session vypršela nebo není platná
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('lastActivity');
-    window.location.href = '/login';
-    throw new Error('Sezení vypršelo. Přihlaste se znovu.');
-  }
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'API chyba');
-  }
-  return response.json();
-}
+import { buildApiUrl, getAuthHeaders, getToken, handleResponse, clearAuthState } from './httpClient';
 
 // Odhlásit — smaže session v DB, pak vyčistí localStorage
 export async function logoutApi(): Promise<void> {
   const token = getToken();
   if (token) {
     try {
-      await fetch(`${API_BASE_URL}/auth/logout`, {
+      await fetch(buildApiUrl('/auth/logout'), {
         method: 'POST',
         headers: getAuthHeaders(),
       });
@@ -48,27 +14,25 @@ export async function logoutApi(): Promise<void> {
       // Offline nebo chyba sítě — pokračujeme v odhlášení lokálně
     }
   }
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  localStorage.removeItem('lastActivity');
+  clearAuthState();
 }
 
 // ==================== REVIZE ====================
 export const revizeApi = {
   async getAll() {
-    return fetch(`${API_BASE_URL}/revize`, {
+    return fetch(buildApiUrl('/revize'), {
       headers: getAuthHeaders(),
     }).then(handleResponse);
   },
 
   async getById(id: string) {
-    return fetch(`${API_BASE_URL}/revize/${id}`, {
+    return fetch(buildApiUrl(`/revize/${id}`), {
       headers: getAuthHeaders(),
     }).then(handleResponse);
   },
 
   async create(data: any) {
-    return fetch(`${API_BASE_URL}/revize`, {
+    return fetch(buildApiUrl('/revize'), {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -76,7 +40,7 @@ export const revizeApi = {
   },
 
   async update(id: string, data: any) {
-    return fetch(`${API_BASE_URL}/revize/${id}`, {
+    return fetch(buildApiUrl(`/revize/${id}`), {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -84,7 +48,7 @@ export const revizeApi = {
   },
 
   async delete(id: string) {
-    return fetch(`${API_BASE_URL}/revize/${id}`, {
+    return fetch(buildApiUrl(`/revize/${id}`), {
       method: 'DELETE',
       headers: getAuthHeaders(),
     }).then(handleResponse);
@@ -94,13 +58,13 @@ export const revizeApi = {
 // ==================== ROZVADECE ====================
 export const rozvadeceApi = {
   async getByRevize(revizeId: string) {
-    return fetch(`${API_BASE_URL}/rozvadece/${revizeId}`, {
+    return fetch(buildApiUrl(`/rozvadece/${revizeId}`), {
       headers: getAuthHeaders(),
     }).then(handleResponse);
   },
 
   async create(data: any) {
-    return fetch(`${API_BASE_URL}/rozvadece`, {
+    return fetch(buildApiUrl('/rozvadece'), {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -108,7 +72,7 @@ export const rozvadeceApi = {
   },
 
   async delete(id: string) {
-    return fetch(`${API_BASE_URL}/rozvadece/${id}`, {
+    return fetch(buildApiUrl(`/rozvadece/${id}`), {
       method: 'DELETE',
       headers: getAuthHeaders(),
     }).then(handleResponse);
@@ -118,13 +82,13 @@ export const rozvadeceApi = {
 // ==================== NASTAVENÍ ====================
 export const nastaveniApi = {
   async get() {
-    return fetch(`${API_BASE_URL}/nastaveni`, {
+    return fetch(buildApiUrl('/nastaveni'), {
       headers: getAuthHeaders(),
     }).then(handleResponse);
   },
 
   async update(data: any) {
-    return fetch(`${API_BASE_URL}/nastaveni`, {
+    return fetch(buildApiUrl('/nastaveni'), {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -132,13 +96,13 @@ export const nastaveniApi = {
   },
 
   async getHistorie(): Promise<import('../types').TechnikHistorie[]> {
-    return fetch(`${API_BASE_URL}/technik-historie`, {
+    return fetch(buildApiUrl('/technik-historie'), {
       headers: getAuthHeaders(),
     }).then(r => handleResponse<import('../types').TechnikHistorie[]>(r));
   },
 
   async addHistorie(data: Omit<import('../types').TechnikHistorie, 'id' | 'createdAt'>): Promise<{ id: number }> {
-    return fetch(`${API_BASE_URL}/technik-historie`, {
+    return fetch(buildApiUrl('/technik-historie'), {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data),
@@ -146,7 +110,7 @@ export const nastaveniApi = {
   },
 
   async deleteHistorie(id: number): Promise<void> {
-    return fetch(`${API_BASE_URL}/technik-historie/${id}`, {
+    return fetch(buildApiUrl(`/technik-historie/${id}`), {
       method: 'DELETE',
       headers: getAuthHeaders(),
     }).then(r => handleResponse<void>(r));
@@ -156,13 +120,13 @@ export const nastaveniApi = {
 // ==================== BACKUP ====================
 export const backupApi = {
   async download() {
-    return fetch(`${API_BASE_URL}/backup`, {
+    return fetch(buildApiUrl('/backup'), {
       headers: { 'Content-Type': 'application/json' },
     }).then(handleResponse);
   },
 
   async import(data: any, mode: 'merge' | 'replace' = 'merge') {
-    return fetch(`${API_BASE_URL}/backup/import`, {
+    return fetch(buildApiUrl('/backup/import'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ data, mode }),
@@ -173,7 +137,7 @@ export const backupApi = {
 // ==================== HEALTH CHECK ====================
 export async function checkServerHealth() {
   try {
-    const response = await fetch(`${API_BASE_URL}/health`);
+    const response = await fetch(buildApiUrl('/health'));
     return response.ok;
   } catch {
     return false;
@@ -184,14 +148,14 @@ export async function checkServerHealth() {
 export const aiApi = {
   /** Zkontrolovat, zda je AI nakonfigurováno */
   async getStatus(): Promise<{ configured: boolean }> {
-    return fetch(`${API_BASE_URL}/ai/status`, {
+    return fetch(buildApiUrl('/ai/status'), {
       headers: getAuthHeaders(),
     }).then(res => handleResponse<{ configured: boolean }>(res));
   },
 
   /** Vygenerovat text revizní zprávy z dat revize */
   async generateReport(revizeId: number): Promise<{ text: string }> {
-    return fetch(`${API_BASE_URL}/ai/generate-report`, {
+    return fetch(buildApiUrl('/ai/generate-report'), {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ revizeId }),
@@ -203,7 +167,7 @@ export const aiApi = {
     messages: { role: 'user' | 'assistant'; content: string }[],
     revizeContext?: any,
   ): Promise<{ reply: string }> {
-    return fetch(`${API_BASE_URL}/ai/chat`, {
+    return fetch(buildApiUrl('/ai/chat'), {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ messages, revizeContext }),
@@ -216,7 +180,7 @@ export const aiApi = {
     formData: Record<string, any>,
     entityType: string,
   ): Promise<{ suggestion: Record<string, string> }> {
-    return fetch(`${API_BASE_URL}/ai/autofill`, {
+    return fetch(buildApiUrl('/ai/autofill'), {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ field, formData, entityType }),
@@ -228,7 +192,7 @@ export const aiApi = {
     rozvadecId: number,
     images: string[],
   ): Promise<{ okruhy: { cislo: number; nazev: string; jisticTyp: string; jisticProud: string; pocetFazi: number }[] }> {
-    return fetch(`${API_BASE_URL}/ai/analyze-photos`, {
+    return fetch(buildApiUrl('/ai/analyze-photos'), {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ rozvadecId, images }),

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import { verifySession } from '../services/httpClient';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -9,67 +10,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const verifyToken = async () => {
-      const token = localStorage.getItem('token');
-      console.log('ProtectedRoute: Checking token...', token ? 'Found' : 'Not found');
-
-      if (!token) {
-        console.log('ProtectedRoute: No token found, redirecting to login');
-        setIsAuthorized(false);
-        return;
-      }
-
-      // Offline → rovnou důvěřujeme lokálnímu tokenu, nečekáme na fetch
-      if (!navigator.onLine) {
-        console.log('ProtectedRoute: Offline, trusting cached token');
-        setIsAuthorized(true);
-        return;
-      }
-
-      try {
-        // V produkci používáme relativní URL
-        const API_BASE = import.meta.env.VITE_API_URL || '/api';
-        const verifyUrl = `${API_BASE}/auth/verify`;
-        console.log('ProtectedRoute: Verifying token at', verifyUrl);
-        
-        const response = await fetch(verifyUrl, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        console.log('ProtectedRoute: Verify response status:', response.status);
-        
-        if (response.status === 401) {
-          // Token je skutečně neplatný — server potvrdil
-          const errorData = await response.json().catch(() => null);
-          console.error('ProtectedRoute: Token invalid (401)', errorData);
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          setIsAuthorized(false);
-          return;
-        }
-
-        if (!response.ok) {
-          // Server error (500, 503, …) nebo cachovaná chyba ze SW — důvěřujeme tokenu
-          console.log('ProtectedRoute: Server error, trusting cached token');
-          setIsAuthorized(true);
-          return;
-        }
-
-        await response.json();
-        console.log('ProtectedRoute: Verification successful');
-        setIsAuthorized(true);
-      } catch (err) {
-        // Síť nedostupná (DNS error, timeout, …) — důvěřujeme tokenu
-        console.log('ProtectedRoute: Network unavailable, trusting cached token');
-        setIsAuthorized(true);
-      }
-    };
-
-    verifyToken();
+    verifySession().then(setIsAuthorized);
   }, []);
 
   if (isAuthorized === null) {
@@ -84,10 +25,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!isAuthorized) {
-    console.log('ProtectedRoute: Authorization failed, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
-  console.log('ProtectedRoute: Authorization successful, rendering children');
   return <>{children}</>;
 }
