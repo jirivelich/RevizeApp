@@ -58,7 +58,7 @@ export function NotificationBell({ strongText = false }: Props & { strongText?: 
         onClick={() => setOpen(v => !v)}
         aria-label={`Upozornění${count > 0 ? ` (${count})` : ''}`}
         className={`relative w-full flex items-center gap-2.5 px-3 py-2 rounded text-[13px] transition-colors sidebar-nav-item ${strongText ? 'font-bold' : 'font-medium'}`}
-        style={{ color: '#f1f5f9' }}
+        style={{ color: 'var(--nav-text)' }}
       >
         <span className="relative flex-shrink-0">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

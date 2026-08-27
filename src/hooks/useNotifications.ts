@@ -105,9 +105,9 @@ export function useNotifications() {
             type: 'report_deadline',
             severity: severity(days),
             title: `Zpráva: ${z.nazev}`,
-            description: days < 0
+            description: (days < 0
               ? `Deadline odevzdání zprávy byl ${label}`
-              : `Odevzdat zprávu do ${label}`,
+              : `Odevzdat zprávu do ${label}`) + (z.adresa ? ` — ${z.adresa}` : ''),
             daysUntil: days,
             link: '/planovani',
           });
@@ -127,9 +127,9 @@ export function useNotifications() {
               type: 'report_deadline',
               severity: severity(days),
               title: `Zpráva: ${z.nazev}`,
-              description: days < 0
+              description: (days < 0
                 ? `Deadline odevzdání zprávy byl ${label}`
-                : `Odevzdat zprávu do ${label}`,
+                : `Odevzdat zprávu do ${label}`) + (z.adresa ? ` — ${z.adresa}` : ''),
               daysUntil: days,
               link: '/planovani',
             });
