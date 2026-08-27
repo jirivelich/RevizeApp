@@ -239,7 +239,7 @@ export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }
 
       if (day < 1 || day > daysInMonth) {
         rows.push(
-          <div key={`empty-${r}-${col}`} className={`p-2 min-h-[90px] border border-[var(--border)] ${isWeekend ? 'bg-white/[0.015]' : 'bg-[var(--bg-faint)]'}`}></div>
+          <div key={`empty-${r}-${col}`} className={`p-2 min-h-[90px] border border-[var(--border)] ${isWeekend ? 'bg-[var(--bg-faint)]' : ''}`}></div>
         );
       } else {
         const dateStr = formatDateStr(day);
@@ -260,8 +260,8 @@ export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }
               todayClass
                 ? 'bg-blue-500/[0.12] ring-2 ring-blue-500/[0.40] ring-inset'
                 : isWeekend
-                ? 'bg-white/[0.015]'
-                : 'bg-[var(--bg-faint)]'
+                ? 'bg-[var(--bg-faint)]'
+                : ''
             }`}
             onClick={() => onDayClick(dateStr)}
             onMouseEnter={() => {

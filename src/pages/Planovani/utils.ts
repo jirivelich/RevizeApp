@@ -32,20 +32,20 @@ export const emptyFormData: ZakazkaFormData = {
 
 export function getStatusColor(stav: Zakazka['stav']): string {
   switch (stav) {
-    case 'plánováno': return 'bg-blue-100 text-blue-700';
-    case 'v realizaci': return 'bg-amber-100 text-amber-700';
-    case 'dokončeno': return 'bg-green-100 text-green-700';
-    case 'zrušeno': return 'bg-slate-100 text-slate-700';
-    default: return 'bg-slate-100 text-slate-700';
+    case 'plánováno': return 'bg-[var(--bg-accent-badge)] text-blue-400';
+    case 'v realizaci': return 'bg-amber-500/[0.15] text-amber-400';
+    case 'dokončeno': return 'bg-emerald-500/[0.15] text-emerald-400';
+    case 'zrušeno': return 'bg-[var(--bg-hover)] text-[var(--text-secondary)]';
+    default: return 'bg-[var(--bg-hover)] text-[var(--text-secondary)]';
   }
 }
 
 export function getPriorityColor(priorita: Zakazka['priorita']): string {
   switch (priorita) {
-    case 'vysoká': return 'bg-red-100 text-red-700';
-    case 'střední': return 'bg-amber-100 text-amber-700';
-    case 'nizká': return 'bg-green-100 text-green-700';
-    default: return 'bg-slate-100 text-slate-700';
+    case 'vysoká': return 'bg-red-500/[0.15] text-red-400';
+    case 'střední': return 'bg-amber-500/[0.15] text-amber-400';
+    case 'nizká': return 'bg-[var(--bg-accent-badge)] text-blue-400';
+    default: return 'bg-[var(--bg-hover)] text-[var(--text-secondary)]';
   }
 }
 
