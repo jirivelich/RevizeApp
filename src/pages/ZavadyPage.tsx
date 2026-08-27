@@ -1,6 +1,6 @@
 ﻿import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Button, Card, Input, Select, Modal } from '../components/ui';
+import { Button, Card, Input, Select, Modal, ConfirmDialog } from '../components/ui';
 import { useZavadyKatalog, useZavadyKategorie, useCreateZavadaKatalog, useUpdateZavadaKatalog, useDeleteZavadaKatalog } from '../hooks/useQueries';
 import { queryKeys } from '../hooks/queryKeys';
 import { zavadaKatalogService } from '../services/database';
@@ -14,6 +14,7 @@ export function ZavadyPage() {
   const [filterZavaznost, setFilterZavaznost] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [showStats, setShowStats] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<ZavadaKatalog | null>(null);
 
   const [formData, setFormData] = useState({
     popis: '',
@@ -81,10 +82,12 @@ export function ZavadyPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Opravdu chcete smazat tuto závadu z katalogu?')) {
-      deleteZavadaMut.mutate(id);
-    }
+  const handleDelete = (zavada: ZavadaKatalog) => setDeleteTarget(zavada);
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget?.id) return;
+    deleteZavadaMut.mutate(deleteTarget.id);
+    setDeleteTarget(null);
   };
 
   const filteredZavady = zavady.filter(z => {
@@ -241,7 +244,7 @@ export function ZavadyPage() {
                         <Button
                           variant="danger"
                           size="sm"
-                          onClick={() => handleDelete(z.id!)}
+                          onClick={() => handleDelete(z)}
                         >
                           Smazat
                         </Button>
@@ -350,6 +353,15 @@ export function ZavadyPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        title="Smazat závadu"
+        message="Opravdu chcete smazat tuto závadu z katalogu?"
+        confirmLabel="Smazat"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { googleCalendarService, type GoogleCalendarStatus, type GoogleCalendarItem } from '../services/googleCalendar';
-import { Button, Card, Input } from '../components/ui';
+import { Button, Card, Input, ConfirmDialog } from '../components/ui';
 import { backupService } from '../services/database';
 import { useNastaveni, useSaveNastaveni, usePredvoleneTexty, useCreatePredvolenyText, useUpdatePredvolenyText, useDeletePredvolenyText, useDatabaseStats, useTechnikHistorie, useAddTechnikHistorie, useDeleteTechnikHistorie } from '../hooks/useQueries';
 import type { Nastaveni, PredvolenyText, TechnikHistorie } from '../types';
@@ -117,6 +117,9 @@ export function NastaveniPage() {
   const [showNewDoklad, setShowNewDoklad] = useState(false);
   const [newDoklad, setNewDoklad] = useState<Omit<TechnikHistorie, 'id' | 'createdAt'>>(emptyDoklad);
 
+  // Potvrzovací dialog – sdílený pro všechny destruktivní akce na této stránce
+  const [confirmAction, setConfirmAction] = useState<{ title: string; message: string; confirmLabel?: string; onConfirm: () => void } | null>(null);
+
   // Sync nastaveni from query data into local form state
   useEffect(() => {
     if (nastaveniData) setNastaveni(nastaveniData);
@@ -168,18 +171,24 @@ export function NastaveniPage() {
     }
   };
 
-  const handleGcDisconnect = async () => {
-    if (!window.confirm('Opravdu chcete odpojit Google Calendar?')) return;
-    setGcLoading(true);
-    try {
-      await googleCalendarService.disconnect();
-      setGcStatus({ connected: false, calendarId: null });
-      setGcCalendars([]);
-      setGcMessage({ type: 'success', text: 'Google Calendar byl odpojen.' });
-    } catch (err: any) {
-      setGcMessage({ type: 'error', text: err.message });
-    }
-    setGcLoading(false);
+  const handleGcDisconnect = () => {
+    setConfirmAction({
+      title: 'Odpojit Google Calendar',
+      message: 'Opravdu chcete odpojit Google Calendar?',
+      onConfirm: async () => {
+        setConfirmAction(null);
+        setGcLoading(true);
+        try {
+          await googleCalendarService.disconnect();
+          setGcStatus({ connected: false, calendarId: null });
+          setGcCalendars([]);
+          setGcMessage({ type: 'success', text: 'Google Calendar byl odpojen.' });
+        } catch (err: any) {
+          setGcMessage({ type: 'error', text: err.message });
+        }
+        setGcLoading(false);
+      },
+    });
   };
 
   const handleGcSelectCalendar = async (calendarId: string) => {
@@ -221,13 +230,19 @@ export function NastaveniPage() {
     }
   };
 
-  const handleDeleteText = async (id: number) => {
-    if (!window.confirm('Smazat tuto předvolbu?')) return;
-    try {
-      await deleteTextMut.mutateAsync(id);
-    } catch (err) {
-      console.error('Chyba při mazání:', err);
-    }
+  const handleDeleteText = (id: number) => {
+    setConfirmAction({
+      title: 'Smazat předvolbu',
+      message: 'Smazat tuto předvolbu?',
+      onConfirm: async () => {
+        setConfirmAction(null);
+        try {
+          await deleteTextMut.mutateAsync(id);
+        } catch (err) {
+          console.error('Chyba při mazání:', err);
+        }
+      },
+    });
   };
 
   const handleSave = async () => {
@@ -248,9 +263,15 @@ export function NastaveniPage() {
     setNewDoklad(emptyDoklad());
   };
 
-  const handleDeleteDoklad = async (id: number) => {
-    if (!window.confirm('Smazat tento doklad?')) return;
-    await deleteHistorieMut.mutateAsync(id);
+  const handleDeleteDoklad = (id: number) => {
+    setConfirmAction({
+      title: 'Smazat doklad',
+      message: 'Smazat tento doklad?',
+      onConfirm: async () => {
+        setConfirmAction(null);
+        await deleteHistorieMut.mutateAsync(id);
+      },
+    });
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -334,27 +355,31 @@ export function NastaveniPage() {
   };
 
   // Očistit staré data
-  const handleCleanOldData = async () => {
-    if (!window.confirm('Opravdu chcete smazat všechny schválené revize starší než 365 dní a jejich závislé záznamy?')) {
-      return;
-    }
-
-    setIsCleaning(true);
-    try {
-      const result = await backupService.cleanOldData(365);
-      setBackupMessage({
-        type: 'success',
-        text: result.message || `✅ Smazáno ${result.deleted} starých revizí a jejich závislých záznamů.`,
-      });
-      qc.invalidateQueries({ queryKey: ['databaseStats'] });
-    } catch (error) {
-      setBackupMessage({
-        type: 'error',
-        text: `Chyba: ${error instanceof Error ? error.message : 'Neznámá chyba'}`,
-      });
-    } finally {
-      setIsCleaning(false);
-    }
+  const handleCleanOldData = () => {
+    setConfirmAction({
+      title: 'Vyčistit stará data',
+      message: 'Opravdu chcete smazat všechny schválené revize starší než 365 dní a jejich závislé záznamy?',
+      confirmLabel: 'Smazat',
+      onConfirm: async () => {
+        setConfirmAction(null);
+        setIsCleaning(true);
+        try {
+          const result = await backupService.cleanOldData(365);
+          setBackupMessage({
+            type: 'success',
+            text: result.message || `✅ Smazáno ${result.deleted} starých revizí a jejich závislých záznamů.`,
+          });
+          qc.invalidateQueries({ queryKey: ['databaseStats'] });
+        } catch (error) {
+          setBackupMessage({
+            type: 'error',
+            text: `Chyba: ${error instanceof Error ? error.message : 'Neznámá chyba'}`,
+          });
+        } finally {
+          setIsCleaning(false);
+        }
+      },
+    });
   };
 
   const totalRecords = databaseStats
@@ -1168,6 +1193,15 @@ export function NastaveniPage() {
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmAction !== null}
+        title={confirmAction?.title ?? ''}
+        message={confirmAction?.message ?? ''}
+        confirmLabel={confirmAction?.confirmLabel ?? 'Smazat'}
+        onConfirm={() => confirmAction?.onConfirm()}
+        onCancel={() => setConfirmAction(null)}
+      />
     </div>
   );
 }

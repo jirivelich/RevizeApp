@@ -29,17 +29,19 @@ export function DokumentaceTab({
 }: DokumentaceTabProps) {
   const [isPristrojModalOpen, setIsPristrojModalOpen] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
   const addPristroj = useAddPristrojToRevize();
   const removePristroj = useRemovePristrojFromRevize();
 
   const handleAIGenerateReport = async () => {
     if (!revizeId) return;
     setAiGenerating(true);
+    setAiError(null);
     try {
       const { text } = await aiApi.generateReport(revizeId);
       setFormData({ ...formData, zaver: text });
     } catch (err: any) {
-      alert(err.message || 'Chyba AI generování');
+      setAiError(err.message || 'Chyba AI generování');
     } finally {
       setAiGenerating(false);
     }
@@ -457,6 +459,11 @@ export function DokumentaceTab({
               vlastniTexty={vlastniTexty}
             />
           </div>
+          {aiError && (
+            <p className="text-xs font-medium text-[var(--danger)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2 mb-1">
+              {aiError}
+            </p>
+          )}
           <textarea
             className={TW.textarea}
             rows={4}

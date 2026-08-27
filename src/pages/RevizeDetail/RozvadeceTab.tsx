@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Button, Card, Input, Modal, BottomSheet } from '../../components/ui';
+import { Button, Card, Input, Modal, BottomSheet, ConfirmDialog } from '../../components/ui';
 import { okruhService, cranicService } from '../../services/database';
 import { useCreateRozvadec, useDeleteRozvadec, useUpdateRozvadec } from '../../hooks/useQueries';
 import type { Rozvadec, Okruh, Chranic } from '../../types';
@@ -38,6 +38,9 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
   const [isOkruhSheetOpen, setIsOkruhSheetOpen] = useState(false);
   const [isCranicSheetOpen, setIsCranicSheetOpen] = useState(false);
   const [isImportFotoOpen, setIsImportFotoOpen] = useState(false);
+  const [deleteRozvadecId, setDeleteRozvadecId] = useState<number | null>(null);
+  const [deleteOkruhId, setDeleteOkruhId] = useState<number | null>(null);
+  const [deleteChranicId, setDeleteChranicId] = useState<number | null>(null);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [cranicFormData, setCranicFormData] = useState<CranicFormData>({
     cislo: 1, nazev: '', typ: 'A', proud: '25A',
@@ -163,20 +166,23 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     }
   };
 
-  const handleDeleteRozvadec = (rozvadecId: number) => {
-    if (window.confirm('Opravdu chcete smazat tento rozvaděč?')) {
-      deleteRozvadec.mutate(
-        { id: rozvadecId, revizeId },
-        {
-          onSuccess: () => {
-            if (selectedRozvadec?.id === rozvadecId) {
-              setSelectedRozvadec(null);
-              setOkruhy([]);
-            }
-          },
-        }
-      );
-    }
+  const handleDeleteRozvadec = (rozvadecId: number) => setDeleteRozvadecId(rozvadecId);
+
+  const handleConfirmDeleteRozvadec = () => {
+    if (deleteRozvadecId === null) return;
+    const rozvadecId = deleteRozvadecId;
+    setDeleteRozvadecId(null);
+    deleteRozvadec.mutate(
+      { id: rozvadecId, revizeId },
+      {
+        onSuccess: () => {
+          if (selectedRozvadec?.id === rozvadecId) {
+            setSelectedRozvadec(null);
+            setOkruhy([]);
+          }
+        },
+      }
+    );
   };
 
   const resetOkruhForm = () => {
@@ -287,14 +293,17 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     }
   };
 
-  const handleDeleteOkruh = async (okruhId: number) => {
-    if (window.confirm('Opravdu chcete smazat tento okruh?')) {
-      await okruhService.delete(okruhId);
-      if (selectedRozvadec?.id) {
-        const okruhyData = await okruhService.getByRozvadec(selectedRozvadec.id);
-        setOkruhy(okruhyData);
-        setOkruhyCounts(prev => ({ ...prev, [selectedRozvadec.id!]: okruhyData.length }));
-      }
+  const handleDeleteOkruh = (okruhId: number) => setDeleteOkruhId(okruhId);
+
+  const handleConfirmDeleteOkruh = async () => {
+    if (deleteOkruhId === null) return;
+    const okruhId = deleteOkruhId;
+    setDeleteOkruhId(null);
+    await okruhService.delete(okruhId);
+    if (selectedRozvadec?.id) {
+      const okruhyData = await okruhService.getByRozvadec(selectedRozvadec.id);
+      setOkruhy(okruhyData);
+      setOkruhyCounts(prev => ({ ...prev, [selectedRozvadec.id!]: okruhyData.length }));
     }
   };
 
@@ -368,12 +377,15 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     }
   };
 
-  const handleDeleteChranic = async (cranicId: number) => {
-    if (window.confirm('Opravdu chcete smazat tento chránič?')) {
-      await cranicService.delete(cranicId);
-      if (selectedRozvadec?.id) {
-        setChranice(await cranicService.getByRozvadec(selectedRozvadec.id));
-      }
+  const handleDeleteChranic = (cranicId: number) => setDeleteChranicId(cranicId);
+
+  const handleConfirmDeleteChranic = async () => {
+    if (deleteChranicId === null) return;
+    const cranicId = deleteChranicId;
+    setDeleteChranicId(null);
+    await cranicService.delete(cranicId);
+    if (selectedRozvadec?.id) {
+      setChranice(await cranicService.getByRozvadec(selectedRozvadec.id));
     }
   };
 
@@ -764,6 +776,31 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
         }}
       />
     )}
+
+    <ConfirmDialog
+      isOpen={deleteRozvadecId !== null}
+      title="Smazat rozvaděč"
+      message="Opravdu chcete smazat tento rozvaděč?"
+      confirmLabel="Smazat"
+      onConfirm={handleConfirmDeleteRozvadec}
+      onCancel={() => setDeleteRozvadecId(null)}
+    />
+    <ConfirmDialog
+      isOpen={deleteOkruhId !== null}
+      title="Smazat okruh"
+      message="Opravdu chcete smazat tento okruh?"
+      confirmLabel="Smazat"
+      onConfirm={handleConfirmDeleteOkruh}
+      onCancel={() => setDeleteOkruhId(null)}
+    />
+    <ConfirmDialog
+      isOpen={deleteChranicId !== null}
+      title="Smazat chránič"
+      message="Opravdu chcete smazat tento chránič?"
+      confirmLabel="Smazat"
+      onConfirm={handleConfirmDeleteChranic}
+      onCancel={() => setDeleteChranicId(null)}
+    />
     </>
   );
 }

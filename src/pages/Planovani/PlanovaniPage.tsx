@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Modal } from '../../components/ui';
+import { Button, Modal, ConfirmDialog } from '../../components/ui';
 import { useRevize, useZakazky, useCreateZakazka, useUpdateZakazka, useDeleteZakazka, useCreateRevize } from '../../hooks/useQueries';
 import type { Zakazka, KategorieRevize } from '../../types';
 import { emptyFormData, zakazkaToFormData } from './utils';
@@ -69,6 +69,8 @@ export function PlanovaniPage() {
   // === Google Calendar sync ===
   const [gcSyncing, setGcSyncing] = useState(false);
   const [gcMessage, setGcMessage] = useState<string | null>(null);
+  const [revizeError, setRevizeError] = useState<string | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
   const handleGcSync = async () => {
     setGcSyncing(true);
@@ -151,6 +153,7 @@ export function PlanovaniPage() {
 
     const today = new Date().toISOString().split('T')[0];
     const cislo = `REV-${Date.now().toString().slice(-6)}`;
+    setRevizeError(null);
     try {
       const revizeId = await createRevizeMutation.mutateAsync({
         cisloRevize: cislo,
@@ -168,7 +171,8 @@ export function PlanovaniPage() {
       navigate(`/revize/${revizeId}`);
     } catch (err) {
       console.error('Chyba při vytváření revize:', err);
-      alert('Nepodařilo se vytvořit revizní zprávu.');
+      setRevizeError('Nepodařilo se vytvořit revizní zprávu.');
+      setTimeout(() => setRevizeError(null), 5000);
     }
   };
 
@@ -184,10 +188,12 @@ export function PlanovaniPage() {
   };
 
   // === Delete ===
-  const handleDelete = (id: number) => {
-    if (window.confirm('Opravdu chcete smazat tuto zakázku?')) {
-      deleteZakazka.mutate(id);
-    }
+  const handleDelete = (id: number) => setDeleteTargetId(id);
+
+  const handleConfirmDelete = () => {
+    if (deleteTargetId === null) return;
+    deleteZakazka.mutate(deleteTargetId);
+    setDeleteTargetId(null);
   };
 
   return (
@@ -252,6 +258,11 @@ export function PlanovaniPage() {
           gcMessage.startsWith('✅') ? 'bg-green-500/[0.12] text-green-300' : 'bg-red-500/[0.12] text-red-400'
         }`}>
           {gcMessage}
+        </div>
+      )}
+      {revizeError && (
+        <div className="text-sm px-4 py-2 rounded-lg bg-red-500/[0.12] text-red-400">
+          {revizeError}
         </div>
       )}
 
@@ -340,6 +351,15 @@ export function PlanovaniPage() {
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={deleteTargetId !== null}
+        title="Smazat zakázku"
+        message="Opravdu chcete smazat tuto zakázku?"
+        confirmLabel="Smazat"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTargetId(null)}
+      />
     </div>
   );
 }

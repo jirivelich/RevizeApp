@@ -97,6 +97,7 @@ export function HromosvodPrintPage() {
   const [error, setError] = useState<string | null>(null);
   const [paging, setPaging] = useState(false);
   const [pageCount, setPageCount] = useState(0);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const sourceRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -207,11 +208,12 @@ export function HromosvodPrintPage() {
 
   const handleWordExport = async () => {
     if (!data) return;
+    setExportError(null);
     try {
       await exportHromosvodToWord(data);
     } catch (err) {
       console.error('Word export error:', err);
-      alert('Chyba při exportu do Wordu: ' + (err instanceof Error ? err.message : 'Neznámá chyba'));
+      setExportError('Chyba při exportu do Wordu: ' + (err instanceof Error ? err.message : 'Neznámá chyba'));
     }
   };
 
@@ -668,6 +670,13 @@ export function HromosvodPrintPage() {
             </button>
           </div>
         </div>
+        {exportError && (
+          <div className="max-w-[210mm] mx-auto px-6 pb-3">
+            <p className="text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {exportError}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Skrytý zdrojový obsah */}

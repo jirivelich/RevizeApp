@@ -60,6 +60,7 @@ export function RevizePage() {
   const [duplikatSourceCislo, setDuplikatSourceCislo] = useState('');
   const [duplikatCislo, setDuplikatCislo] = useState('');
   const [duplikatTyp, setDuplikatTyp] = useState<'navazujici' | 'duplikat'>('navazujici');
+  const [duplikatError, setDuplikatError] = useState<string | null>(null);
   const [isDuplikating, setIsDuplikating] = useState(false);
 
   // Historie revizí
@@ -227,18 +228,20 @@ export function RevizePage() {
     setDuplikatSourceCislo(cisloRevize);
     setDuplikatCislo(generateCisloRevize());
     setDuplikatTyp('navazujici');
+    setDuplikatError(null);
     setIsDuplikatModalOpen(true);
   };
 
   const handleDuplikovat = async () => {
     if (!duplikatSourceId || !duplikatCislo.trim()) return;
     setIsDuplikating(true);
+    setDuplikatError(null);
     try {
       const result = await revizeService.duplikovat(duplikatSourceId, duplikatCislo.trim(), duplikatTyp);
       setIsDuplikatModalOpen(false);
       navigate(`/revize/${result.id}`);
     } catch (err) {
-      alert('Chyba při duplikaci: ' + (err instanceof Error ? err.message : 'Neznámá chyba'));
+      setDuplikatError('Chyba při duplikaci: ' + (err instanceof Error ? err.message : 'Neznámá chyba'));
     } finally {
       setIsDuplikating(false);
     }
@@ -979,6 +982,12 @@ export function RevizePage() {
             onChange={(e) => setDuplikatCislo(e.target.value)}
             placeholder="např. 202603281200"
           />
+
+          {duplikatError && (
+            <p className="text-xs font-medium text-[var(--danger)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+              {duplikatError}
+            </p>
+          )}
         </div>
       </Modal>
 

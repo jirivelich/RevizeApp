@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react';
-import { Button, Card, Input, Modal } from '../components/ui';
+import { Button, Card, Input, Modal, ConfirmDialog } from '../components/ui';
 import { useFirmy, useCreateFirma, useUpdateFirma, useDeleteFirma } from '../hooks/useQueries';
 import type { Firma } from '../types';
 
@@ -11,6 +11,8 @@ export function FirmyPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFirma, setEditingFirma] = useState<Firma | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Firma | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     nazev: '',
     adresa: '',
@@ -37,6 +39,7 @@ export function FirmyPage() {
   };
 
   const handleOpenModal = (firma?: Firma) => {
+    setFormError(null);
     if (firma) {
       setEditingFirma(firma);
       setFormData({
@@ -62,7 +65,7 @@ export function FirmyPage() {
 
   const handleSave = () => {
     if (!formData.nazev.trim()) {
-      alert('Zadejte název firmy');
+      setFormError('Zadejte název firmy');
       return;
     }
 
@@ -73,10 +76,12 @@ export function FirmyPage() {
     }
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm('Opravdu chcete smazat tuto firmu?')) {
-      deleteFirma.mutate(id);
-    }
+  const handleDelete = (firma: Firma) => setDeleteTarget(firma);
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget?.id) return;
+    deleteFirma.mutate(deleteTarget.id);
+    setDeleteTarget(null);
   };
 
   return (
@@ -146,7 +151,7 @@ export function FirmyPage() {
                         <Button
                           variant="danger"
                           size="sm"
-                          onClick={() => handleDelete(firma.id!)}
+                          onClick={() => handleDelete(firma)}
                         >
                           Smazat
                         </Button>
@@ -234,6 +239,12 @@ export function FirmyPage() {
             />
           </div>
 
+          {formError && (
+            <p className="text-xs font-medium text-[var(--danger)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+              {formError}
+            </p>
+          )}
+
           <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border)]">
             <Button variant="secondary" onClick={handleCloseModal}>
               Zrušit
@@ -244,6 +255,15 @@ export function FirmyPage() {
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        title="Smazat firmu"
+        message="Opravdu chcete smazat tuto firmu?"
+        confirmLabel="Smazat"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

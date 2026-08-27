@@ -1,5 +1,5 @@
 ﻿import { useState } from 'react';
-import { Button, Card, Input, Select, Modal } from '../components/ui';
+import { Button, Card, Input, Select, Modal, ConfirmDialog } from '../components/ui';
 import { usePristroje, useCreatePristroj, useUpdatePristroj, useDeletePristroj, useKalibrace, useCreateKalibrace, useDeleteKalibrace } from '../hooks/useQueries';
 import type { MericiPristroj } from '../types';
 
@@ -19,6 +19,7 @@ export function PristrojePage() {
   const [showExpiring, setShowExpiring] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [historyPristroj, setHistoryPristroj] = useState<MericiPristroj | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MericiPristroj | null>(null);
   const [isKalibraceModalOpen, setIsKalibraceModalOpen] = useState(false);
   const [kalibraceForm, setKalibraceForm] = useState({
     datumKalibrace: new Date().toISOString().split('T')[0],
@@ -86,10 +87,12 @@ export function PristrojePage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Opravdu chcete smazat tento přístroj?')) {
-      deletePristroj.mutate(id);
-    }
+  const handleDelete = (pristroj: MericiPristroj) => setDeleteTarget(pristroj);
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget?.id) return;
+    deletePristroj.mutate(deleteTarget.id);
+    setDeleteTarget(null);
   };
 
   const isExpiring = (platnost: string) => {
@@ -257,7 +260,7 @@ export function PristrojePage() {
                         <Button
                           variant="danger"
                           size="sm"
-                          onClick={() => handleDelete(p.id!)}
+                          onClick={() => handleDelete(p)}
                         >
                           Smazat
                         </Button>
@@ -509,6 +512,15 @@ export function PristrojePage() {
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        title="Smazat přístroj"
+        message="Opravdu chcete smazat tento přístroj?"
+        confirmLabel="Smazat"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

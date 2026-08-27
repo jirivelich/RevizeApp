@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Input, Select, Modal } from '../components/ui';
+import { Button, Card, Input, Select, Modal, ConfirmDialog } from '../components/ui';
 import { useRevize } from '../hooks/useQueries';
 import { mistnostService } from '../services/database';
 import type { Mistnost } from '../types';
@@ -9,6 +9,7 @@ export function MistnostiPage() {
   const [mistnosti, setMistnosti] = useState<(Mistnost & { revizeNazev?: string })[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMistnost, setEditingMistnost] = useState<Mistnost | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<(Mistnost & { revizeNazev?: string }) | null>(null);
 
   const [formData, setFormData] = useState({
     revizeId: 0,
@@ -68,11 +69,13 @@ export function MistnostiPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Opravdu chcete smazat tuto místnost?')) {
-      await mistnostService.delete(id);
-      loadMistnosti();
-    }
+  const handleDelete = (mistnost: Mistnost & { revizeNazev?: string }) => setDeleteTarget(mistnost);
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget?.id) return;
+    await mistnostService.delete(deleteTarget.id);
+    setDeleteTarget(null);
+    loadMistnosti();
   };
 
   return (
@@ -106,7 +109,7 @@ export function MistnostiPage() {
                       Upravit
                     </button>
                     <button
-                      onClick={() => handleDelete(m.id!)}
+                      onClick={() => handleDelete(m)}
                       className="text-xs text-[var(--text-secondary)] hover:text-red-400"
                     >
                       ×
@@ -173,6 +176,15 @@ export function MistnostiPage() {
           />
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        title="Smazat místnost"
+        message="Opravdu chcete smazat tuto místnost?"
+        confirmLabel="Smazat"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

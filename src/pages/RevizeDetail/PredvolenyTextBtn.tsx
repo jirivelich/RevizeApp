@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import type { PredvolenyText } from '../../types';
 import { useCreatePredvolenyText, useDeletePredvolenyText, usePredvoleneTexty } from '../../hooks/useQueries';
 import { PREDVOLENE_TEXTY } from './constants';
+import { ConfirmDialog } from '../../components/ui';
 
 interface PredvolenyTextBtnProps {
   field: string;
@@ -22,6 +23,7 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
   const [adding, setAdding] = useState(false);
   const [newNazev, setNewNazev] = useState('');
   const [newText, setNewText] = useState('');
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const builtIn = PREDVOLENE_TEXTY[field] || [];
   const custom = vlastniTexty.filter(t => t.pole === field);
@@ -50,9 +52,12 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
     );
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Smazat tuto vlastní předvolbu?')) return;
-    deleteText.mutate(id);
+  const handleDelete = (id: number) => setDeleteTargetId(id);
+
+  const handleConfirmDelete = () => {
+    if (deleteTargetId === null) return;
+    deleteText.mutate(deleteTargetId);
+    setDeleteTargetId(null);
   };
 
   const handleSaveAsCurrent = async () => {
@@ -167,6 +172,15 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={deleteTargetId !== null}
+        title="Smazat předvolbu"
+        message="Smazat tuto vlastní předvolbu?"
+        confirmLabel="Smazat"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTargetId(null)}
+      />
     </div>
   );
 }

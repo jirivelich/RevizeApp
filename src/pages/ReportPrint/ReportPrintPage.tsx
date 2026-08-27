@@ -296,8 +296,7 @@ export function ReportPrintPage() {
     try {
       await exportElektroToWord(data);
     } catch (err) {
-      console.error('Word export error:', err);
-      alert('Chyba p\u0159i exportu do Wordu: ' + (err instanceof Error ? err.message : 'Nezn\u00e1m\u00e1 chyba'));
+      console.error('Chyba p\u0159i exportu do Wordu:', err);
     }
   };
 

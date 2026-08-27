@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Card, Input, Select, Modal } from '../components/ui';
+import { Button, Card, Input, Select, Modal, ConfirmDialog } from '../components/ui';
 import { useOkruhyByRozvadec, useCreateOkruh, useUpdateOkruh, useDeleteOkruh, useCranicByRozvadec, useCreateChranic, useUpdateChranic, useDeleteChranic } from '../hooks/useQueries';
 import { rozvadecService } from '../services/database';
 import type { Okruh, Chranic } from '../types';
@@ -82,6 +82,7 @@ export function RozvadecDetailPage() {
 
   const [isOkruhModalOpen, setIsOkruhModalOpen] = useState(false);
   const [editingOkruh, setEditingOkruh] = useState<Okruh | null>(null);
+  const [deleteOkruhTarget, setDeleteOkruhTarget] = useState<Okruh | null>(null);
 
   const [okruhFormData, setOkruhFormData] = useState({
     cislo: 1,
@@ -143,14 +144,17 @@ export function RozvadecDetailPage() {
     setIsOkruhModalOpen(true);
   };
 
-  const handleDeleteOkruh = (okruhId: number) => {
-    if (window.confirm('Opravdu chcete smazat tento okruh?')) {
-      deleteOkruh.mutate({ id: okruhId, rozvadecId: numericId! });
-    }
+  const handleDeleteOkruh = (okruh: Okruh) => setDeleteOkruhTarget(okruh);
+
+  const handleConfirmDeleteOkruh = () => {
+    if (!deleteOkruhTarget?.id) return;
+    deleteOkruh.mutate({ id: deleteOkruhTarget.id, rozvadecId: numericId! });
+    setDeleteOkruhTarget(null);
   };
 
   const [isCranicModalOpen, setIsCranicModalOpen] = useState(false);
   const [editingChranic, setEditingChranic] = useState<Chranic | null>(null);
+  const [deleteChranicTarget, setDeleteChranicTarget] = useState<Chranic | null>(null);
   const [cranicFormData, setCranicFormData] = useState({
     cislo: 1,
     nazev: '',
@@ -220,10 +224,12 @@ export function RozvadecDetailPage() {
     setIsCranicModalOpen(true);
   };
 
-  const handleDeleteChranic = (cranicId: number) => {
-    if (window.confirm('Opravdu chcete smazat tento chránič?')) {
-      deleteChranic.mutate({ id: cranicId, rozvadecId: numericId! });
-    }
+  const handleDeleteChranic = (chranic: Chranic) => setDeleteChranicTarget(chranic);
+
+  const handleConfirmDeleteChranic = () => {
+    if (!deleteChranicTarget?.id) return;
+    deleteChranic.mutate({ id: deleteChranicTarget.id, rozvadecId: numericId! });
+    setDeleteChranicTarget(null);
   };
 
   if (!rozvadec) {
@@ -306,7 +312,7 @@ export function RozvadecDetailPage() {
                         <Button size="sm" variant="secondary" onClick={() => handleEditOkruh(o)} title="Upravit">
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </Button>
-                        <Button size="sm" variant="danger" onClick={() => handleDeleteOkruh(o.id!)} title="Smazat">
+                        <Button size="sm" variant="danger" onClick={() => handleDeleteOkruh(o)} title="Smazat">
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
                         </Button>
                       </div>
@@ -457,7 +463,7 @@ export function RozvadecDetailPage() {
                         <Button variant="secondary" size="sm" onClick={() => handleEditChranic(c)} title="Upravit">
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </Button>
-                        <Button variant="danger" size="sm" onClick={() => handleDeleteChranic(c.id!)} title="Smazat">
+                        <Button variant="danger" size="sm" onClick={() => handleDeleteChranic(c)} title="Smazat">
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
                         </Button>
                       </div>
@@ -617,6 +623,23 @@ export function RozvadecDetailPage() {
           />
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={deleteOkruhTarget !== null}
+        title="Smazat okruh"
+        message="Opravdu chcete smazat tento okruh?"
+        confirmLabel="Smazat"
+        onConfirm={handleConfirmDeleteOkruh}
+        onCancel={() => setDeleteOkruhTarget(null)}
+      />
+      <ConfirmDialog
+        isOpen={deleteChranicTarget !== null}
+        title="Smazat chránič"
+        message="Opravdu chcete smazat tento chránič?"
+        confirmLabel="Smazat"
+        onConfirm={handleConfirmDeleteChranic}
+        onCancel={() => setDeleteChranicTarget(null)}
+      />
     </div>
   );
 }

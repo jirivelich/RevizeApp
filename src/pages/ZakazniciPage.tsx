@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react';
-import { Button, Card, Input, Modal } from '../components/ui';
+import { Button, Card, Input, Modal, ConfirmDialog } from '../components/ui';
 import { zakazniciService } from '../services/database';
 import { useZakaznici, useCreateZakaznik, useUpdateZakaznik, useDeleteZakaznik } from '../hooks/useQueries';
 import type { Zakaznik, Revize } from '../types';
@@ -17,6 +17,8 @@ const ZakazniciPage: React.FC = () => {
   const [selectedZakaznikRevize, setSelectedZakaznikRevize] = useState<Revize[]>([]);
   const [selectedZakaznikName, setSelectedZakaznikName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<Zakaznik | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     nazev: '',
@@ -32,6 +34,7 @@ const ZakazniciPage: React.FC = () => {
   const handleNewZakaznik = () => {
     setIsNewZakaznik(true);
     setEditingZakaznik(null);
+    setFormError(null);
     setFormData({
       nazev: '',
       adresa: '',
@@ -48,6 +51,7 @@ const ZakazniciPage: React.FC = () => {
   const handleEditZakaznik = (zakaznik: Zakaznik) => {
     setIsNewZakaznik(false);
     setEditingZakaznik(zakaznik);
+    setFormError(null);
     setFormData({
       nazev: zakaznik.nazev || '',
       adresa: zakaznik.adresa || '',
@@ -71,18 +75,25 @@ const ZakazniciPage: React.FC = () => {
       setIsModalOpen(false);
     } catch (error) {
       console.error('Chyba při ukládání zákazníka:', error);
-      alert('Nepodařilo se uložit zákazníka');
+      setFormError('Nepodařilo se uložit zákazníka');
     }
   };
 
-  const handleDelete = async (id: number | undefined) => {
-    if (!id) return;
-    if (!confirm('Opravdu chcete smazat tohoto zákazníka? Vazby na revize budou odstraněny.')) return;
+  const handleDelete = (zakaznik: Zakaznik) => {
+    if (!zakaznik.id) return;
+    setFormError(null);
+    setDeleteTarget(zakaznik);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget?.id) return;
     try {
-      await deleteZakaznik.mutateAsync(id);
+      await deleteZakaznik.mutateAsync(deleteTarget.id);
+      setDeleteTarget(null);
     } catch (error) {
       console.error('Chyba při mazání zákazníka:', error);
-      alert('Nepodařilo se smazat zákazníka');
+      setDeleteTarget(null);
+      setFormError('Nepodařilo se smazat zákazníka');
     }
   };
 
@@ -125,6 +136,12 @@ const ZakazniciPage: React.FC = () => {
           <span className="hidden sm:inline">Nový zákazník</span>
         </Button>
       </div>
+
+      {formError && (
+        <p className="text-xs font-medium text-[var(--danger)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+          {formError}
+        </p>
+      )}
 
       {/* Vyhledávání */}
       <Card className="p-4">
@@ -195,7 +212,7 @@ const ZakazniciPage: React.FC = () => {
                         <Button
                           variant="danger"
                           size="sm"
-                          onClick={() => handleDelete(zakaznik.id)}
+                          onClick={() => handleDelete(zakaznik)}
                         >
                           Smazat
                         </Button>
@@ -267,6 +284,12 @@ const ZakazniciPage: React.FC = () => {
             />
           </div>
 
+          {formError && isModalOpen && (
+            <p className="text-xs font-medium text-[var(--danger)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+              {formError}
+            </p>
+          )}
+
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
               Zrušit
@@ -314,6 +337,16 @@ const ZakazniciPage: React.FC = () => {
           )}
         </div>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        title="Smazat zákazníka"
+        message={`Opravdu chcete smazat zákazníka „${deleteTarget?.nazev ?? ''}“? Vazby na revize budou odstraněny.`}
+        confirmLabel="Smazat"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 };

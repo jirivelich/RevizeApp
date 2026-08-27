@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from 'react';
-import { Button, Card, Input, Select, Modal, BottomSheet } from '../../components/ui';
+import { Button, Card, Input, Select, Modal, BottomSheet, ConfirmDialog } from '../../components/ui';
 import { TW } from './tw';
 import { zarizeniService } from '../../services/database';
 import { useCreateMistnost, useUpdateMistnost, useDeleteMistnost } from '../../hooks/useQueries';
@@ -24,6 +24,8 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
   const [editingZarizeni, setEditingZarizeni] = useState<Zarizeni | null>(null);
 
   const [isZarizeniSheetOpen, setIsZarizeniSheetOpen] = useState(false);
+  const [deleteMistnostId, setDeleteMistnostId] = useState<number | null>(null);
+  const [deleteZarizeniId, setDeleteZarizeniId] = useState<number | null>(null);
   const [zarizeniCounts, setZarizeniCounts] = useState<Record<number, number>>(propCounts);
 
   const [mistnostFormData, setMistnostFormData] = useState({
@@ -99,20 +101,23 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
     setIsMistnostModalOpen(true);
   };
 
-  const handleDeleteMistnost = (mistnostId: number) => {
-    if (window.confirm('Opravdu chcete smazat tuto místnost včetně všech zařízení?')) {
-      deleteMistnost.mutate(
-        { id: mistnostId, revizeId },
-        {
-          onSuccess: () => {
-            if (selectedMistnost?.id === mistnostId) {
-              setSelectedMistnost(null);
-              setZarizeni([]);
-            }
-          },
-        }
-      );
-    }
+  const handleDeleteMistnost = (mistnostId: number) => setDeleteMistnostId(mistnostId);
+
+  const handleConfirmDeleteMistnost = () => {
+    if (deleteMistnostId === null) return;
+    const mistnostId = deleteMistnostId;
+    setDeleteMistnostId(null);
+    deleteMistnost.mutate(
+      { id: mistnostId, revizeId },
+      {
+        onSuccess: () => {
+          if (selectedMistnost?.id === mistnostId) {
+            setSelectedMistnost(null);
+            setZarizeni([]);
+          }
+        },
+      }
+    );
   };
 
   // Zařízení CRUD
@@ -155,14 +160,17 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
     }
   };
 
-  const handleDeleteZarizeni = async (zarizeniId: number) => {
-    if (window.confirm('Opravdu chcete smazat toto zařízení?')) {
-      await zarizeniService.delete(zarizeniId);
-      if (selectedMistnost?.id) {
-        const zarizeniData = await zarizeniService.getByMistnost(selectedMistnost.id);
-        setZarizeni(zarizeniData);
-        setZarizeniCounts(prev => ({ ...prev, [selectedMistnost.id!]: zarizeniData.length }));
-      }
+  const handleDeleteZarizeni = (zarizeniId: number) => setDeleteZarizeniId(zarizeniId);
+
+  const handleConfirmDeleteZarizeni = async () => {
+    if (deleteZarizeniId === null) return;
+    const zarizeniId = deleteZarizeniId;
+    setDeleteZarizeniId(null);
+    await zarizeniService.delete(zarizeniId);
+    if (selectedMistnost?.id) {
+      const zarizeniData = await zarizeniService.getByMistnost(selectedMistnost.id);
+      setZarizeni(zarizeniData);
+      setZarizeniCounts(prev => ({ ...prev, [selectedMistnost.id!]: zarizeniData.length }));
     }
   };
 
@@ -401,6 +409,23 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
         <Input label="Poznámka" value={zarizeniFormData.poznamka} onChange={(e) => setZarizeniFormData({ ...zarizeniFormData, poznamka: e.target.value })} placeholder="Volitelná poznámka..." />
       </form>
     </BottomSheet>
+
+    <ConfirmDialog
+      isOpen={deleteMistnostId !== null}
+      title="Smazat místnost"
+      message="Opravdu chcete smazat tuto místnost včetně všech zařízení?"
+      confirmLabel="Smazat"
+      onConfirm={handleConfirmDeleteMistnost}
+      onCancel={() => setDeleteMistnostId(null)}
+    />
+    <ConfirmDialog
+      isOpen={deleteZarizeniId !== null}
+      title="Smazat zařízení"
+      message="Opravdu chcete smazat toto zařízení?"
+      confirmLabel="Smazat"
+      onConfirm={handleConfirmDeleteZarizeni}
+      onCancel={() => setDeleteZarizeniId(null)}
+    />
     </>
   );
 }

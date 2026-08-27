@@ -1,7 +1,10 @@
 ﻿import { useMemo, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { useQuery as useRQQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { useRevize, usePristroje, useZakazky } from '../hooks/useQueries';
+import { Badge } from '../components/ui';
+import type { BadgeVariant } from '../components/ui';
 import type { MericiPristroj, Revize, Zakazka } from '../types';
 
 /* ═══ Helpers ═══ */
@@ -14,12 +17,24 @@ function daysUntil(dateStr: string) {
 
 /* ═══ Sub-components ═══ */
 
-function StatCard({ title, value, subtitle, accent, link }: {
+type StatTint = 'blue' | 'amber' | 'danger' | 'success';
+
+const tintClasses: Record<StatTint, string> = {
+  blue: 'bg-blue-500/[0.12] text-blue-400',
+  amber: 'bg-amber-500/[0.14] text-amber-400',
+  danger: 'bg-red-500/[0.12] text-red-400',
+  success: 'bg-emerald-500/[0.13] text-emerald-400',
+};
+
+function StatCard({ title, value, subtitle, icon, tint, link }: {
   title: string; value: number; subtitle?: string;
-  accent: string; link: string;
+  icon: ReactNode; tint: StatTint; link: string;
 }) {
   return (
-    <Link to={link} className={`group block rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] shadow-[var(--shadow-elevated)] p-3 transition-all hover:border-[var(--border-strong)] active:scale-[0.98] border-l-[3px] ${accent}`}>
+    <Link to={link} className="group block rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] p-3 transition-all hover:border-[var(--border-strong)] active:scale-[0.98]">
+      <div className={`mb-2 flex h-7 w-7 items-center justify-center rounded-md ${tintClasses[tint]}`}>
+        {icon}
+      </div>
       <p className="text-[11px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">{title}</p>
       <p className="mt-1 text-2xl font-bold text-[var(--text)] tracking-tight">{value}</p>
       {subtitle && <p className="mt-0.5 text-[10px] text-[var(--text-muted)]">{subtitle}</p>}
@@ -27,31 +42,27 @@ function StatCard({ title, value, subtitle, accent, link }: {
   );
 }
 
-function RevizeRow({ r }: { r: Revize }) {
-  const stavConfig = {
-    'dokončeno':    { dot: 'bg-emerald-500', bg: 'bg-emerald-500/[0.15] text-emerald-300' },
-    'rozpracováno': { dot: 'bg-amber-500',   bg: 'bg-amber-500/[0.15] text-amber-300' },
-    'schváleno':    { dot: 'bg-blue-500',    bg: 'bg-[var(--bg-accent-badge)] text-blue-300' },
-  } as const;
-  const cfg = stavConfig[r.stav] ?? { dot: 'bg-slate-400', bg: 'bg-[var(--bg-hover)] text-[var(--text-secondary)]' };
+const STAV_BADGE_VARIANT: Record<string, BadgeVariant> = {
+  'dokončeno': 'success',
+  'rozpracováno': 'warning',
+  'schváleno': 'info',
+};
 
+function RevizeRow({ r }: { r: Revize }) {
   return (
     <Link to={`/revize/${r.id}`} className="group flex items-center gap-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-faint)] px-2.5 py-2 transition-all hover:border-[var(--border-strong)]">
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13px] font-medium text-[var(--text)] group-hover:text-slate-100 transition-colors">{r.nazev}</p>
         <p className="text-[11px] text-[var(--text-secondary)]">{r.cisloRevize} · {formatDate(r.datum)}</p>
       </div>
-      <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded px-2 py-0.5 text-[10px] font-medium ${cfg.bg}`}>
-        <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
-        {r.stav}
-      </span>
+      <Badge variant={STAV_BADGE_VARIANT[r.stav] ?? 'neutral'}>{r.stav}</Badge>
     </Link>
   );
 }
 
 function ZakazkaRow({ z }: { z: Zakazka }) {
   const days = daysUntil(z.datumPlanovany);
-  const urgency = days < 0 ? 'text-red-300 bg-red-500/[0.15]' : days <= 3 ? 'text-amber-300 bg-amber-500/[0.15]' : 'text-[var(--text-secondary)] bg-[var(--bg-input)]';
+  const urgencyVariant: BadgeVariant = days < 0 ? 'danger' : days <= 3 ? 'warning' : 'neutral';
   const prioritaColor = {
     'vysoká': 'border-l-red-500',
     'střední': 'border-l-amber-400',
@@ -64,9 +75,7 @@ function ZakazkaRow({ z }: { z: Zakazka }) {
         <p className="truncate text-[13px] font-medium text-[var(--text)] group-hover:text-slate-100 transition-colors">{z.nazev}</p>
         <p className="text-[11px] text-[var(--text-secondary)]">{z.klient}</p>
       </div>
-      <span className={`whitespace-nowrap rounded px-2 py-0.5 text-[11px] font-medium ${urgency}`}>
-        {days < 0 ? `${Math.abs(days)}d po` : days === 0 ? 'Dnes' : `za ${days}d`}
-      </span>
+      <Badge variant={urgencyVariant}>{days < 0 ? `${Math.abs(days)}d po` : days === 0 ? 'Dnes' : `za ${days}d`}</Badge>
     </Link>
   );
 }
@@ -560,28 +569,32 @@ export function Dashboard() {
             title="Celkem revizí"
             value={stats.celkemRevizi}
             subtitle={`${stats.dokonceno} dokončených`}
-            accent="border-l-slate-400"
+            icon={<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
+            tint="blue"
             link="/revize"
           />
           <StatCard
             title="Rozpracováno"
             value={stats.rozpracovano}
             subtitle="čeká na dokončení"
-            accent="border-l-amber-400"
+            icon={<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+            tint="amber"
             link="/revize"
           />
           <StatCard
             title="K rekalibraci"
             value={stats.pristrojeKRekalibraci}
             subtitle="do 30 dnů"
-            accent="border-l-red-400"
+            icon={<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.999L13.732 4.001c-.77-1.333-2.694-1.333-3.464 0L3.34 16.001C2.57 17.334 3.532 19 5.072 19z" /></svg>}
+            tint="danger"
             link="/pristroje"
           />
           <StatCard
             title="Plánované zakázky"
             value={stats.planovaneZakazky}
             subtitle="naplánováno"
-            accent="border-l-emerald-400"
+            icon={<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+            tint="success"
             link="/planovani"
           />
         </div>

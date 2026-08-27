@@ -1,5 +1,5 @@
 ﻿import { useState, useRef } from 'react';
-import { Button, Card, Select, Modal } from '../../components/ui';
+import { Button, Card, Select, Modal, ConfirmDialog } from '../../components/ui';
 import { zavadaService, revizeService } from '../../services/database';
 import { useCreateZavada, useUpdateZavada, useDeleteZavada } from '../../hooks/useQueries';
 import type { Zavada, Rozvadec, Mistnost, ZavadaKatalog } from '../../types';
@@ -22,6 +22,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [selectedKatalogZavada, setSelectedKatalogZavada] = useState<string>('');
   const [inlineMode, setInlineMode] = useState(false);
+  const [deleteZavadaId, setDeleteZavadaId] = useState<number | null>(null);
   const [inlineDraft, setInlineDraft] = useState({
     popis: '',
     zavaznost: 'C2' as Zavada['zavaznost'],
@@ -105,13 +106,16 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
     setIsZavadaModalOpen(true);
   };
 
-  const handleDeleteZavada = (zavadaId: number) => {
-    if (window.confirm('Opravdu chcete smazat tuto závadu?')) {
-      deleteZavada.mutate(
-        { id: zavadaId, revizeId },
-        { onSuccess: () => updateRevizeVysledek(revizeId) }
-      );
-    }
+  const handleDeleteZavada = (zavadaId: number) => setDeleteZavadaId(zavadaId);
+
+  const handleConfirmDeleteZavada = () => {
+    if (deleteZavadaId === null) return;
+    const zavadaId = deleteZavadaId;
+    setDeleteZavadaId(null);
+    deleteZavada.mutate(
+      { id: zavadaId, revizeId },
+      { onSuccess: () => updateRevizeVysledek(revizeId) }
+    );
   };
 
   const handleInlineSave = () => {
@@ -430,6 +434,15 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
         </div>
       </div>
     )}
+
+    <ConfirmDialog
+      isOpen={deleteZavadaId !== null}
+      title="Smazat závadu"
+      message="Opravdu chcete smazat tuto závadu?"
+      confirmLabel="Smazat"
+      onConfirm={handleConfirmDeleteZavada}
+      onCancel={() => setDeleteZavadaId(null)}
+    />
     </>
   );
 }
