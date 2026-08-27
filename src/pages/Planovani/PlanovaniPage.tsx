@@ -216,7 +216,7 @@ export function PlanovaniPage() {
               onClick={() => setViewMode('list')}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'list'
-                  ? 'bg-slate-700 text-white'
+                  ? 'bg-[var(--primary)] text-white'
                   : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
               }`}
             >
@@ -226,7 +226,7 @@ export function PlanovaniPage() {
               onClick={() => setViewMode('week')}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'week'
-                  ? 'bg-slate-700 text-white'
+                  ? 'bg-[var(--primary)] text-white'
                   : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
               }`}
             >
@@ -236,7 +236,7 @@ export function PlanovaniPage() {
               onClick={() => setViewMode('calendar')}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 viewMode === 'calendar'
-                  ? 'bg-slate-700 text-white'
+                  ? 'bg-[var(--primary)] text-white'
                   : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
               }`}
             >
