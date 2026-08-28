@@ -34,11 +34,11 @@ export async function removePendingRequest(id: number) {
 /**
  * Po úspěšném POST přepíše všechna dočasná FK ve zbývající frontě + v cache tabulkách.
  * Nahradí tempId → realId v:
- *   - body polích: revizeId, rozvadecId, mistnostId, okruhId
+ *   - body polích: revizeId, rozvadecId, mistnostId, okruhId, zakaznikId
  *   - URL patternu: /${tempId} (pro navazující PUT/DELETE téhož záznamu)
  */
 async function remapTempIdInQueue(tempId: number, realId: number): Promise<void> {
-  const FK_FIELDS = ['revizeId', 'rozvadecId', 'mistnostId', 'okruhId'] as const;
+  const FK_FIELDS = ['revizeId', 'rozvadecId', 'mistnostId', 'okruhId', 'zakaznikId'] as const;
   const remaining = await db.pendingRequests.toArray();
 
   for (const req of remaining) {

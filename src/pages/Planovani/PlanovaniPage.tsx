@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Modal, ConfirmDialog } from '../../components/ui';
-import { useRevize, useZakazky, useCreateZakazka, useUpdateZakazka, useDeleteZakazka, useCreateRevize } from '../../hooks/useQueries';
+import { useRevize, useZakazky, useCreateZakazka, useUpdateZakazka, useDeleteZakazka, useCreateRevize, useZakaznici } from '../../hooks/useQueries';
 import type { Zakazka, KategorieRevize } from '../../types';
 import { emptyFormData, zakazkaToFormData } from './utils';
 import type { ZakazkaFormData } from './utils';
@@ -50,6 +50,7 @@ const KATEGORIE_REVIZE: { value: KategorieRevize; label: string; popis: string; 
 export function PlanovaniPage() {
   const { data: zakazky = [] } = useZakazky();
   const { data: revize = [] } = useRevize();
+  const { data: zakaznici = [] } = useZakaznici();
   const createZakazka = useCreateZakazka();
   const updateZakazka = useUpdateZakazka();
   const deleteZakazka = useDeleteZakazka();
@@ -166,6 +167,7 @@ export function PlanovaniPage() {
         nazev: z.nazev,
         adresa: z.adresa,
         objednatel: z.klient,
+        zakaznikId: z.zakaznikId,
         kategorieRevize: kategorie,
         datum: today,
         termin: 60,
@@ -319,6 +321,7 @@ export function PlanovaniPage() {
         formData={formData}
         setFormData={setFormData}
         revize={revize}
+        zakaznici={zakaznici}
         isEditing={editingId !== null}
       />
 

@@ -933,6 +933,36 @@ export function NastaveniPage() {
               </Button>
             </div>
           </Card>
+          <Card title="Prohlížečová upozornění">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={!!nastaveni.browserNotificationsEnabled}
+                onChange={(e) => {
+                  const enabled = e.target.checked;
+                  setNastaveni({ ...nastaveni, browserNotificationsEnabled: enabled });
+                  if (enabled && typeof Notification !== 'undefined' && Notification.permission === 'default') {
+                    Notification.requestPermission();
+                  }
+                }}
+                className="mt-0.5"
+              />
+              <span className="text-sm text-[var(--text)]">
+                Povolit systémová upozornění v prohlížeči
+                <span className="block text-xs text-[var(--text-secondary)] mt-0.5">
+                  Zobrazí upozornění (kritická a varovná) jako notifikaci operačního systému, pokud máte aplikaci otevřenou v kartě nebo okně prohlížeče. Prohlížeč se při zapnutí zeptá na oprávnění.
+                  {typeof Notification !== 'undefined' && Notification.permission === 'denied' && (
+                    <span className="block text-[var(--danger-text)] mt-1">Oprávnění bylo zablokováno — povolte notifikace pro tuto stránku v nastavení prohlížeče.</span>
+                  )}
+                </span>
+              </span>
+            </label>
+            <div className="mt-4">
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving ? 'Ukládám...' : 'Uložit nastavení'}
+              </Button>
+            </div>
+          </Card>
           <Card title="Jak fungují upozornění">
             <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
               <li className="flex gap-2"><span className="text-blue-500 mt-0.5">•</span><span><strong>Plánované zakázky</strong> — upozorní na zakázky se stavem „Plánováno“, které mají datum realizace během nastaveného počtu dní.</span></li>

@@ -115,7 +115,8 @@ interface ZakazkaForSync {
 export async function syncZakazkyToCalendar(
   userId: number,
   calendarId: string,
-  zakazky: ZakazkaForSync[]
+  zakazky: ZakazkaForSync[],
+  reminderDaysBefore?: number
 ): Promise<{ created: number; updated: number; errors: number }> {
   const auth = await getAuthorizedClient(userId);
   const calendar = google.calendar({ version: 'v3', auth });
@@ -135,7 +136,7 @@ export async function syncZakazkyToCalendar(
       const eventKey = `revizeapp-zakazka-${z.id}`;
       const existingEventId = existingEvents.get(eventKey);
 
-      const eventData = buildEventData(z);
+      const eventData = buildEventData(z, reminderDaysBefore);
 
       if (existingEventId) {
         await calendar.events.update({
@@ -196,7 +197,7 @@ async function getExistingRevizeAppEvents(
 }
 
 // Sestavit data události Google Calendaru ze zakázky
-function buildEventData(z: ZakazkaForSync): object {
+function buildEventData(z: ZakazkaForSync, reminderDaysBefore?: number): object {
   const prioritaEmoji = z.priorita === 'vysoká' ? '🔴' : z.priorita === 'střední' ? '🟡' : '🟢';
   const title = `${prioritaEmoji} ${z.nazev} – ${z.klient}`;
 
@@ -239,6 +240,8 @@ function buildEventData(z: ZakazkaForSync): object {
     .filter(Boolean)
     .join('\n');
 
+  const reminderMinutes = reminderDaysBefore && reminderDaysBefore > 0 ? reminderDaysBefore * 24 * 60 : undefined;
+
   return {
     summary: title,
     description,
@@ -246,5 +249,14 @@ function buildEventData(z: ZakazkaForSync): object {
     start,
     end,
     colorId: z.priorita === 'vysoká' ? '11' : z.priorita === 'střední' ? '5' : '2',
+    reminders: reminderMinutes
+      ? {
+          useDefault: false,
+          overrides: [
+            { method: 'popup', minutes: reminderMinutes },
+            { method: 'email', minutes: reminderMinutes },
+          ],
+        }
+      : undefined,
   };
 }

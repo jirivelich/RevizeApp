@@ -261,6 +261,7 @@ export interface Zakazka {
   nazev: string;
   klient: string;
   adresa: string;
+  zakaznikId?: number;
   datumPlanovany: string;
   casPlanovany?: string; // HH:mm format
   datumDokonceni?: string;
@@ -312,6 +313,7 @@ export interface Nastaveni {
   upozorneniZpravaDni?: number;
   upozorneniTechnikDni?: number;
   upozorneniPlatnostRevizeDni?: number;
+  browserNotificationsEnabled?: boolean;
 }
 
 export type NotificationType =

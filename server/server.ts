@@ -870,6 +870,95 @@ async function startServer() {
   });
 
   // ==================== ZAKÁZKY ====================
+
+  const ZAKAZKA_STAVY = ['plánováno', 'v realizaci', 'dokončeno', 'zrušeno'];
+  const ZAKAZKA_PRIORITY = ['nizká', 'střední', 'vysoká'];
+  const ALLOWED_ZAKAZKA_FIELDS = [
+    'nazev', 'klient', 'adresa', 'zakaznikId', 'datumPlanovany', 'casPlanovany',
+    'datumDokonceni', 'stav', 'priorita', 'revizeId', 'poznamka',
+    'datumyRealizace', 'lhutaZpravyDni', 'datumOdevzdaniZpravy',
+  ] as const;
+
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  const TIME_RE = /^\d{2}:\d{2}$/;
+  const isValidDate = (v: string) => DATE_RE.test(v) && !isNaN(Date.parse(v));
+  const isPositiveIntOrNull = (v: any) => v === null || v === undefined || (Number.isInteger(v) && v > 0);
+
+  // Validuje tělo požadavku pro zakázku. isPartial=true pro PUT (pole se kontrolují jen pokud jsou přítomna).
+  function validateZakazkaBody(body: any, isPartial: boolean): string | null {
+    if (!isPartial) {
+      if (!body.nazev || !String(body.nazev).trim()) return 'Chybí název zakázky';
+      if (!body.klient || !String(body.klient).trim()) return 'Chybí klient';
+      if (!body.adresa || !String(body.adresa).trim()) return 'Chybí adresa';
+      if (!body.datumPlanovany || !isValidDate(body.datumPlanovany)) return 'Neplatné datum plánované realizace';
+    }
+    if (body.datumPlanovany !== undefined && body.datumPlanovany !== null && !isValidDate(body.datumPlanovany)) {
+      return 'Neplatné datum plánované realizace';
+    }
+    if (body.datumDokonceni !== undefined && body.datumDokonceni !== null && !isValidDate(body.datumDokonceni)) {
+      return 'Neplatné datum dokončení';
+    }
+    if (body.datumOdevzdaniZpravy !== undefined && body.datumOdevzdaniZpravy !== null && !isValidDate(body.datumOdevzdaniZpravy)) {
+      return 'Neplatné datum odevzdání zprávy';
+    }
+    if (body.casPlanovany !== undefined && body.casPlanovany !== null && !TIME_RE.test(body.casPlanovany)) {
+      return 'Neplatný formát plánovaného času (HH:mm)';
+    }
+    if (body.stav !== undefined && !ZAKAZKA_STAVY.includes(body.stav)) {
+      return `Neplatný stav zakázky: ${body.stav}`;
+    }
+    if (body.priorita !== undefined && !ZAKAZKA_PRIORITY.includes(body.priorita)) {
+      return `Neplatná priorita zakázky: ${body.priorita}`;
+    }
+    if (body.zakaznikId !== undefined && !isPositiveIntOrNull(body.zakaznikId)) {
+      return 'Neplatné ID zákazníka';
+    }
+    if (body.revizeId !== undefined && !isPositiveIntOrNull(body.revizeId)) {
+      return 'Neplatné ID revize';
+    }
+    if (body.datumyRealizace !== undefined && body.datumyRealizace !== null) {
+      if (!Array.isArray(body.datumyRealizace) || !body.datumyRealizace.every((d: any) => isValidDate(d))) {
+        return 'Neplatný seznam dní realizace';
+      }
+    }
+    return null;
+  }
+
+  // Best-effort automatická synchronizace zakázek do Google Kalendáře po zápisu.
+  // Nikdy neblokuje ani neshazuje odpověď klientovi - chyby se jen zalogují.
+  async function triggerAutoGoogleSync(userId: number) {
+    try {
+      const tokenRow = await pool.query(
+        'SELECT calendar_id FROM google_oauth_tokens WHERE user_id = $1',
+        [userId]
+      );
+      if (tokenRow.rows.length === 0) return; // uživatel nemá propojený Google Calendar
+      const calendarId = tokenRow.rows[0].calendar_id || 'primary';
+
+      const zakazkyResult = await pool.query(`
+        SELECT id, nazev, klient, adresa, "datumPlanovany", "casPlanovany",
+               "datumDokonceni", "datumyRealizace", "datumOdevzdaniZpravy",
+               stav, priorita, poznamka
+        FROM zakazka
+        WHERE stav != 'zrušeno'
+        ORDER BY "datumPlanovany" DESC
+      `);
+      const zakazky = zakazkyResult.rows.map((r: any) => ({
+        ...r,
+        datumyRealizace: r.datumyRealizace
+          ? (typeof r.datumyRealizace === 'string' ? JSON.parse(r.datumyRealizace) : r.datumyRealizace)
+          : [],
+      }));
+
+      const nastaveniRow = await pool.query('SELECT "upozorneniZakazkaDni" FROM nastaveni LIMIT 1');
+      const reminderDaysBefore = nastaveniRow.rows[0]?.upozorneniZakazkaDni ?? undefined;
+
+      await syncZakazkyToCalendar(userId, calendarId, zakazky, reminderDaysBefore);
+    } catch (err) {
+      console.error('Automatická synchronizace do Google Calendar selhala:', err);
+    }
+  }
+
   app.get('/api/zakazky', authMiddleware, async (req, res) => {
     try {
       const result = await pool.query('SELECT * FROM zakazka ORDER BY "datumPlanovany" DESC');
@@ -883,33 +972,43 @@ async function startServer() {
     }
   });
 
-  app.post('/api/zakazky', authMiddleware, async (req, res) => {
+  app.post('/api/zakazky', authMiddleware, async (req: AuthRequest, res) => {
     try {
-      const { nazev, klient, adresa, datumPlanovany, casPlanovany, stav, priorita, revizeId, poznamka,
+      const validationError = validateZakazkaBody(req.body, false);
+      if (validationError) return res.status(400).json({ error: validationError });
+
+      const { nazev, klient, adresa, zakaznikId, datumPlanovany, casPlanovany, stav, priorita, revizeId, poznamka,
               datumyRealizace, lhutaZpravyDni, datumOdevzdaniZpravy } = req.body;
       const now = new Date().toISOString();
       const realizaceJson = Array.isArray(datumyRealizace) && datumyRealizace.length > 0
         ? JSON.stringify(datumyRealizace) : null;
 
       const result = await pool.query(`
-        INSERT INTO zakazka (nazev, klient, adresa, "datumPlanovany", "casPlanovany", stav, priorita,
+        INSERT INTO zakazka (nazev, klient, adresa, "zakaznikId", "datumPlanovany", "casPlanovany", stav, priorita,
           "revizeId", poznamka, "datumyRealizace", "lhutaZpravyDni", "datumOdevzdaniZpravy", "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         RETURNING id
-      `, [nazev, klient, adresa, datumPlanovany, casPlanovany || null, stav, priorita,
+      `, [nazev, klient, adresa, zakaznikId || null, datumPlanovany, casPlanovany || null, stav, priorita,
           revizeId || null, poznamka || null, realizaceJson, lhutaZpravyDni ?? 4,
           datumOdevzdaniZpravy || null, now, now]);
 
       res.json({ id: result.rows[0].id });
+      triggerAutoGoogleSync(req.user!.id);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
   });
 
-  app.put('/api/zakazky/:id', authMiddleware, async (req, res) => {
+  app.put('/api/zakazky/:id', authMiddleware, async (req: AuthRequest, res) => {
     try {
+      const validationError = validateZakazkaBody(req.body, true);
+      if (validationError) return res.status(400).json({ error: validationError });
+
       const now = new Date().toISOString();
-      const body = { ...req.body };
+      const body: Record<string, any> = {};
+      for (const key of ALLOWED_ZAKAZKA_FIELDS) {
+        if (Object.prototype.hasOwnProperty.call(req.body, key)) body[key] = req.body[key];
+      }
       // Serializace pole datumyRealizace
       if (Array.isArray(body.datumyRealizace)) {
         body.datumyRealizace = body.datumyRealizace.length > 0
@@ -923,15 +1022,17 @@ async function startServer() {
       await pool.query(`UPDATE zakazka SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
 
       res.json({ success: true });
+      triggerAutoGoogleSync(req.user!.id);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
   });
 
-  app.delete('/api/zakazky/:id', authMiddleware, async (req, res) => {
+  app.delete('/api/zakazky/:id', authMiddleware, async (req: AuthRequest, res) => {
     try {
       await pool.query('DELETE FROM zakazka WHERE id = $1', [req.params.id]);
       res.json({ success: true });
+      triggerAutoGoogleSync(req.user!.id);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
@@ -1869,7 +1970,10 @@ async function startServer() {
           : [],
       }));
 
-      const result = await syncZakazkyToCalendar(userId, calendarId, zakazky);
+      const nastaveniRow = await pool.query('SELECT "upozorneniZakazkaDni" FROM nastaveni LIMIT 1');
+      const reminderDaysBefore = nastaveniRow.rows[0]?.upozorneniZakazkaDni ?? undefined;
+
+      const result = await syncZakazkyToCalendar(userId, calendarId, zakazky, reminderDaysBefore);
       res.json({ success: true, ...result });
     } catch (error: any) {
       console.error('Google Calendar sync chyba:', error);

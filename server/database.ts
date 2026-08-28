@@ -497,6 +497,10 @@ export async function initializeDatabase() {
       'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "upozorneniRevizeDni" INTEGER DEFAULT 14',
       'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "upozorneniKalibraceDni" INTEGER DEFAULT 30',
       'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "upozorneniZpravaDni" INTEGER DEFAULT 3',
+      // Propojení zakázky na zákazníka (autocomplete/předvyplnění klienta a adresy)
+      'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS "zakaznikId" INTEGER REFERENCES zakaznik(id)',
+      // Povolení prohlížečových systémových upozornění (Web Notifications)
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "browserNotificationsEnabled" BOOLEAN DEFAULT false',
       'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "upozorneniTechnikDni" INTEGER DEFAULT 60',
       'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "upozorneniPlatnostRevizeDni" INTEGER DEFAULT 60',
       // Náčrt LPS – base64 PNG

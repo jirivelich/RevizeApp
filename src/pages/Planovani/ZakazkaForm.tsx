@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react';
 import { Input, Select, Modal, Button } from '../../components/ui';
-import type { Revize } from '../../types';
+import type { Revize, Zakaznik } from '../../types';
 import type { ZakazkaFormData } from './utils';
 import { PRIORITA_OPTIONS, STAV_OPTIONS, addDays } from './utils';
 
@@ -11,6 +11,7 @@ interface ZakazkaFormProps {
   formData: ZakazkaFormData;
   setFormData: React.Dispatch<React.SetStateAction<ZakazkaFormData>>;
   revize: Revize[];
+  zakaznici: Zakaznik[];
   isEditing: boolean;
 }
 
@@ -21,6 +22,7 @@ export function ZakazkaForm({
   formData,
   setFormData,
   revize,
+  zakaznici,
   isEditing,
 }: ZakazkaFormProps) {
   const [formError, setFormError] = useState<string | null>(null);
@@ -88,6 +90,24 @@ export function ZakazkaForm({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input label="Název zakázky" value={formData.nazev} onChange={(e) => setFormData((prev) => ({ ...prev, nazev: e.target.value }))} required />
+        <Select
+          label="Ze zákazníků (volitelné, předvyplní klienta a adresu)"
+          value={formData.zakaznikId?.toString() || ''}
+          onChange={(e) => {
+            const id = e.target.value ? parseInt(e.target.value) : undefined;
+            const zakaznik = zakaznici.find((z) => z.id === id);
+            setFormData((prev) => ({
+              ...prev,
+              zakaznikId: id,
+              klient: zakaznik?.nazev ?? prev.klient,
+              adresa: zakaznik?.adresa ?? prev.adresa,
+            }));
+          }}
+          options={[
+            { value: '', label: '-- Bez zákazníka (volný text) --' },
+            ...zakaznici.filter((z) => z.id !== undefined).map((z) => ({ value: z.id!.toString(), label: z.nazev })),
+          ]}
+        />
         <Input label="Klient" value={formData.klient} onChange={(e) => setFormData((prev) => ({ ...prev, klient: e.target.value }))} required />
         <Input label="Adresa" value={formData.adresa} onChange={(e) => setFormData((prev) => ({ ...prev, adresa: e.target.value }))} required />
 

@@ -4,6 +4,7 @@ export type ZakazkaFormData = {
   nazev: string;
   klient: string;
   adresa: string;
+  zakaznikId: number | undefined;
   datumPlanovany: string;
   casPlanovany: string;
   datumyRealizace: string[];       // pole konkrétních dní realizace
@@ -19,6 +20,7 @@ export const emptyFormData: ZakazkaFormData = {
   nazev: '',
   klient: '',
   adresa: '',
+  zakaznikId: undefined,
   datumPlanovany: new Date().toISOString().split('T')[0],
   casPlanovany: '08:00',
   datumyRealizace: [],
@@ -54,6 +56,7 @@ export function zakazkaToFormData(z: Zakazka): ZakazkaFormData {
     nazev: z.nazev,
     klient: z.klient,
     adresa: z.adresa,
+    zakaznikId: z.zakaznikId,
     datumPlanovany: z.datumPlanovany,
     casPlanovany: z.casPlanovany || '08:00',
     datumyRealizace: z.datumyRealizace || [],

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNotifications } from '../hooks/useNotifications';
+import { useBrowserNotifications } from '../hooks/useBrowserNotifications';
+import { useNastaveni } from '../hooks/useQueries';
 import { NotificationPanel } from './NotificationPanel';
 
 interface Props {
@@ -9,6 +11,8 @@ interface Props {
 export function NotificationBell({ strongText = false }: Props & { strongText?: boolean }) {
   const [open, setOpen] = useState(false);
   const { notifications, count } = useNotifications();
+  const { data: nastaveni } = useNastaveni();
+  useBrowserNotifications(notifications, !!nastaveni?.browserNotificationsEnabled);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
