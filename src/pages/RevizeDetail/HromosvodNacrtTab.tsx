@@ -4,7 +4,7 @@ import { HromosvodNacrtCanvas } from '../../components/HromosvodNacrtCanvas';
 
 interface Props {
   formData: Partial<Revize>;
-  setFormData: (data: Partial<Revize>) => void;
+  setFormData: React.Dispatch<React.SetStateAction<Partial<Revize>>>;
 }
 
 export const HromosvodNacrtTab: React.FC<Props> = ({ formData, setFormData }) => {
@@ -19,10 +19,14 @@ export const HromosvodNacrtTab: React.FC<Props> = ({ formData, setFormData }) =>
         </p>
       </div>
 
-      <HromosvodNacrtCanvas
-        value={formData.hromosvodNacrt}
-        onChange={(dataUrl) => setFormData({ ...formData, hromosvodNacrt: dataUrl })}
-      />
+      {/* Editor reads `value` only once – mount it after the revision is loaded, once per revision */}
+      {formData.id !== undefined && (
+        <HromosvodNacrtCanvas
+          key={formData.id}
+          value={formData.hromosvodNacrt}
+          onChange={(dataUrl) => setFormData(prev => ({ ...prev, hromosvodNacrt: dataUrl }))}
+        />
+      )}
     </div>
   );
 };

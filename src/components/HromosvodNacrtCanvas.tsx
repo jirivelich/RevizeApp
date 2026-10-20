@@ -123,6 +123,9 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
   useEffect(() => { rotRef.current  = newSymRot;  }, [newSymRot]);
 
   const history = useRef<HistoryEntry[]>([]);
+  const readyRef = useRef(false);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const changedRef = useRef(false); // did the current drag actually change something
 
   // Drag state
   const dragging   = useRef(false);
@@ -138,13 +141,21 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
   const getBg  = () => bgElRef.current?.getContext('2d') ?? null;
   const getVis = () => visRef.current?.getContext('2d') ?? null;
 
-  // Render: bgCanvas → visible + symbols on top
-  function fullRedraw(selId: string | null) {
+  // Render: white + (screen-only grid) + bgCanvas + symbols on top.
+  // The grid is never part of bg, so it does not leak into the printed `full` PNG.
+  function paint(syms: LpsSymbol[], selId: string | null, grid: boolean) {
     const vis = getVis();
     const bg  = bgElRef.current;
     if (!vis || !bg) return;
+    vis.fillStyle = '#ffffff';
+    vis.fillRect(0, 0, W, H);
+    if (grid) drawGrid(vis);
     vis.drawImage(bg, 0, 0);
-    drawAllSymbols(vis, symRef.current, selId);
+    drawAllSymbols(vis, syms, selId);
+  }
+
+  function fullRedraw(selId: string | null) {
+    paint(symRef.current, selId, true);
   }
 
   // Save current state to history
@@ -158,20 +169,18 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
 
   // Emit: composite PNG + clean bg + symbols as JSON
   function emitState(syms: LpsSymbol[], selId: string | null) {
-    const vis     = getVis();
     const visEl   = visRef.current;
     const bgEl    = bgElRef.current;
-    if (!vis || !visEl || !bgEl) return;
-    // Clean render (no selection box) for printing
-    vis.drawImage(bgEl, 0, 0);
-    drawAllSymbols(vis, syms, null);
+    // Never overwrite stored data before it was loaded successfully
+    if (!visEl || !bgEl || !readyRef.current) return;
+    // Clean render (no selection box, no grid) for printing
+    paint(syms, null, false);
     const fullPng = visEl.toDataURL('image/png');
     const bgPng   = bgEl.toDataURL('image/png');
     const stored: StoredV2 = { v: 2, full: fullPng, bg: bgPng, symbols: syms };
     onChange(JSON.stringify(stored));
-    // Restore with selection
-    vis.drawImage(bgEl, 0, 0);
-    drawAllSymbols(vis, syms, selId);
+    // Restore on-screen view with grid and selection
+    paint(syms, selId, true);
   }
 
   // ─── Init ────────────────────────────────────────────────────────────────
@@ -182,33 +191,39 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     const bgEl   = document.createElement('canvas');
     bgEl.width   = W; bgEl.height = H;
     bgElRef.current = bgEl;
-    const bgCtx = bgEl.getContext('2d')!;
-    bgCtx.fillStyle = '#ffffff';
-    bgCtx.fillRect(0, 0, W, H);
-    drawGrid(bgCtx);
+    const bgCtx = bgEl.getContext('2d')!;  // transparent; grid is drawn on screen only
 
     const boot = (loadedSyms: LpsSymbol[]) => {
+      readyRef.current = true;
+      setStatus('ready');
       setSymbols(loadedSyms); symRef.current = loadedSyms;
       snapshot(loadedSyms);
       fullRedraw(null);
+    };
+    // Loading failed: keep the stored value untouched (editor stays read-only)
+    const fail = () => { fullRedraw(null); setStatus('error'); };
+
+    const loadImage = (src: string, syms: LpsSymbol[]) => {
+      const img = new Image();
+      img.onload = () => { bgCtx.drawImage(img, 0, 0); boot(syms); };
+      img.onerror = fail;
+      img.src = src;
     };
 
     if (value) {
       if (value.startsWith('{')) {
         try {
           const parsed = JSON.parse(value) as StoredV2;
-          if (parsed.v === 2) {
-            const img = new Image();
-            img.onload = () => { bgCtx.drawImage(img, 0, 0); boot(parsed.symbols ?? []); };
-            img.src = parsed.bg;
+          if (parsed.v === 2 && parsed.bg) {
+            loadImage(parsed.bg, parsed.symbols ?? []);
             return;
           }
         } catch { /* fall through */ }
+        fail();
+        return;
       }
       // Legacy: plain PNG — load into bg layer
-      const img = new Image();
-      img.onload = () => { bgCtx.drawImage(img, 0, 0); boot([]); };
-      img.src = value;
+      loadImage(value, []);
     } else {
       boot([]);
     }
@@ -231,8 +246,9 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
 
   function clearAll() {
     const bgCtx = getBg();
-    if (!bgCtx) return;
-    bgCtx.fillStyle = '#ffffff'; bgCtx.fillRect(0, 0, W, H); drawGrid(bgCtx);
+    if (!bgCtx || !readyRef.current) return;
+    if (!window.confirm('Opravdu smazat celý náčrt? (lze vrátit tlačítkem Zpět)')) return;
+    bgCtx.clearRect(0, 0, W, H);
     setSymbols([]); symRef.current = [];
     setSelectedId(null); selRef.current = null;
     snapshot([]);
@@ -290,9 +306,11 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
 
   function onDown(e: React.MouseEvent | React.TouchEvent) {
     e.preventDefault();
+    if (!readyRef.current) return;
     const pt  = getPos(e);
     const t   = toolRef.current;
     const vis = getVis();
+    changedRef.current = false;
 
     if (t === 'text') {
       setTextOverlay({ x: pt.x, y: pt.y, val: '' });
@@ -352,6 +370,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     if (!vis) return;
 
     if (t === 'select' && dragSymId.current) {
+      changedRef.current = true;
       const nx = pt.x - dragOffset.current.dx;
       const ny = pt.y - dragOffset.current.dy;
       const newSyms = symRef.current.map(s =>
@@ -377,10 +396,12 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
         vis.strokeRect(startPt.current.x, startPt.current.y, pt.x - startPt.current.x, pt.y - startPt.current.y);
       }
       vis.restore();
+      prevPt.current = pt;
       return;
     }
 
     if (t === 'pero') {
+      changedRef.current = true;
       peroPath.current.push(pt);
       vis.save();
       vis.strokeStyle = colorRef.current;
@@ -396,11 +417,10 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     if (t === 'guma') {
       const bgCtx = getBg();
       if (!bgCtx) return;
+      changedRef.current = true;
       bgCtx.save();
-      bgCtx.fillStyle = '#ffffff';
+      bgCtx.globalCompositeOperation = 'destination-out';
       bgCtx.beginPath(); bgCtx.arc(pt.x, pt.y, GUMA_R, 0, Math.PI * 2); bgCtx.fill();
-      bgCtx.beginPath(); bgCtx.arc(pt.x, pt.y, GUMA_R + 1, 0, Math.PI * 2); bgCtx.clip();
-      drawGrid(bgCtx);
       bgCtx.restore();
       fullRedraw(selRef.current);
     }
@@ -410,21 +430,34 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
 
   function onUp(e: React.MouseEvent | React.TouchEvent) {
     if (!dragging.current) return;
+    finishDrag(getPos(e));
+  }
+
+  // Mouse left the canvas / touch was cancelled: commit what was drawn so far
+  function onLeave() {
+    if (!dragging.current) return;
+    finishDrag(prevPt.current);
+  }
+
+  function finishDrag(pt: { x: number; y: number }) {
     dragging.current = false;
-    const pt    = getPos(e);
     const t     = toolRef.current;
     const bgCtx = getBg();
 
     if (t === 'select' && dragSymId.current) {
-      // Commit symbol drag
+      // Commit symbol drag (only if it really moved)
       dragSymId.current = null;
-      snapshot(symRef.current);
-      emitState(symRef.current, selRef.current);
+      if (changedRef.current) {
+        snapshot(symRef.current);
+        emitState(symRef.current, selRef.current);
+      }
       return;
     }
 
     if (bgCtx) {
-      if (t === 'vedeni' || t === 'obdelnik') {
+      if ((t === 'vedeni' || t === 'obdelnik') &&
+          (Math.abs(pt.x - startPt.current.x) > 1 || Math.abs(pt.y - startPt.current.y) > 1)) {
+        changedRef.current = true;
         bgCtx.save();
         bgCtx.strokeStyle = colorRef.current;
         bgCtx.lineWidth   = lwRef.current + (t === 'vedeni' ? 1 : 0);
@@ -438,8 +471,8 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
           bgCtx.strokeRect(startPt.current.x, startPt.current.y, pt.x - startPt.current.x, pt.y - startPt.current.y);
         }
         bgCtx.restore();
-        dragSnap.current = null;
       }
+      dragSnap.current = null;
 
       if (t === 'pero' && peroPath.current.length > 1) {
         // Replay full path on bgCanvas
@@ -452,23 +485,13 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
         for (let i = 1; i < peroPath.current.length; i++) bgCtx.lineTo(peroPath.current[i].x, peroPath.current[i].y);
         bgCtx.stroke();
         bgCtx.restore();
-        peroPath.current = [];
       }
+      peroPath.current = [];
     }
 
-    snapshot(symRef.current);
     fullRedraw(selRef.current);
-    emitState(symRef.current, selRef.current);
-  }
-
-  function onLeave() {
-    if (!dragging.current) return;
-    dragging.current  = false;
-    dragSnap.current  = null;
-    peroPath.current  = [];
-    dragSymId.current = null;
+    if (!changedRef.current) return; // nothing drawn – no history step, no save
     snapshot(symRef.current);
-    fullRedraw(selRef.current);
     emitState(symRef.current, selRef.current);
   }
 
@@ -615,7 +638,16 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
           onTouchStart={onDown}
           onTouchMove={onMove}
           onTouchEnd={onUp}
+          onTouchCancel={onLeave}
         />
+
+        {status !== 'ready' && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/80 text-sm text-center px-4">
+            {status === 'loading'
+              ? 'Načítám náčrt…'
+              : 'Uložený náčrt se nepodařilo načíst. Původní data zůstala beze změny a editor je zablokován.'}
+          </div>
+        )}
 
         {/* Floating text input */}
         {textOverlay && (
