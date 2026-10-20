@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Previewer } from 'pagedjs';
 import { revizeService, zavadaService, revizePristrojService, nastaveniService, zakazniciService } from '../../services/database';
 import type { Revize, Zavada, MericiPristroj, Nastaveni, Zakaznik } from '../../types';
-import { parseOdberneMisto, porovnejJistic, STAV_LABEL, type OdberneMistoData, type KontrolaPolozka } from '../../types/odberneMisto';
+import { parseOdberneMisto, porovnejJistic, validujParametry, PPNN_ZDROJ, STAV_LABEL, type OdberneMistoData, type KontrolaPolozka } from '../../types/odberneMisto';
 import { ReportHeader } from '../ReportPrint/ReportHeader';
 import { ReportSection } from '../ReportPrint/ReportSection';
 import { ReportTable } from '../ReportPrint/ReportTable';
@@ -157,6 +157,13 @@ export function OdberneMistoPrintPage() {
   const prohlidkaRows = filled(om.prohlidka);
   const zkouseniRows = filled(om.zkouseni);
   const checklistRows = filled(om.checklist);
+  const checklistSkupiny = checklistRows.reduce<[string, KontrolaPolozka[]][]>((acc, r) => {
+    const nazev = r.skupina || 'Ostatní';
+    const existing = acc.find(([s]) => s === nazev);
+    if (existing) existing[1].push(r); else acc.push([nazev, [r]]);
+    return acc;
+  }, []);
+  const upozorneni = validujParametry(om);
   const mereniRows = om.mereni.filter(m => m.oznaceni.trim() || m.zs.trim() || m.riz.trim());
   const shoda = porovnejJistic(om);
   const smlouvaVyplnena = !!(om.smlouvaCislo || om.smlouvaJistic || om.smlouvaPrikon || om.tarif);
@@ -360,11 +367,17 @@ export function OdberneMistoPrintPage() {
 
       {nums.checklist > 0 && (
         <ReportSection title={t(nums.checklist, 'Kontrolní seznam dle připojovacích podmínek distributora')}>
-          <ReportTable
-            columns={['Požadavek', 'Výsledek', 'Poznámka']}
-            widths={['64%', '14%', '22%']}
-            rows={checklistRows.map(r => [r.nazev, STAV_LABEL[r.vysledek], r.poznamka || ''])}
-          />
+          <p className="report-text" style={{ fontSize: '9pt', color: '#475569' }}>Podle dokumentu: {PPNN_ZDROJ}.</p>
+          {checklistSkupiny.map(([skupina, rows]) => (
+            <div key={skupina}>
+              <p className="report-text" style={{ marginTop: '6px', marginBottom: '2px' }}><strong>{skupina}</strong></p>
+              <ReportTable
+                columns={['Požadavek', 'Kapitola', 'Výsledek', 'Poznámka']}
+                widths={['52%', '14%', '14%', '20%']}
+                rows={rows.map(r => [r.nazev, r.norma || '—', STAV_LABEL[r.vysledek], r.poznamka || ''])}
+              />
+            </div>
+          ))}
         </ReportSection>
       )}
 
@@ -388,6 +401,12 @@ export function OdberneMistoPrintPage() {
           <div className="report-result-value" style={{ color: vysledekColor }}>{vysledekLabel}</div>
         </div>
         {revize.vysledekOduvodneni && vis('vysledekOduvodneni') && <p className="report-text">{revize.vysledekOduvodneni}</p>}
+        {upozorneni.length > 0 && (
+          <div className="report-text">
+            <strong>Zjištěný nesoulad s Připojovacími podmínkami nn:</strong>
+            <ul style={{ margin: '2px 0 0 16px' }}>{upozorneni.map((u, i) => <li key={i}>{u}</li>)}</ul>
+          </div>
+        )}
       </ReportSection>
 
       {nums.zaver > 0 && (

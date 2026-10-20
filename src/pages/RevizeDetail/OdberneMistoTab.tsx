@@ -3,10 +3,11 @@
  * Data se ukládají do formData.odberneMistoData (JSON) a autosavem do DB.
  * Texty (rozsah, podklady, závěr, přístroje) se vyplňují v záložce "Revidované zařízení".
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Revize } from '../../types';
 import {
-  createDefaultOdberneMisto, parseOdberneMisto, porovnejJistic, TARIFY_DISTRIBUCE,
+  createDefaultOdberneMisto, parseOdberneMisto, porovnejJistic, validujParametry, TARIFY_DISTRIBUCE,
+  DEFAULT_CHECKLIST, PPNN_ZDROJ,
   type OdberneMistoData, type KontrolaPolozka, type MereniObvodu, type Vysledek,
 } from '../../types/odberneMisto';
 import { TW, SectionHeader, ToggleSectionHeader, Field } from './tw';
@@ -86,6 +87,13 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
     setFormData(prev => ({ ...prev, tiskSekce: JSON.stringify({ ...tiskSekce, [key]: !isVisible(key) }) }));
 
   const shoda = porovnejJistic(fd);
+  const upozorneni = validujParametry(fd);
+
+  const obnovitChecklist = () => {
+    if (window.confirm('Nahradit celý kontrolní seznam výchozím seznamem dle Připojovacích podmínek nn? Vámi zadané výsledky a úpravy se přepíšou.')) {
+      setFd(prev => ({ ...prev, checklist: DEFAULT_CHECKLIST.map(r => ({ ...r })) }));
+    }
+  };
 
   const inp = (key: keyof OdberneMistoData, label: string, opts?: { placeholder?: string; type?: string }) => (
     <Field label={label}>
@@ -113,7 +121,11 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
           </tr></thead>
           <tbody>
             {fd[list].map((r, i) => (
-              <tr key={i} className="even:bg-[var(--bg-surface)]">
+              <Fragment key={i}>
+              {r.skupina && r.skupina !== fd[list][i - 1]?.skupina && (
+                <tr><td colSpan={5} className="bg-[var(--section-header-bg)] text-xs font-bold uppercase tracking-wide text-[var(--text)] px-2 py-1">{r.skupina}</td></tr>
+              )}
+              <tr className="even:bg-[var(--bg-surface)]">
                 <td className={TW.td}><input className={TW.tblInput} value={r.nazev} onChange={e => updItem(list, i, { nazev: e.target.value })} /></td>
                 <td className={TW.td}><input className={TW.tblInput} value={r.norma || ''} onChange={e => updItem(list, i, { norma: e.target.value })} /></td>
                 <td className={TW.td}><div className="flex gap-1">
@@ -126,10 +138,16 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
                   <button type="button" className="text-[var(--text-muted)] hover:text-red-500 cursor-pointer" title="Odebrat řádek" onClick={() => removeItem(list, i)}>✕</button>
                 </td>
               </tr>
+              </Fragment>
             ))}
           </tbody>
         </table>
-        <button type="button" className="text-xs text-[var(--primary)] hover:underline cursor-pointer" onClick={() => addItem(list)}>+ Přidat řádek</button>
+        <div className="flex items-center justify-between">
+          <button type="button" className="text-xs text-[var(--primary)] hover:underline cursor-pointer" onClick={() => addItem(list)}>+ Přidat řádek</button>
+          {list === 'checklist' && (
+            <button type="button" className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] hover:underline cursor-pointer" onClick={obnovitChecklist}>↺ Obnovit výchozí seznam dle PPnn</button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -168,7 +186,7 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
             <Field label="Způsob měření">
               <select className={TW.selectFull} value={fd.zpusobMereni} onChange={e => upd('zpusobMereni', e.target.value as OdberneMistoData['zpusobMereni'])}>
                 <option value="">— vyberte —</option>
-                <option value="prime">Přímé (do 100 A)</option>
+                <option value="prime">Přímé (do 80 A včetně)</option>
                 <option value="neprime">Nepřímé (přes transformátory proudu)</option>
               </select>
             </Field>
@@ -194,7 +212,23 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
             {inp('rozvadecIp', 'Stupeň krytí IP')}
             {inp('rozvadecTrida', 'Třída ochrany')}
             {inp('rozvadecProhlaseni', 'Prohlášení o shodě', { placeholder: 'např. EU PROHLÁŠENÍ O SHODĚ 2023-06' })}
+            {inp('jisticZkratovaSchopnost', 'Zkratová schopnost jističe (kA)', { placeholder: 'min. 10' })}
+            <Field label="Prostředí rozváděče">
+              <select className={TW.selectFull} value={fd.umisteniProstredi} onChange={e => upd('umisteniProstredi', e.target.value as OdberneMistoData['umisteniProstredi'])}>
+                <option value="">— vyberte —</option>
+                <option value="vnitrni">Vnitřní (min. IP 2XC)</option>
+                <option value="venkovni">Venkovní (min. IP 43)</option>
+                <option value="venkovniKomunikace">Venkovní u komunikace (min. IP 44)</option>
+              </select>
+            </Field>
           </div>
+          {upozorneni.length > 0 && (
+            <div className="mt-3 rounded border border-amber-400 bg-amber-50 px-3 py-2 text-xs text-amber-800 space-y-0.5">
+              <div className="font-semibold">Nesoulad s Připojovacími podmínkami nn:</div>
+              {upozorneni.map((u, i) => <div key={i}>⚠ {u}</div>)}
+            </div>
+          )}
+          <p className="mt-2 text-[11px] text-[var(--text-muted)]">Kontroly vycházejí z dokumentu: {PPNN_ZDROJ}.</p>
         </div>
       </div>
 
@@ -282,7 +316,7 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
 
       {checklistCard(
         'checklist', '07', 'Kontrolní seznam dle připojovacích podmínek distributora', 'checklist',
-        'Seznam je orientační – upravte položky podle aktuálních podmínek připojení a technických podmínek ČEZ Distribuce.',
+        `Seznam vychází z dokumentu: ${PPNN_ZDROJ}. Položky lze upravit, přidat nebo smazat.`,
       )}
     </div>
   );
