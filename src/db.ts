@@ -35,6 +35,8 @@ export class RevizeAppDB extends Dexie {
   nastaveniCache!: Table<CacheRecord, number>;
   zavadaKatalogCache!: Table<CacheRecord, number>;
   predvolenyTextCache!: Table<CacheRecord, number>;
+  fakturaCache!: Table<CacheRecord, number>;
+  cenikCache!: Table<CacheRecord, number>;
 
   constructor() {
     super('RevizeAppDB');
@@ -70,6 +72,25 @@ export class RevizeAppDB extends Dexie {
       nastaveniCache: 'id, updatedAt',
       zavadaKatalogCache: 'id, updatedAt',
       predvolenyTextCache: 'id, updatedAt',
+    });
+    this.version(7).stores({
+      pendingRequests: '++id, url, method, createdAt',
+      revizeCache: 'id, updatedAt',
+      rozvadecCache: 'id, updatedAt',
+      mistnostCache: 'id, updatedAt',
+      zavadaCache: 'id, updatedAt',
+      okruhCache: 'id, updatedAt',
+      cranicCache: 'id, updatedAt',
+      zarizeniCache: 'id, updatedAt',
+      firmaCache: 'id, updatedAt',
+      zakaznikCache: 'id, updatedAt',
+      pristrojCache: 'id, updatedAt',
+      zakazkaCache: 'id, updatedAt',
+      nastaveniCache: 'id, updatedAt',
+      zavadaKatalogCache: 'id, updatedAt',
+      predvolenyTextCache: 'id, updatedAt',
+      fakturaCache: 'id, updatedAt',
+      cenikCache: 'id, updatedAt',
     });
   }
 }

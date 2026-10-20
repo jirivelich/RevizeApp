@@ -1,7 +1,7 @@
 // Database service - komunikuje s backend API
 // Všechna data jsou uložena na serveru a synchronizována mezi zařízeními
 
-import type { Revize, Rozvadec, Okruh, Chranic, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, MericiPristroj, Firma, ZavadaKatalog, Zakaznik, PredvolenyText, Kalibrace, RevizePriloha } from '../types';
+import type { Revize, Rozvadec, Okruh, Chranic, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, MericiPristroj, Firma, ZavadaKatalog, Zakaznik, PredvolenyText, Kalibrace, RevizePriloha, Faktura, FakturaFilter, FakturaStav, CenikPolozka } from '../types';
 import { safeApiRequest } from './safeApiRequest';
 import { db } from '../db';
 import { buildApiUrl, getAuthHeaders, handleResponse } from './httpClient';
@@ -1331,6 +1331,205 @@ export const zakazniciService = {
   async delete(id: number): Promise<void> {
     await db.zakaznikCache.delete(id);
     await safeApiRequest({ url: buildApiUrl(`/zakaznici/${id}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
+  },
+};
+
+// ==================== FAKTURY ====================
+export const fakturyService = {
+  async getAll(filter?: FakturaFilter): Promise<Faktura[]> {
+    const params = new URLSearchParams();
+    if (filter?.stav) params.set('stav', filter.stav);
+    if (filter?.rok) params.set('rok', String(filter.rok));
+    if (filter?.zakaznikId) params.set('zakaznikId', String(filter.zakaznikId));
+    const qs = params.toString();
+    const fromCache = async () => {
+      let list: Faktura[] = (await db.fakturaCache.toArray()).map(r => r.data);
+      if (filter?.stav) list = list.filter(f => f.stav === filter.stav);
+      if (filter?.zakaznikId) list = list.filter(f => f.zakaznikId === filter.zakaznikId);
+      if (filter?.rok) list = list.filter(f => (f.datumVystaveni || f.createdAt || '').startsWith(String(filter.rok)));
+      return list;
+    };
+    if (navigator.onLine) {
+      try {
+        const faktury = await fetch(buildApiUrl(`/faktury${qs ? `?${qs}` : ''}`), {
+          headers: getAuthHeaders(),
+        }).then(res => handleResponse<Faktura[]>(res));
+        for (const f of faktury) {
+          if (!f.id) continue;
+          // Seznam je bez položek – nepřepisuj dříve načtené položky v cache
+          const cached = await db.fakturaCache.get(f.id);
+          const polozky = f.polozky ?? cached?.data?.polozky;
+          await db.fakturaCache.put({ id: f.id, data: polozky ? { ...f, polozky } : f, updatedAt: Date.now() });
+        }
+        return faktury;
+      } catch {
+        return fromCache();
+      }
+    }
+    return fromCache();
+  },
+
+  async getById(id: number): Promise<Faktura | undefined> {
+    if (navigator.onLine) {
+      try {
+        const f = await fetch(buildApiUrl(`/faktury/${id}`), {
+          headers: getAuthHeaders(),
+        }).then(res => handleResponse<Faktura | undefined>(res));
+        if (f && f.id) await db.fakturaCache.put({ id: f.id, data: f, updatedAt: Date.now() });
+        return f;
+      } catch {
+        const cached = await db.fakturaCache.get(id);
+        return cached?.data;
+      }
+    }
+    const cached = await db.fakturaCache.get(id);
+    return cached?.data;
+  },
+
+  async create(data: Partial<Omit<Faktura, 'id' | 'createdAt' | 'updatedAt'>>): Promise<number> {
+    if (navigator.onLine) {
+      try {
+        const response = await fetch(buildApiUrl('/faktury'), {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<{ id: number }>(res));
+        await db.fakturaCache.put({ id: response.id, data: { ...data, id: response.id } as Faktura, updatedAt: Date.now() });
+        return response.id;
+      } catch {
+        // Network error - queue offline
+      }
+    }
+    const tempId = Date.now() * -1;
+    await db.fakturaCache.put({ id: tempId, data: { ...data, id: tempId, stav: data.stav ?? 'koncept' } as Faktura, updatedAt: Date.now() });
+    await safeApiRequest({ url: buildApiUrl('/faktury'), method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string>, tempId });
+    return tempId;
+  },
+
+  async update(id: number, data: Partial<Faktura>): Promise<number> {
+    if (navigator.onLine) {
+      try {
+        await fetch(buildApiUrl(`/faktury/${id}`), {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<unknown>(res));
+        const cached = await db.fakturaCache.get(id);
+        if (cached) {
+          await db.fakturaCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+        }
+        return 1;
+      } catch {
+        // Network error - fallback to offline
+      }
+    }
+    const cached = await db.fakturaCache.get(id);
+    if (cached) {
+      await db.fakturaCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+    }
+    await safeApiRequest({ url: buildApiUrl(`/faktury/${id}`), method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
+    return 1;
+  },
+
+  async delete(id: number): Promise<void> {
+    await db.fakturaCache.delete(id);
+    await safeApiRequest({ url: buildApiUrl(`/faktury/${id}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
+  },
+
+  /** Změna stavu (vystavení přiděluje číslo na serveru) – pouze online. */
+  async zmenStav(id: number, stav: Exclude<FakturaStav, 'koncept'>): Promise<void> {
+    if (!navigator.onLine) {
+      throw new Error('Změna stavu faktury vyžaduje připojení k internetu.');
+    }
+    await fetch(buildApiUrl(`/faktury/${id}/stav`), {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ stav }),
+    }).then(res => handleResponse<unknown>(res));
+    // Server mohl přidělit číslo/datumy – cache zneplatnit, příští načtení ji obnoví
+    await db.fakturaCache.delete(id);
+  },
+
+  /** Vytvoření faktury z revize – pouze online. */
+  async vytvorZRevize(revizeId: number): Promise<number> {
+    if (!navigator.onLine) {
+      throw new Error('Vytvoření faktury z revize vyžaduje připojení k internetu.');
+    }
+    const response = await fetch(buildApiUrl(`/revize/${revizeId}/faktura`), {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    }).then(res => handleResponse<{ id: number }>(res));
+    return response.id;
+  },
+};
+
+// ==================== CENÍK ====================
+export const cenikService = {
+  async getAll(): Promise<CenikPolozka[]> {
+    if (navigator.onLine) {
+      try {
+        const polozky = await fetch(buildApiUrl('/cenik'), {
+          headers: getAuthHeaders(),
+        }).then(res => handleResponse<CenikPolozka[]>(res));
+        for (const p of polozky) {
+          if (p.id) await db.cenikCache.put({ id: p.id, data: p, updatedAt: Date.now() });
+        }
+        return polozky;
+      } catch {
+        return (await db.cenikCache.toArray()).map(r => r.data);
+      }
+    }
+    return (await db.cenikCache.toArray()).map(r => r.data);
+  },
+
+  async create(data: Omit<CenikPolozka, 'id'>): Promise<number> {
+    if (navigator.onLine) {
+      try {
+        const response = await fetch(buildApiUrl('/cenik'), {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<{ id: number }>(res));
+        await db.cenikCache.put({ id: response.id, data: { ...data, id: response.id } as CenikPolozka, updatedAt: Date.now() });
+        return response.id;
+      } catch {
+        // Network error - queue offline
+      }
+    }
+    const tempId = Date.now() * -1;
+    await db.cenikCache.put({ id: tempId, data: { ...data, id: tempId } as CenikPolozka, updatedAt: Date.now() });
+    await safeApiRequest({ url: buildApiUrl('/cenik'), method: 'POST', body: data, headers: getAuthHeaders() as Record<string, string>, tempId });
+    return tempId;
+  },
+
+  async update(id: number, data: Partial<CenikPolozka>): Promise<number> {
+    if (navigator.onLine) {
+      try {
+        await fetch(buildApiUrl(`/cenik/${id}`), {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(data),
+        }).then(res => handleResponse<unknown>(res));
+        const cached = await db.cenikCache.get(id);
+        if (cached) {
+          await db.cenikCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+        }
+        return 1;
+      } catch {
+        // Network error - fallback to offline
+      }
+    }
+    const cached = await db.cenikCache.get(id);
+    if (cached) {
+      await db.cenikCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
+    }
+    await safeApiRequest({ url: buildApiUrl(`/cenik/${id}`), method: 'PUT', body: data, headers: getAuthHeaders() as Record<string, string> });
+    return 1;
+  },
+
+  async delete(id: number): Promise<void> {
+    await db.cenikCache.delete(id);
+    await safeApiRequest({ url: buildApiUrl(`/cenik/${id}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },
 };
 

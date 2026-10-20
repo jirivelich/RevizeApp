@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Component, useEffect } from 'react';
+import { Component, Suspense, lazy, useEffect } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/Layout';
@@ -18,10 +18,15 @@ import {
   PristrojePage,
   FirmyPage,
   ZakazniciPage,
+  FakturyPage,
+  FakturaFormPage,
+  CenikPage,
   NahledRouter,
 } from './pages';
 import { useOfflineQueueSync } from './hooks/useOfflineQueue';
 import { ThemeProvider } from './context/ThemeContext';
+
+const FakturaPrintPage = lazy(() => import('./pages/FakturaPrint/FakturaPrintPage'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -112,6 +117,13 @@ function App() {
                 <NahledRouter />
               </ProtectedRoute>
             } />
+            <Route path="/faktura/:id/nahled" element={
+              <ProtectedRoute>
+                <Suspense fallback={null}>
+                  <FakturaPrintPage />
+                </Suspense>
+              </ProtectedRoute>
+            } />
             <Route
               path="/"
               element={
@@ -128,6 +140,10 @@ function App() {
               <Route path="pristroje" element={<PristrojePage />} />
               <Route path="firmy" element={<FirmyPage />} />
               <Route path="zakaznici" element={<ZakazniciPage />} />
+              <Route path="faktury" element={<FakturyPage />} />
+              <Route path="faktury/nova" element={<FakturaFormPage />} />
+              <Route path="faktury/:id" element={<FakturaFormPage />} />
+              <Route path="cenik" element={<CenikPage />} />
               <Route path="planovani" element={<PlanovaniPage />} />
               <Route path="nastaveni" element={<NastaveniPage />} />
               <Route path="form-builder" element={<FormBuilderPage />} />

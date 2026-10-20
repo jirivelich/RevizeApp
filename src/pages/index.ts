@@ -11,3 +11,6 @@ export { FirmyPage } from './FirmyPage';
 export { default as LoginPage } from './LoginPage';
 export { default as ZakazniciPage } from './ZakazniciPage';
 export { NahledRouter } from './NahledRouter';
+export { default as FakturyPage } from './FakturyPage';
+export { default as FakturaFormPage } from './FakturaForm';
+export { default as CenikPage } from './CenikPage';

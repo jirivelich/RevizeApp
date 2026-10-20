@@ -325,6 +325,14 @@ export interface Nastaveni {
   upozorneniTechnikDni?: number;
   upozorneniPlatnostRevizeDni?: number;
   browserNotificationsEnabled?: boolean;
+  // Fakturace
+  bankovniUcet?: string;
+  iban?: string;
+  swift?: string;
+  splatnostDni?: number;
+  fakturaPrefix?: string;
+  fakturaPoznamkaPata?: string;
+  razitko?: string; // Base64 encoded image
 }
 
 export type NotificationType =
@@ -428,4 +436,57 @@ export interface RevizePriloha {
   poznamka?: string;
   vTisku?: boolean; // false = interní dokument, netiskne se
   createdAt?: string;
+}
+
+// ==================== FAKTURACE ====================
+export type FakturaStav = 'koncept' | 'vystavena' | 'zaplacena' | 'storno';
+
+export interface FakturaPolozka {
+  id?: number;
+  fakturaId?: number;
+  poradi: number;
+  popis: string;
+  mnozstvi: number;
+  jednotka?: string;
+  cenaZaJednotku: number;
+  celkem: number;
+}
+
+export interface Faktura {
+  id: number;
+  cisloFaktury?: string;
+  variabilniSymbol?: string;
+  zakaznikId?: number;
+  odberatelNazev: string;
+  odberatelAdresa?: string;
+  odberatelIco?: string;
+  odberatelDic?: string;
+  revizeId?: number;
+  zakazkaId?: number;
+  datumVystaveni?: string;
+  datumZdanitelnehoPlneni?: string;
+  datumSplatnosti?: string;
+  formaUhrady: string;
+  stav: FakturaStav;
+  datumUhrady?: string;
+  poznamka?: string;
+  celkem: number;
+  polozky?: FakturaPolozka[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FakturaFilter {
+  stav?: FakturaStav;
+  rok?: number;
+  zakaznikId?: number;
+}
+
+export interface CenikPolozka {
+  id: number;
+  nazev: string;
+  jednotka?: string;
+  cena: number;
+  aktivni: boolean;
+  poznamka?: string;
 }

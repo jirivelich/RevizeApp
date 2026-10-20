@@ -551,6 +551,64 @@ export async function initializeDatabase() {
         updated_at TEXT NOT NULL
       )`,
       'ALTER TABLE google_oauth_tokens ADD COLUMN IF NOT EXISTS calendar_id TEXT DEFAULT \'primary\'',
+      // ===== Fakturace =====
+      `CREATE TABLE IF NOT EXISTS faktura (
+        id SERIAL PRIMARY KEY,
+        "cisloFaktury" TEXT UNIQUE,
+        "variabilniSymbol" TEXT,
+        "zakaznikId" INTEGER REFERENCES zakaznik(id) ON DELETE SET NULL,
+        "odberatelNazev" TEXT,
+        "odberatelAdresa" TEXT,
+        "odberatelIco" TEXT,
+        "odberatelDic" TEXT,
+        "revizeId" INTEGER,
+        "zakazkaId" INTEGER,
+        "datumVystaveni" TEXT,
+        "datumZdanitelnehoPlneni" TEXT,
+        "datumSplatnosti" TEXT,
+        "formaUhrady" TEXT DEFAULT 'prevod',
+        stav TEXT DEFAULT 'koncept',
+        "datumUhrady" TEXT,
+        poznamka TEXT,
+        celkem NUMERIC DEFAULT 0,
+        "createdAt" TEXT NOT NULL,
+        "updatedAt" TEXT NOT NULL
+      )`,
+      `CREATE TABLE IF NOT EXISTS "fakturaPolozka" (
+        id SERIAL PRIMARY KEY,
+        "fakturaId" INTEGER NOT NULL REFERENCES faktura(id) ON DELETE CASCADE,
+        poradi INTEGER,
+        popis TEXT,
+        mnozstvi NUMERIC,
+        jednotka TEXT,
+        "cenaZaJednotku" NUMERIC,
+        celkem NUMERIC
+      )`,
+      `CREATE TABLE IF NOT EXISTS cenik (
+        id SERIAL PRIMARY KEY,
+        nazev TEXT NOT NULL,
+        jednotka TEXT,
+        cena NUMERIC DEFAULT 0,
+        aktivni BOOLEAN DEFAULT TRUE,
+        poznamka TEXT,
+        "createdAt" TEXT NOT NULL,
+        "updatedAt" TEXT NOT NULL
+      )`,
+      `CREATE TABLE IF NOT EXISTS "fakturaRada" (
+        rok INTEGER PRIMARY KEY,
+        "posledniCislo" INTEGER NOT NULL DEFAULT 0
+      )`,
+      'CREATE INDEX IF NOT EXISTS idx_faktura_zakaznik ON faktura("zakaznikId")',
+      'CREATE INDEX IF NOT EXISTS idx_faktura_stav ON faktura(stav)',
+      'CREATE INDEX IF NOT EXISTS idx_faktura_datum ON faktura("datumVystaveni")',
+      'CREATE INDEX IF NOT EXISTS idx_faktura_polozka_faktura ON "fakturaPolozka"("fakturaId")',
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "bankovniUcet" TEXT',
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS iban TEXT',
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS swift TEXT',
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "splatnostDni" INTEGER DEFAULT 14',
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "fakturaPrefix" TEXT',
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "fakturaPoznamkaPata" TEXT',
+      'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS razitko TEXT',
     ];
     
     for (const migration of migrations) {

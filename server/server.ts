@@ -6,6 +6,7 @@ import { pool, initializeDatabase } from './database';
 import { authMiddleware, loginUser, registerUser, logoutSession, changePassword, AuthRequest } from './auth';
 import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion, analyzeRozvadecPhotos } from './ai';
 import { getAuthUrl, exchangeCodeAndSave, deleteTokens, getTokens, saveTokens, listCalendars, syncZakazkyToCalendar } from './googleCalendar';
+import { PolozkaInput, toNum, vypocitejPolozku, vypocitejCelkem, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj } from './faktura-utils';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -1463,6 +1464,260 @@ async function startServer() {
         await pool.query(`UPDATE nastaveni SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, existing.rows[0].id]);
       }
 
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== FAKTURACE ====================
+  const FAKTURA_NUM = ['celkem'];
+  const POLOZKA_NUM = ['mnozstvi', 'cenaZaJednotku', 'celkem'];
+  const FAKTURA_EDIT_FIELDS = [
+    'variabilniSymbol', 'zakaznikId', 'odberatelNazev', 'odberatelAdresa', 'odberatelIco', 'odberatelDic',
+    'revizeId', 'zakazkaId', 'datumVystaveni', 'datumZdanitelnehoPlneni', 'datumSplatnosti', 'formaUhrady', 'poznamka', 'datumUhrady',
+  ];
+  const dnesIso = () => new Date().toISOString().slice(0, 10);
+
+  async function vlozPolozky(db: { query: (q: string, p?: any[]) => Promise<any> }, fakturaId: number, polozky: PolozkaInput[]) {
+    let poradi = 0;
+    for (const p of polozky) {
+      await db.query(
+        `INSERT INTO "fakturaPolozka" ("fakturaId", poradi, popis, mnozstvi, jednotka, "cenaZaJednotku", celkem)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [fakturaId, poradi++, p.popis ?? '', toNum(p.mnozstvi), p.jednotka ?? null, toNum(p.cenaZaJednotku), vypocitejPolozku(p)]
+      );
+    }
+  }
+
+  app.get('/api/faktury', authMiddleware, async (req, res) => {
+    try {
+      const where: string[] = [];
+      const params: any[] = [];
+      const { stav, rok, zakaznikId } = req.query;
+      if (stav) { params.push(String(stav)); where.push(`stav = $${params.length}`); }
+      if (rok) { params.push(String(rok)); where.push(`COALESCE("datumVystaveni", "createdAt") LIKE $${params.length} || '%'`); }
+      if (zakaznikId) { params.push(Number(zakaznikId)); where.push(`"zakaznikId" = $${params.length}`); }
+      const result = await pool.query(
+        `SELECT * FROM faktura ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY id DESC`,
+        params
+      );
+      res.json(result.rows.map(r => numerizuj(r, FAKTURA_NUM)));
+    } catch (error: any) {
+      if (error.message?.includes('does not exist')) return res.json([]);
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.get('/api/faktury/:id', authMiddleware, async (req, res) => {
+    try {
+      const f = await pool.query('SELECT * FROM faktura WHERE id = $1', [req.params.id]);
+      if (f.rows.length === 0) return res.status(404).json({ error: 'Faktura nenalezena' });
+      const p = await pool.query('SELECT * FROM "fakturaPolozka" WHERE "fakturaId" = $1 ORDER BY poradi, id', [req.params.id]);
+      res.json({ ...numerizuj(f.rows[0], FAKTURA_NUM), polozky: p.rows.map(r => numerizuj(r, POLOZKA_NUM)) });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/faktury', authMiddleware, async (req, res) => {
+    const client = await pool.connect();
+    try {
+      const b = req.body || {};
+      const polozky: PolozkaInput[] = Array.isArray(b.polozky) ? b.polozky : [];
+      const now = new Date().toISOString();
+      await client.query('BEGIN');
+      const r = await client.query(
+        `INSERT INTO faktura ("variabilniSymbol", "zakaznikId", "odberatelNazev", "odberatelAdresa", "odberatelIco", "odberatelDic",
+           "revizeId", "zakazkaId", "datumVystaveni", "datumZdanitelnehoPlneni", "datumSplatnosti", "formaUhrady", stav, poznamka, celkem, "createdAt", "updatedAt")
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'koncept',$13,$14,$15,$15) RETURNING id`,
+        [b.variabilniSymbol || null, b.zakaznikId || null, b.odberatelNazev || null, b.odberatelAdresa || null, b.odberatelIco || null, b.odberatelDic || null,
+         b.revizeId || null, b.zakazkaId || null, b.datumVystaveni || null, b.datumZdanitelnehoPlneni || null, b.datumSplatnosti || null,
+         b.formaUhrady || 'prevod', b.poznamka || null, vypocitejCelkem(polozky), now]
+      );
+      await vlozPolozky(client, r.rows[0].id, polozky);
+      await client.query('COMMIT');
+      res.json({ id: r.rows[0].id });
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      console.error('Error creating faktura:', error);
+      res.status(500).json({ error: (error as Error).message });
+    } finally {
+      client.release();
+    }
+  });
+
+  app.put('/api/faktury/:id', authMiddleware, async (req, res) => {
+    const client = await pool.connect();
+    try {
+      const b = req.body || {};
+      await client.query('BEGIN');
+      const cur = await client.query('SELECT stav FROM faktura WHERE id = $1 FOR UPDATE', [req.params.id]);
+      if (cur.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Faktura nenalezena' });
+      }
+      const now = new Date().toISOString();
+      const isKoncept = cur.rows[0].stav === 'koncept';
+      const allowed = isKoncept ? FAKTURA_EDIT_FIELDS : ['poznamka', 'datumUhrady'];
+      const updates: Record<string, any> = {};
+      for (const k of allowed) if (k in b) updates[k] = b[k] === '' ? null : b[k];
+      if (isKoncept && Array.isArray(b.polozky)) {
+        await client.query('DELETE FROM "fakturaPolozka" WHERE "fakturaId" = $1', [req.params.id]);
+        await vlozPolozky(client, Number(req.params.id), b.polozky);
+        updates.celkem = vypocitejCelkem(b.polozky);
+      }
+      updates.updatedAt = now;
+      const keys = Object.keys(updates);
+      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      await client.query(`UPDATE faktura SET ${setClause} WHERE id = $${keys.length + 1}`, [...keys.map(k => updates[k]), req.params.id]);
+      await client.query('COMMIT');
+      res.json({ success: true });
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      res.status(500).json({ error: (error as Error).message });
+    } finally {
+      client.release();
+    }
+  });
+
+  app.delete('/api/faktury/:id', authMiddleware, async (req, res) => {
+    try {
+      const cur = await pool.query('SELECT stav FROM faktura WHERE id = $1', [req.params.id]);
+      if (cur.rows.length === 0) return res.status(404).json({ error: 'Faktura nenalezena' });
+      if (cur.rows[0].stav !== 'koncept') return res.status(409).json({ error: 'Smazat lze pouze koncept' });
+      await pool.query('DELETE FROM faktura WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/faktury/:id/stav', authMiddleware, async (req, res) => {
+    const client = await pool.connect();
+    try {
+      const novy = String(req.body?.stav || '');
+      await client.query('BEGIN');
+      const cur = await client.query('SELECT * FROM faktura WHERE id = $1 FOR UPDATE', [req.params.id]);
+      if (cur.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Faktura nenalezena' });
+      }
+      const f = cur.rows[0];
+      if (!jePrechodPovolen(f.stav, novy)) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ error: `Přechod ${f.stav} → ${novy} není povolen` });
+      }
+      const now = new Date().toISOString();
+      const dnes = dnesIso();
+      if (novy === 'vystavena') {
+        const nast = await client.query('SELECT "splatnostDni", "fakturaPrefix" FROM nastaveni LIMIT 1');
+        const splatnostDni = nast.rows[0]?.splatnostDni ?? 14;
+        const prefix = nast.rows[0]?.fakturaPrefix || '';
+        const rok = new Date().getFullYear();
+        const rada = await client.query(
+          `INSERT INTO "fakturaRada" (rok, "posledniCislo") VALUES ($1, 1)
+           ON CONFLICT (rok) DO UPDATE SET "posledniCislo" = "fakturaRada"."posledniCislo" + 1
+           RETURNING "posledniCislo"`,
+          [rok]
+        );
+        const cislo = formatCisloFaktury(rok, rada.rows[0].posledniCislo, prefix);
+        await client.query(
+          `UPDATE faktura SET stav = 'vystavena', "cisloFaktury" = $1,
+             "variabilniSymbol" = COALESCE(NULLIF("variabilniSymbol", ''), $1),
+             "datumVystaveni" = $2, "datumZdanitelnehoPlneni" = COALESCE(NULLIF("datumZdanitelnehoPlneni", ''), $2),
+             "datumSplatnosti" = $3, "updatedAt" = $4 WHERE id = $5`,
+          [cislo, dnes, pridejDny(dnes, Number(splatnostDni)), now, req.params.id]
+        );
+      } else if (novy === 'zaplacena') {
+        await client.query(`UPDATE faktura SET stav = 'zaplacena', "datumUhrady" = $1, "updatedAt" = $2 WHERE id = $3`, [dnes, now, req.params.id]);
+      } else {
+        await client.query(`UPDATE faktura SET stav = 'storno', "updatedAt" = $1 WHERE id = $2`, [now, req.params.id]);
+      }
+      await client.query('COMMIT');
+      const out = await pool.query('SELECT * FROM faktura WHERE id = $1', [req.params.id]);
+      res.json({ success: true, ...numerizuj(out.rows[0], FAKTURA_NUM) });
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      res.status(500).json({ error: (error as Error).message });
+    } finally {
+      client.release();
+    }
+  });
+
+  app.post('/api/revize/:id/faktura', authMiddleware, async (req, res) => {
+    const client = await pool.connect();
+    try {
+      const rv = await client.query('SELECT id, "cisloRevize", "zakaznikId", objednatel, adresa FROM revize WHERE id = $1', [req.params.id]);
+      if (rv.rows.length === 0) return res.status(404).json({ error: 'Revize nenalezena' });
+      const r = rv.rows[0];
+      let z: any = null;
+      if (r.zakaznikId) {
+        const zr = await client.query('SELECT * FROM zakaznik WHERE id = $1', [r.zakaznikId]);
+        z = zr.rows[0] || null;
+      }
+      const now = new Date().toISOString();
+      await client.query('BEGIN');
+      const f = await client.query(
+        `INSERT INTO faktura ("zakaznikId", "odberatelNazev", "odberatelAdresa", "odberatelIco", "odberatelDic", "revizeId", stav, celkem, "createdAt", "updatedAt")
+         VALUES ($1,$2,$3,$4,$5,$6,'koncept',0,$7,$7) RETURNING id`,
+        [z ? z.id : null, z ? z.nazev : r.objednatel, z ? z.adresa : r.adresa, z?.ico || null, z?.dic || null, r.id, now]
+      );
+      await vlozPolozky(client, f.rows[0].id, [{ popis: `Revize č. ${r.cisloRevize}`, mnozstvi: 1, jednotka: 'ks', cenaZaJednotku: 0 }]);
+      await client.query('COMMIT');
+      res.json({ id: f.rows[0].id });
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      res.status(500).json({ error: (error as Error).message });
+    } finally {
+      client.release();
+    }
+  });
+
+  // ==================== CENÍK ====================
+  app.get('/api/cenik', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM cenik ORDER BY nazev');
+      res.json(result.rows.map(r => numerizuj(r, ['cena'])));
+    } catch (error: any) {
+      if (error.message?.includes('does not exist')) return res.json([]);
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/cenik', authMiddleware, async (req, res) => {
+    try {
+      const { nazev, jednotka, cena, aktivni, poznamka } = req.body || {};
+      if (!nazev) return res.status(400).json({ error: 'Název je povinný' });
+      const now = new Date().toISOString();
+      const result = await pool.query(
+        `INSERT INTO cenik (nazev, jednotka, cena, aktivni, poznamka, "createdAt", "updatedAt")
+         VALUES ($1,$2,$3,$4,$5,$6,$6) RETURNING id`,
+        [nazev, jednotka || null, toNum(cena), aktivni !== false, poznamka || null, now]
+      );
+      res.json({ id: result.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/cenik/:id', authMiddleware, async (req, res) => {
+    try {
+      const updates: Record<string, any> = {};
+      for (const k of ['nazev', 'jednotka', 'cena', 'aktivni', 'poznamka']) if (k in (req.body || {})) updates[k] = req.body[k];
+      updates.updatedAt = new Date().toISOString();
+      const keys = Object.keys(updates);
+      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      await pool.query(`UPDATE cenik SET ${setClause} WHERE id = $${keys.length + 1}`, [...keys.map(k => updates[k]), req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/cenik/:id', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM cenik WHERE id = $1', [req.params.id]);
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });

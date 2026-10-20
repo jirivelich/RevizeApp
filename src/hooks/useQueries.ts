@@ -25,6 +25,8 @@ import {
   zavadaKatalogService,
   predvolenyTextService,
   zakazniciService,
+  fakturyService,
+  cenikService,
   backupService,
 } from '../services/database';
 import { nastaveniApi } from '../services/api';
@@ -33,6 +35,7 @@ import type {
   Revize, Rozvadec, Okruh, Chranic, Mistnost, Zavada,
   MericiPristroj, Firma, Zakazka, Nastaveni, TechnikHistorie,
   ZavadaKatalog, PredvolenyText, Zakaznik, Kalibrace,
+  Faktura, FakturaFilter, FakturaStav, CenikPolozka,
 } from '../types';
 
 /* ═══════════════════════════════════════════
@@ -549,6 +552,119 @@ export function useDeleteZakaznik() {
     mutationFn: (id: number) => zakazniciService.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.zakaznici.all });
+    },
+  });
+}
+
+/* ═══════════════════════════════════════════
+   FAKTURY
+   ═══════════════════════════════════════════ */
+
+export function useFaktury(filter?: FakturaFilter) {
+  return useQuery({
+    queryKey: queryKeys.faktury.list(filter),
+    queryFn: () => fakturyService.getAll(filter),
+  });
+}
+
+export function useFaktura(id: number | undefined) {
+  return useQuery({
+    queryKey: queryKeys.faktury.detail(id!),
+    queryFn: () => fakturyService.getById(id!),
+    enabled: !!id,
+  });
+}
+
+export function useCreateFaktura() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<Faktura>) => fakturyService.create(data as any),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.faktury.all });
+    },
+  });
+}
+
+export function useUpdateFaktura() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<Faktura> }) =>
+      fakturyService.update(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.faktury.all });
+    },
+  });
+}
+
+export function useDeleteFaktura() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => fakturyService.delete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.faktury.all });
+    },
+  });
+}
+
+export function useZmenStavFaktury() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, stav }: { id: number; stav: Exclude<FakturaStav, 'koncept'> }) =>
+      fakturyService.zmenStav(id, stav),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.faktury.all });
+    },
+  });
+}
+
+export function useVytvorFakturuZRevize() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (revizeId: number) => fakturyService.vytvorZRevize(revizeId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.faktury.all });
+    },
+  });
+}
+
+/* ═══════════════════════════════════════════
+   CENÍK
+   ═══════════════════════════════════════════ */
+
+export function useCenik() {
+  return useQuery({
+    queryKey: queryKeys.cenik.all,
+    queryFn: () => cenikService.getAll(),
+  });
+}
+
+export function useCreateCenik() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<CenikPolozka>) => cenikService.create(data as any),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.cenik.all });
+    },
+  });
+}
+
+export function useUpdateCenik() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<CenikPolozka> }) =>
+      cenikService.update(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.cenik.all });
+    },
+  });
+}
+
+export function useDeleteCenik() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => cenikService.delete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.cenik.all });
     },
   });
 }

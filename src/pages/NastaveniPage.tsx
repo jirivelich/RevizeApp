@@ -90,6 +90,7 @@ export function NastaveniPage() {
   const [activeTab, setActiveTab] = useState<'obecne' | 'technik' | 'texty' | 'zalohy' | 'notifikace' | 'integrace'>('obecne');
   const [searchParams, setSearchParams] = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const razitkoInputRef = useRef<HTMLInputElement>(null);
 
   // Backup state
   const [isExporting, setIsExporting] = useState(false);
@@ -280,6 +281,17 @@ export function NastaveniPage() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setNastaveni({ ...nastaveni, logo: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRazitkoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNastaveni({ ...nastaveni, razitko: reader.result as string });
       };
       reader.readAsDataURL(file);
     }
@@ -524,6 +536,82 @@ export function NastaveniPage() {
                   variant="danger"
                   className="ml-2"
                   onClick={() => setNastaveni({ ...nastaveni, logo: '' })}
+                >
+                  Odebrat
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <Card title="Fakturace">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            label="Bankovní účet"
+            placeholder="123456789/0100"
+            value={nastaveni.bankovniUcet || ''}
+            onChange={(e) => setNastaveni({ ...nastaveni, bankovniUcet: e.target.value })}
+          />
+          <Input
+            label="IBAN"
+            placeholder="CZ6501000000000123456789"
+            value={nastaveni.iban || ''}
+            onChange={(e) => setNastaveni({ ...nastaveni, iban: e.target.value })}
+          />
+          <Input
+            label="SWIFT / BIC"
+            value={nastaveni.swift || ''}
+            onChange={(e) => setNastaveni({ ...nastaveni, swift: e.target.value })}
+          />
+          <Input
+            label="Splatnost (dní)"
+            type="number"
+            min={0}
+            value={nastaveni.splatnostDni ?? ''}
+            onChange={(e) => setNastaveni({ ...nastaveni, splatnostDni: e.target.value === '' ? undefined : Number(e.target.value) })}
+          />
+          <Input
+            label="Prefix číselné řady"
+            value={nastaveni.fakturaPrefix || ''}
+            onChange={(e) => setNastaveni({ ...nastaveni, fakturaPrefix: e.target.value })}
+          />
+        </div>
+        <div className="mt-4">
+          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Pata faktury</label>
+          <textarea
+            value={nastaveni.fakturaPoznamkaPata || ''}
+            onChange={(e) => setNastaveni({ ...nastaveni, fakturaPoznamkaPata: e.target.value })}
+            className="w-full px-3 py-2 border rounded-md bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]"
+            rows={3}
+          />
+        </div>
+        <div className="mt-6">
+          <label className="text-sm font-medium text-[var(--text-secondary)] block mb-2">Razítko a podpis</label>
+          <div className="flex items-center gap-4">
+            {nastaveni.razitko && (
+              <img
+                src={nastaveni.razitko}
+                alt="Razítko"
+                className="w-24 h-24 object-contain rounded-lg border border-[var(--border-medium)]"
+              />
+            )}
+            <div>
+              <input
+                ref={razitkoInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleRazitkoUpload}
+                className="hidden"
+              />
+              <Button variant="secondary" onClick={() => razitkoInputRef.current?.click()}>
+                {nastaveni.razitko ? 'Změnit razítko' : 'Nahrát razítko'}
+              </Button>
+              {nastaveni.razitko && (
+                <Button
+                  variant="danger"
+                  className="ml-2"
+                  onClick={() => setNastaveni({ ...nastaveni, razitko: '' })}
                 >
                   Odebrat
                 </Button>

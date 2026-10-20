@@ -9,7 +9,7 @@ import {
   useRevizeDetail, useUpdateRevize,
   useRozvadeceByRevize, useZavadyByRevize, useMistnostiByRevize,
   usePristrojeByRevize, usePristroje, useFirmy, useZakaznici,
-  useNastaveni, usePredvoleneTexty, useZavadyKatalog,
+  useNastaveni, usePredvoleneTexty, useZavadyKatalog, useVytvorFakturuZRevize,
 } from '../../hooks/useQueries';
 import { useAutosave } from '../../hooks/useAutosave';
 import type { AutosaveStatus } from '../../hooks/useAutosave';
@@ -73,6 +73,20 @@ export function RevizeDetailPage() {
   }, [revize?.id, updateRevize]);
 
   const { status: autoStatus, saveNow, flush } = useAutosave(formData, revize, handleAutosave);
+
+  const vytvorFakturu = useVytvorFakturuZRevize();
+  const [fakturaError, setFakturaError] = useState<string | null>(null);
+  const handleVystavitFakturu = async () => {
+    if (!numericId) return;
+    setFakturaError(null);
+    try {
+      await flush();
+      const fakturaId = await vytvorFakturu.mutateAsync(numericId);
+      navigate(`/faktury/${fakturaId}`);
+    } catch (e) {
+      setFakturaError(e instanceof Error ? e.message : 'Fakturu se nepodařilo vytvořit.');
+    }
+  };
 
   // Display status: 'saved' fades out after 2s
   const [displayStatus, setDisplayStatus] = useState<AutosaveStatus>('idle');
@@ -232,9 +246,18 @@ export function RevizeDetailPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => navigate('/revize')}>← Zpět</Button>
+          <Button variant="secondary" onClick={handleVystavitFakturu} disabled={vytvorFakturu.isPending}>
+            {vytvorFakturu.isPending ? 'Vytvářím…' : 'Vystavit fakturu'}
+          </Button>
           <Button variant="success" onClick={async () => { await flush(); navigate(`/revize/${id}/nahled`); }}>Náhled</Button>
         </div>
       </div>
+
+      {fakturaError && (
+        <p className="text-xs font-medium text-[var(--danger-text)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+          {fakturaError}
+        </p>
+      )}
 
       {/* Tab bar */}
       <div className="flex gap-1 border-b border-[var(--border)] overflow-x-auto scrollbar-thin">

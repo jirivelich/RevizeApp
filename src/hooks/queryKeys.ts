@@ -42,6 +42,14 @@ export const queryKeys = {
   zakaznici: {
     all: ['zakaznici'] as const,
   },
+  faktury: {
+    all: ['faktury'] as const,
+    list: (filter?: { stav?: string; rok?: number; zakaznikId?: number }) => ['faktury', 'list', filter ?? {}] as const,
+    detail: (id: number) => ['faktury', 'detail', id] as const,
+  },
+  cenik: {
+    all: ['cenik'] as const,
+  },
   zakazky: {
     all: ['zakazky'] as const,
   },
