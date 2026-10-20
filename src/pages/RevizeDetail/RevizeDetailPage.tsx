@@ -25,6 +25,7 @@ import { HromosvodInfoTab } from './HromosvodInfoTab';
 import { HromosvodZarizeniTab } from './HromosvodZarizeniTab';
 import { HromosvodNacrtTab } from './HromosvodNacrtTab';
 import { StrojniZarizeniTab } from './StrojniZarizeniTab';
+import { PrilohyTab } from './PrilohyTab';
 
 export function RevizeDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -33,7 +34,7 @@ export function RevizeDetailPage() {
 
   // Core state (local)
   const [formData, setFormData] = useState<Partial<Revize>>({});
-  const [activeTab, setActiveTab] = useState<'info' | 'dokumentace' | 'rozvadece' | 'zavady' | 'mistnosti' | 'hromosvod_zarizeni' | 'hromosvod_nacrt' | 'strojni_zarizeni'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'dokumentace' | 'rozvadece' | 'zavady' | 'mistnosti' | 'hromosvod_zarizeni' | 'hromosvod_nacrt' | 'strojni_zarizeni' | 'prilohy'>('info');
   const [selectedFirmaId, setSelectedFirmaId] = useState<string>('');
   const [selectedZakaznikId, setSelectedZakaznikId] = useState<string>('');
 
@@ -183,12 +184,14 @@ export function RevizeDetailPage() {
         { id: 'hromosvod_zarizeni', label: 'Revidované zařízení', icon: '' },
         { id: 'hromosvod_nacrt', label: '✏️ Náčrt LPS', icon: '' },
         { id: 'zavady', label: `Závady (${zavady.length})`, icon: '' },
+        { id: 'prilohy', label: 'Přílohy', icon: '' },
       ]
     : isStroje
     ? [
         { id: 'info', label: 'Základní údaje', icon: '' },
         { id: 'strojni_zarizeni', label: 'Protokol strojního zařízení', icon: '' },
         { id: 'zavady', label: `Závady (${zavady.length})`, icon: '' },
+        { id: 'prilohy', label: 'Přílohy', icon: '' },
       ]
     : [
         { id: 'info', label: 'Základní údaje', icon: '' },
@@ -196,6 +199,7 @@ export function RevizeDetailPage() {
         { id: 'rozvadece', label: `Rozvaděče (${rozvadece.length})`, icon: '' },
         { id: 'mistnosti', label: `Místnosti (${mistnosti.length})`, icon: '' },
         { id: 'zavady', label: `Závady (${zavady.length})`, icon: '' },
+        { id: 'prilohy', label: 'Přílohy', icon: '' },
       ];
 
   const handleReload = () => {
@@ -320,6 +324,8 @@ export function RevizeDetailPage() {
           revizeId={revize.id!} onReload={handleReload}
         />
       )}
+
+      {activeTab === 'prilohy' && <PrilohyTab revizeId={revize.id!} />}
 
       {/* Fixed save bar */}
       {(activeTab === 'info' || activeTab === 'dokumentace' || activeTab === 'hromosvod_zarizeni' || activeTab === 'hromosvod_nacrt' || activeTab === 'strojni_zarizeni') && (

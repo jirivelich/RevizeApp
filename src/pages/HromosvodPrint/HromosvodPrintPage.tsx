@@ -7,6 +7,8 @@ import { ReportHeader } from '../ReportPrint/ReportHeader';
 import { ReportSection } from '../ReportPrint/ReportSection';
 import { ReportTable } from '../ReportPrint/ReportTable';
 import { exportHromosvodToWord } from '../../services/wordExportHromosvod';
+import { PrilohyPrint } from '../ReportPrint/PrilohyPrint';
+import { loadPrilohyForPrint, type PrilohaPrintItem } from '../../services/prilohyUtils';
 import '../ReportPrint/print.css';
 
 interface MereniOdporu {
@@ -87,6 +89,7 @@ export interface HromosvodReportData {
   zakaznik: Zakaznik | null;
   zavady: Zavada[];
   pristroje: MericiPristroj[];
+  prilohy: PrilohaPrintItem[];
 }
 
 export function HromosvodPrintPage() {
@@ -127,7 +130,8 @@ export function HromosvodPrintPage() {
         } catch { /* ok */ }
       }
 
-      setData({ revize, nastaveni: nastaveniData || null, zakaznik, zavady, pristroje });
+      const prilohy = await loadPrilohyForPrint(revizeId);
+      setData({ revize, nastaveni: nastaveniData || null, zakaznik, zavady, pristroje, prilohy });
 
       // Nastavit document.title pro výchozí název PDF souboru
       const titleParts = [
@@ -237,7 +241,7 @@ export function HromosvodPrintPage() {
     );
   }
 
-  const { revize, nastaveni, zakaznik, zavady, pristroje } = data;
+  const { revize, nastaveni, zakaznik, zavady, pristroje, prilohy } = data;
 
   // Tisk sekce
   let tiskSekce: Record<string, boolean> = {};
@@ -639,6 +643,8 @@ export function HromosvodPrintPage() {
           V ...................... dne {revize.datumVypracovani ? new Date(revize.datumVypracovani).toLocaleDateString('cs-CZ') : new Date().toLocaleDateString('cs-CZ')}
         </div>
       </ReportSection>
+
+      <PrilohyPrint prilohy={prilohy} />
     </div>
   );
 

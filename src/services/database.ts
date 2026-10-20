@@ -1,7 +1,7 @@
 // Database service - komunikuje s backend API
 // Všechna data jsou uložena na serveru a synchronizována mezi zařízeními
 
-import type { Revize, Rozvadec, Okruh, Chranic, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, MericiPristroj, Firma, ZavadaKatalog, Zakaznik, PredvolenyText, Kalibrace } from '../types';
+import type { Revize, Rozvadec, Okruh, Chranic, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, MericiPristroj, Firma, ZavadaKatalog, Zakaznik, PredvolenyText, Kalibrace, RevizePriloha } from '../types';
 import { safeApiRequest } from './safeApiRequest';
 import { db } from '../db';
 import { buildApiUrl, getAuthHeaders, handleResponse } from './httpClient';
@@ -1378,3 +1378,40 @@ export const exportService = {
   },
 };
 
+
+// ==================== PŘÍLOHY (online-only, bez offline cache) ====================
+export const prilohaService = {
+  async getByRevize(revizeId: number): Promise<RevizePriloha[]> {
+    const res = await fetch(buildApiUrl(`/revize/${revizeId}/prilohy`), { headers: getAuthHeaders() });
+    return handleResponse<RevizePriloha[]>(res);
+  },
+
+  async getById(id: number): Promise<RevizePriloha> {
+    const res = await fetch(buildApiUrl(`/prilohy/${id}`), { headers: getAuthHeaders() });
+    return handleResponse<RevizePriloha>(res);
+  },
+
+  async create(priloha: Pick<RevizePriloha, 'revizeId' | 'nazev' | 'mimeType' | 'data' | 'poznamka'>): Promise<number> {
+    const res = await fetch(buildApiUrl(`/revize/${priloha.revizeId}/prilohy`), {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(priloha),
+    });
+    const { id } = await handleResponse<{ id: number }>(res);
+    return id;
+  },
+
+  async update(id: number, changes: Partial<Pick<RevizePriloha, 'nazev' | 'poznamka' | 'poradi'>>): Promise<void> {
+    const res = await fetch(buildApiUrl(`/prilohy/${id}`), {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(changes),
+    });
+    await handleResponse<{ success: boolean }>(res);
+  },
+
+  async delete(id: number): Promise<void> {
+    const res = await fetch(buildApiUrl(`/prilohy/${id}`), { method: 'DELETE', headers: getAuthHeaders() });
+    await handleResponse<{ success: boolean }>(res);
+  },
+};

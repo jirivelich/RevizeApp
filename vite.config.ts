@@ -30,6 +30,11 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         runtimeCaching: [
           {
+            // Přílohy jsou velké a jen online – necachovat
+            urlPattern: /^https?:\/\/.*\/api\/(prilohy|revize\/\d+\/prilohy).*/i,
+            handler: 'NetworkOnly',
+          },
+          {
             urlPattern: /^https?:\/\/.*\/api\/.*/i,
             handler: 'NetworkFirst',
             options: {

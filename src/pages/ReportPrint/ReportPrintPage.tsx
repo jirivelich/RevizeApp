@@ -8,6 +8,8 @@ import { ReportSection } from './ReportSection';
 import { ReportTable } from './ReportTable';
 import { DEFAULT_NORMY_SOULAD } from '../RevizeDetail/constants';
 import { exportElektroToWord } from '../../services/wordExport';
+import { PrilohyPrint } from './PrilohyPrint';
+import { loadPrilohyForPrint, type PrilohaPrintItem } from '../../services/prilohyUtils';
 import './print.css';
 
 /**
@@ -85,6 +87,7 @@ export interface ReportData {
   zavady: Zavada[];
   mistnosti: MistnostWithZarizeni[];
   pristroje: MericiPristroj[];
+  prilohy: PrilohaPrintItem[];
 }
 
 export interface RozvadecWithOkruhy extends Rozvadec {
@@ -151,7 +154,8 @@ export function ReportPrintPage() {
         } catch { /* ok */ }
       }
 
-      setData({ revize, nastaveni: nastaveniData || null, zakaznik, rozvadece, zavady, mistnosti, pristroje });
+      const prilohy = await loadPrilohyForPrint(revizeId);
+      setData({ revize, nastaveni: nastaveniData || null, zakaznik, rozvadece, zavady, mistnosti, pristroje, prilohy });
 
       // Nastavit document.title pro výchozí název PDF souboru
       const titleParts = [
@@ -324,7 +328,7 @@ export function ReportPrintPage() {
     );
   }
 
-  const { revize, nastaveni, zakaznik, rozvadece, zavady, mistnosti, pristroje } = data;
+  const { revize, nastaveni, zakaznik, rozvadece, zavady, mistnosti, pristroje, prilohy } = data;
 
   // Parsovat tiskSekce – které sekce jsou viditelné v tisku
   let tiskSekce: Record<string, boolean> = {};
@@ -837,11 +841,14 @@ export function ReportPrintPage() {
       )}
 
       {/* SEZNAM PŘÍLOH */}
-      {isSekceVisible('prilohy') && revize.prilohy && (
+      {isSekceVisible('prilohy') && (revize.prilohy || prilohy.length > 0) && (
       <ReportSection title={`${sectionNums.prilohy}. Přílohy`}>
         <ol style={{ margin: 0, paddingLeft: '20px' }}>
-          {revize.prilohy.split('\n').filter(r => r.trim()).map((radek, i) => (
+          {(revize.prilohy || '').split('\n').filter(r => r.trim()).map((radek, i) => (
             <li key={i} className="report-text" style={{ marginBottom: '2px' }}>{radek.trim()}</li>
+          ))}
+          {prilohy.map((p, i) => (
+            <li key={`file-${i}`} className="report-text" style={{ marginBottom: '2px' }}>{p.nazev} (příloha {i + 1})</li>
           ))}
         </ol>
       </ReportSection>
@@ -872,6 +879,8 @@ export function ReportPrintPage() {
           </div>
         </>
       )}
+
+      <PrilohyPrint prilohy={prilohy} />
 
     </div>
   );

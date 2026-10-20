@@ -518,6 +518,81 @@ async function startServer() {
     }
   });
 
+  // ==================== PŘÍLOHY ====================
+  const PRILOHA_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
+  const PRILOHA_MAX_BYTES = 15 * 1024 * 1024;
+
+  app.get('/api/revize/:revizeId/prilohy', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query(
+        `SELECT id, "revizeId", nazev, "mimeType", velikost, poradi, poznamka, "createdAt"
+         FROM "revizePriloha" WHERE "revizeId" = $1 ORDER BY poradi, id`,
+        [req.params.revizeId]
+      );
+      res.json(result.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.get('/api/prilohy/:id', authMiddleware, async (req, res) => {
+    try {
+      const result = await pool.query('SELECT * FROM "revizePriloha" WHERE id = $1', [req.params.id]);
+      if (!result.rows[0]) return res.status(404).json({ error: 'Příloha nenalezena' });
+      res.json(result.rows[0]);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/revize/:revizeId/prilohy', authMiddleware, async (req, res) => {
+    try {
+      const { nazev, mimeType, data, poznamka } = req.body;
+      if (!nazev || !data || typeof data !== 'string') {
+        return res.status(400).json({ error: 'Chybí název nebo data přílohy' });
+      }
+      if (!PRILOHA_MIME.includes(mimeType)) {
+        return res.status(400).json({ error: 'Nepodporovaný typ souboru (povoleny obrázky a PDF)' });
+      }
+      const base64 = data.includes(',') ? data.slice(data.indexOf(',') + 1) : data;
+      const velikost = Math.floor(base64.length * 3 / 4);
+      if (velikost > PRILOHA_MAX_BYTES) {
+        return res.status(413).json({ error: 'Soubor je příliš velký (max. 15 MB)' });
+      }
+      const poradiRow = await pool.query('SELECT COALESCE(MAX(poradi), 0) + 1 AS p FROM "revizePriloha" WHERE "revizeId" = $1', [req.params.revizeId]);
+      const result = await pool.query(
+        `INSERT INTO "revizePriloha" ("revizeId", nazev, "mimeType", velikost, data, poradi, poznamka, "createdAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+        [req.params.revizeId, nazev, mimeType, velikost, data, poradiRow.rows[0].p, poznamka ?? null, new Date().toISOString()]
+      );
+      res.json({ id: result.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/prilohy/:id', authMiddleware, async (req, res) => {
+    try {
+      const allowed = ['nazev', 'poznamka', 'poradi'];
+      const keys = Object.keys(req.body).filter(k => allowed.includes(k));
+      if (keys.length === 0) return res.json({ success: true });
+      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      await pool.query(`UPDATE "revizePriloha" SET ${setClause} WHERE id = $${keys.length + 1}`, [...keys.map(k => req.body[k]), req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/prilohy/:id', authMiddleware, async (req, res) => {
+    try {
+      await pool.query('DELETE FROM "revizePriloha" WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
   // ==================== OKRUHY ====================
   app.get('/api/okruhy/:rozvadecId', authMiddleware, async (req, res) => {
     try {

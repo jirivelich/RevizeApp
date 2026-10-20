@@ -564,3 +564,27 @@
   font-style: italic;
   color: #333;
 }
+
+.report-priloha-title {
+  font-size: 12pt;
+  font-weight: 800;
+  color: #000000;
+  border-bottom: 2px solid #b0b0b0;
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+
+.report-priloha-poznamka {
+  font-size: 8.5pt;
+  color: #475569;
+  margin-bottom: 8px;
+  white-space: pre-line;
+}
+
+.report-priloha-img {
+  display: block;
+  max-width: 100%;
+  max-height: 230mm;
+  margin: 0 auto;
+  object-fit: contain;
+}

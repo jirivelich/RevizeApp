@@ -405,3 +405,15 @@ export interface PredvolenyText {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface RevizePriloha {
+  id?: number;
+  revizeId: number;
+  nazev: string;
+  mimeType: string;
+  velikost?: number;
+  data?: string; // base64 data-URL, vrací jen detail přílohy
+  poradi?: number;
+  poznamka?: string;
+  createdAt?: string;
+}

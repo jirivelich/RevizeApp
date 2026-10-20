@@ -204,6 +204,20 @@ export async function initializeDatabase() {
     `);
 
     await client.query(`
+      CREATE TABLE IF NOT EXISTS "revizePriloha" (
+        id SERIAL PRIMARY KEY,
+        "revizeId" INTEGER NOT NULL REFERENCES revize(id) ON DELETE CASCADE,
+        nazev TEXT NOT NULL,
+        "mimeType" TEXT NOT NULL,
+        velikost INTEGER,
+        data TEXT NOT NULL,
+        poradi INTEGER DEFAULT 0,
+        poznamka TEXT,
+        "createdAt" TEXT NOT NULL
+      )
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS zakazka (
         id SERIAL PRIMARY KEY,
         nazev TEXT NOT NULL,
@@ -370,6 +384,7 @@ export async function initializeDatabase() {
       'CREATE INDEX IF NOT EXISTS idx_zarizeni_mistnost ON zarizeni("mistnostId")',
       'CREATE INDEX IF NOT EXISTS idx_zavada_revize ON zavada("revizeId")',
       'CREATE INDEX IF NOT EXISTS idx_zavada_stav ON zavada(stav)',
+      'CREATE INDEX IF NOT EXISTS idx_priloha_revize ON "revizePriloha"("revizeId")',
     ];
     
     for (const idx of indexes) {

@@ -6,6 +6,8 @@ import type { Revize, Zavada, MericiPristroj, Nastaveni, Zakaznik } from '../../
 import { ReportHeader } from '../ReportPrint/ReportHeader';
 import { ReportSection } from '../ReportPrint/ReportSection';
 import { ReportTable } from '../ReportPrint/ReportTable';
+import { PrilohyPrint } from '../ReportPrint/PrilohyPrint';
+import { loadPrilohyForPrint, type PrilohaPrintItem } from '../../services/prilohyUtils';
 import '../ReportPrint/print.css';
 
 // ── Typy pro strojní data (z JSON) ──
@@ -100,6 +102,7 @@ export interface StrojniReportData {
   zavady: Zavada[];
   pristroje: MericiPristroj[];
   strojniData: StrojniFormData | null;
+  prilohy: PrilohaPrintItem[];
 }
 
 // ── Helpers ──
@@ -153,7 +156,8 @@ export function StrojniZarizeniPrintPage() {
         try { strojniData = JSON.parse(revize.strojniData); } catch { /* ok */ }
       }
 
-      setData({ revize, nastaveni: nastaveniData || null, zakaznik, zavady, pristroje, strojniData });
+      const prilohy = await loadPrilohyForPrint(revizeId);
+      setData({ revize, nastaveni: nastaveniData || null, zakaznik, zavady, pristroje, strojniData, prilohy });
 
       // Nastavit document.title pro výchozí název PDF souboru
       const titleParts = [
@@ -251,7 +255,7 @@ export function StrojniZarizeniPrintPage() {
     );
   }
 
-  const { revize, nastaveni, zakaznik, zavady, pristroje, strojniData: sd } = data;
+  const { revize, nastaveni, zakaznik, zavady, pristroje, strojniData: sd, prilohy } = data;
 
   const typRevizeLabel = revize.typRevize === 'výchozí' ? 'Výchozí revize' :
     revize.typRevize === 'pravidelná' ? 'Pravidelná revize' :
@@ -578,6 +582,8 @@ export function StrojniZarizeniPrintPage() {
           V ...................... dne {revize.datumVypracovani ? new Date(revize.datumVypracovani).toLocaleDateString('cs-CZ') : new Date().toLocaleDateString('cs-CZ')}
         </div>
       </ReportSection>
+
+      <PrilohyPrint prilohy={prilohy} />
     </div>
   );
 
