@@ -426,5 +426,6 @@ export interface RevizePriloha {
   data?: string; // base64 data-URL, vrací jen detail přílohy
   poradi?: number;
   poznamka?: string;
+  vTisku?: boolean; // false = interní dokument, netiskne se
   createdAt?: string;
 }

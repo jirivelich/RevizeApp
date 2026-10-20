@@ -397,6 +397,8 @@ export async function initializeDatabase() {
 
     // Migrace - přidat chybějící sloupce do existujících tabulek
     const migrations = [
+      // Přílohy: FALSE = interní dokument (faktura, smlouva…), netiskne se
+      'ALTER TABLE "revizePriloha" ADD COLUMN IF NOT EXISTS "vTisku" BOOLEAN NOT NULL DEFAULT TRUE',
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "zakaznikId" INTEGER REFERENCES zakaznik(id)',
       // Odstranit UNIQUE constraint z vyrobniCislo (může být prázdné nebo duplicitní)
       'ALTER TABLE "mericiPristroj" DROP CONSTRAINT IF EXISTS "mericiPristroj_vyrobniCislo_key"',

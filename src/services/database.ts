@@ -1391,7 +1391,7 @@ export const prilohaService = {
     return handleResponse<RevizePriloha>(res);
   },
 
-  async create(priloha: Pick<RevizePriloha, 'revizeId' | 'nazev' | 'mimeType' | 'data' | 'poznamka'>): Promise<number> {
+  async create(priloha: Pick<RevizePriloha, 'revizeId' | 'nazev' | 'mimeType' | 'data' | 'poznamka' | 'vTisku'>): Promise<number> {
     const res = await fetch(buildApiUrl(`/revize/${priloha.revizeId}/prilohy`), {
       method: 'POST',
       headers: getAuthHeaders(),
@@ -1401,7 +1401,7 @@ export const prilohaService = {
     return id;
   },
 
-  async update(id: number, changes: Partial<Pick<RevizePriloha, 'nazev' | 'poznamka' | 'poradi'>>): Promise<void> {
+  async update(id: number, changes: Partial<Pick<RevizePriloha, 'nazev' | 'poznamka' | 'poradi' | 'vTisku'>>): Promise<void> {
     const res = await fetch(buildApiUrl(`/prilohy/${id}`), {
       method: 'PUT',
       headers: getAuthHeaders(),

@@ -527,7 +527,7 @@ async function startServer() {
   app.get('/api/revize/:revizeId/prilohy', authMiddleware, async (req, res) => {
     try {
       const result = await pool.query(
-        `SELECT id, "revizeId", nazev, "mimeType", velikost, poradi, poznamka, "createdAt"
+        `SELECT id, "revizeId", nazev, "mimeType", velikost, poradi, poznamka, "vTisku", "createdAt"
          FROM "revizePriloha" WHERE "revizeId" = $1 ORDER BY poradi, id`,
         [req.params.revizeId]
       );
@@ -549,11 +549,14 @@ async function startServer() {
 
   app.post('/api/revize/:revizeId/prilohy', authMiddleware, async (req, res) => {
     try {
-      const { nazev, mimeType, data, poznamka } = req.body;
+      const { nazev, data, poznamka } = req.body;
+      const vTisku = req.body.vTisku !== false;
+      const mimeType = req.body.mimeType || 'application/octet-stream';
       if (!nazev || !data || typeof data !== 'string') {
         return res.status(400).json({ error: 'Chybí název nebo data přílohy' });
       }
-      if (!PRILOHA_MIME.includes(mimeType)) {
+      // Tištěné přílohy jen obrázky/PDF; interní dokumenty (faktury, smlouvy…) libovolný typ
+      if (vTisku && !PRILOHA_MIME.includes(mimeType)) {
         return res.status(400).json({ error: 'Nepodporovaný typ souboru (povoleny obrázky a PDF)' });
       }
       const base64 = data.includes(',') ? data.slice(data.indexOf(',') + 1) : data;
@@ -563,9 +566,9 @@ async function startServer() {
       }
       const poradiRow = await pool.query('SELECT COALESCE(MAX(poradi), 0) + 1 AS p FROM "revizePriloha" WHERE "revizeId" = $1', [req.params.revizeId]);
       const result = await pool.query(
-        `INSERT INTO "revizePriloha" ("revizeId", nazev, "mimeType", velikost, data, poradi, poznamka, "createdAt")
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-        [req.params.revizeId, nazev, mimeType, velikost, data, poradiRow.rows[0].p, poznamka ?? null, new Date().toISOString()]
+        `INSERT INTO "revizePriloha" ("revizeId", nazev, "mimeType", velikost, data, poradi, poznamka, "vTisku", "createdAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+        [req.params.revizeId, nazev, mimeType, velikost, data, poradiRow.rows[0].p, poznamka ?? null, vTisku, new Date().toISOString()]
       );
       res.json({ id: result.rows[0].id });
     } catch (error) {
@@ -575,9 +578,16 @@ async function startServer() {
 
   app.put('/api/prilohy/:id', authMiddleware, async (req, res) => {
     try {
-      const allowed = ['nazev', 'poznamka', 'poradi'];
+      const allowed = ['nazev', 'poznamka', 'poradi', 'vTisku'];
       const keys = Object.keys(req.body).filter(k => allowed.includes(k));
       if (keys.length === 0) return res.json({ success: true });
+      if (keys.includes('vTisku') && req.body.vTisku === true) {
+        const cur = await pool.query('SELECT "mimeType" FROM "revizePriloha" WHERE id = $1', [req.params.id]);
+        if (!cur.rows[0]) return res.status(404).json({ error: 'Příloha nenalezena' });
+        if (!PRILOHA_MIME.includes(cur.rows[0].mimeType)) {
+          return res.status(400).json({ error: 'Do tisku lze zahrnout jen obrázky a PDF' });
+        }
+      }
       const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
       await pool.query(`UPDATE "revizePriloha" SET ${setClause} WHERE id = $${keys.length + 1}`, [...keys.map(k => req.body[k]), req.params.id]);
       res.json({ success: true });

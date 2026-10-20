@@ -42,15 +42,19 @@ async function compressImage(file: File): Promise<{ data: string; mimeType: stri
 }
 
 /** Připraví soubor k nahrání. Při nepodporovaném typu nebo velikosti vyhodí Error s českou zprávou. */
-export async function prepareFile(file: File): Promise<{ nazev: string; mimeType: string; data: string }> {
-  if (!PRILOHA_MIME.includes(file.type)) {
+export async function prepareFile(
+  file: File,
+  { libovolnyTyp = false }: { libovolnyTyp?: boolean } = {},
+): Promise<{ nazev: string; mimeType: string; data: string }> {
+  if (!libovolnyTyp && !PRILOHA_MIME.includes(file.type)) {
     throw new Error(`„${file.name}“: nepodporovaný typ (povoleny jsou obrázky a PDF)`);
   }
   if (file.size > PRILOHA_MAX_BYTES) {
     throw new Error(`„${file.name}“ je příliš velký (max. 15 MB)`);
   }
-  if (file.type === 'application/pdf') {
-    return { nazev: file.name, mimeType: file.type, data: await readAsDataUrl(file) };
+  if (libovolnyTyp || file.type === 'application/pdf') {
+    // Interní dokumenty ukládáme beze změny (bez komprese)
+    return { nazev: file.name, mimeType: file.type || 'application/octet-stream', data: await readAsDataUrl(file) };
   }
   const { data, mimeType } = await compressImage(file);
   return { nazev: file.name, mimeType, data };
@@ -122,7 +126,7 @@ export interface PrilohaPrintItem {
 export async function loadPrilohyForPrint(revizeId: number): Promise<PrilohaPrintItem[]> {
   const { prilohaService } = await import('./database');
   try {
-    const list = await prilohaService.getByRevize(revizeId);
+    const list = (await prilohaService.getByRevize(revizeId)).filter(p => p.vTisku !== false);
     const items: PrilohaPrintItem[] = [];
     for (const meta of list) {
       try {
@@ -138,4 +142,26 @@ export async function loadPrilohyForPrint(revizeId: number): Promise<PrilohaPrin
   } catch {
     return [];
   }
+}
+
+/** Stáhne přílohu jako soubor (bez vykreslení – bezpečné i pro neznámé typy). */
+export function downloadPriloha(p: RevizePriloha): void {
+  if (!p.data) return;
+  const url = URL.createObjectURL(dataUrlToBlob(p.data));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = p.nazev;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+/** Zda lze přílohu zobrazit v náhledu / zařadit do tisku (obrázek nebo PDF). */
+export const isPrintable = (p: Pick<RevizePriloha, 'mimeType'>) => PRILOHA_MIME.includes(p.mimeType);
+
+/** Krátký popisek typu souboru podle přípony pro kartu bez náhledu. */
+export function fileTypeLabel(nazev: string): string {
+  const ext = nazev.includes('.') ? nazev.split('.').pop()!.toUpperCase() : '';
+  return ext && ext.length <= 5 ? ext : 'SOUBOR';
 }
