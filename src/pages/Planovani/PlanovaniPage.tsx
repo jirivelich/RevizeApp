@@ -45,6 +45,18 @@ const KATEGORIE_REVIZE: { value: KategorieRevize; label: string; popis: string; 
       </svg>
     ),
   },
+  {
+    value: 'odberne_misto',
+    label: 'Odběrné místo (ČEZ)',
+    popis: 'Elektroměrový rozvaděč, smlouva, tarif',
+    icon: (
+      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="5" y="3" width="14" height="18" rx="2" />
+        <circle cx="12" cy="10" r="3.5" />
+        <path d="M9 17h6" strokeLinecap="round" />
+      </svg>
+    ),
+  },
 ];
 
 export function PlanovaniPage() {

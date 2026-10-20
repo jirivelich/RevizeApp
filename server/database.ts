@@ -452,6 +452,8 @@ export async function initializeDatabase() {
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodMereniOdporu" TEXT',
       // === Strojní zařízení ===
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "strojniData" TEXT',
+      // === Odběrné místo (ČEZ) ===
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "odberneMistoData" TEXT',
       // Normy soulad – text nad nadpisem zprávy
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "normySoulad" TEXT',
       // Lhůta – vlastní text místo počtu měsíců

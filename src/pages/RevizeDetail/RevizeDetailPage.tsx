@@ -25,6 +25,7 @@ import { HromosvodInfoTab } from './HromosvodInfoTab';
 import { HromosvodZarizeniTab } from './HromosvodZarizeniTab';
 import { HromosvodNacrtTab } from './HromosvodNacrtTab';
 import { StrojniZarizeniTab } from './StrojniZarizeniTab';
+import { OdberneMistoTab } from './OdberneMistoTab';
 import { PrilohyTab } from './PrilohyTab';
 
 export function RevizeDetailPage() {
@@ -34,7 +35,7 @@ export function RevizeDetailPage() {
 
   // Core state (local)
   const [formData, setFormData] = useState<Partial<Revize>>({});
-  const [activeTab, setActiveTab] = useState<'info' | 'dokumentace' | 'rozvadece' | 'zavady' | 'mistnosti' | 'hromosvod_zarizeni' | 'hromosvod_nacrt' | 'strojni_zarizeni' | 'prilohy'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'dokumentace' | 'rozvadece' | 'zavady' | 'mistnosti' | 'hromosvod_zarizeni' | 'hromosvod_nacrt' | 'strojni_zarizeni' | 'odberne_misto' | 'prilohy'>('info');
   const [selectedFirmaId, setSelectedFirmaId] = useState<string>('');
   const [selectedZakaznikId, setSelectedZakaznikId] = useState<string>('');
 
@@ -178,7 +179,17 @@ export function RevizeDetailPage() {
   const isHromosvod = revize.kategorieRevize === 'hromosvod';
   const isStroje = revize.kategorieRevize === 'stroje';
 
-  const tabs = isHromosvod
+  const isOdberneMisto = revize.kategorieRevize === 'odberne_misto';
+
+  const tabs = isOdberneMisto
+    ? [
+        { id: 'info', label: 'Základní údaje', icon: '' },
+        { id: 'odberne_misto', label: 'Odběrné místo', icon: '' },
+        { id: 'dokumentace', label: 'Revidované zařízení', icon: '' },
+        { id: 'zavady', label: `Závady (${zavady.length})`, icon: '' },
+        { id: 'prilohy', label: 'Přílohy', icon: '' },
+      ]
+    : isHromosvod
     ? [
         { id: 'info', label: 'Základní údaje', icon: '' },
         { id: 'hromosvod_zarizeni', label: 'Revidované zařízení', icon: '' },
@@ -281,6 +292,10 @@ export function RevizeDetailPage() {
         />
       )}
 
+      {activeTab === 'odberne_misto' && (
+        <OdberneMistoTab revize={revize} formData={formData} setFormData={setFormData} />
+      )}
+
       {activeTab === 'strojni_zarizeni' && (
         <StrojniZarizeniTab
           revize={revize}
@@ -328,7 +343,7 @@ export function RevizeDetailPage() {
       {activeTab === 'prilohy' && <PrilohyTab revizeId={revize.id!} />}
 
       {/* Fixed save bar */}
-      {(activeTab === 'info' || activeTab === 'dokumentace' || activeTab === 'hromosvod_zarizeni' || activeTab === 'hromosvod_nacrt' || activeTab === 'strojni_zarizeni') && (
+      {(activeTab === 'info' || activeTab === 'dokumentace' || activeTab === 'hromosvod_zarizeni' || activeTab === 'hromosvod_nacrt' || activeTab === 'strojni_zarizeni' || activeTab === 'odberne_misto') && (
         <div className="fixed bottom-0 left-0 lg:left-64 right-0 z-50 bg-[var(--surface)]/90 backdrop-blur border-t border-[var(--border-medium)] shadow-[0_-2px_8px_rgba(0,0,0,0.15)]">
           <div className="max-w-4xl mx-auto px-4 py-1 flex items-center justify-between gap-4">
             <div className="text-sm min-w-[140px]">

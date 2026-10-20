@@ -4,6 +4,7 @@ import { revizeService } from '../services/database';
 import { ReportPrintPage } from './ReportPrint';
 import { HromosvodPrintPage } from './HromosvodPrint';
 import { StrojniZarizeniPrintPage } from './StrojniZarizeniPrint';
+import { OdberneMistoPrintPage } from './OdberneMistoPrint';
 import './ReportPrint/nahled.css';
 
 /**
@@ -38,6 +39,7 @@ export function NahledRouter() {
     }
     if (kategorie === 'hromosvod') return <HromosvodPrintPage />;
     if (kategorie === 'stroje') return <StrojniZarizeniPrintPage />;
+    if (kategorie === 'odberne_misto') return <OdberneMistoPrintPage />;
     return <ReportPrintPage />;
   };
 

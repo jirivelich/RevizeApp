@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button, Input, Select, Modal } from '../components/ui';
 import { revizeService } from '../services/database';
 import { useRevize, useDeleteRevize } from '../hooks/useQueries';
+import { KATEGORIE_LABELS } from '../types';
 import type { KategorieRevize, Revize } from '../types';
 
 // Definice kategorií revizí - centrální místo pro budoucí rozšíření
@@ -37,6 +38,18 @@ const KATEGORIE_REVIZE: { value: KategorieRevize; label: string; popis: string; 
       <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <circle cx="12" cy="12" r="3" />
         <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    value: 'odberne_misto',
+    label: 'Odběrné místo (ČEZ)',
+    popis: 'Revize elektroměrového rozvaděče a odběrného místa dle připojovacích podmínek distributora, smlouvy a tarifu',
+    icon: (
+      <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="5" y="3" width="14" height="18" rx="2" />
+        <circle cx="12" cy="10" r="3.5" />
+        <path d="M9 17h6" strokeLinecap="round" />
       </svg>
     ),
   },
@@ -319,6 +332,7 @@ export function RevizePage() {
               { value: 'elektro', label: 'Elektrické instalace' },
               { value: 'hromosvod', label: 'Hromosvody' },
               { value: 'stroje', label: 'Strojní zařízení' },
+              { value: 'odberne_misto', label: 'Odběrné místo (ČEZ)' },
             ]}
           />
           <Select
@@ -369,9 +383,7 @@ export function RevizePage() {
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
-                      {r.kategorieRevize === 'elektro' ? 'Elektro' :
-                       r.kategorieRevize === 'hromosvod' ? 'Hromosvod' :
-                       r.kategorieRevize === 'stroje' ? 'Stroje' : r.kategorieRevize}
+                      {KATEGORIE_LABELS[r.kategorieRevize]?.kratky ?? r.kategorieRevize}
                     </span>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                       r.stav === 'dokončeno' ? 'bg-[var(--success-bg)] text-[var(--success-text)]' :
@@ -436,15 +448,8 @@ export function RevizePage() {
                       )}
                     </td>
                     <td className="py-2 px-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        r.kategorieRevize === 'elektro' ? 'bg-[var(--bg-hover)] text-[var(--text-secondary)]' :
-                        r.kategorieRevize === 'hromosvod' ? 'bg-[var(--bg-hover)] text-[var(--text-secondary)]' :
-                        r.kategorieRevize === 'stroje' ? 'bg-[var(--bg-hover)] text-[var(--text-secondary)]' :
-                        'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
-                      }`}>
-                        {r.kategorieRevize === 'elektro' ? 'Elektro' :
-                         r.kategorieRevize === 'hromosvod' ? 'Hromosvod' :
-                         r.kategorieRevize === 'stroje' ? 'Stroje' : 'Elektro'}
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
+                        {KATEGORIE_LABELS[r.kategorieRevize]?.kratky ?? 'Elektro'}
                       </span>
                     </td>
                     <td className="py-2 px-3 text-xs font-medium text-[var(--text)]">{r.nazev}</td>
@@ -513,8 +518,7 @@ export function RevizePage() {
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
-                            {r.kategorieRevize === 'elektro' ? 'Elektro' :
-                             r.kategorieRevize === 'hromosvod' ? 'Hromosvod' : 'Stroje'}
+                            {KATEGORIE_LABELS[r.kategorieRevize]?.kratky ?? 'Elektro'}
                           </span>
                           <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                             r.stav === 'dokončeno' ? 'bg-[var(--success-bg)] text-[var(--success-text)]' :

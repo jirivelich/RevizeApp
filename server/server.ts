@@ -201,6 +201,8 @@ async function startServer() {
         'hromosvodMereniOdporu',
         // Strojní zařízení (JSON)
         'strojniData',
+        // Odběrné místo (JSON)
+        'odberneMistoData',
         // Normy soulad + vlastní text lhůty
         'normySoulad', 'lhutaText',
         // Historie / návaznost revizí

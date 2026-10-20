@@ -1,7 +1,15 @@
 // Základní typy pro RevizeApp
 
 // Kategorie revize - typ kontrolovaného zařízení
-export type KategorieRevize = 'elektro' | 'hromosvod' | 'stroje';
+export type KategorieRevize = 'elektro' | 'hromosvod' | 'stroje' | 'odberne_misto';
+
+/** Štítky kategorií revize (jediné místo pro názvy v UI). */
+export const KATEGORIE_LABELS: Record<KategorieRevize, { plny: string; kratky: string }> = {
+  elektro: { plny: 'Elektrické instalace', kratky: 'Elektro' },
+  hromosvod: { plny: 'Hromosvody', kratky: 'Hromosvod' },
+  stroje: { plny: 'Strojní zařízení', kratky: 'Stroje' },
+  odberne_misto: { plny: 'Odběrné místo (ČEZ)', kratky: 'Odběrné místo' },
+};
 
 export interface Zakaznik {
   id?: number;
@@ -132,6 +140,9 @@ export interface Revize {
 
   // ═══ STROJNÍ ZAŘÍZENÍ - data formuláře (JSON) ═══
   strojniData?: string;                // JSON: StrojniFormData
+
+  // ═══ ODBĚRNÉ MÍSTO (ČEZ) - data formuláře (JSON) ═══
+  odberneMistoData?: string;           // JSON: OdberneMistoData (src/types/odberneMisto.ts)
 
   createdAt: Date;
   updatedAt: Date;
