@@ -49,16 +49,16 @@ export function OkruhFormFields({ data, onChange }: OkruhFormFieldsProps) {
         <Input label="Název" value={data.nazev} onChange={(e) => set({ nazev: e.target.value })} required />
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <EditableSelect label="Typ jištění" value={data.jisticTyp} onChange={(val) => set({ jisticTyp: val })} options={['B', 'C', 'D', 'gG', 'aM', 'IT', 'IJ', 'IJV', 'ITM']} />
-        <EditableSelect label="Proud jističe" value={data.jisticProud} onChange={(val) => set({ jisticProud: val })} options={['2A','4A','6A','10A','13A','16A','20A','25A','32A','40A','50A','63A','80A','100A','125A','160A']} />
+        <EditableSelect label="Typ jištění" value={data.jisticTyp} onChange={(val) => set({ jisticTyp: val })} options={['B', 'C', 'D', 'gG', 'aM', 'IT', 'IJ', 'IJV', 'ITM']} allowEmpty />
+        <EditableSelect label="Proud jističe" value={data.jisticProud} onChange={(val) => set({ jisticProud: val })} options={['2A','4A','6A','10A','13A','16A','20A','25A','32A','40A','50A','63A','80A','100A','125A','160A']} allowEmpty />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <Select label="Počet fází" value={data.pocetFazi.toString()} onChange={(e) => set({ pocetFazi: parseInt(e.target.value) })} options={[{ value: '1', label: '1P' }, { value: '2', label: '2P' }, { value: '3', label: '3P' }]} />
-        <EditableSelect label="Typ kabelu" value={data.typKabelu} onChange={(val) => set({ typKabelu: val })} options={TYPY_KABELU} />
+        <EditableSelect label="Typ kabelu" value={data.typKabelu} onChange={(val) => set({ typKabelu: val })} options={TYPY_KABELU} allowEmpty />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <Input label="Počet žil (volitelné)" value={data.pocetZil} onChange={(e) => set({ pocetZil: e.target.value })} placeholder="např. 3" />
-        <EditableSelect label="Průřez (mm²)" value={data.prurez} onChange={(val) => set({ prurez: val })} options={PRUREZY} />
+        <EditableSelect label="Průřez (mm²)" value={data.prurez} onChange={(val) => set({ prurez: val })} options={PRUREZY} allowEmpty />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <Input label="Izolační odpor (MΩ)" value={data.izolacniOdpor} onChange={(e) => set({ izolacniOdpor: e.target.value })} />

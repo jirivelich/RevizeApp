@@ -10,18 +10,18 @@ export function computeVodic(typKabelu?: string, pocetZil?: string, prurez?: str
 }
 
 // EditableSelect – select s možností zadat vlastní hodnotu
-export function EditableSelect({ label, value, onChange, options }: {
-  label: string; value: string; onChange: (val: string) => void; options: string[];
+export function EditableSelect({ label, value, onChange, options, allowEmpty }: {
+  label: string; value: string; onChange: (val: string) => void; options: string[]; allowEmpty?: boolean;
 }) {
   const isCustom = value !== '' && !options.includes(value);
   const [showCustom, setShowCustom] = useState(isCustom);
 
   // Sync showCustom when value changes externally (e.g. form reset)
   useEffect(() => {
-    if (options.includes(value)) {
+    if (options.includes(value) || (allowEmpty && value === '')) {
       setShowCustom(false);
     }
-  }, [value, options]);
+  }, [value, options, allowEmpty]);
 
   return (
     <div className="flex flex-col gap-1">
@@ -44,7 +44,7 @@ export function EditableSelect({ label, value, onChange, options }: {
       ) : (
         <select
           className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-blue-500/[0.5] text-xs"
-          value={options.includes(value) ? value : '__custom__'}
+          value={options.includes(value) || (allowEmpty && value === '') ? value : '__custom__'}
           onChange={(e) => {
             if (e.target.value === '__custom__') {
               setShowCustom(true);
@@ -54,6 +54,7 @@ export function EditableSelect({ label, value, onChange, options }: {
             }
           }}
         >
+          {allowEmpty && <option value="">— nevyplněno —</option>}
           {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
           <option value="__custom__">✏️ Vlastní hodnota...</option>
         </select>

@@ -193,6 +193,7 @@ export function OkruhyInlineTable({ rozvadecId, okruhy, onEdit, onDelete, onSave
                 onChange={(e) => setInlineOkruhDraft(d => ({ ...d, typKabelu: e.target.value }))}
                 onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'typKabelu')}
                 className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]">
+                <option value="">—</option>
                 {TYPY_KABELU.map(k => <option key={k} value={k}>{k}</option>)}
               </select>
             </td>
@@ -201,6 +202,7 @@ export function OkruhyInlineTable({ rozvadecId, okruhy, onEdit, onDelete, onSave
                 onChange={(e) => setInlineOkruhDraft(d => ({ ...d, pocetZil: e.target.value }))}
                 onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'pocetZil')}
                 className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]">
+                <option value="">—</option>
                 {['1','2','3','4','5'].map(z => <option key={z} value={z}>{z}</option>)}
               </select>
             </td>
@@ -209,6 +211,7 @@ export function OkruhyInlineTable({ rozvadecId, okruhy, onEdit, onDelete, onSave
                 onChange={(e) => setInlineOkruhDraft(d => ({ ...d, prurez: e.target.value }))}
                 onKeyDown={(e) => handleInlineOkruhKeyDown(e, 'prurez')}
                 className="w-full px-1.5 py-1 border border-[var(--border-input)] rounded bg-[var(--bg-input)] text-[var(--text)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]">
+                <option value="">—</option>
                 {PRUREZY.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
             </td>

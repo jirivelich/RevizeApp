@@ -203,12 +203,14 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
   const saveOkruh = async () => {
     if (!selectedRozvadec?.id) return;
     const { impedanceSmyckyMax, typKabelu, pocetZil, prurez, ...okruhData } = okruhFormData;
+    // Při úpravě posíláme '' (ne undefined), jinak by se vymazaná hodnota v DB nepřepsala
+    const empty = editingOkruh?.id ? '' : undefined;
     const saveData = {
       ...okruhData,
-      typKabelu: typKabelu || undefined,
-      pocetZil: pocetZil || undefined,
-      prurez: prurez || undefined,
-      vodic: computeVodic(typKabelu, pocetZil, prurez) || undefined,
+      typKabelu: typKabelu || empty,
+      pocetZil: pocetZil || empty,
+      prurez: prurez || empty,
+      vodic: computeVodic(typKabelu, pocetZil, prurez) || empty,
       izolacniOdpor: okruhData.izolacniOdpor || undefined,
       impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky || undefined,
     };
