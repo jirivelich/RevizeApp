@@ -11,16 +11,34 @@ interface LpsSymbol {
   rotation: number;
 }
 
+// Vector objects drawn above the raster layer: selectable, movable, resizable.
+// text uses (x1, y1) as its baseline-left position; (x2, y2) are unused.
+interface Shape {
+  id: string;
+  kind: 'rect' | 'line' | 'text';
+  x1: number; y1: number; x2: number; y2: number;
+  color: string;
+  lw: number;
+  text?: string;
+  size?: number;
+}
+
+type Pt = { x: number; y: number };
+type HandleKey = 'x1' | 'x2';
+type HandleKeyY = 'y1' | 'y2';
+
 interface StoredV2 {
   v: 2;
-  full: string;  // composite PNG – for printing (bg + symbols)
-  bg: string;    // clean bg PNG – for editing
+  full: string;  // composite PNG – for printing (bg + shapes + symbols)
+  bg: string;    // clean bg PNG (pen/eraser strokes, legacy drawings) – for editing
   symbols: LpsSymbol[];
+  shapes?: Shape[];
 }
 
 interface HistoryEntry {
   bg: ImageData;
   symbols: LpsSymbol[];
+  shapes: Shape[];
 }
 
 interface Props {
@@ -92,6 +110,100 @@ function drawGrid(ctx: CanvasRenderingContext2D) {
   ctx.restore();
 }
 
+// ─── shapes ──────────────────────────────────────────────────────────────────
+
+const textSizeFor = (lw: number) => (lw <= 1 ? 12 : lw <= 2 ? 14 : 18);
+const SHAPE_HIT = 8;
+const HANDLE_R = 6;
+
+let measureCtx: CanvasRenderingContext2D | null = null;
+function textBox(s: Shape) {
+  measureCtx ??= document.createElement('canvas').getContext('2d');
+  const size = s.size ?? 14;
+  if (measureCtx) measureCtx.font = `${size}px sans-serif`;
+  const w = measureCtx ? measureCtx.measureText(s.text ?? '').width : 40;
+  return { x: s.x1, y: s.y1 - size, w, h: size + 4 };
+}
+
+function drawShape(ctx: CanvasRenderingContext2D, s: Shape) {
+  ctx.save();
+  ctx.strokeStyle = s.color; ctx.fillStyle = s.color; ctx.lineWidth = s.lw; ctx.lineCap = 'round';
+  if (s.kind === 'line') {
+    ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke();
+  } else if (s.kind === 'rect') {
+    ctx.strokeRect(s.x1, s.y1, s.x2 - s.x1, s.y2 - s.y1);
+  } else {
+    ctx.font = `${s.size ?? 14}px sans-serif`;
+    ctx.fillText(s.text ?? '', s.x1, s.y1);
+  }
+  ctx.restore();
+}
+
+function handlesOf(s: Shape): { x: number; y: number; kx: HandleKey; ky: HandleKeyY }[] {
+  if (s.kind === 'line') return [
+    { x: s.x1, y: s.y1, kx: 'x1', ky: 'y1' },
+    { x: s.x2, y: s.y2, kx: 'x2', ky: 'y2' },
+  ];
+  if (s.kind === 'rect') return [
+    { x: s.x1, y: s.y1, kx: 'x1', ky: 'y1' },
+    { x: s.x2, y: s.y1, kx: 'x2', ky: 'y1' },
+    { x: s.x2, y: s.y2, kx: 'x2', ky: 'y2' },
+    { x: s.x1, y: s.y2, kx: 'x1', ky: 'y2' },
+  ];
+  return [];
+}
+
+function drawAllShapes(ctx: CanvasRenderingContext2D, shapes: Shape[], selId: string | null) {
+  for (const s of shapes) {
+    drawShape(ctx, s);
+    if (s.id !== selId) continue;
+    ctx.save();
+    ctx.strokeStyle = '#2B88FF'; ctx.fillStyle = '#ffffff'; ctx.lineWidth = 1.5;
+    if (s.kind === 'text') {
+      const b = textBox(s);
+      ctx.setLineDash([4, 3]);
+      ctx.strokeRect(b.x - 2, b.y - 2, b.w + 4, b.h + 4);
+    } else {
+      for (const h of handlesOf(s)) {
+        ctx.beginPath(); ctx.rect(h.x - 4, h.y - 4, 8, 8); ctx.fill(); ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+}
+
+function distToSegment(p: Pt, a: Pt, b: Pt) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
+  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+}
+
+function hitShape(s: Shape, p: Pt, interior: boolean): boolean {
+  if (s.kind === 'line') {
+    return !interior && distToSegment(p, { x: s.x1, y: s.y1 }, { x: s.x2, y: s.y2 }) <= Math.max(SHAPE_HIT, s.lw / 2 + 4);
+  }
+  if (s.kind === 'text') {
+    if (interior) return false;
+    const b = textBox(s);
+    return p.x >= b.x - 4 && p.x <= b.x + b.w + 4 && p.y >= b.y - 4 && p.y <= b.y + b.h + 4;
+  }
+  const minX = Math.min(s.x1, s.x2), maxX = Math.max(s.x1, s.x2);
+  const minY = Math.min(s.y1, s.y2), maxY = Math.max(s.y1, s.y2);
+  if (interior) return p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY;
+  const inX = p.x >= minX - SHAPE_HIT && p.x <= maxX + SHAPE_HIT;
+  const inY = p.y >= minY - SHAPE_HIT && p.y <= maxY + SHAPE_HIT;
+  return (inY && (Math.abs(p.x - minX) <= SHAPE_HIT || Math.abs(p.x - maxX) <= SHAPE_HIT)) ||
+         (inX && (Math.abs(p.y - minY) <= SHAPE_HIT || Math.abs(p.y - maxY) <= SHAPE_HIT));
+}
+
+// Topmost shape under the point: edges/lines/text first, then rectangle interiors
+function findShapeAt(shapes: Shape[], p: Pt): Shape | null {
+  for (let i = shapes.length - 1; i >= 0; i--) if (hitShape(shapes[i], p, false)) return shapes[i];
+  for (let i = shapes.length - 1; i >= 0; i--) if (hitShape(shapes[i], p, true)) return shapes[i];
+  return null;
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
@@ -122,6 +234,14 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
   useEffect(() => { lwRef.current   = lineWidth;  }, [lineWidth]);
   useEffect(() => { rotRef.current  = newSymRot;  }, [newSymRot]);
 
+  const [shapes, setShapesState] = useState<Shape[]>([]);
+  const shapesRef = useRef<Shape[]>([]);
+  const setShapes = (arr: Shape[]) => { shapesRef.current = arr; setShapesState(arr); };
+  // Active drag of a selected shape: whole-shape move or a single resize handle
+  const dragShape = useRef<{ id: string; orig: Shape; start: Pt; handle?: { kx: HandleKey; ky: HandleKeyY } } | null>(null);
+  const deleteRef = useRef<() => void>(() => {});
+  const undoRef = useRef<() => void>(() => {});
+
   const history = useRef<HistoryEntry[]>([]);
   const readyRef = useRef(false);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -151,6 +271,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     vis.fillRect(0, 0, W, H);
     if (grid) drawGrid(vis);
     vis.drawImage(bg, 0, 0);
+    drawAllShapes(vis, shapesRef.current, selId);
     drawAllSymbols(vis, syms, selId);
   }
 
@@ -162,7 +283,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
   function snapshot(syms: LpsSymbol[]) {
     const bg = getBg();
     if (!bg) return;
-    history.current.push({ bg: bg.getImageData(0, 0, W, H), symbols: [...syms] });
+    history.current.push({ bg: bg.getImageData(0, 0, W, H), symbols: [...syms], shapes: [...shapesRef.current] });
     if (history.current.length > MAX_HIST) history.current.shift();
     setHistoryCount(history.current.length);
   }
@@ -177,7 +298,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     paint(syms, null, false);
     const fullPng = visEl.toDataURL('image/png');
     const bgPng   = bgEl.toDataURL('image/png');
-    const stored: StoredV2 = { v: 2, full: fullPng, bg: bgPng, symbols: syms };
+    const stored: StoredV2 = { v: 2, full: fullPng, bg: bgPng, symbols: syms, shapes: shapesRef.current };
     onChange(JSON.stringify(stored));
     // Restore on-screen view with grid and selection
     paint(syms, selId, true);
@@ -193,9 +314,10 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     bgElRef.current = bgEl;
     const bgCtx = bgEl.getContext('2d')!;  // transparent; grid is drawn on screen only
 
-    const boot = (loadedSyms: LpsSymbol[]) => {
+    const boot = (loadedSyms: LpsSymbol[], loadedShapes: Shape[] = []) => {
       readyRef.current = true;
       setStatus('ready');
+      setShapes(loadedShapes);
       setSymbols(loadedSyms); symRef.current = loadedSyms;
       snapshot(loadedSyms);
       fullRedraw(null);
@@ -203,9 +325,9 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     // Loading failed: keep the stored value untouched (editor stays read-only)
     const fail = () => { fullRedraw(null); setStatus('error'); };
 
-    const loadImage = (src: string, syms: LpsSymbol[]) => {
+    const loadImage = (src: string, syms: LpsSymbol[], shp: Shape[] = []) => {
       const img = new Image();
-      img.onload = () => { bgCtx.drawImage(img, 0, 0); boot(syms); };
+      img.onload = () => { bgCtx.drawImage(img, 0, 0); boot(syms, shp); };
       img.onerror = fail;
       img.src = src;
     };
@@ -215,7 +337,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
         try {
           const parsed = JSON.parse(value) as StoredV2;
           if (parsed.v === 2 && parsed.bg) {
-            loadImage(parsed.bg, parsed.symbols ?? []);
+            loadImage(parsed.bg, parsed.symbols ?? [], parsed.shapes ?? []);
             return;
           }
         } catch { /* fall through */ }
@@ -238,6 +360,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     getBg()?.putImageData(prev.bg, 0, 0);
     const syms = [...prev.symbols];
     setSymbols(syms); symRef.current = syms;
+    setShapes([...prev.shapes]);
     setSelectedId(null); selRef.current = null;
     setHistoryCount(history.current.length);
     fullRedraw(null);
@@ -249,6 +372,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     if (!bgCtx || !readyRef.current) return;
     if (!window.confirm('Opravdu smazat celý náčrt? (lze vrátit tlačítkem Zpět)')) return;
     bgCtx.clearRect(0, 0, W, H);
+    setShapes([]);
     setSymbols([]); symRef.current = [];
     setSelectedId(null); selRef.current = null;
     snapshot([]);
@@ -270,9 +394,10 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
 
   function deleteSelected() {
     const id = selRef.current;
-    if (!id) return;
+    if (!id || !readyRef.current) return;
     const newSyms = symRef.current.filter(s => s.id !== id);
     setSymbols(newSyms); symRef.current = newSyms;
+    setShapes(shapesRef.current.filter(s => s.id !== id));
     setSelectedId(null); selRef.current = null;
     snapshot(newSyms);
     fullRedraw(null);
@@ -318,8 +443,26 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     }
 
     if (t === 'select') {
+      // 1) resize handle of the currently selected rectangle / line
+      const cur = shapesRef.current.find(s => s.id === selRef.current);
+      if (cur) {
+        const sc = visRef.current ? W / visRef.current.getBoundingClientRect().width : 1;
+        const h = handlesOf(cur).find(h => Math.hypot(pt.x - h.x, pt.y - h.y) <= HANDLE_R * 1.6 * sc);
+        if (h) {
+          dragging.current = true;
+          dragShape.current = { id: cur.id, orig: cur, start: pt, handle: { kx: h.kx, ky: h.ky } };
+          return;
+        }
+      }
+      // 2) symbols (drawn on top), 3) shapes
       const sym = findSym(pt);
-      if (sym) {
+      const shp = sym ? null : findShapeAt(shapesRef.current, pt);
+      if (shp) {
+        setSelectedId(shp.id); selRef.current = shp.id;
+        fullRedraw(shp.id);
+        dragging.current = true;
+        dragShape.current = { id: shp.id, orig: shp, start: pt };
+      } else if (sym) {
         setSelectedId(sym.id); selRef.current = sym.id;
         fullRedraw(sym.id);
         dragging.current  = true;
@@ -368,6 +511,19 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     const t   = toolRef.current;
     const vis = getVis();
     if (!vis) return;
+
+    if (t === 'select' && dragShape.current) {
+      const d = dragShape.current;
+      const dx = pt.x - d.start.x, dy = pt.y - d.start.y;
+      if (!changedRef.current && Math.hypot(dx, dy) < 2) return; // ignore click jitter
+      changedRef.current = true;
+      const moved: Shape = d.handle
+        ? { ...d.orig, [d.handle.kx]: pt.x, [d.handle.ky]: pt.y }
+        : { ...d.orig, x1: d.orig.x1 + dx, y1: d.orig.y1 + dy, x2: d.orig.x2 + dx, y2: d.orig.y2 + dy };
+      setShapes(shapesRef.current.map(s => s.id === d.id ? moved : s));
+      fullRedraw(d.id);
+      return;
+    }
 
     if (t === 'select' && dragSymId.current) {
       changedRef.current = true;
@@ -444,9 +600,10 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     const t     = toolRef.current;
     const bgCtx = getBg();
 
-    if (t === 'select' && dragSymId.current) {
-      // Commit symbol drag (only if it really moved)
+    if (t === 'select' && (dragSymId.current || dragShape.current)) {
+      // Commit symbol / shape drag (only if it really moved)
       dragSymId.current = null;
+      dragShape.current = null;
       if (changedRef.current) {
         snapshot(symRef.current);
         emitState(symRef.current, selRef.current);
@@ -458,19 +615,14 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
       if ((t === 'vedeni' || t === 'obdelnik') &&
           (Math.abs(pt.x - startPt.current.x) > 1 || Math.abs(pt.y - startPt.current.y) > 1)) {
         changedRef.current = true;
-        bgCtx.save();
-        bgCtx.strokeStyle = colorRef.current;
-        bgCtx.lineWidth   = lwRef.current + (t === 'vedeni' ? 1 : 0);
-        bgCtx.lineCap     = 'round';
-        if (t === 'vedeni') {
-          bgCtx.beginPath();
-          bgCtx.moveTo(startPt.current.x, startPt.current.y);
-          bgCtx.lineTo(pt.x, pt.y);
-          bgCtx.stroke();
-        } else {
-          bgCtx.strokeRect(startPt.current.x, startPt.current.y, pt.x - startPt.current.x, pt.y - startPt.current.y);
-        }
-        bgCtx.restore();
+        // Vector object (selectable / movable), not baked into the raster layer
+        setShapes([...shapesRef.current, {
+          id: crypto.randomUUID(),
+          kind: t === 'vedeni' ? 'line' : 'rect',
+          x1: startPt.current.x, y1: startPt.current.y, x2: pt.x, y2: pt.y,
+          color: colorRef.current,
+          lw: lwRef.current + (t === 'vedeni' ? 1 : 0),
+        }]);
       }
       dragSnap.current = null;
 
@@ -497,24 +649,57 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
 
   function confirmText() {
     if (!textOverlay?.val.trim()) { setTextOverlay(null); return; }
-    const bgCtx = getBg();
-    if (bgCtx) {
-      bgCtx.save();
-      bgCtx.fillStyle = colorRef.current;
-      bgCtx.font = `${lwRef.current <= 1 ? 12 : lwRef.current <= 2 ? 14 : 18}px sans-serif`;
-      bgCtx.fillText(textOverlay.val, textOverlay.x, textOverlay.y);
-      bgCtx.restore();
-    }
+    setShapes([...shapesRef.current, {
+      id: crypto.randomUUID(), kind: 'text',
+      x1: textOverlay.x, y1: textOverlay.y, x2: textOverlay.x, y2: textOverlay.y,
+      color: colorRef.current, lw: 1, text: textOverlay.val,
+      size: textSizeFor(lwRef.current),
+    }]);
     setTextOverlay(null);
     snapshot(symRef.current);
     fullRedraw(selRef.current);
     emitState(symRef.current, selRef.current);
   }
 
+  // Apply colour / width to the selected shape (if any); `commit` = save + history step
+  function styleSelected(patch: { color?: string; width?: number }, commit: boolean) {
+    const id = selRef.current;
+    const cur = shapesRef.current.find(s => s.id === id);
+    if (!cur || !readyRef.current) return;
+    const next: Shape = { ...cur };
+    if (patch.color) next.color = patch.color;
+    if (patch.width) {
+      if (cur.kind === 'text') next.size = textSizeFor(patch.width);
+      else next.lw = patch.width + (cur.kind === 'line' ? 1 : 0);
+    }
+    setShapes(shapesRef.current.map(s => s.id === id ? next : s));
+    fullRedraw(id);
+    if (commit) { snapshot(symRef.current); emitState(symRef.current, id); }
+  }
+
+  // Keyboard: Delete removes the selection, Ctrl+Z undoes (ignored while typing in a field)
+  useEffect(() => {
+    deleteRef.current = deleteSelected;
+    undoRef.current = undo;
+  });
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selRef.current) {
+        e.preventDefault(); deleteRef.current();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault(); undoRef.current();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   // ─── Toolbar config ──────────────────────────────────────────────────────
 
   const toolDefs: { id: Tool; label: string; title: string }[] = [
-    { id: 'select',   label: '↖ Výběr',    title: 'Výběr – kliknutím vyberte umístěný symbol; potom ho táhněte nebo potočte' },
+    { id: 'select',   label: '↖ Výběr',    title: 'Výběr – kliknutím vyberte symbol, čáru, obdélník nebo text; táhněte pro přesun, úchyty mění velikost, Delete maže' },
     { id: 'jimaec',   label: '⚡ Jímač',   title: 'Jímač (tyčový) – kliknutím umístíte symbol' },
     { id: 'svod',     label: '🔌 Svod',     title: 'Svod (svodové vedení) – kliknutím umístíte symbol' },
     { id: 'uzemneni', label: '⏚ Uzemnění', title: 'Uzemnění (zemní elektroda) – kliknutím umístíte symbol' },
@@ -522,7 +707,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
     { id: 'obdelnik', label: '▭ Obdélník', title: 'Obdélník – tažením nakreslete obrys objektu' },
     { id: 'pero',     label: '✏ Pero',     title: 'Pero – volné kreslení' },
     { id: 'text',     label: 'T Text',     title: 'Text – kliknutím přidejte popisek' },
-    { id: 'guma',     label: '◻ Guma',     title: 'Guma – výmazání (zachovává mřížku)' },
+    { id: 'guma',     label: '◻ Guma',     title: 'Guma – maže jen kresbu perem; čáry, obdélníky a texty smažte nástrojem Výběr (Delete)' },
   ];
 
   const cursorMap: Record<Tool, string> = {
@@ -532,7 +717,8 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
 
   // For selected symbol: show its current rotation; for new-symbol tools: show placement rotation
   const selectedSym   = selectedId ? symbols.find(s => s.id === selectedId) : null;
-  const showRotCtrls  = isSymTool(tool) || (tool === 'select' && selectedId !== null);
+  const selectedShape = selectedId ? shapes.find(s => s.id === selectedId) : null;
+  const showRotCtrls  = isSymTool(tool) || (tool === 'select' && selectedSym != null);
   const rotDisplay    = tool === 'select' && selectedSym ? selectedSym.rotation : newSymRot;
 
   function rotateBtn(delta: number) {
@@ -570,12 +756,14 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
         <div className="flex items-center gap-1">
           <span className="text-xs text-[var(--text-muted)] hidden sm:inline">Barva:</span>
           {['#1a1a1a', '#c00000', '#1d4ed8', '#166534'].map(c => (
-            <button key={c} type="button" title={c} onClick={() => setColor(c)}
+            <button key={c} type="button" title={c} onClick={() => { setColor(c); styleSelected({ color: c }, true); }}
               style={{ backgroundColor: c }}
               className={`w-5 h-5 rounded-full border-2 flex-shrink-0 ${color === c ? 'border-slate-700 scale-110' : 'border-white shadow-sm'}`}
             />
           ))}
-          <input type="color" value={color} onChange={e => setColor(e.target.value)}
+          <input type="color" value={color}
+            onChange={e => { setColor(e.target.value); styleSelected({ color: e.target.value }, false); }}
+            onBlur={() => styleSelected({}, true)}
             className="w-6 h-6 rounded border border-slate-300 cursor-pointer p-0" title="Vlastní barva" />
         </div>
 
@@ -585,7 +773,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
         <div className="flex items-center gap-1">
           <span className="text-xs text-[var(--text-muted)] hidden sm:inline">Tloušťka:</span>
           {([1, 2, 4] as const).map(w => (
-            <button key={w} type="button" onClick={() => setLineWidth(w)}
+            <button key={w} type="button" onClick={() => { setLineWidth(w); styleSelected({ width: w }, true); }}
               className={`px-2 py-1 text-xs rounded border ${
                 lineWidth === w ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-700 border-slate-300 hover:border-slate-400'
               }`}
@@ -604,12 +792,12 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
             <span className="text-xs font-medium text-slate-700 w-8 text-center">{rotDisplay}°</span>
             <button type="button" onClick={() => rotateBtn(90)} title="Otočit doprava o 90°"
               className="px-2 py-1 text-xs rounded border bg-white text-slate-700 border-slate-300 hover:border-slate-400">↻</button>
-            {tool === 'select' && selectedId && (
-              <button type="button" onClick={deleteSelected}
-                className="px-2 py-1 text-xs rounded border bg-white text-red-600 border-red-200 hover:bg-red-50"
-                title="Smazat vybraný symbol">✕ Smazat</button>
-            )}
           </div>
+        )}
+        {tool === 'select' && selectedId && (
+          <button type="button" onClick={deleteSelected}
+            className="px-2 py-1 text-xs rounded border bg-white text-red-600 border-red-200 hover:bg-red-50"
+            title="Smazat vybraný objekt (klávesa Delete)">✕ Smazat</button>
         )}
 
         <div className="ml-auto flex gap-1">
@@ -677,7 +865,8 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
         <span className="font-medium text-green-800">S = Svod</span>
         <span className="font-medium text-orange-900">E = Uzemnění</span>
         <span>━ = Vedení</span>
-        {tool === 'select' && selectedId && <span className="text-blue-600 font-medium">Symbol vybrán – táhněte nebo otočte ↺↻, smažte ✕</span>}
+        {tool === 'select' && selectedSym && <span className="text-blue-600 font-medium">Symbol vybrán – táhněte nebo otočte ↺↻, smažte ✕</span>}
+        {tool === 'select' && selectedShape && <span className="text-blue-600 font-medium">Objekt vybrán – táhněte pro přesun{selectedShape.kind !== 'text' ? ', úchyty mění velikost' : ''}, barvu a tloušťku změníte v liště, smažte ✕ / Delete</span>}
       </div>
 
       <p className="text-xs text-[var(--text-secondary)]">
