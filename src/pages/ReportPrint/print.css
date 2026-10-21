@@ -188,6 +188,19 @@
   font-size: 12pt;
 }
 
+.report-page-1 .report-title {
+  font-size: 18pt;
+  margin-top: 4px;
+}
+
+.report-page-1 .report-subtitle {
+  margin-bottom: 6px;
+}
+
+.report-page-1 .report-info-table {
+  font-size: 9pt;
+}
+
 .report-page-1 .report-signatures {
   margin-top: 4px;
 }

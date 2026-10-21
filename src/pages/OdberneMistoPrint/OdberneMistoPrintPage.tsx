@@ -203,6 +203,7 @@ export function OdberneMistoPrintPage() {
       <span className="report-string-title">{revize.nazev} – {revize.adresa}</span>
       <span className="report-string-firma">{nastaveni?.firmaJmeno || ''}</span>
 
+      <div className="report-page-1">
       <ReportHeader nastaveni={nastaveni} revize={revize} />
 
       <div className="report-title">ZPRÁVA O REVIZI ELEKTRICKÉ INSTALACE ODBĚRNÉHO MÍSTA</div>
@@ -263,6 +264,7 @@ export function OdberneMistoPrintPage() {
           <div className="report-result-value" style={{ color: vysledekColor }}>{vysledekLabel}</div>
         </div>
       </ReportSection>
+      </div>
 
       <div className="report-page-break" />
 
