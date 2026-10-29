@@ -28,6 +28,10 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
   const [deleteZarizeniId, setDeleteZarizeniId] = useState<number | null>(null);
   const [zarizeniCounts, setZarizeniCounts] = useState<Record<number, number>>(propCounts);
 
+  const [copySource, setCopySource] = useState<Mistnost | null>(null);
+  const [copyNazev, setCopyNazev] = useState('');
+  const [isCopying, setIsCopying] = useState(false);
+
   const [mistnostFormData, setMistnostFormData] = useState({
     nazev: '', patro: '', poznamka: ''
   });
@@ -99,6 +103,52 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
       poznamka: mistnost.poznamka || ''
     });
     setIsMistnostModalOpen(true);
+  };
+
+  const handleOpenCopy = (mistnost: Mistnost) => {
+    setCopySource(mistnost);
+    setCopyNazev(`${mistnost.nazev} (kopie)`);
+  };
+
+  const closeCopy = () => {
+    setCopySource(null);
+    setCopyNazev('');
+  };
+
+  const handleCopyMistnost = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!copySource?.id || !copyNazev.trim() || isCopying) return;
+    const source = copySource;
+    setIsCopying(true);
+    createMistnost.mutate(
+      { nazev: copyNazev.trim(), patro: source.patro, poznamka: source.poznamka, revizeId } as any,
+      {
+        onSuccess: async (newId) => {
+          try {
+            const newMistnostId = newId as unknown as number;
+            const sourceZarizeni = await zarizeniService.getByMistnost(source.id!);
+            for (const z of sourceZarizeni) {
+              await zarizeniService.create({
+                nazev: z.nazev, oznaceni: z.oznaceni, pocetKs: z.pocetKs,
+                trida: z.trida, prikonW: z.prikonW, ochranaPredDotykem: z.ochranaPredDotykem,
+                stav: 'nekontrolováno', poznamka: z.poznamka, mistnostId: newMistnostId,
+              } as any);
+            }
+            const copied = await zarizeniService.getByMistnost(newMistnostId);
+            setZarizeni(copied);
+            setZarizeniCounts(prev => ({ ...prev, [newMistnostId]: copied.length }));
+            setSelectedMistnost({
+              id: newMistnostId, nazev: copyNazev.trim(), patro: source.patro,
+              poznamka: source.poznamka, revizeId,
+            });
+            closeCopy();
+          } finally {
+            setIsCopying(false);
+          }
+        },
+        onError: () => setIsCopying(false),
+      }
+    );
   };
 
   const handleDeleteMistnost = (mistnostId: number) => setDeleteMistnostId(mistnostId);
@@ -223,6 +273,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
                   <span className="hidden sm:inline">+ Přidat zařízení</span>
                 </Button>
                 <Button variant="secondary" size="sm" onClick={() => handleEditMistnost(selectedMistnost)}>Upravit</Button>
+                <Button variant="secondary" size="sm" onClick={() => handleOpenCopy(selectedMistnost)}>Kopírovat</Button>
                 <Button variant="danger" size="sm" onClick={() => handleDeleteMistnost(selectedMistnost.id!)}>🗑️ Smazat</Button>
               </div>
             }
@@ -303,6 +354,26 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
         <Input label="Název místnosti" value={mistnostFormData.nazev} onChange={(e) => setMistnostFormData({ ...mistnostFormData, nazev: e.target.value })} placeholder="např. Obývací pokoj, Kuchyň..." required />
         <Input label="Patro" value={mistnostFormData.patro} onChange={(e) => setMistnostFormData({ ...mistnostFormData, patro: e.target.value })} placeholder="např. 1.NP, přízemí..." />
         <Input label="Poznámka" value={mistnostFormData.poznamka} onChange={(e) => setMistnostFormData({ ...mistnostFormData, poznamka: e.target.value })} placeholder="Volitelná poznámka..." />
+      </form>
+    </Modal>
+
+    {/* Modal pro kopírování místnosti */}
+    <Modal
+      isOpen={copySource !== null}
+      onClose={closeCopy}
+      title="Kopírovat místnost"
+      footer={
+        <>
+          <Button variant="secondary" onClick={closeCopy}>Zrušit</Button>
+          <Button size="sm" onClick={() => handleCopyMistnost()} disabled={isCopying || !copyNazev.trim()}>Kopírovat</Button>
+        </>
+      }
+    >
+      <form onSubmit={handleCopyMistnost} className="space-y-3">
+        <Input label="Název nové místnosti" value={copyNazev} onChange={(e) => setCopyNazev(e.target.value)} required />
+        <p className="text-xs text-[var(--text-secondary)]">
+          Zkopíruje se {copySource?.id === selectedMistnost?.id ? zarizeni.length : (zarizeniCounts[copySource?.id ?? -1] || 0)} zařízení (stav bude nastaven na „nekontrolováno").
+        </p>
       </form>
     </Modal>
 
