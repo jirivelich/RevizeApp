@@ -21,19 +21,19 @@ describe('Button', () => {
   it('should apply primary variant classes by default', () => {
     render(<Button>Primary</Button>);
     const btn = screen.getByRole('button');
-    expect(btn.className).toContain('bg-slate-800');
+    expect(btn.className).toContain('bg-[var(--primary)]');
   });
 
   it('should apply danger variant classes', () => {
     render(<Button variant="danger">Smazat</Button>);
     const btn = screen.getByRole('button');
-    expect(btn.className).toContain('bg-red-500');
+    expect(btn.className).toContain('text-[var(--danger-text)]');
   });
 
   it('should apply success variant classes', () => {
     render(<Button variant="success">Uložit</Button>);
     const btn = screen.getByRole('button');
-    expect(btn.className).toContain('bg-emerald-600');
+    expect(btn.className).toContain('text-[var(--success-text)]');
   });
 
   it('should apply size sm classes', () => {

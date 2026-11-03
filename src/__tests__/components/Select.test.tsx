@@ -34,7 +34,7 @@ describe('Select', () => {
   it('should apply error border class', () => {
     render(<Select options={testOptions} error="Chyba" data-testid="sel" />);
     const select = screen.getByTestId('sel');
-    expect(select.className).toContain('border-red-500');
+    expect(select.className).toContain('border-[var(--danger)]');
   });
 
   it('should call onChange when selection changes', async () => {

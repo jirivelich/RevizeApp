@@ -1,4 +1,4 @@
-﻿import { forwardRef } from 'react';
+import { forwardRef, useId } from 'react';
 import type { InputHTMLAttributes } from 'react';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -7,29 +7,35 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, className = '', ...props }, ref) => {
+  ({ label, error, className = '', id, ...props }, ref) => {
+    const autoId = useId();
+    const fieldId = id ?? autoId;
+    const errorId = `${fieldId}-error`;
     return (
       <div className="flex flex-col gap-0.5">
         {label && (
-          <label className="text-xs font-medium text-[var(--text-secondary)]">
+          <label htmlFor={fieldId} className="text-xs font-medium text-[var(--text-secondary)]">
             {label}
           </label>
         )}
         <input
           ref={ref}
+          id={fieldId}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
           className={`
             px-2 py-1.5 border rounded-lg
             bg-[var(--bg-input)] text-[var(--text)] placeholder:text-[var(--text-muted)]
-            transition-all duration-200
-            focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[rgba(43,136,255,0.4)] focus:shadow-[0_0_0_3px_rgba(43,136,255,0.12)]
-            text-xs
-            ${error ? 'border-red-500/[0.5]' : 'border-[var(--border-input)]'}
+            transition-colors duration-150
+            focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--focus-ring-color)]
+            min-h-[44px] text-base sm:min-h-[36px] sm:text-sm
+            ${error ? 'border-[var(--danger)]' : 'border-[var(--border-input)]'}
             ${className}
           `}
           {...props}
         />
         {error && (
-          <span className="text-sm text-red-500">{error}</span>
+          <span id={errorId} role="alert" className="text-xs text-[var(--danger-text)]">{error}</span>
         )}
       </div>
     );

@@ -31,7 +31,7 @@ describe('Input', () => {
   it('should apply error border class when error is set', () => {
     render(<Input error="Chyba" data-testid="inp" />);
     const input = screen.getByTestId('inp');
-    expect(input.className).toContain('border-red-500');
+    expect(input.className).toContain('border-[var(--danger)]');
   });
 
   it('should apply normal border when no error', () => {
