@@ -16,6 +16,7 @@ interface IzolaceRow { misto: string; napeti: string; hodnota: string; pozadavek
 interface SpojitostRow { misto: string; proud: string; hodnota: string; pozadavek: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; }
 interface ImpedanceRow { misto: string; hodnota: string; pozadavek: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; }
 interface RcdRow { nazev: string; idn: string; typ: string; cas: string; limit: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; }
+interface OstatniRow { nazev: string; misto: string; hodnota: string; jednotka: string; pozadavek: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; }
 interface KontrolaRow { nazev: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; editable: boolean; }
 interface PristrojRow { typ: string; sn: string; kalibrace: string; trida: string; poznamka: string; }
 
@@ -25,7 +26,7 @@ interface StrojniFormData {
   strojTrida: string; strojCe: string; mistoHala: string;
   strojPrivod: '' | 'pevny' | 'pohyblivy';
   jisteni: JisteniRow[]; izolace: IzolaceRow[]; spojitost: SpojitostRow[];
-  impedance: ImpedanceRow[]; rcd: RcdRow[]; kontroly: KontrolaRow[]; pristroje: PristrojRow[];
+  impedance: ImpedanceRow[]; rcd: RcdRow[]; ostatni?: OstatniRow[]; kontroly: KontrolaRow[]; pristroje: PristrojRow[];
   verdikt: '' | 'pass' | 'fail';
   posudekZavady: string; posudekDoporuceni: string; posudekNormy: string;
 }
@@ -273,7 +274,8 @@ export function StrojniZarizeniPrintPage() {
   const spojitostRows = (sd?.spojitost || []).filter(r => (r.misto.trim() || r.hodnota.trim() || r.vysledek) && r.vysledek !== 'NA');
   const rcdRows = (sd?.rcd || []).filter(r => (r.nazev.trim() || r.cas.trim() || r.vysledek) && r.vysledek !== 'NA');
   const impedanceRows = (sd?.impedance || []).filter(r => (r.misto.trim() || r.hodnota.trim() || r.vysledek) && r.vysledek !== 'NA');
-  const kontrolyRows = (sd?.kontroly || []).filter(r => r.nazev.trim() && r.vysledek && r.vysledek !== 'NA');
+  const ostatniRows = (sd?.ostatni || []).filter(r => (r.nazev.trim() || r.hodnota.trim() || r.vysledek) && r.vysledek !== 'NA');
+  const kontrolyRows =(sd?.kontroly || []).filter(r => r.nazev.trim() && r.vysledek && r.vysledek !== 'NA');
   const pristrojRows = (sd?.pristroje || []).filter(r => r.typ.trim());
 
   const reportContent = (
@@ -458,6 +460,24 @@ export function StrojniZarizeniPrintPage() {
             r.typ || '—',
             r.cas || '—',
             r.limit || '—',
+            stavLabel(r.vysledek),
+            r.poznamka || '',
+          ])}
+        />
+      </ReportSection>
+      )}
+
+      {/* i2) OSTATNÍ MĚŘENÍ */}
+      {ostatniRows.length > 0 && (
+      <ReportSection title="10a. Ostatní měření">
+        <ReportTable
+          columns={['Měření', 'Místo', 'Naměřeno', 'Požadavek', 'Výsledek', 'Pozn.']}
+          widths={['24%', '20%', '16%', '14%', '12%', '14%']}
+          rows={ostatniRows.map(r => [
+            r.nazev || '—',
+            r.misto || '—',
+            r.hodnota ? `${r.hodnota}${r.jednotka ? ` ${r.jednotka}` : ''}` : '—',
+            r.pozadavek || '—',
             stavLabel(r.vysledek),
             r.poznamka || '',
           ])}

@@ -166,6 +166,7 @@ vi.mock('../../services/database', () => ({
   revizePristrojService: { getByRevize: vi.fn() },
   nastaveniService: { get: vi.fn() },
   zakazniciService: { getAll: vi.fn() },
+  prilohaService: { getByRevize: vi.fn().mockResolvedValue([]), getById: vi.fn() },
 }));
 
 import {
@@ -530,6 +531,44 @@ describe('StrojniZarizeniPrintPage – sekce 7. Izolace', () => {
       expect(screen.getAllByText('PROTOKOL O OVĚŘENÍ STROJNÍHO ZAŘÍZENÍ').length).toBeGreaterThanOrEqual(1);
     });
     expect(screen.queryByText(/Měření izolačního odporu/)).not.toBeInTheDocument();
+  });
+});
+
+// ═══════════════════════════════════════════════════
+// Ostatní měření (nepovinná sekce)
+// ═══════════════════════════════════════════════════
+
+describe('StrojniZarizeniPrintPage – Ostatní měření', () => {
+  const row = { nazev: 'Svodový proud', misto: 'Kostra', hodnota: '1,2', jednotka: 'mA', pozadavek: '≤ 3,5 mA', vysledek: 'V', poznamka: '' };
+
+  it('should render ostatni mereni when filled', async () => {
+    const sd = { ...strojniFormData, ostatni: [row] };
+    setupMocks({}, { strojniData: sd });
+    render(<StrojniZarizeniPrintPage />);
+    await waitFor(() => {
+      expect(screen.getAllByText(/Ostatní měření/).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Svodový proud').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('1,2 mA').length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  it('should NOT render ostatni mereni when empty or missing', async () => {
+    const sd = { ...strojniFormData, ostatni: [{ ...row, nazev: '', hodnota: '', vysledek: '' }] };
+    setupMocks({}, { strojniData: sd });
+    render(<StrojniZarizeniPrintPage />);
+    await waitFor(() => {
+      expect(screen.getAllByText('ZPRÁVA O REVIZI ELEKTRICKÉ INSTALACE STROJNÍHO ZAŘÍZENÍ').length).toBeGreaterThanOrEqual(1);
+    });
+    expect(screen.queryByText(/Ostatní měření/)).not.toBeInTheDocument();
+  });
+
+  it('should NOT render ostatni mereni for old data without the field', async () => {
+    setupMocks();
+    render(<StrojniZarizeniPrintPage />);
+    await waitFor(() => {
+      expect(screen.getAllByText('ZPRÁVA O REVIZI ELEKTRICKÉ INSTALACE STROJNÍHO ZAŘÍZENÍ').length).toBeGreaterThanOrEqual(1);
+    });
+    expect(screen.queryByText(/Ostatní měření/)).not.toBeInTheDocument();
   });
 });
 

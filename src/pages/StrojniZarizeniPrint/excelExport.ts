@@ -257,6 +257,22 @@ export async function exportStrojniExcel(data: any): Promise<void> {
   emptyRow();
 
   // ═══════════════════════════════════════════════
+  // 08a – OSTATNÍ MĚŘENÍ (jen pokud je něco vyplněno)
+  // ═══════════════════════════════════════════════
+  type OstatniExportRow = { nazev: string; misto: string; hodnota: string; jednotka: string; pozadavek: string; vysledek: string; poznamka: string };
+  const ostatniRows = ((data.ostatni || []) as OstatniExportRow[])
+    .filter(row => (row.nazev.trim() || row.hodnota.trim() || row.vysledek) && row.vysledek !== 'NA');
+  if (ostatniRows.length > 0) {
+    sectionRow('08a  OSTATNÍ MĚŘENÍ');
+    tableHeader(['Měření', 'Místo', 'Naměřená hodnota', 'Požadavek', 'Výsledek', 'Poznámka']);
+    ostatniRows.forEach((row, i) => {
+      const hodnota = row.hodnota ? `${row.hodnota}${row.jednotka ? ` ${row.jednotka}` : ''}` : '';
+      tableRow([row.nazev, row.misto, hodnota, row.pozadavek, row.vysledek, row.poznamka], i % 2 === 1);
+    });
+    emptyRow();
+  }
+
+  // ═══════════════════════════════════════════════
   // 09 – FUNKČNÍ KONTROLY
   // ═══════════════════════════════════════════════
   sectionRow('09  FUNKČNÍ KONTROLY');

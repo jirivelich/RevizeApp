@@ -18,6 +18,7 @@ interface IzolaceRow { misto: string; napeti: string; hodnota: string; pozadavek
 interface SpojitostRow { misto: string; proud: string; hodnota: string; pozadavek: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; }
 interface ImpedanceRow { misto: string; hodnota: string; pozadavek: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; }
 interface RcdRow { nazev: string; idn: string; typ: string; cas: string; limit: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; }
+interface OstatniRow { nazev: string; misto: string; hodnota: string; jednotka: string; pozadavek: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; }
 interface KontrolaRow { nazev: string; vysledek: '' | 'V' | 'N' | 'NA'; poznamka: string; editable: boolean; }
 interface PristrojRow { typ: string; sn: string; kalibrace: string; trida: string; poznamka: string; }
 
@@ -27,10 +28,13 @@ interface StrojniFormData {
   strojTrida: string; strojCe: string; mistoHala: string;
   strojPrivod: '' | 'pevny' | 'pohyblivy';
   jisteni: JisteniRow[]; izolace: IzolaceRow[]; spojitost: SpojitostRow[];
-  impedance: ImpedanceRow[]; rcd: RcdRow[]; kontroly: KontrolaRow[]; pristroje: PristrojRow[];
+  impedance: ImpedanceRow[]; rcd: RcdRow[]; ostatni: OstatniRow[]; kontroly: KontrolaRow[]; pristroje: PristrojRow[];
   verdikt: '' | 'pass' | 'fail';
   posudekZavady: string; posudekDoporuceni: string; posudekNormy: string;
 }
+
+const NAZVY_OSTATNI = ['Svodový proud', 'Dotykový proud', 'Proud PE vodičem', 'Zbytkové napětí', 'Odpor PE vodiče přívodu', 'Příkon', 'Napětí', 'Otáčky / smysl otáčení'];
+const EMPTY_OSTATNI: OstatniRow = { nazev: '', misto: '', hodnota: '', jednotka: '', pozadavek: '', vysledek: '', poznamka: '' };
 
 // Výchozí data
 const DEFAULT_JISTENI: JisteniRow[] = [
@@ -99,6 +103,7 @@ function createDefault(): StrojniFormData {
     spojitost: DEFAULT_SPOJITOST.map(r => ({ ...r })),
     impedance: DEFAULT_IMPEDANCE.map(r => ({ ...r })),
     rcd: DEFAULT_RCD.map(r => ({ ...r })),
+    ostatni: [],
     kontroly: DEFAULT_KONTROLY.map(r => ({ ...r })),
     pristroje: DEFAULT_PRISTROJE.map(r => ({ ...r })),
     verdikt: '', posudekZavady: '', posudekDoporuceni: '',
@@ -206,6 +211,14 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       t[idx] = { ...row, [field]: row[field] === val ? '' : val };
       return { ...prev, [tableKey]: t } as StrojniFormData;
     });
+  }, []);
+
+  const addOstatni = useCallback(() => {
+    setFd(prev => ({ ...prev, ostatni: [...prev.ostatni, { ...EMPTY_OSTATNI }] }));
+  }, []);
+
+  const removeOstatni = useCallback((idx: number) => {
+    setFd(prev => ({ ...prev, ostatni: prev.ostatni.filter((_, i) => i !== idx) }));
   }, []);
 
   // Export handler – Excel only (PDF is via PrintReport page)
@@ -467,6 +480,59 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
             </tbody>
           </table>
           <p className="text-xs text-[var(--text-secondary)] italic mt-1.5">V = Vyhovuje &nbsp;|&nbsp; N = Nevyhovuje &nbsp;|&nbsp; NA = Neaplikováno</p>
+        </div>
+      </div>
+
+      {/* ═══ OSTATNÍ MĚŘENÍ (nepovinné – bez řádků se v protokolu nevypisuje) ═══ */}
+      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+          <span className="text-[var(--primary)]">06a</span> Ostatní měření
+          <button
+            type="button"
+            className="ml-auto px-2 py-0.5 text-xs font-semibold rounded border border-[var(--border-strong)] hover:bg-[var(--bg-hover-strong)] cursor-pointer"
+            onClick={addOstatni}
+          >+ Přidat měření</button>
+        </div>
+        <div className="p-4">
+          {fd.ostatni.length === 0 ? (
+            <p className="text-xs text-[var(--text-secondary)] italic">Žádná další měření – sekce se v protokolu nevypíše.</p>
+          ) : (
+            <table className="w-full text-sm border-collapse mt-1">
+              <thead><tr>
+                <th className={TW.th} style={{ width: '20%' }}>Měření</th>
+                <th className={TW.th} style={{ width: '17%' }}>Místo</th>
+                <th className={TW.th} style={{ width: '12%' }}>Naměřeno</th>
+                <th className={TW.th} style={{ width: '8%' }}>Jedn.</th>
+                <th className={TW.th} style={{ width: '12%' }}>Požadavek</th>
+                <th className={TW.th} style={{ width: '14%' }}>Výsledek</th>
+                <th className={TW.th} style={{ width: '12%' }}>Pozn.</th>
+                <th className={TW.th} style={{ width: '5%' }}></th>
+              </tr></thead>
+              <tbody>
+                {fd.ostatni.map((r, i) => (
+                  <tr key={i} className="even:bg-[var(--bg-surface)]">
+                    <td className={TW.td}><input className={TW.tblInput} list="ostatni-nazvy" value={r.nazev} onChange={e => updRow('ostatni', i, 'nazev', e.target.value)} /></td>
+                    <td className={TW.td}><input className={TW.tblInput} value={r.misto} onChange={e => updRow('ostatni', i, 'misto', e.target.value)} /></td>
+                    <td className={TW.td}><input className={TW.tblInput} value={r.hodnota} onChange={e => updRow('ostatni', i, 'hodnota', e.target.value)} /></td>
+                    <td className={TW.td}><input className={TW.tblInput} value={r.jednotka} onChange={e => updRow('ostatni', i, 'jednotka', e.target.value)} /></td>
+                    <td className={TW.td}><input className={TW.tblInput} value={r.pozadavek} onChange={e => updRow('ostatni', i, 'pozadavek', e.target.value)} /></td>
+                    <td className={TW.td}><div className="flex gap-1.5">
+                      <CB val="V" label="V" active={r.vysledek==='V'} onClick={() => toggleCheck('ostatni',i,'vysledek','V')} />
+                      <CB val="N" label="N" active={r.vysledek==='N'} onClick={() => toggleCheck('ostatni',i,'vysledek','N')} />
+                      <CB val="NA" label="NA" active={r.vysledek==='NA'} onClick={() => toggleCheck('ostatni',i,'vysledek','NA')} />
+                    </div></td>
+                    <td className={TW.td}><input className={TW.tblInput} value={r.poznamka} onChange={e => updRow('ostatni', i, 'poznamka', e.target.value)} /></td>
+                    <td className={TW.td}>
+                      <button type="button" className="text-red-500 hover:text-red-700 cursor-pointer text-sm" title="Smazat řádek" onClick={() => removeOstatni(i)}>✕</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          <datalist id="ostatni-nazvy">
+            {NAZVY_OSTATNI.map(n => <option key={n} value={n} />)}
+          </datalist>
         </div>
       </div>
 

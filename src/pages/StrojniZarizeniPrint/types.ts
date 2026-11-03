@@ -49,6 +49,9 @@ export interface StrojniFormData {
   // 08 – RCD
   rcd: RcdRow[];
 
+  // Ostatní měření (nepovinné, bez řádků se netiskne)
+  ostatni: OstatniRow[];
+
   // 09 – Funkční kontroly
   kontroly: KontrolaRow[];
 
@@ -95,6 +98,16 @@ export interface RcdRow {
   typ: string;
   cas: string;
   limit: string;
+  vysledek: 'V' | 'N' | 'NA' | '';
+  poznamka: string;
+}
+
+export interface OstatniRow {
+  nazev: string;
+  misto: string;
+  hodnota: string;
+  jednotka: string;
+  pozadavek: string;
   vysledek: 'V' | 'N' | 'NA' | '';
   poznamka: string;
 }
@@ -207,6 +220,7 @@ export function createDefaultFormData(): StrojniFormData {
     izolace: DEFAULT_IZOLACE.map(r => ({ ...r })),
     spojitost: DEFAULT_SPOJITOST.map(r => ({ ...r })),
     rcd: DEFAULT_RCD.map(r => ({ ...r })),
+    ostatni: [],
     kontroly: DEFAULT_KONTROLY.map(r => ({ ...r })),
     pristroje: DEFAULT_PRISTROJE.map(r => ({ ...r })),
     verdikt: '',
