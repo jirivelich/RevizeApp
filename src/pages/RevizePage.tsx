@@ -283,7 +283,7 @@ export function RevizePage() {
   if (loading) {
     return (
       <div className="text-center py-12">
-        <div className="animate-spin h-6 w-6 border-2 border-slate-400 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <div className="animate-spin h-6 w-6 border-2 border-[var(--border-strong)] border-t-transparent rounded-full mx-auto mb-4"></div>
         <p className="text-sm text-[var(--text-secondary)]">Načítání revizí...</p>
       </div>
     );
@@ -805,7 +805,7 @@ export function RevizePage() {
                       isCurrent
                         ? 'bg-[var(--primary)] border-[var(--primary-hover)] text-white'
                         : h.stav === 'dokončeno' || h.stav === 'schváleno'
-                          ? 'bg-[var(--success-bg)] border-emerald-400 text-[var(--success-text)]'
+                          ? 'bg-[var(--success-bg)] border-[var(--success)] text-[var(--success-text)]'
                           : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text-muted)]'
                     }`}>
                       {idx + 1}
@@ -828,7 +828,7 @@ export function RevizePage() {
                       {!isCurrent && h.id && (
                         <button
                           onClick={() => { setIsHistorieModalOpen(false); navigate(`/revize/${h.id}`); }}
-                          className="text-xs text-blue-500 hover:underline mt-1"
+                          className="text-xs text-[var(--primary)] hover:underline mt-1"
                         >
                           Otevřít →
                         </button>
@@ -866,7 +866,7 @@ export function RevizePage() {
             value={confirmDeleteInput}
             onChange={e => setConfirmDeleteInput(e.target.value)}
             placeholder={confirmDelete?.cisloRevize ?? ''}
-            className="w-full px-3 py-2 rounded-lg border border-[var(--border-medium)] bg-[var(--bg-input)] text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500"
+            className="w-full px-3 py-2 rounded-lg border border-[var(--border-medium)] bg-[var(--bg-input)] text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-[var(--danger)]"
             autoComplete="off"
             autoFocus
           />
@@ -981,7 +981,7 @@ export function RevizePage() {
           />
 
           {duplikatError && (
-            <p className="text-xs font-medium text-[var(--danger-text)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+            <p className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-lg px-3 py-2">
               {duplikatError}
             </p>
           )}

@@ -23,8 +23,8 @@ type ListKey = 'prohlidka' | 'zkouseni' | 'checklist';
 function CB({ val, active, onClick }: { val: Vysledek; active: boolean; onClick: () => void }) {
   const base = 'flex-1 py-1 px-1 text-xs font-semibold border cursor-pointer text-center transition-all select-none rounded';
   const cls = active
-    ? val === 'V' ? `${base} bg-emerald-50 border-emerald-500 text-emerald-600`
-    : val === 'N' ? `${base} bg-red-50 border-red-500 text-red-600`
+    ? val === 'V' ? `${base} bg-[var(--success-bg)] border-[var(--success)] text-[var(--success-text)]`
+    : val === 'N' ? `${base} bg-[var(--danger-bg)] border-[var(--danger)] text-[var(--danger-text)]`
     : `${base} bg-[var(--bg-hover-strong)] border-[var(--border-strong)] text-[var(--text)]`
     : `${base} border-[var(--border-input)] bg-[var(--bg-input)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text)]`;
   return <button className={cls} onClick={onClick} type="button">{val}</button>;
@@ -135,7 +135,7 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
                 </div></td>
                 <td className={TW.td}><input className={TW.tblInput} value={r.poznamka} onChange={e => updItem(list, i, { poznamka: e.target.value })} /></td>
                 <td className={TW.td}>
-                  <button type="button" className="text-[var(--text-muted)] hover:text-red-500 cursor-pointer" title="Odebrat řádek" onClick={() => removeItem(list, i)}>✕</button>
+                  <button type="button" className="text-[var(--text-muted)] hover:text-[var(--danger-text)] cursor-pointer" title="Odebrat řádek" onClick={() => removeItem(list, i)}>✕</button>
                 </td>
               </tr>
               </Fragment>
@@ -223,7 +223,7 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
             </Field>
           </div>
           {upozorneni.length > 0 && (
-            <div className="mt-3 rounded border border-amber-400 bg-amber-50 px-3 py-2 text-xs text-amber-800 space-y-0.5">
+            <div className="mt-3 rounded border border-amber-400 bg-[var(--warning-bg)] px-3 py-2 text-xs text-[var(--warning-text)] space-y-0.5">
               <div className="font-semibold">Nesoulad s Připojovacími podmínkami nn:</div>
               {upozorneni.map((u, i) => <div key={i}>⚠ {u}</div>)}
             </div>
@@ -258,8 +258,8 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
             {inp('hdoKod', 'HDO – kód / signál')}
           </div>
           <div className={`text-xs rounded px-3 py-2 border ${
-            shoda === 'shoda' ? 'bg-emerald-50 border-emerald-400 text-emerald-700'
-            : shoda === 'neshoda' ? 'bg-red-50 border-red-400 text-red-700'
+            shoda === 'shoda' ? 'bg-[var(--success-bg)] border-[var(--success)] text-[var(--success-text)]'
+            : shoda === 'neshoda' ? 'bg-[var(--danger-bg)] border-red-400 text-[var(--danger-text)]'
             : 'bg-[var(--bg-surface)] border-[var(--border)] text-[var(--text-muted)]'}`}>
             {shoda === 'shoda' && `✓ Osazený hlavní jistič (${fd.jisticProud} A) odpovídá smlouvě.`}
             {shoda === 'neshoda' && `⚠ Osazený hlavní jistič (${fd.jisticProud} A) NEODPOVÍDÁ smlouvě (${fd.smlouvaJistic} A). Uveďte v závěru.`}
@@ -299,7 +299,7 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
                       ))}
                     </div></td>
                     <td className={TW.td}>
-                      <button type="button" className="text-[var(--text-muted)] hover:text-red-500 cursor-pointer" title="Odebrat řádek"
+                      <button type="button" className="text-[var(--text-muted)] hover:text-[var(--danger-text)] cursor-pointer" title="Odebrat řádek"
                         onClick={() => setFd(prev => ({ ...prev, mereni: prev.mereni.filter((_, j) => j !== i) }))}>✕</button>
                     </td>
                   </tr>

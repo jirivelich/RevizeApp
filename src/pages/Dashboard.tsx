@@ -266,7 +266,7 @@ function getMonthGrid(year: number, month: number): (Date | null)[] {
 }
 
 const LEGEND_ITEMS = [
-  { color: 'bg-red-500', label: 'Vysoká priorita' },
+  { color: 'bg-[var(--danger)]', label: 'Vysoká priorita' },
   { color: 'bg-amber-400', label: 'Střední' },
   { color: 'bg-blue-400', label: 'Nízká' },
   { color: 'bg-slate-400', label: 'Dokončeno' },
@@ -385,7 +385,7 @@ function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
                   {hasEvents && (
                     <div className="mt-1 flex items-center justify-center gap-0.5 flex-wrap">
                       {dayZ.slice(0, 3).map((z) => {
-                        const color = z.stav === 'dokončeno' ? 'bg-[var(--text-muted)]' : z.priorita === 'vysoká' ? 'bg-red-500' : z.priorita === 'střední' ? 'bg-amber-400' : 'bg-[var(--primary)]';
+                        const color = z.stav === 'dokončeno' ? 'bg-[var(--text-muted)]' : z.priorita === 'vysoká' ? 'bg-[var(--danger)]' : z.priorita === 'střední' ? 'bg-amber-400' : 'bg-[var(--primary)]';
                         return (
                           <span
                             key={z.id}

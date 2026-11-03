@@ -84,7 +84,7 @@ const CenikPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-400"></div>
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--border-strong)]"></div>
       </div>
     );
   }
@@ -103,7 +103,7 @@ const CenikPage: React.FC = () => {
       </div>
 
       {formError && !isModalOpen && (
-        <p className="text-xs font-medium text-[var(--danger-text)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+        <p className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-lg px-3 py-2">
           {formError}
         </p>
       )}
@@ -168,7 +168,7 @@ const CenikPage: React.FC = () => {
             />
           </div>
           {formError && isModalOpen && (
-            <p className="text-xs font-medium text-[var(--danger-text)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+            <p className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-lg px-3 py-2">
               {formError}
             </p>
           )}

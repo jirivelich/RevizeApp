@@ -77,7 +77,7 @@ export function NotificationPanel({ notifications, onClose }: Props) {
           </svg>
           <span className="text-sm font-semibold text-[var(--text)]">Upozornění</span>
           {notifications.length > 0 && (
-            <span className="text-[11px] font-bold bg-red-500 text-white rounded-full px-1.5 py-0.5 leading-none">
+            <span className="text-[11px] font-bold bg-[var(--danger)] text-white rounded-full px-1.5 py-0.5 leading-none">
               {notifications.length}
             </span>
           )}

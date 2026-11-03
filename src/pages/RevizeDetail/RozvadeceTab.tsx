@@ -461,7 +461,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                   onDragEnd={handleRozvadecDragEnd}
                   className={`rounded-lg border transition-colors cursor-grab active:cursor-grabbing ${
                     selectedRozvadec?.id === r.id
-                      ? 'border-blue-500 bg-[var(--bg-accent)]'
+                      ? 'border-[var(--primary)] bg-[var(--bg-accent)]'
                       : draggedRozvadec?.id === r.id
                         ? 'opacity-50 bg-[var(--bg-accent)] border-[var(--border)]'
                         : 'border-[var(--border)] bg-[var(--bg-surface)] hover:border-[var(--border-strong)]'
@@ -600,7 +600,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                             Upravit
                           </button>
                           <button
-                            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-500 hover:bg-[var(--bg-hover)] transition-colors"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[var(--danger-text)] hover:bg-[var(--bg-hover)] transition-colors"
                             onClick={() => { setIsMoreMenuOpen(false); handleDeleteRozvadec(selectedRozvadec.id!); }}>
                             <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
                             Smazat

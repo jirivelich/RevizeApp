@@ -278,7 +278,7 @@ export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }
                 todayClass
                   ? 'bg-blue-500 text-white'
                   : isWeekend
-                  ? 'text-slate-500'
+                  ? 'text-[var(--text-muted)]'
                   : 'text-[var(--text-secondary)]'
               }`}
             >
@@ -380,7 +380,7 @@ export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }
           <div
             key={den}
             className={`p-2 text-center text-sm font-medium bg-[var(--bg-input)] border-b border-[var(--border)] ${
-              WEEKEND_INDICES.has(i) ? 'text-slate-500' : 'text-[var(--text-secondary)]'
+              WEEKEND_INDICES.has(i) ? 'text-[var(--text-muted)]' : 'text-[var(--text-secondary)]'
             }`}
           >
             {den}

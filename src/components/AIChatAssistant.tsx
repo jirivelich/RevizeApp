@@ -109,7 +109,7 @@ export function AIChatAssistant() {
                     <path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7z" />
                   </svg>
                 </div>
-                <p className="text-sm text-slate-600 font-medium mb-1">AI Asistent pro revize</p>
+                <p className="text-sm text-[var(--text-secondary)] font-medium mb-1">AI Asistent pro revize</p>
                 <p className="text-xs text-[var(--text-secondary)]">Zeptejte se na normy ČSN, postupy měření, klasifikaci závad...</p>
                 <div className="mt-4 space-y-2">
                   {[

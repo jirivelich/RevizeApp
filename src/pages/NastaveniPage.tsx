@@ -782,7 +782,7 @@ export function NastaveniPage() {
               className={`p-4 rounded-lg border ${
                 backupMessage.type === 'success'
                   ? 'border-green-500/[0.20] bg-[var(--success-bg)] text-[var(--success-text)]'
-                  : 'border-red-500/[0.20] bg-[var(--danger-bg)] text-[var(--danger-text)]'
+                  : 'border-[var(--danger)]/[0.20] bg-[var(--danger-bg)] text-[var(--danger-text)]'
               }`}
             >
               {backupMessage.text}
@@ -1053,11 +1053,11 @@ export function NastaveniPage() {
           </Card>
           <Card title="Jak fungují upozornění">
             <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
-              <li className="flex gap-2"><span className="text-blue-500 mt-0.5">•</span><span><strong>Plánované zakázky</strong> — upozorní na zakázky se stavem „Plánováno“, které mají datum realizace během nastaveného počtu dní.</span></li>
+              <li className="flex gap-2"><span className="text-[var(--primary)] mt-0.5">•</span><span><strong>Plánované zakázky</strong> — upozorní na zakázky se stavem „Plánováno“, které mají datum realizace během nastaveného počtu dní.</span></li>
               <li className="flex gap-2"><span className="text-amber-500 mt-0.5">•</span><span><strong>Rozpracované revize</strong> — upozorní na revize ve stavu „Rozpracováno“, které nebyly dokončeny delší dobu než nastavený počet dní.</span></li>
-              <li className="flex gap-2"><span className="text-red-500 mt-0.5">•</span><span><strong>Deadline zprávy</strong> — upozorní na přiblížející se (nebo promekaný) deadline odevzdání revizní zprávy po dokončené zakázce.</span></li>
-              <li className="flex gap-2"><span className="text-red-500 mt-0.5">•</span><span><strong>Kalibrace přístrojů</strong> — upozorní, když se blíží konec platnosti kalibrace měřicího přístroje.</span></li>
-              <li className="flex gap-2"><span className="text-red-500 mt-0.5">•</span><span><strong>Expirace dokladů technika</strong> — upozorní na končec platnosti oprávnění či osvědčení revizního technika (nastaveného v záložce Revizní technik).</span></li>              <li className="flex gap-2"><span className="text-red-500 mt-0.5">•</span><span><strong>Expirace platnosti revize</strong> — upozorní, když se blíží datum, do kterého musí být provedena nová revize (pole "Platnost do" na dokončené revizi).</span></li>            </ul>
+              <li className="flex gap-2"><span className="text-[var(--danger-text)] mt-0.5">•</span><span><strong>Deadline zprávy</strong> — upozorní na přiblížející se (nebo promekaný) deadline odevzdání revizní zprávy po dokončené zakázce.</span></li>
+              <li className="flex gap-2"><span className="text-[var(--danger-text)] mt-0.5">•</span><span><strong>Kalibrace přístrojů</strong> — upozorní, když se blíží konec platnosti kalibrace měřicího přístroje.</span></li>
+              <li className="flex gap-2"><span className="text-[var(--danger-text)] mt-0.5">•</span><span><strong>Expirace dokladů technika</strong> — upozorní na končec platnosti oprávnění či osvědčení revizního technika (nastaveného v záložce Revizní technik).</span></li>              <li className="flex gap-2"><span className="text-[var(--danger-text)] mt-0.5">•</span><span><strong>Expirace platnosti revize</strong> — upozorní, když se blíží datum, do kterého musí být provedena nová revize (pole "Platnost do" na dokončené revizi).</span></li>            </ul>
             <p className="text-xs text-[var(--text-secondary)] mt-3">Upozornění jsou barevně rozlišena: červená = po termínu, jantárová = do 3 dní, modrá = před termínem. Zobrazuju se v reálném čase ve zvončku v bočním panelu.</p>
           </Card>
         </div>
@@ -1155,10 +1155,10 @@ export function NastaveniPage() {
 
           <Card title="Jak synchronizace funguje">
             <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
-              <li className="flex gap-2"><span className="text-blue-500 mt-0.5">•</span><span>Každá zakázka ve stavu <em>Plánováno</em> nebo <em>V realizaci</em> se přenese jako událost do zvoleného Google Kalendáře.</span></li>
-              <li className="flex gap-2"><span className="text-blue-500 mt-0.5">•</span><span>Při opakované synchronizaci se existující události aktualizují, nové se vytvoří — nic se nesmaže.</span></li>
+              <li className="flex gap-2"><span className="text-[var(--primary)] mt-0.5">•</span><span>Každá zakázka ve stavu <em>Plánováno</em> nebo <em>V realizaci</em> se přenese jako událost do zvoleného Google Kalendáře.</span></li>
+              <li className="flex gap-2"><span className="text-[var(--primary)] mt-0.5">•</span><span>Při opakované synchronizaci se existující události aktualizují, nové se vytvoří — nic se nesmaže.</span></li>
               <li className="flex gap-2"><span className="text-[var(--primary)] mt-0.5">•</span><span>Barva události odpovídá prioritě: <span className="text-[var(--success-text)]">zelená</span> = nízká, <span className="text-[var(--warning-text)]">žlutá</span> = střední, <span className="text-[var(--danger-text)]">červená</span> = vysoká.</span></li>
-              <li className="flex gap-2"><span className="text-blue-500 mt-0.5">•</span><span>Synchronizaci spusťte ručně kdykoli z tohoto nastavení nebo přes tlačítko na stránce Plánování.</span></li>
+              <li className="flex gap-2"><span className="text-[var(--primary)] mt-0.5">•</span><span>Synchronizaci spusťte ručně kdykoli z tohoto nastavení nebo přes tlačítko na stránce Plánování.</span></li>
             </ul>
           </Card>
         </div>

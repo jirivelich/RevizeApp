@@ -153,7 +153,7 @@ export function OkruhyInlineTable({ rozvadecId, okruhy, onEdit, onDelete, onSave
             </tr>
           ))}
           {/* Draft řádek */}
-          <tr className="bg-[var(--bg-accent)] border-b border-blue-500/[0.20]">
+          <tr className="bg-[var(--bg-accent)] border-b border-[var(--primary)]/[0.20]">
             <td className="py-1 pr-2 text-xs font-medium text-[var(--text-secondary)] pl-1">{inlineOkruhDraft.cislo}</td>
             <td className="py-1 pr-2">
               <input ref={inlineNazevRef} type="text" value={inlineOkruhDraft.nazev}
@@ -232,7 +232,7 @@ export function OkruhyInlineTable({ rozvadecId, okruhy, onEdit, onDelete, onSave
             <td className="py-1">
               <button type="button" title="Uložit (Enter)" onClick={() => handleInlineOkruhSave()}
                 disabled={!inlineOkruhDraft.nazev.trim()}
-                className="w-7 h-7 flex items-center justify-center rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-base">↵</button>
+                className="w-7 h-7 flex items-center justify-center rounded bg-[var(--primary)] text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-base">↵</button>
             </td>
           </tr>
         </tbody>

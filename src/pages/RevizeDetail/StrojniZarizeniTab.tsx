@@ -128,8 +128,8 @@ interface StrojniZarizeniTabProps {
 function CB({ val, active, label, onClick }: { val: string; active: boolean; label: string; onClick: () => void }) {
   const base = 'flex-1 py-1 px-1 text-xs font-semibold border cursor-pointer text-center transition-all select-none rounded';
   const cls = active
-    ? val === 'V' ? `${base} bg-emerald-50 border-emerald-500 text-emerald-600`
-    : val === 'N' ? `${base} bg-red-50 border-red-500 text-red-600`
+    ? val === 'V' ? `${base} bg-[var(--success-bg)] border-[var(--success)] text-[var(--success-text)]`
+    : val === 'N' ? `${base} bg-[var(--danger-bg)] border-[var(--danger)] text-[var(--danger-text)]`
     : `${base} bg-[var(--bg-hover-strong)] border-[var(--border-strong)] text-[var(--text)]`
     : `${base} border-[var(--border-input)] bg-[var(--bg-input)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text)]`;
   return <button className={cls} onClick={onClick} type="button">{label}</button>;
@@ -523,7 +523,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
                     </div></td>
                     <td className={TW.td}><input className={TW.tblInput} value={r.poznamka} onChange={e => updRow('ostatni', i, 'poznamka', e.target.value)} /></td>
                     <td className={TW.td}>
-                      <button type="button" className="text-red-500 hover:text-red-700 cursor-pointer text-sm" title="Smazat řádek" onClick={() => removeOstatni(i)}>✕</button>
+                      <button type="button" className="text-[var(--danger-text)] hover:text-[var(--danger-text)] cursor-pointer text-sm" title="Smazat řádek" onClick={() => removeOstatni(i)}>✕</button>
                     </td>
                   </tr>
                 ))}
@@ -602,7 +602,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
                       <td className={TW.td}>{p.platnostKalibrace ? new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ') : '—'}</td>
                       <td className={`${TW.td} text-center`}>
                         <button type="button" onClick={() => { if (p.id) removePristroj.mutate({ revizeId, pristrojId: p.id }); }}
-                          className="bg-red-500 text-white border-none px-2 py-0.5 cursor-pointer font-semibold text-xs rounded hover:bg-red-600 transition-colors"
+                          className="bg-[var(--danger)] text-white border-none px-2 py-0.5 cursor-pointer font-semibold text-xs rounded hover:bg-[var(--danger)] transition-colors"
                         >✕</button>
                       </td>
                     </tr>
@@ -680,7 +680,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
                       {p.platnostKalibrace && ` • Kalibrace: ${new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}`}
                     </div>
                   </div>
-                  <span className="text-emerald-600 font-semibold text-sm">+ Přidat</span>
+                  <span className="text-[var(--success-text)] font-semibold text-sm">+ Přidat</span>
                 </div>
               ))
           ) : (
@@ -705,14 +705,14 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
             <div className="flex gap-3 mb-3.5">
               <button
                 className={`flex-1 py-3 px-4 border-2 rounded-lg cursor-pointer text-xs font-bold text-center transition-all tracking-wide ${
-                  fd.verdikt === 'pass' ? 'bg-emerald-50 border-emerald-500 text-emerald-600' : 'border-[var(--border-medium)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-strong)]'
+                  fd.verdikt === 'pass' ? 'bg-[var(--success-bg)] border-[var(--success)] text-[var(--success-text)]' : 'border-[var(--border-medium)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-strong)]'
                 }`}
                 onClick={() => upd('verdikt', fd.verdikt === 'pass' ? '' : 'pass')} type="button">
                 ✓ &nbsp; VYHOVUJE
               </button>
               <button
                 className={`flex-1 py-3 px-4 border-2 rounded-lg cursor-pointer text-xs font-bold text-center transition-all tracking-wide ${
-                  fd.verdikt === 'fail' ? 'bg-red-50 border-red-500 text-red-600' : 'border-[var(--border-medium)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-strong)]'
+                  fd.verdikt === 'fail' ? 'bg-[var(--danger-bg)] border-[var(--danger)] text-[var(--danger-text)]' : 'border-[var(--border-medium)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-strong)]'
                 }`}
                 onClick={() => upd('verdikt', fd.verdikt === 'fail' ? '' : 'fail')} type="button">
                 ✗ &nbsp; NEVYHOVUJE – vyžadována nápravná opatření

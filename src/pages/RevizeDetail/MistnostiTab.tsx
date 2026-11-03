@@ -235,7 +235,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
               {mistnosti.map((m) => (
                 <div key={m.id}
                   className={`rounded-lg border transition-colors cursor-pointer ${
-                    selectedMistnost?.id === m.id ? 'border-blue-500 bg-[var(--bg-accent)]' : 'border-[var(--border)] bg-[var(--bg-surface)] hover:border-white/[0.14]'
+                    selectedMistnost?.id === m.id ? 'border-[var(--primary)] bg-[var(--bg-accent)]' : 'border-[var(--border)] bg-[var(--bg-surface)] hover:border-white/[0.14]'
                   }`}
                   onClick={() => handleSelectMistnost(m)}
                 >
@@ -310,8 +310,8 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
                         <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{z.ochranaPredDotykem || '—'}</td>
                         <td className="py-1 px-2 text-xs">
                           <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                            z.stav === 'OK' ? 'bg-green-100 text-green-700' :
-                            z.stav === 'závada' ? 'bg-red-100 text-red-700' :
+                            z.stav === 'OK' ? 'bg-[var(--success-bg)] text-[var(--success-text)]' :
+                            z.stav === 'závada' ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]' :
                             'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
                           }`}>{z.stav}</span>
                         </td>

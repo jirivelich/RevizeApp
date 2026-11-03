@@ -128,12 +128,12 @@ export function ZakazkaForm({
                     type="date"
                     value={day}
                     onChange={(e) => updateExtraDay(day, e.target.value)}
-                    className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-3 py-2 text-sm border border-[var(--border-input)] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <button
                     type="button"
                     onClick={() => removeExtraDay(day)}
-                    className="text-[var(--text-secondary)] hover:text-red-500 transition-colors px-2 py-1 text-lg leading-none"
+                    className="text-[var(--text-secondary)] hover:text-[var(--danger-text)] transition-colors px-2 py-1 text-lg leading-none"
                     title="Odebrat den"
                   >
                     ×
@@ -145,7 +145,7 @@ export function ZakazkaForm({
           <button
             type="button"
             onClick={addExtraDay}
-            className="mt-2 text-xs text-blue-600 hover:text-blue-800 transition-colors"
+            className="mt-2 text-xs text-[var(--primary)] hover:text-[var(--primary)] transition-colors"
           >
             + Přidat další den realizace
           </button>
@@ -154,7 +154,7 @@ export function ZakazkaForm({
         <Input type="time" label="Plánovaný čas (1. den)" value={formData.casPlanovany} onChange={(e) => setFormData((prev) => ({ ...prev, casPlanovany: e.target.value }))} />
 
         {/* Revizní zpráva */}
-        <div className="border-t border-slate-200 pt-4 space-y-3">
+        <div className="border-t border-[var(--border-input)] pt-4 space-y-3">
           <p className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">Revizní zpráva</p>
           <div className="flex items-end gap-3">
             <div className="flex-1">
@@ -193,7 +193,7 @@ export function ZakazkaForm({
         <Input label="Poznámka" value={formData.poznamka} onChange={(e) => setFormData((prev) => ({ ...prev, poznamka: e.target.value }))} />
 
         {formError && (
-          <p className="text-xs font-medium text-[var(--danger-text)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+          <p className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-lg px-3 py-2">
             {formError}
           </p>
         )}

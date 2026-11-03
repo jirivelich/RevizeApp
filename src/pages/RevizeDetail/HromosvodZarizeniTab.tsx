@@ -32,9 +32,9 @@ const STAV_OPTIONS = [
 
 const stavColor = (stav?: string) => {
   switch (stav) {
-    case 'vyhovující': return 'text-emerald-700 bg-emerald-50';
-    case 'nevyhovující': return 'text-red-700 bg-red-50';
-    case 'částečně vyhovující': return 'text-amber-700 bg-amber-50';
+    case 'vyhovující': return 'text-[var(--success-text)] bg-[var(--success-bg)]';
+    case 'nevyhovující': return 'text-[var(--danger-text)] bg-[var(--danger-bg)]';
+    case 'částečně vyhovující': return 'text-[var(--warning-text)] bg-[var(--warning-bg)]';
     default: return 'text-[var(--text-muted)]';
   }
 };
@@ -270,7 +270,7 @@ export function HromosvodZarizeniTab({
             </div>
             <div className="flex flex-col gap-1">
               <label className={TW.label}>Stav SPD</label>
-              <select className={`${TW.selectFull} ${formData.hromosvodSpdStav === 'vyhovující' ? 'text-emerald-700 bg-emerald-50' : formData.hromosvodSpdStav === 'nevyhovující' ? 'text-red-700 bg-red-50' : formData.hromosvodSpdStav === 'nenainstalováno' ? 'text-amber-700 bg-amber-50' : ''}`}
+              <select className={`${TW.selectFull} ${formData.hromosvodSpdStav === 'vyhovující' ? 'text-[var(--success-text)] bg-[var(--success-bg)]' : formData.hromosvodSpdStav === 'nevyhovující' ? 'text-[var(--danger-text)] bg-[var(--danger-bg)]' : formData.hromosvodSpdStav === 'nenainstalováno' ? 'text-[var(--warning-text)] bg-[var(--warning-bg)]' : ''}`}
                 value={formData.hromosvodSpdStav || ''} onChange={(e) => setFormData({ ...formData, hromosvodSpdStav: e.target.value as any })}>
                 <option value="">-- Vyberte --</option>
                 <option value="vyhovující">Vyhovující</option>
@@ -321,7 +321,7 @@ export function HromosvodZarizeniTab({
                         <input type="text" className={TW.tblInput + ' text-right'} value={m.limit} onChange={(e) => updateMereni(i, 'limit', e.target.value)} placeholder="15" />
                       </td>
                       <td className={TW.td + ' text-center'}>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${m.vyhovuje ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${m.vyhovuje ? 'bg-[var(--success-bg)] text-[var(--success-text)]' : 'bg-[var(--danger-bg)] text-[var(--danger-text)]'}`}>
                           {m.vyhovuje ? 'Vyhovuje' : 'Nevyhovuje'}
                         </span>
                       </td>

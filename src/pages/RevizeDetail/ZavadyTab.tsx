@@ -195,7 +195,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                   </td>
                   <td className="py-2 pr-3">
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                      z.stav === 'vyřešená' ? 'bg-green-100 text-green-700' :
+                      z.stav === 'vyřešená' ? 'bg-[var(--success-bg)] text-[var(--success-text)]' :
                       z.stav === 'v řešení' ? 'bg-[var(--bg-accent)] text-[var(--nav-text-active)]' :
                       'bg-[var(--bg-hover)] text-[var(--text-muted)]'
                     }`}>{z.stav}</span>
@@ -213,7 +213,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                         type="button"
                         title="Smazat"
                         onClick={() => handleDeleteZavada(z.id!)}
-                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-red-100 text-[var(--text-secondary)] hover:text-red-600"
+                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-[var(--danger-bg)] text-[var(--text-secondary)] hover:text-[var(--danger-text)]"
                       >✕</button>
                     </div>
                   </td>
@@ -295,7 +295,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                 <div className="flex items-center gap-2 mb-1">
                   <p className="font-medium text-sm">{z.popis}</p>
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                    z.stav === 'vyřešená' ? 'bg-green-100 text-green-700' :
+                    z.stav === 'vyřešená' ? 'bg-[var(--success-bg)] text-[var(--success-text)]' :
                       z.stav === 'v řešení' ? 'bg-[var(--bg-accent)] text-[var(--nav-text-active)]' :
                     'bg-[var(--bg-hover)] text-[var(--text-muted)]'
                   }`}>{z.stav}</span>
@@ -416,7 +416,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                     onClick={() => setLightboxImage(foto)} />
                   <button type="button"
                     onClick={(e) => { e.stopPropagation(); setZavadaFormData(prev => ({ ...prev, fotky: prev.fotky.filter((_, idx) => idx !== i) })); }}
-                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600">×</button>
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-[var(--danger)] text-white rounded-full text-xs flex items-center justify-center hover:bg-[var(--danger)]">×</button>
                 </div>
               ))}
             </div>

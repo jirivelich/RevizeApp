@@ -165,7 +165,7 @@ export function RevizeDetailPage() {
   if (loading) {
     return (
       <div className="text-center py-12">
-        <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <div className="animate-spin h-8 w-8 border-4 border-[var(--primary)] border-t-transparent rounded-full mx-auto mb-4"></div>
         <p className="text-[var(--text-muted)]">Načítání revize...</p>
       </div>
     );
@@ -174,8 +174,8 @@ export function RevizeDetailPage() {
   if (error) {
     return (
       <div className="text-center py-12">
-        <div className="text-red-500 text-sm mb-4">Chyba</div>
-        <p className="text-red-600 font-medium mb-2">{error}</p>
+        <div className="text-[var(--danger-text)] text-sm mb-4">Chyba</div>
+        <p className="text-[var(--danger-text)] font-medium mb-2">{error}</p>
         <Button variant="secondary" onClick={() => navigate('/revize')}>← Zpět na seznam revizí</Button>
       </div>
     );
@@ -254,7 +254,7 @@ export function RevizeDetailPage() {
       </div>
 
       {fakturaError && (
-        <p className="text-xs font-medium text-[var(--danger-text)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+        <p className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-lg px-3 py-2">
           {fakturaError}
         </p>
       )}

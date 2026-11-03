@@ -216,7 +216,7 @@ export function ImportZFotografiiModal({
           </p>
 
           {error && (
-            <div className="px-3 py-2 bg-[var(--danger-bg)] border border-red-500/30 rounded-lg text-xs text-[var(--danger-text)]">
+            <div className="px-3 py-2 bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-lg text-xs text-[var(--danger-text)]">
               {error}
             </div>
           )}
@@ -257,7 +257,7 @@ export function ImportZFotografiiModal({
                     <button
                       type="button"
                       onClick={() => handleRemovePhoto(i)}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs flex items-center justify-center transition-colors"
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[var(--danger)] hover:bg-[var(--danger)] text-white rounded-full text-xs flex items-center justify-center transition-colors"
                     >
                       ×
                     </button>
@@ -296,7 +296,7 @@ export function ImportZFotografiiModal({
       {step === 'review' && (
         <div className="p-4 space-y-3">
           {error && (
-            <div className="px-3 py-2 bg-[var(--danger-bg)] border border-red-500/30 rounded-lg text-xs text-[var(--danger-text)]">
+            <div className="px-3 py-2 bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-lg text-xs text-[var(--danger-text)]">
               {error}
             </div>
           )}

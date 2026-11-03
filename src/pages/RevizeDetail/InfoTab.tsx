@@ -80,7 +80,7 @@ export function InfoTab({
           {selectedZakaznikId && (() => {
             const zakaznik = zakaznici.find(z => z.id === parseInt(selectedZakaznikId));
             return zakaznik ? (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-[var(--text-muted)] bg-blue-50 rounded p-2">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-[var(--text-muted)] bg-[var(--bg-accent)] rounded p-2">
                 {zakaznik.adresa && <span>Adresa: {zakaznik.adresa}</span>}
                 {zakaznik.ico && <span>IČO: {zakaznik.ico}</span>}
                 {zakaznik.kontaktOsoba && <span>Kontakt: {zakaznik.kontaktOsoba}</span>}
@@ -201,7 +201,7 @@ export function InfoTab({
             </Field>
           </div>
           {selectedFirmaId === '' && nastaveni && (nastaveni.firmaJmeno || nastaveni.firmaIco) && (
-            <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded p-2">📋 Z nastavení: <strong>{nastaveni.firmaJmeno}</strong> | IČO: {nastaveni.firmaIco || '—'} | {nastaveni.firmaAdresa || '—'}</div>
+            <div className="text-xs text-[var(--primary)] bg-[var(--bg-accent)] border border-blue-200 rounded p-2">📋 Z nastavení: <strong>{nastaveni.firmaJmeno}</strong> | IČO: {nastaveni.firmaIco || '—'} | {nastaveni.firmaAdresa || '—'}</div>
           )}
           {selectedFirmaId === '' && (!nastaveni || (!nastaveni.firmaJmeno && !nastaveni.firmaIco)) && (
             <p className="text-xs text-[var(--warning-text)]">⚠️ Nemáte výchozí firmu. <Link to="/nastaveni" className="underline font-medium">Nastavení</Link></p>

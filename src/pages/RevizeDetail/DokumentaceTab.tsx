@@ -246,7 +246,7 @@ export function DokumentaceTab({
                         setFormData({ ...formData, ochranaOpatreni: JSON.stringify(updated) });
                         saveNow?.();
                       }}
-                      className="w-4 h-4 text-blue-600 rounded border-[var(--checkbox-border)]"
+                      className="w-4 h-4 text-[var(--primary)] rounded border-[var(--checkbox-border)]"
                     />
                     <span className="text-sm text-[var(--text)]">{opatreni.label}</span>
                   </label>
@@ -460,7 +460,7 @@ export function DokumentaceTab({
             />
           </div>
           {aiError && (
-            <p className="text-xs font-medium text-[var(--danger-text)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2 mb-1">
+            <p className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-lg px-3 py-2 mb-1">
               {aiError}
             </p>
           )}
