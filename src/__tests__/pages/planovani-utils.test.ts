@@ -29,10 +29,10 @@ describe('emptyFormData', () => {
 });
 
 describe('getStatusColor', () => {
-  // Barvy jsou vázané na CSS proměnné z theme.ts (--primary/--warning-*/--success-*),
+  // Barvy jsou vázané na CSS proměnné z index.css (--secondary/--warning-*/--success-*),
   // aby se badge správně přizpůsoboval světlému i tmavému motivu.
-  it('should return primary (info) tone for plánováno', () => {
-    expect(getStatusColor('plánováno')).toContain('--primary');
+  it('should return secondary (info) tone for plánováno', () => {
+    expect(getStatusColor('plánováno')).toContain('--secondary');
   });
 
   it('should return warning tone for v realizaci', () => {
@@ -61,8 +61,8 @@ describe('getPriorityColor', () => {
     expect(getPriorityColor('střední')).toContain('--warning');
   });
 
-  it('should return primary (info) tone for nizká', () => {
-    expect(getPriorityColor('nizká')).toContain('--primary');
+  it('should return secondary (info) tone for nizká', () => {
+    expect(getPriorityColor('nizká')).toContain('--secondary');
   });
 
   it('should return default (neutral) for unknown priority', () => {
