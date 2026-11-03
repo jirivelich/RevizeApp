@@ -1,4 +1,5 @@
-import { type ReactNode, useEffect } from 'react';
+import type { ReactNode } from 'react';
+import { useDialog } from './useDialog';
 
 interface ModalProps {
   isOpen: boolean;
@@ -18,33 +19,22 @@ const sizeClasses = {
 };
 
 export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }: ModalProps) {
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen, onClose]);
+  const { ref, titleId, dialogProps } = useDialog(isOpen, onClose);
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-[var(--overlay)]"
         onClick={onClose}
       />
-      <div className={`relative bg-[var(--surface)] border border-[var(--border-medium)] rounded-2xl shadow-[var(--shadow-elevated)] ${sizeClasses[size]} w-full max-h-[90vh] flex flex-col overflow-hidden`}>
+      <div className={`relative bg-[var(--surface)] border border-[var(--border-medium)] rounded-2xl shadow-[var(--shadow-lg)] ${sizeClasses[size]} w-full max-h-[90vh] flex flex-col overflow-hidden outline-none`}
+        ref={ref}
+        {...dialogProps}
+      >
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)]">
-          <h2 className="text-base font-semibold text-[var(--text)] tracking-tight">{title}</h2>
+          <h2 id={titleId} className="text-base font-semibold text-[var(--text)] tracking-tight">{title}</h2>
           <button
             onClick={onClose}
             aria-label="Zavřít"

@@ -61,6 +61,7 @@
   --fs-20: 20px;
   --fs-24: 24px;
   --shadow-lg: 0 12px 32px rgba(0,0,0,0.55);
+  --overlay: rgba(0,0,0,0.6);
 }
 
 :root[data-theme="light"] {
@@ -123,6 +124,7 @@
   --fs-20: 20px;
   --fs-24: 24px;
   --shadow-lg: 0 12px 32px rgba(16,24,40,0.18);
+  --overlay: rgba(15,23,42,0.45);
 }
 
 * {

@@ -1,4 +1,5 @@
-import { type ReactNode, useEffect } from 'react';
+import type { ReactNode } from 'react';
+import { useDialog } from './useDialog';
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -9,27 +10,17 @@ interface BottomSheetProps {
 }
 
 export function BottomSheet({ isOpen, onClose, title, children, footer }: BottomSheetProps) {
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen, onClose]);
+  const { ref, titleId, dialogProps } = useDialog(isOpen, onClose);
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="absolute inset-0 bg-[var(--overlay)]" onClick={onClose} />
       <div
-        className="relative bg-[var(--surface)] rounded-t-2xl shadow-xl max-h-[85vh] flex flex-col"
+        ref={ref}
+        {...dialogProps}
+        className="relative bg-[var(--surface)] border-t border-[var(--border-medium)] rounded-t-2xl shadow-[var(--shadow-lg)] max-h-[85vh] flex flex-col outline-none"
         style={{ animation: 'slideUp 0.25s ease-out' }}
       >
         {/* Drag handle */}
@@ -37,8 +28,8 @@ export function BottomSheet({ isOpen, onClose, title, children, footer }: Bottom
           <div className="w-10 h-1 rounded-full bg-[var(--border-strong)]" />
         </div>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-subtle)] flex-shrink-0">
-          <h2 className="text-sm font-semibold text-[var(--text)]">{title}</h2>
+        <div className="flex items-center justify-between px-6 py-3 border-b border-[var(--border-subtle)] flex-shrink-0">
+          <h2 id={titleId} className="text-base font-semibold text-[var(--text)]">{title}</h2>
           <button
             onClick={onClose}
             aria-label="Zavřít"
