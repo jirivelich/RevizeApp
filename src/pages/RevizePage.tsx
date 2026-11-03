@@ -1,7 +1,7 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
-import { Button, Input, Select, Modal } from '../components/ui';
+import { Button, Input, Select, Modal, BottomSheet } from '../components/ui';
 import { revizeService } from '../services/database';
 import { useRevize, useDeleteRevize } from '../hooks/useQueries';
 import { KATEGORIE_LABELS } from '../types';
@@ -874,61 +874,54 @@ export function RevizePage() {
       </Modal>
 
       {/* Action sheet pro mobil – akce revize */}
-      {actionSheetRevize && (
-        <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setActionSheetRevize(null)} />
-          <div className="relative bg-[var(--surface)] rounded-t-2xl shadow-xl pb-safe">
-            <div className="px-4 pt-4 pb-2 border-b border-[var(--border-subtle)]">
-              <p className="font-semibold text-[var(--text)] text-sm truncate">{actionSheetRevize.nazev}</p>
-              <p className="text-xs text-[var(--text-secondary)]">{actionSheetRevize.cisloRevize}</p>
-            </div>
-            <div className="py-1">
-              <button
-                onClick={() => { setActionSheetRevize(null); navigate(`/revize/${actionSheetRevize.id}`); }}
-                className="w-full text-left px-4 py-3.5 text-sm text-[var(--text)] active:bg-[var(--bg-hover)] flex items-center gap-3"
-              >
-                <span className="text-base">✏️</span> Upravit
-              </button>
-              <button
-                onClick={() => {
-                  if (isOfflineId(actionSheetRevize?.id)) return;
-                  const a = actionSheetRevize; setActionSheetRevize(null); openDuplikatModal(a!.id, a!.cisloRevize);
-                }}
-                disabled={isOfflineId(actionSheetRevize?.id)}
-                className={`w-full text-left px-4 py-3.5 text-sm flex items-center gap-3 ${
-                  isOfflineId(actionSheetRevize?.id)
-                    ? 'text-[var(--text-muted)] opacity-40'
-                    : 'text-[var(--text)] active:bg-[var(--bg-hover)]'
-                }`}
-                title={isOfflineId(actionSheetRevize?.id) ? 'Dostupné po synchronizaci' : undefined}
-              >
-                <span className="text-base">📋</span> Kopírovat revizi
-              </button>
-              <button
-                onClick={() => { const a = actionSheetRevize; setActionSheetRevize(null); openHistorieModal(a.id, a.cisloRevize); }}
-                className="w-full text-left px-4 py-3.5 text-sm text-[var(--text)] active:bg-[var(--bg-hover)] flex items-center gap-3"
-              >
-                <span className="text-base">🕐</span> Historie
-              </button>
-              <div className="border-t border-[var(--border-subtle)] mx-4 my-1" />
-              <button
-                onClick={() => { const a = actionSheetRevize; setActionSheetRevize(null); handleDelete(a.id, a.cisloRevize); }}
-                className="w-full text-left px-4 py-3.5 text-sm text-[var(--danger-text)] active:bg-[var(--danger-bg)] flex items-center gap-3"
-              >
-                <span className="text-base">🗑️</span> Smazat
-              </button>
-            </div>
-            <div className="px-4 pb-4 pt-1">
-              <button
-                onClick={() => setActionSheetRevize(null)}
-                className="w-full py-3 rounded-xl bg-[var(--bg-surface)] text-sm font-medium text-[var(--text)] active:bg-[var(--bg-hover)]"
-              >
-                Zrušit
-              </button>
-            </div>
+      <div className="md:hidden">
+        <BottomSheet
+          isOpen={actionSheetRevize !== null}
+          onClose={() => setActionSheetRevize(null)}
+          title={actionSheetRevize ? `${actionSheetRevize.cisloRevize} – ${actionSheetRevize.nazev}` : ''}
+        >
+          {actionSheetRevize && (
+          <div className="-mx-5 -my-5">
+    <div className="py-1">
+      <button
+        onClick={() => { setActionSheetRevize(null); navigate(`/revize/${actionSheetRevize.id}`); }}
+        className="w-full text-left px-4 py-3.5 text-sm text-[var(--text)] active:bg-[var(--bg-hover)] flex items-center gap-3"
+      >
+        <span className="text-base">✏️</span> Upravit
+      </button>
+      <button
+        onClick={() => {
+          if (isOfflineId(actionSheetRevize?.id)) return;
+          const a = actionSheetRevize; setActionSheetRevize(null); openDuplikatModal(a!.id, a!.cisloRevize);
+        }}
+        disabled={isOfflineId(actionSheetRevize?.id)}
+        className={`w-full text-left px-4 py-3.5 text-sm flex items-center gap-3 ${
+          isOfflineId(actionSheetRevize?.id)
+            ? 'text-[var(--text-muted)] opacity-40'
+            : 'text-[var(--text)] active:bg-[var(--bg-hover)]'
+        }`}
+        title={isOfflineId(actionSheetRevize?.id) ? 'Dostupné po synchronizaci' : undefined}
+      >
+        <span className="text-base">📋</span> Kopírovat revizi
+      </button>
+      <button
+        onClick={() => { const a = actionSheetRevize; setActionSheetRevize(null); openHistorieModal(a.id, a.cisloRevize); }}
+        className="w-full text-left px-4 py-3.5 text-sm text-[var(--text)] active:bg-[var(--bg-hover)] flex items-center gap-3"
+      >
+        <span className="text-base">🕐</span> Historie
+      </button>
+      <div className="border-t border-[var(--border-subtle)] mx-4 my-1" />
+      <button
+        onClick={() => { const a = actionSheetRevize; setActionSheetRevize(null); handleDelete(a.id, a.cisloRevize); }}
+        className="w-full text-left px-4 py-3.5 text-sm text-[var(--danger-text)] active:bg-[var(--danger-bg)] flex items-center gap-3"
+      >
+        <span className="text-base">🗑️</span> Smazat
+      </button>
+    </div>
           </div>
-        </div>
-      )}
+          )}
+        </BottomSheet>
+      </div>
 
       {/* Modal pro duplikaci revize */}
       <Modal
