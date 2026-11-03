@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { themes } from '../theme'
-import type { ThemeName } from '../theme'
+export type ThemeName = 'dark' | 'light'
 
 interface ThemeContextValue {
   themeName: ThemeName
@@ -11,11 +10,7 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 function applyTheme(name: ThemeName) {
-  const vars = themes[name]
-  const root = document.documentElement
-  for (const [key, value] of Object.entries(vars)) {
-    root.style.setProperty(key, value)
-  }
+  document.documentElement.dataset.theme = name
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
