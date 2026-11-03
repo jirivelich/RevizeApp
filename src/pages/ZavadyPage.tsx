@@ -1,6 +1,7 @@
-﻿import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Button, Card, Input, Select, Modal, ConfirmDialog } from '../components/ui';
+import { Button, Card, Input, Select, Modal, ConfirmDialog, PageHeader, DataTable } from '../components/ui';
+import type { DataTableColumn } from '../components/ui';
 import { useZavadyKatalog, useZavadyKategorie, useCreateZavadaKatalog, useUpdateZavadaKatalog, useDeleteZavadaKatalog } from '../hooks/useQueries';
 import { queryKeys } from '../hooks/queryKeys';
 import { zavadaKatalogService } from '../services/database';
@@ -108,18 +109,79 @@ export function ZavadyPage() {
     drobne: zavady.filter(z => z.zavaznost === 'C3').length,
   };
 
+  const columns: DataTableColumn<ZavadaKatalog>[] = [
+    {
+      key: 'zavaznost',
+      header: 'Závažnost',
+      render: (z) => (
+        <span className={`px-2 py-1 rounded text-xs font-medium ${
+          z.zavaznost === 'C1' ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]' :
+          z.zavaznost === 'C2' ? 'bg-[var(--warning-bg)] text-[var(--warning-text)]' :
+          'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
+        }`}>
+          {z.zavaznost}
+        </span>
+      ),
+    },
+    { key: 'kategorie', header: 'Kategorie', render: (z) => z.kategorie || '-' },
+    {
+      key: 'popis',
+      header: 'Popis',
+      render: (z) => (
+        <div className="max-w-md text-left">
+          <p className="font-medium">{z.popis}</p>
+          {z.zneniClanku && (
+            <button
+              type="button"
+              onClick={() => setExpandedId(expandedId === z.id ? null : z.id!)}
+              className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] mt-1"
+            >
+              {expandedId === z.id ? '▼ Skrýt znění' : '▶ Zobrazit znění'}
+            </button>
+          )}
+          {expandedId === z.id && z.zneniClanku && (
+            <div className="mt-2 p-2 bg-[var(--bg-input)] rounded text-xs text-[var(--text-secondary)] italic">
+              "{z.zneniClanku}"
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'norma',
+      header: 'Norma',
+      render: (z) =>
+        z.norma ? (
+          <span className="px-2 py-1 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">{z.norma}</span>
+        ) : null,
+    },
+    { key: 'clanek', header: 'Článek', render: (z) => <span className="text-[var(--text-secondary)]">{z.clanek || '-'}</span> },
+    {
+      key: 'akce',
+      header: 'Akce',
+      align: 'right',
+      actions: true,
+      render: (z) => (
+        <>
+          <Button variant="secondary" size="sm" onClick={() => handleEdit(z)}>Upravit</Button>
+          <Button variant="danger" size="sm" onClick={() => handleDelete(z)}>Smazat</Button>
+        </>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">Katalog závad</h1>
-          <p className="text-xs text-[var(--text-secondary)]">Databáze typických závad s odkazy na normy a zákony</p>
-        </div>
-        <Button size="sm" onClick={() => { resetForm(); setIsModalOpen(true); }}>
-          <span className="sm:hidden text-lg leading-none">+</span>
-          <span className="hidden sm:inline">+ Nová závada</span>
-        </Button>
-      </div>
+      <PageHeader
+        title="Katalog závad"
+        subtitle="Databáze typických závad s odkazy na normy a zákony"
+        actions={
+          <Button size="sm" onClick={() => { resetForm(); setIsModalOpen(true); }}>
+            <span className="sm:hidden text-lg leading-none">+</span>
+            <span className="hidden sm:inline">+ Nová závada</span>
+          </Button>
+        }
+      />
 
       {/* Statistiky */}
       <div className="lg:hidden">
@@ -181,80 +243,7 @@ export function ZavadyPage() {
         </div>
 
         {filteredZavady.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[var(--border)]">
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Závažnost</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Kategorie</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Popis</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Norma</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Článek</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Akce</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredZavady.map((z) => (
-                  <tr key={z.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[var(--primary)] hover:bg-[var(--bg-hover)] group">
-                    <td className="py-2 px-3">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        z.zavaznost === 'C1' ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]' :
-                        z.zavaznost === 'C2' ? 'bg-[var(--warning-bg)] text-[var(--warning-text)]' :
-                        'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
-                      }`}>
-                        {z.zavaznost}
-                      </span>
-                    </td>
-                    <td className="py-2 px-3 text-xs">{z.kategorie || '-'}</td>
-                    <td className="py-2 px-3">
-                      <div className="max-w-md">
-                        <p className="font-medium text-xs">{z.popis}</p>
-                        {z.zneniClanku && (
-                          <button
-                            onClick={() => setExpandedId(expandedId === z.id ? null : z.id!)}
-                            className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] mt-1"
-                          >
-                            {expandedId === z.id ? '▼ Skrýt znění' : '▶ Zobrazit znění'}
-                          </button>
-                        )}
-                        {expandedId === z.id && z.zneniClanku && (
-                          <div className="mt-2 p-2 bg-[var(--bg-input)] rounded text-xs text-[var(--text-secondary)] italic">
-                            "{z.zneniClanku}"
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-2 px-3">
-                      {z.norma && (
-                        <span className="px-2 py-1 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
-                          {z.norma}
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">{z.clanek || '-'}</td>
-                    <td className="py-2 px-3">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleEdit(z)}
-                        >
-                          Upravit
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleDelete(z)}
-                        >
-                          Smazat
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable columns={columns} rows={filteredZavady} rowKey={(r) => r.id ?? r.popis} />
         ) : (
           <p className="text-center text-[var(--text-muted)] py-8">
             {filterKategorie || filterZavaznost || searchTerm

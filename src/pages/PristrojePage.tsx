@@ -1,5 +1,6 @@
-﻿import { useState } from 'react';
-import { Button, Card, Input, Select, Modal, ConfirmDialog } from '../components/ui';
+import { useState } from 'react';
+import { Button, Card, Input, Select, Modal, ConfirmDialog, PageHeader, DataTable } from '../components/ui';
+import type { DataTableColumn } from '../components/ui';
 import { usePristroje, useCreatePristroj, useUpdatePristroj, useDeletePristroj, useKalibrace, useCreateKalibrace, useDeleteKalibrace } from '../hooks/useQueries';
 import type { MericiPristroj } from '../types';
 
@@ -116,18 +117,62 @@ export function PristrojePage() {
     return typyPristroju.find(t => t.value === typ)?.label || typ;
   };
 
+  const columns: DataTableColumn<MericiPristroj>[] = [
+    { key: 'nazev', header: 'Název', render: (p) => <span className="font-medium">{p.nazev}</span> },
+    {
+      key: 'typ',
+      header: 'Typ',
+      render: (p) => (
+        <span className="px-2 py-1 bg-[var(--bg-hover)] text-[var(--text-secondary)] rounded text-xs">
+          {getTypLabel(p.typPristroje)}
+        </span>
+      ),
+    },
+    { key: 'vyrobce', header: 'Výrobce / Model', render: (p) => <span className="text-[var(--text-secondary)]">{p.vyrobce} {p.model}</span> },
+    { key: 'sn', header: 'Výr. číslo', render: (p) => <span className="font-mono text-[var(--text-secondary)]">{p.vyrobniCislo}</span> },
+    { key: 'kalibrace', header: 'Kalibrace', render: (p) => <span className="text-[var(--text-secondary)]">{new Date(p.datumKalibrace).toLocaleDateString('cs-CZ')}</span> },
+    {
+      key: 'platnost',
+      header: 'Platnost',
+      render: (p) => (
+        <span className={`px-2 py-1 rounded text-xs font-medium ${
+          isExpired(p.platnostKalibrace)
+            ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]'
+            : isExpiring(p.platnostKalibrace)
+              ? 'bg-[var(--warning-bg)] text-[var(--warning-text)]'
+              : 'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
+        }`}>
+          {new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}
+        </span>
+      ),
+    },
+    {
+      key: 'akce',
+      header: 'Akce',
+      align: 'right',
+      actions: true,
+      render: (p) => (
+        <>
+          <Button variant="secondary" size="sm" onClick={() => setHistoryPristroj(p)}>Kalibrace</Button>
+          <Button variant="secondary" size="sm" onClick={() => handleEdit(p)}>Upravit</Button>
+          <Button variant="danger" size="sm" onClick={() => handleDelete(p)}>Smazat</Button>
+        </>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">Přístroje a kalibrace</h1>
-          <p className="text-xs text-[var(--text-secondary)]">Správa měřících přístrojů a jejich kalibračních termínů</p>
-        </div>
-        <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
-          <span className="sm:hidden text-lg leading-none">+</span>
-          <span className="hidden sm:inline">+ Přidat přístroj</span>
-        </Button>
-      </div>
+      <PageHeader
+        title="Přístroje a kalibrace"
+        subtitle="Správa měřících přístrojů a jejich kalibračních termínů"
+        actions={
+          <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>
+            <span className="sm:hidden text-lg leading-none">+</span>
+            <span className="hidden sm:inline">+ Přidat přístroj</span>
+          </Button>
+        }
+      />
 
       {/* Statistiky */}
       <div className="lg:hidden">
@@ -201,76 +246,7 @@ export function PristrojePage() {
       {/* Seznam přístrojů */}
       <Card title="Seznam přístrojů">
         {filteredPristroje.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[var(--border)]">
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Název</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Typ</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Výrobce / Model</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Výr. číslo</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Kalibrace</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Platnost</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Akce</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPristroje.map((p) => (
-                  <tr key={p.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[var(--primary)] hover:bg-[var(--bg-hover)] group">
-                    <td className="py-2 px-3 text-xs font-medium text-[var(--text)]">{p.nazev}</td>
-                    <td className="py-2 px-3">
-                      <span className="px-2 py-1 bg-[var(--bg-hover)] text-[var(--text-secondary)] rounded text-xs">
-                        {getTypLabel(p.typPristroje)}
-                      </span>
-                    </td>
-                    <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">
-                      {p.vyrobce} {p.model}
-                    </td>
-                    <td className="py-2 px-3 font-mono text-xs text-[var(--text-secondary)]">{p.vyrobniCislo}</td>
-                    <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">
-                      {new Date(p.datumKalibrace).toLocaleDateString('cs-CZ')}
-                    </td>
-                    <td className="py-2 px-3">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        isExpired(p.platnostKalibrace)
-                          ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]'
-                          : isExpiring(p.platnostKalibrace)
-                            ? 'bg-[var(--warning-bg)] text-[var(--warning-text)]'
-                            : 'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
-                      }`}>
-                        {new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}
-                      </span>
-                    </td>
-                    <td className="py-2 px-3">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => setHistoryPristroj(p)}
-                        >
-                          Kalibrace
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleEdit(p)}
-                        >
-                          Upravit
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleDelete(p)}
-                        >
-                          Smazat
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable columns={columns} rows={filteredPristroje} rowKey={(r) => r.id ?? r.nazev} />
         ) : (
           <p className="text-center text-[var(--text-muted)] py-8">
             {filterTyp || showExpiring
