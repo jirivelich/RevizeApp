@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Card, Select, Badge, ConfirmDialog } from '../components/ui';
+import { Button, Card, Select, Badge, ConfirmDialog, PageHeader, EmptyState, DataTable } from '../components/ui';
+import type { DataTableColumn } from '../components/ui';
 import type { BadgeVariant } from '../components/ui';
 import { useFaktury, useDeleteFaktura, useZmenStavFaktury } from '../hooks/useQueries';
 import type { Faktura, FakturaFilter, FakturaStav } from '../types';
@@ -14,8 +15,6 @@ const STAV_VARIANT: Record<FakturaStav, BadgeVariant> = {
 };
 
 const formatDatum = (d?: string): string => (d ? new Date(d).toLocaleDateString('cs-CZ') : '-');
-
-const TH = 'py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider';
 
 const FakturyPage: React.FC = () => {
   const navigate = useNavigate();
@@ -75,6 +74,46 @@ const FakturyPage: React.FC = () => {
     if (f) await handleZmenStav(f, 'storno');
   };
 
+  const columns: DataTableColumn<Faktura>[] = [
+    { key: 'cislo', header: 'Číslo', render: (f) => <span className="font-mono">{f.cisloFaktury || '(koncept)'}</span> },
+    { key: 'odberatel', header: 'Odběratel', render: (f) => <span className="font-medium">{f.odberatelNazev}</span> },
+    { key: 'vystaveno', header: 'Vystaveno', render: (f) => formatDatum(f.datumVystaveni) },
+    { key: 'splatnost', header: 'Splatnost', render: (f) => formatDatum(f.datumSplatnosti) },
+    { key: 'celkem', header: 'Celkem', align: 'right', render: (f) => <span className="whitespace-nowrap">{formatKc(f.celkem)}</span> },
+    { key: 'stav', header: 'Stav', render: (f) => <Badge variant={STAV_VARIANT[f.stav]}>{STAV_LABEL[f.stav]}</Badge> },
+    {
+      key: 'akce',
+      header: 'Akce',
+      align: 'right',
+      actions: true,
+      render: (f) => (
+        <>
+          {f.stav === 'koncept' && (
+            <>
+              <Button variant="secondary" size="sm" onClick={() => navigate(`/faktury/${f.id}`)}>Upravit</Button>
+              <Button size="sm" onClick={() => handleZmenStav(f, 'vystavena')}>Vystavit</Button>
+            </>
+          )}
+          {f.stav === 'vystavena' && (
+            <>
+              <Button variant="success" size="sm" onClick={() => handleZmenStav(f, 'zaplacena')}>Zaplacena</Button>
+              <Button variant="warning" size="sm" onClick={() => setStornoTarget(f)}>Storno</Button>
+            </>
+          )}
+          {f.stav !== 'koncept' && (
+            <Button variant="secondary" size="sm" onClick={() => navigate(`/faktury/${f.id}`)}>Detail</Button>
+          )}
+          {f.stav !== 'storno' && (
+            <Button variant="secondary" size="sm" onClick={() => window.open(`/faktura/${f.id}/nahled`, '_blank')}>Tisk</Button>
+          )}
+          {f.stav === 'koncept' && (
+            <Button variant="danger" size="sm" onClick={() => setDeleteTarget(f)}>Smazat</Button>
+          )}
+        </>
+      ),
+    },
+  ];
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -85,19 +124,19 @@ const FakturyPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-sm font-bold text-[var(--text)]">Faktury</h1>
-          <p className="text-xs text-[var(--text-secondary)]">Vystavování a evidence faktur</p>
-        </div>
-        <Button onClick={() => navigate('/faktury/nova')}>
-          <span className="sm:hidden text-lg leading-none">+</span>
-          <span className="hidden sm:inline">Nová faktura</span>
-        </Button>
-      </div>
+      <PageHeader
+        title="Faktury"
+        subtitle="Vystavování a evidence faktur"
+        actions={
+          <Button onClick={() => navigate('/faktury/nova')}>
+            <span className="sm:hidden text-lg leading-none">+</span>
+            <span className="hidden sm:inline">Nová faktura</span>
+          </Button>
+        }
+      />
 
       {error && (
-        <p role="alert" className="text-xs font-medium text-[var(--danger-text)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+        <p role="alert" className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-lg px-3 py-2">
           {error}
         </p>
       )}
@@ -110,70 +149,15 @@ const FakturyPage: React.FC = () => {
       </Card>
 
       {faktury.length === 0 ? (
-        <Card className="p-8 text-center">
-          <p className="text-xs text-[var(--text-secondary)]">
-            {filter ? 'Žádné faktury neodpovídají filtru' : 'Zatím nemáte žádné faktury'}
-          </p>
-          {!filter && (
-            <Button onClick={() => navigate('/faktury/nova')} className="mt-4">
-              Vytvořit první fakturu
-            </Button>
-          )}
-        </Card>
+        <EmptyState
+          message={filter ? 'Žádné faktury neodpovídají filtru' : 'Zatím nemáte žádné faktury'}
+          action={
+            !filter && <Button onClick={() => navigate('/faktury/nova')}>Vytvořit první fakturu</Button>
+          }
+        />
       ) : (
         <Card title="Seznam faktur">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[var(--border)]">
-                  <th className={`text-left ${TH}`}>Číslo</th>
-                  <th className={`text-left ${TH}`}>Odběratel</th>
-                  <th className={`text-left ${TH}`}>Vystaveno</th>
-                  <th className={`text-left ${TH}`}>Splatnost</th>
-                  <th className={`text-right ${TH}`}>Celkem</th>
-                  <th className={`text-left ${TH}`}>Stav</th>
-                  <th className={`text-right ${TH}`}>Akce</th>
-                </tr>
-              </thead>
-              <tbody>
-                {faktury.map((f) => (
-                  <tr key={f.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[var(--primary)] hover:bg-[var(--bg-hover)]">
-                    <td className="py-2 px-3 font-mono text-xs text-[var(--text)]">{f.cisloFaktury || '(koncept)'}</td>
-                    <td className="py-2 px-3 text-xs font-medium text-[var(--text)]">{f.odberatelNazev}</td>
-                    <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">{formatDatum(f.datumVystaveni)}</td>
-                    <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">{formatDatum(f.datumSplatnosti)}</td>
-                    <td className="py-2 px-3 text-xs text-right text-[var(--text)] whitespace-nowrap">{formatKc(f.celkem)}</td>
-                    <td className="py-2 px-3"><Badge variant={STAV_VARIANT[f.stav]}>{STAV_LABEL[f.stav]}</Badge></td>
-                    <td className="py-2 px-3">
-                      <div className="flex justify-end gap-2 flex-wrap">
-                        {f.stav === 'koncept' && (
-                          <>
-                            <Button variant="secondary" size="sm" onClick={() => navigate(`/faktury/${f.id}`)}>Upravit</Button>
-                            <Button size="sm" onClick={() => handleZmenStav(f, 'vystavena')}>Vystavit</Button>
-                          </>
-                        )}
-                        {f.stav === 'vystavena' && (
-                          <>
-                            <Button variant="success" size="sm" onClick={() => handleZmenStav(f, 'zaplacena')}>Zaplacena</Button>
-                            <Button variant="warning" size="sm" onClick={() => setStornoTarget(f)}>Storno</Button>
-                          </>
-                        )}
-                        {f.stav !== 'koncept' && (
-                          <Button variant="secondary" size="sm" onClick={() => navigate(`/faktury/${f.id}`)}>Detail</Button>
-                        )}
-                        {f.stav !== 'storno' && (
-                          <Button variant="secondary" size="sm" onClick={() => window.open(`/faktura/${f.id}/nahled`, '_blank')}>Tisk</Button>
-                        )}
-                        {f.stav === 'koncept' && (
-                          <Button variant="danger" size="sm" onClick={() => setDeleteTarget(f)}>Smazat</Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable columns={columns} rows={faktury} rowKey={(f) => f.id} />
         </Card>
       )}
 

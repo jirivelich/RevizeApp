@@ -7,3 +7,7 @@ export { BottomSheet } from './BottomSheet';
 export { Badge } from './Badge';
 export type { BadgeVariant } from './Badge';
 export { ConfirmDialog } from './ConfirmDialog';
+export { PageHeader } from './PageHeader';
+export { EmptyState } from './EmptyState';
+export { DataTable } from './DataTable';
+export type { DataTableColumn } from './DataTable';
