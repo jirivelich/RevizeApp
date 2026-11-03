@@ -195,12 +195,13 @@ export function RevizeDetailPage() {
 
   const isOdberneMisto = revize.kategorieRevize === 'odberne_misto';
 
-  const tabs = isOdberneMisto
+  type TabDef = { id: string; label: string; icon: string; count?: number; danger?: boolean };
+  const tabs: TabDef[] = isOdberneMisto
     ? [
         { id: 'info', label: 'Základní údaje', icon: '' },
         { id: 'odberne_misto', label: 'Odběrné místo', icon: '' },
         { id: 'dokumentace', label: 'Revidované zařízení', icon: '' },
-        { id: 'zavady', label: `Závady (${zavady.length})`, icon: '' },
+        { id: 'zavady', label: 'Závady', icon: '', count: zavady.length, danger: true },
         { id: 'prilohy', label: 'Přílohy', icon: '' },
       ]
     : isHromosvod
@@ -208,22 +209,22 @@ export function RevizeDetailPage() {
         { id: 'info', label: 'Základní údaje', icon: '' },
         { id: 'hromosvod_zarizeni', label: 'Revidované zařízení', icon: '' },
         { id: 'hromosvod_nacrt', label: '✏️ Náčrt LPS', icon: '' },
-        { id: 'zavady', label: `Závady (${zavady.length})`, icon: '' },
+        { id: 'zavady', label: 'Závady', icon: '', count: zavady.length, danger: true },
         { id: 'prilohy', label: 'Přílohy', icon: '' },
       ]
     : isStroje
     ? [
         { id: 'info', label: 'Základní údaje', icon: '' },
         { id: 'strojni_zarizeni', label: 'Protokol strojního zařízení', icon: '' },
-        { id: 'zavady', label: `Závady (${zavady.length})`, icon: '' },
+        { id: 'zavady', label: 'Závady', icon: '', count: zavady.length, danger: true },
         { id: 'prilohy', label: 'Přílohy', icon: '' },
       ]
     : [
         { id: 'info', label: 'Základní údaje', icon: '' },
         { id: 'dokumentace', label: 'Revidované zařízení', icon: '' },
-        { id: 'rozvadece', label: `Rozvaděče (${rozvadece.length})`, icon: '' },
-        { id: 'mistnosti', label: `Místnosti (${mistnosti.length})`, icon: '' },
-        { id: 'zavady', label: `Závady (${zavady.length})`, icon: '' },
+        { id: 'rozvadece', label: 'Rozvaděče', icon: '', count: rozvadece.length },
+        { id: 'mistnosti', label: 'Místnosti', icon: '', count: mistnosti.length },
+        { id: 'zavady', label: 'Závady', icon: '', count: zavady.length, danger: true },
         { id: 'prilohy', label: 'Přílohy', icon: '' },
       ];
 
@@ -233,7 +234,7 @@ export function RevizeDetailPage() {
   };
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6 pb-36 lg:pb-20">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -260,19 +261,26 @@ export function RevizeDetailPage() {
       )}
 
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-[var(--border)] overflow-x-auto scrollbar-thin">
+      <div role="tablist" className="flex gap-0.5 border-b border-[var(--border)] overflow-x-auto scrollbar-thin">
         {tabs.map((tab) => (
           <button
             key={tab.id}
+            role="tab"
+            aria-selected={activeTab === tab.id}
             onClick={() => { flush(); setActiveTab(tab.id as any); }}
-            className={`px-3 py-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap flex-shrink-0 cursor-pointer ${
+            className={`px-3.5 py-2.5 text-sm font-semibold transition-colors border-b-2 -mb-px whitespace-nowrap flex-shrink-0 cursor-pointer flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus-ring-color)] ${
               activeTab === tab.id
                 ? 'border-[var(--primary)] text-[var(--primary)]'
                 : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text)]'
             }`}
           >
-            <span className="mr-1.5">{tab.icon}</span>
+            {tab.icon && <span>{tab.icon}</span>}
             {tab.label}
+            {tab.count !== undefined && tab.count > 0 && (
+              <span className={`inline-grid place-items-center min-w-[18px] h-[18px] px-1.5 rounded-full text-xs font-bold ${
+                tab.danger ? 'bg-[var(--danger)] text-[var(--background)]' : 'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
+              }`}>{tab.count}</span>
+            )}
           </button>
         ))}
       </div>
@@ -367,9 +375,9 @@ export function RevizeDetailPage() {
 
       {/* Fixed save bar */}
       {(activeTab === 'info' || activeTab === 'dokumentace' || activeTab === 'hromosvod_zarizeni' || activeTab === 'hromosvod_nacrt' || activeTab === 'strojni_zarizeni' || activeTab === 'odberne_misto') && (
-        <div className="fixed bottom-0 left-0 lg:left-64 right-0 z-50 bg-[var(--surface)]/90 backdrop-blur border-t border-[var(--border-medium)] shadow-[0_-2px_8px_rgba(0,0,0,0.15)]">
-          <div className="max-w-4xl mx-auto px-4 py-1 flex items-center justify-between gap-4">
-            <div className="text-sm min-w-[140px]">
+        <div className="fixed bottom-[calc(56px+env(safe-area-inset-bottom))] lg:bottom-0 left-0 lg:left-64 right-0 z-40 bg-[var(--surface)] border-t border-[var(--border-medium)]">
+          <div className="max-w-4xl mx-auto px-4 py-2 flex items-center justify-between gap-4">
+            <div className="text-sm min-w-[140px]" role="status" aria-live="polite">
               {displayStatus === 'saving' && (
                 <span className="flex items-center gap-1.5 text-[var(--text)]">
                   <span className="inline-block w-3 h-3 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
@@ -386,7 +394,7 @@ export function RevizeDetailPage() {
                 <span className="text-[var(--danger-text)]">Chyba ukládání</span>
               )}
             </div>
-            <button onClick={handleSave} className="px-4 py-1 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white text-sm font-medium rounded transition-colors cursor-pointer">Uložit</button>
+            <Button size="sm" onClick={handleSave}>Uložit</Button>
           </div>
         </div>
       )}

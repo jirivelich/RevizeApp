@@ -257,11 +257,11 @@ export function ImportZFotografiiModal({
                     <button
                       type="button"
                       onClick={() => handleRemovePhoto(i)}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[var(--danger)] hover:bg-[var(--danger)] text-white rounded-full text-xs flex items-center justify-center transition-colors"
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[var(--danger)] hover:brightness-110 text-[var(--background)] rounded-full text-xs flex items-center justify-center transition-colors"
                     >
                       ×
                     </button>
-                    <span className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] text-center py-0.5 rounded-b-lg">
+                    <span className="absolute bottom-0 left-0 right-0 bg-[var(--surface)]/80 text-[var(--text)] text-xs text-center py-0.5 rounded-b-lg">
                       Foto {i + 1}
                     </span>
                   </div>
@@ -324,10 +324,10 @@ export function ImportZFotografiiModal({
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-lg border border-[var(--border-table)]">
+          <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
             <table className="w-full text-xs">
               <thead>
-                <tr className="bg-[var(--bg-accent)] border-b border-[var(--border-table)]">
+                <tr className="bg-[var(--bg-accent)] border-b border-[var(--border)]">
                   <th className="px-2 py-2 text-left text-[var(--text-secondary)] font-medium w-8">☑</th>
                   <th className="px-2 py-2 text-left text-[var(--text-secondary)] font-medium w-10">Č.</th>
                   <th className="px-2 py-2 text-left text-[var(--text-secondary)] font-medium min-w-[160px]">Název okruhu</th>
@@ -344,7 +344,7 @@ export function ImportZFotografiiModal({
                   return (
                     <tr
                       key={idx}
-                      className={`border-b border-[var(--border-table)] transition-colors ${
+                      className={`border-b border-[var(--border)] transition-colors ${
                         isSkipped
                           ? 'opacity-40'
                           : 'hover:bg-[var(--bg-hover)]'
@@ -357,7 +357,7 @@ export function ImportZFotografiiModal({
                           checked={navrh.selected && !isSkipped}
                           disabled={isSkipped}
                           onChange={() => handleToggleSelect(idx)}
-                          className="cursor-pointer"
+                          className="cursor-pointer w-4 h-4 accent-[var(--primary)]"
                         />
                       </td>
                       {/* Číslo */}
@@ -422,14 +422,14 @@ export function ImportZFotografiiModal({
                             onChange={(e) =>
                               handleConflictAction(idx, e.target.value as 'add' | 'replace' | 'skip')
                             }
-                            className="w-full px-1 py-0.5 border border-yellow-500/50 rounded bg-[var(--warning-bg)] text-[var(--warning-text)] text-[10px] focus:outline-none focus:ring-1 focus:ring-yellow-500/50"
+                            className="w-full px-1 py-0.5 border border-[var(--warning)]/50 rounded bg-[var(--warning-bg)] text-[var(--warning-text)] text-xs focus:outline-none focus:ring-1 focus:ring-[var(--warning)]/50"
                           >
                             <option value="replace">✏️ Nahradit</option>
                             <option value="add">➕ Přidat nový</option>
                             <option value="skip">⏭️ Přeskočit</option>
                           </select>
                         ) : (
-                          <span className="text-[var(--text-muted)] text-[10px]">—</span>
+                          <span className="text-[var(--text-muted)] text-xs">—</span>
                         )}
                       </td>
                     </tr>
@@ -440,7 +440,7 @@ export function ImportZFotografiiModal({
           </div>
 
           {existingCisla.size > 0 && navrhyOkruhu.some((n) => existingCisla.has(n.cislo)) && (
-            <p className="text-[10px] text-[var(--warning-text)] opacity-80">
+            <p className="text-xs text-[var(--warning-text)] opacity-80">
               ✱ Žluté řádky označují kolizi s existujícím okruhem (stejné číslo).
             </p>
           )}

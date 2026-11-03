@@ -1,5 +1,6 @@
 ﻿import { Link } from 'react-router-dom';
 import type { Revize, Firma, Nastaveni, Zakaznik } from '../../types';
+import { Input, Select } from '../../components/ui';
 import { TW, SectionHeader, Field } from './tw';
 
 interface HromosvodInfoTabProps {
@@ -33,13 +34,7 @@ export function HromosvodInfoTab({
             <Field label="Číslo revize">
               <input className={TW.inputDisabled} value={formData.cisloRevize || ''} disabled />
             </Field>
-            <Field label="Typ revize">
-              <select className={TW.select} value={formData.typRevize || ''} onChange={(e) => { setFormData({ ...formData, typRevize: e.target.value as any }); saveNow?.(); }}>
-                <option value="pravidelná">Pravidelná</option>
-                <option value="výchozí">Výchozí</option>
-                <option value="mimořádná">Mimořádná</option>
-              </select>
-            </Field>
+            <Select label="Typ revize" value={formData.typRevize || ''} onChange={(e) => { setFormData({ ...formData, typRevize: e.target.value as any }); saveNow?.(); }} options={[{ value: "pravidelná", label: "Pravidelná" }, { value: "výchozí", label: "Výchozí" }, { value: "mimořádná", label: "Mimořádná" }]} />
             <Field label="Kategorie">
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)] border border-[var(--border-input)]">
                 Hromosvody
@@ -49,9 +44,7 @@ export function HromosvodInfoTab({
               <label className={TW.label}>Název objektu</label>
               <input className={TW.input} value={formData.nazev || ''} onChange={(e) => setFormData({ ...formData, nazev: e.target.value })} />
             </div>
-            <Field label="Adresa objektu">
-              <input className={TW.input} value={formData.adresa || ''} onChange={(e) => setFormData({ ...formData, adresa: e.target.value })} />
-            </Field>
+            <Input label="Adresa objektu" value={formData.adresa || ''} onChange={(e) => setFormData({ ...formData, adresa: e.target.value })} />
             <div className="flex flex-col gap-1 col-span-3 max-sm:col-span-1">
               <label className={TW.label}>Norma</label>
               <input className={TW.input} placeholder="ČSN EN 62305-1 až 4" value={formData.hromosvodNorma || ''} onChange={(e) => setFormData({ ...formData, hromosvodNorma: e.target.value })} />
@@ -65,9 +58,7 @@ export function HromosvodInfoTab({
         <SectionHeader num="02">Objednatel / Provozovatel</SectionHeader>
         <div className="p-4 space-y-3">
           <div className={TW.grid2}>
-            <Field label="Objednatel">
-              <input className={TW.input} placeholder="Nebo vyberte zákazníka níže" value={formData.objednatel || ''} onChange={(e) => setFormData({ ...formData, objednatel: e.target.value })} />
-            </Field>
+            <Input label="Objednatel" placeholder="Nebo vyberte zákazníka níže" value={formData.objednatel || ''} onChange={(e) => setFormData({ ...formData, objednatel: e.target.value })} />
             <Field label="Ze zákazníků">
               <select className={TW.selectFull} value={selectedZakaznikId} onChange={(e) => {
                 const zakaznikId = e.target.value;
@@ -99,26 +90,9 @@ export function HromosvodInfoTab({
         <SectionHeader num="03">Charakteristika systému ochrany před bleskem (LPS)</SectionHeader>
         <div className="p-4">
           <div className={TW.grid2}>
-            <Field label="Třída LPS">
-              <select className={TW.selectFull} value={formData.hromosvodTridaLps || ''} onChange={(e) => { setFormData({ ...formData, hromosvodTridaLps: e.target.value as any }); saveNow?.(); }}>
-                <option value="">-- Vyberte --</option>
-                <option value="I">I — Nejvyšší ochrana (výbušné prostory, nemocnice)</option>
-                <option value="II">II — Vysoká ochrana (veřejné budovy)</option>
-                <option value="III">III — Standardní ochrana (obytné budovy)</option>
-                <option value="IV">IV — Základní ochrana</option>
-              </select>
-            </Field>
-            <Field label="Typ ochrany">
-              <select className={TW.selectFull} value={formData.hromosvodTypOchrany || ''} onChange={(e) => { setFormData({ ...formData, hromosvodTypOchrany: e.target.value as any }); saveNow?.(); }}>
-                <option value="">-- Vyberte --</option>
-                <option value="vnější">Vnější ochrana (jímače + svody + uzemnění)</option>
-                <option value="vnitřní">Vnitřní ochrana (SPD + pospojování)</option>
-                <option value="kombinovaná">Kombinovaná (vnější + vnitřní)</option>
-              </select>
-            </Field>
-            <Field label="Rok instalace">
-              <input type="text" className={TW.input} placeholder="např. 2005" value={formData.hromosvodRokInstalace || ''} onChange={(e) => setFormData({ ...formData, hromosvodRokInstalace: e.target.value })} />
-            </Field>
+            <Select label="Třída LPS" value={formData.hromosvodTridaLps || ''} onChange={(e) => { setFormData({ ...formData, hromosvodTridaLps: e.target.value as any }); saveNow?.(); }} options={[{ value: "", label: "-- Vyberte --" }, { value: "I", label: "I — Nejvyšší ochrana (výbušné prostory, nemocnice)" }, { value: "II", label: "II — Vysoká ochrana (veřejné budovy)" }, { value: "III", label: "III — Standardní ochrana (obytné budovy)" }, { value: "IV", label: "IV — Základní ochrana" }]} />
+            <Select label="Typ ochrany" value={formData.hromosvodTypOchrany || ''} onChange={(e) => { setFormData({ ...formData, hromosvodTypOchrany: e.target.value as any }); saveNow?.(); }} options={[{ value: "", label: "-- Vyberte --" }, { value: "vnější", label: "Vnější ochrana (jímače + svody + uzemnění)" }, { value: "vnitřní", label: "Vnitřní ochrana (SPD + pospojování)" }, { value: "kombinovaná", label: "Kombinovaná (vnější + vnitřní)" }]} />
+            <Input label="Rok instalace" type="text" placeholder="např. 2005" value={formData.hromosvodRokInstalace || ''} onChange={(e) => setFormData({ ...formData, hromosvodRokInstalace: e.target.value })} />
           </div>
           <div className="mt-3">
             <Field label="Popis LPS">
@@ -133,23 +107,10 @@ export function HromosvodInfoTab({
         <SectionHeader num="04">Termíny a data</SectionHeader>
         <div className="p-4">
           <div className={TW.grid3}>
-            <Field label="Datum revize">
-              <input type="date" className={TW.input} value={formData.datum || ''} onChange={(e) => setFormData({ ...formData, datum: e.target.value })} />
-            </Field>
-            <Field label="Datum dokončení">
-              <input type="date" className={TW.input} value={formData.datumDokonceni || ''} onChange={(e) => setFormData({ ...formData, datumDokonceni: e.target.value })} />
-            </Field>
-            <Field label="Datum vypracování">
-              <input type="date" className={TW.input} value={formData.datumVypracovani || ''} onChange={(e) => setFormData({ ...formData, datumVypracovani: e.target.value })} />
-            </Field>
-            <Field label="Lhůta platnosti">
-              <select className={TW.select} value={String(formData.termin || 48)} onChange={(e) => { setFormData({ ...formData, termin: parseInt(e.target.value) }); saveNow?.(); }}>
-                <option value="12">1 rok</option>
-                <option value="24">2 roky (LPS I/II - vizuální)</option>
-                <option value="48">4 roky (LPS III/IV - vizuální)</option>
-                <option value="60">5 let</option>
-              </select>
-            </Field>
+            <Input label="Datum revize" type="date" value={formData.datum || ''} onChange={(e) => setFormData({ ...formData, datum: e.target.value })} />
+            <Input label="Datum dokončení" type="date" value={formData.datumDokonceni || ''} onChange={(e) => setFormData({ ...formData, datumDokonceni: e.target.value })} />
+            <Input label="Datum vypracování" type="date" value={formData.datumVypracovani || ''} onChange={(e) => setFormData({ ...formData, datumVypracovani: e.target.value })} />
+            <Select label="Lhůta platnosti" value={String(formData.termin || 48)} onChange={(e) => { setFormData({ ...formData, termin: parseInt(e.target.value) }); saveNow?.(); }} options={[{ value: "12", label: "1 rok" }, { value: "24", label: "2 roky (LPS I/II - vizuální)" }, { value: "48", label: "4 roky (LPS III/IV - vizuální)" }, { value: "60", label: "5 let" }]} />
             <Field label="Platnost do">
               <span className={`text-sm py-1 ${formData.datumPlatnosti ? 'font-medium' : 'text-[var(--text-secondary)]'}`}>
                 {formData.datumPlatnosti ? new Date(formData.datumPlatnosti).toLocaleDateString('cs-CZ') : 'Vypočítá se při dokončení'}
@@ -164,31 +125,8 @@ export function HromosvodInfoTab({
         <SectionHeader num="05">Stav a výsledek revize</SectionHeader>
         <div className="p-4">
           <div className={TW.grid2}>
-            <Field label="Stav">
-              <select className={TW.select} value={formData.stav || ''} onChange={(e) => {
-                const newStav = e.target.value;
-                let newData: Partial<Revize> = { ...formData, stav: newStav as any };
-                if (newStav === 'dokončeno' && revize.stav !== 'dokončeno') {
-                  const baseDate = formData.datumDokonceni ? new Date(formData.datumDokonceni) : new Date();
-                  const platnostDo = new Date(baseDate);
-                  platnostDo.setMonth(platnostDo.getMonth() + (formData.termin || 36));
-                  newData = { ...newData, datumPlatnosti: platnostDo.toISOString().split('T')[0], datumVypracovani: new Date().toISOString().split('T')[0] };
-                }
-                setFormData(newData);
-                saveNow?.();
-              }}>
-                <option value="rozpracováno">Rozpracováno</option>
-                <option value="dokončeno">Dokončeno</option>
-                <option value="schváleno">Schváleno</option>
-              </select>
-            </Field>
-            <Field label="Výsledek">
-              <select className={TW.select} value={formData.vysledek || ''} onChange={(e) => { setFormData({ ...formData, vysledek: e.target.value as any }); saveNow?.(); }}>
-                <option value="">-- Nevyplněno --</option>
-                <option value="schopno">Schopno provozu</option>
-                <option value="neschopno">Neschopno provozu</option>
-              </select>
-            </Field>
+            <Select label="Stav" value={formData.stav || ''} onChange={(e) => { const newStav = e.target.value; let newData: Partial<Revize> = { ...formData, stav: newStav as any }; if (newStav === 'dokončeno' && revize.stav !== 'dokončeno') { const baseDate = formData.datumDokonceni ? new Date(formData.datumDokonceni) : new Date(); const platnostDo = new Date(baseDate); platnostDo.setMonth(platnostDo.getMonth() + (formData.termin || 36)); newData = { ...newData, datumPlatnosti: platnostDo.toISOString().split('T')[0], datumVypracovani: new Date().toISOString().split('T')[0] }; } setFormData(newData); saveNow?.(); }} options={[{ value: "rozpracováno", label: "Rozpracováno" }, { value: "dokončeno", label: "Dokončeno" }, { value: "schváleno", label: "Schváleno" }]} />
+            <Select label="Výsledek" value={formData.vysledek || ''} onChange={(e) => { setFormData({ ...formData, vysledek: e.target.value as any }); saveNow?.(); }} options={[{ value: "", label: "-- Nevyplněno --" }, { value: "schopno", label: "Schopno provozu" }, { value: "neschopno", label: "Neschopno provozu" }]} />
           </div>
         </div>
       </div>
@@ -209,21 +147,13 @@ export function HromosvodInfoTab({
             </select>
           </Field>
           <div className={TW.grid2}>
-            <Field label="Název firmy">
-              <input className={TW.input} placeholder="Ponechte prázdné → firma z nastavení" value={formData.firmaJmeno || ''} onChange={(e) => setFormData({ ...formData, firmaJmeno: e.target.value })} />
-            </Field>
-            <Field label="IČO">
-              <input className={TW.input} value={formData.firmaIco || ''} onChange={(e) => setFormData({ ...formData, firmaIco: e.target.value })} />
-            </Field>
-            <Field label="Adresa">
-              <input className={TW.input} value={formData.firmaAdresa || ''} onChange={(e) => setFormData({ ...formData, firmaAdresa: e.target.value })} />
-            </Field>
-            <Field label="DIČ">
-              <input className={TW.input} value={formData.firmaDic || ''} onChange={(e) => setFormData({ ...formData, firmaDic: e.target.value })} />
-            </Field>
+            <Input label="Název firmy" placeholder="Ponechte prázdné → firma z nastavení" value={formData.firmaJmeno || ''} onChange={(e) => setFormData({ ...formData, firmaJmeno: e.target.value })} />
+            <Input label="IČO" value={formData.firmaIco || ''} onChange={(e) => setFormData({ ...formData, firmaIco: e.target.value })} />
+            <Input label="Adresa" value={formData.firmaAdresa || ''} onChange={(e) => setFormData({ ...formData, firmaAdresa: e.target.value })} />
+            <Input label="DIČ" value={formData.firmaDic || ''} onChange={(e) => setFormData({ ...formData, firmaDic: e.target.value })} />
           </div>
           {selectedFirmaId === '' && nastaveni && (nastaveni.firmaJmeno || nastaveni.firmaIco) && (
-            <div className="text-xs text-[var(--primary)] bg-[var(--bg-accent)] border border-blue-200 rounded p-2">📋 Z nastavení: <strong>{nastaveni.firmaJmeno}</strong> | IČO: {nastaveni.firmaIco || '—'} | {nastaveni.firmaAdresa || '—'}</div>
+            <div className="text-xs text-[var(--primary)] bg-[var(--bg-accent)] border border-[var(--primary)]/30 rounded-md p-2">📋 Z nastavení: <strong>{nastaveni.firmaJmeno}</strong> | IČO: {nastaveni.firmaIco || '—'} | {nastaveni.firmaAdresa || '—'}</div>
           )}
           {selectedFirmaId === '' && (!nastaveni || (!nastaveni.firmaJmeno && !nastaveni.firmaIco)) && (
             <p className="text-xs text-[var(--warning-text)]">⚠️ Nemáte výchozí firmu. <Link to="/nastaveni" className="underline font-medium">Nastavení</Link></p>

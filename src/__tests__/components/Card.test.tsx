@@ -37,14 +37,19 @@ describe('Card', () => {
     const { container } = render(<Card className="my-custom">Obsah</Card>);
     const card = container.firstElementChild as HTMLElement;
     expect(card.className).toContain('my-custom');
-    expect(card.className).toContain('bg-white');
+    expect(card.className).toContain('bg-[var(--surface)]');
+  });
+
+  it('should render accent stripe', () => {
+    const { container } = render(<Card accent="success">Obsah</Card>);
+    expect((container.firstElementChild as HTMLElement).className).toContain('border-l-[var(--success)]');
   });
 
   it('should have default card styling', () => {
     const { container } = render(<Card>Obsah</Card>);
     const card = container.firstElementChild as HTMLElement;
-    expect(card.className).toContain('rounded-xl');
-    expect(card.className).toContain('shadow-sm');
+    expect(card.className).toContain('rounded-[var(--radius-lg)]');
+    expect(card.className).not.toContain('shadow');
     expect(card.className).toContain('border');
   });
 });

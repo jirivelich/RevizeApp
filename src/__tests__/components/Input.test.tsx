@@ -37,7 +37,7 @@ describe('Input', () => {
   it('should apply normal border when no error', () => {
     render(<Input data-testid="inp" />);
     const input = screen.getByTestId('inp');
-    expect(input.className).toContain('border-slate-300');
+    expect(input.className).toContain('border-[var(--border-input)]');
   });
 
   it('should handle user typing', async () => {

@@ -35,38 +35,38 @@ export function CranicFormFields({ data, onChange }: CranicFormFieldsProps) {
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
         <Input type="number" label="Číslo" value={data.cislo} onChange={(e) => set({ cislo: parseInt(e.target.value) || 1 })} required />
         <Input label="Název" value={data.nazev} onChange={(e) => set({ nazev: e.target.value })} required />
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
         <EditableSelect label="Typ chrániče" value={data.typ} onChange={(val) => set({ typ: val })} options={['A', 'AC', 'B', 'F', 'G']} />
         <EditableSelect label="Jmenovitý proud" value={data.proud} onChange={(val) => set({ proud: val })} options={['10A', '16A', '20A', '25A', '32A', '40A', '63A']} />
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
         <Select label="Citlivost IΔn (mA)" value={String(data.citlivostMa)} onChange={(e) => set({ citlivostMa: parseFloat(e.target.value) })} options={[{ value: '10', label: '10 mA' }, { value: '30', label: '30 mA' }, { value: '100', label: '100 mA' }, { value: '300', label: '300 mA' }, { value: '500', label: '500 mA' }]} />
         <Select label="Počet pólů" value={String(data.pocetPolu)} onChange={(e) => set({ pocetPolu: parseInt(e.target.value) })} options={[{ value: '2', label: '2' }, { value: '4', label: '4' }]} />
       </div>
       {/* Měřené hodnoty */}
       <div className="border-t border-[var(--border)] pt-3">
         <p className="text-xs font-medium text-[var(--text-secondary)] mb-3">Měřené hodnoty</p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-3">
           <label className="flex items-center gap-2 text-xs">
             <input type="checkbox"
               checked={!!data.testovacitlacitko}
               onChange={(e) => set({ testovacitlacitko: e.target.checked || undefined })}
-              className="rounded border-[var(--checkbox-border)]" />
+              className="w-4 h-4 accent-[var(--primary)]" />
             <span>Testovací tlačítko ✓</span>
           </label>
           <label className="flex items-center gap-2 text-xs">
             <input type="checkbox"
               checked={!!data.nevybavovaci}
               onChange={(e) => set({ nevybavovaci: e.target.checked || undefined })}
-              className="rounded border-[var(--checkbox-border)]" />
+              className="w-4 h-4 accent-[var(--primary)]" />
             <span>Nevybavení při 0,5×IΔn ✓</span>
           </label>
         </div>
-        <div className="grid grid-cols-2 gap-3 mt-3">
+        <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-3 mt-3">
           <Input type="number" step="0.1" label="Dotykové napětí Uc [V]"
             value={data.dotykoveNapeti ?? ''}
             onChange={(e) => set({ dotykoveNapeti: e.target.value ? parseFloat(e.target.value) : undefined })} />
@@ -74,7 +74,7 @@ export function CranicFormFields({ data, onChange }: CranicFormFieldsProps) {
             value={data.vybavovacProud ?? ''}
             onChange={(e) => set({ vybavovacProud: e.target.value ? parseFloat(e.target.value) : undefined })} />
         </div>
-        <div className="grid grid-cols-2 gap-3 mt-3">
+        <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-3 mt-3">
           <Input type="number" step="1" label="Čas odpojení tA při 1×IΔn [ms]"
             value={data.casOdpojeni1x ?? ''}
             onChange={(e) => set({ casOdpojeni1x: e.target.value ? parseFloat(e.target.value) : undefined })} />
@@ -95,7 +95,7 @@ export function CranicFormFields({ data, onChange }: CranicFormFieldsProps) {
                 <input type="checkbox"
                   checked={!!data.zkouskaVypnuti2x}
                   onChange={(e) => set({ zkouskaVypnuti2x: e.target.checked || undefined })}
-                  className="rounded border-[var(--checkbox-border)]" />
+                  className="w-4 h-4 accent-[var(--primary)]" />
                 <span>Zkouška vypnutí 2×IΔn nárůstem proudu ✓</span>
               </label>
             </>
@@ -106,7 +106,7 @@ export function CranicFormFields({ data, onChange }: CranicFormFieldsProps) {
             <input type="checkbox"
               checked={!!data.selektivita}
               onChange={(e) => set({ selektivita: e.target.checked || undefined })}
-              className="rounded border-[var(--checkbox-border)]" />
+              className="w-4 h-4 accent-[var(--primary)]" />
             <span>Selektivita (typ S/G) ✓</span>
           </label>
         </div>

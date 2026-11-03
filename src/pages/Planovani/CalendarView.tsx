@@ -16,9 +16,9 @@ const DAY_NAMES = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
 const WEEKEND_INDICES = new Set([5, 6]);
 
 const LEGEND_ITEMS = [
-  { color: 'bg-purple-400/70', label: 'Realizace' },
-  { color: 'bg-amber-400/80', label: 'Deadline zprávy' },
-  { color: 'bg-blue-400/80', label: 'Odevzdání' },
+  { color: 'bg-[var(--primary)]', label: 'Realizace' },
+  { color: 'bg-[var(--warning)]', label: 'Deadline zprávy' },
+  { color: 'bg-[var(--secondary)]', label: 'Odevzdání' },
 ] as const;
 
 function getISOWeek(date: Date): number {
@@ -85,14 +85,14 @@ function DayPopover({ dateStr, allZakazky, onZakazkaClick, onAddClick, onMouseEn
 
   return createPortal(
     <div
-      className="fixed z-[9000] bg-[var(--surface)] border border-[var(--border-strong)] rounded-xl overflow-hidden"
-      style={{ ...style, boxShadow: 'var(--shadow-elevated)' }}
+      className="fixed z-[9000] bg-[var(--surface)] border border-[var(--border-strong)] rounded-[var(--radius-lg)] overflow-hidden"
+      style={{ ...style, boxShadow: 'var(--shadow-lg)' }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
       <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-subtle)]">
-        <p className="text-[11px] font-semibold text-[var(--text)] capitalize truncate">{dateLabel}</p>
-        <button onClick={onAddClick} className="text-[10px] text-[var(--primary)] hover:underline whitespace-nowrap ml-2 shrink-0">+ Přidat</button>
+        <p className="text-xs font-semibold text-[var(--text)] capitalize truncate">{dateLabel}</p>
+        <button onClick={onAddClick} className="text-xs text-[var(--primary)] hover:underline whitespace-nowrap ml-2 shrink-0">+ Přidat</button>
       </div>
       <div className="overflow-y-auto p-1.5 space-y-1" style={{ maxHeight: popMaxHeight - 40 }}>
         {dayZakazky.map((z) => {
@@ -102,18 +102,18 @@ function DayPopover({ dateStr, allZakazky, onZakazkaClick, onAddClick, onMouseEn
             <div
               key={z.id}
               onClick={() => onZakazkaClick(z)}
-              className="px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[var(--bg-hover)] transition-colors"
+              className="px-2 py-1.5 rounded-[var(--radius-md)] cursor-pointer hover:bg-[var(--bg-hover)] transition-colors"
             >
               <div className="flex items-center gap-1.5 min-w-0">
-                <span className={`shrink-0 px-1 py-0.5 rounded text-[9px] font-medium ${getPriorityColor(z.priorita)}`}>{z.priorita}</span>
-                <p className="text-[12px] font-medium text-[var(--text)] truncate">{z.nazev}</p>
+                <span className={`shrink-0 px-1.5 py-0.5 rounded-[var(--radius-sm)] text-xs font-medium ${getPriorityColor(z.priorita)}`}>{z.priorita}</span>
+                <p className="text-[13px] font-medium text-[var(--text)] truncate">{z.nazev}</p>
               </div>
               <div className="flex items-center gap-2 mt-0.5">
-                <p className="text-[10px] text-[var(--text-secondary)] truncate flex-1">{z.klient}</p>
+                <p className="text-xs text-[var(--text-secondary)] truncate flex-1">{z.klient}</p>
                 {z.casPlanovany && isFirst && (
-                  <span className="text-[10px] text-[var(--text-muted)] shrink-0">{z.casPlanovany}</span>
+                  <span className="text-xs text-[var(--text-muted)] shrink-0">{z.casPlanovany}</span>
                 )}
-                <span className={`text-[9px] font-medium px-1 py-0.5 rounded shrink-0 ${getStatusColor(z.stav)}`}>{z.stav}</span>
+                <span className={`text-xs font-medium px-1.5 py-0.5 rounded-[var(--radius-sm)] shrink-0 ${getStatusColor(z.stav)}`}>{z.stav}</span>
               </div>
             </div>
           );
@@ -122,12 +122,12 @@ function DayPopover({ dateStr, allZakazky, onZakazkaClick, onAddClick, onMouseEn
           <div
             key={`dl-${z.id}`}
             onClick={() => onZakazkaClick(z)}
-            className={`px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[var(--bg-hover)] transition-colors flex items-start gap-1.5 ${isOverdue(dateStr) ? 'text-[var(--danger-text)]' : 'text-[var(--warning-text)]'}`}
+            className={`px-2 py-1.5 rounded-[var(--radius-md)] cursor-pointer hover:bg-[var(--bg-hover)] transition-colors flex items-start gap-1.5 ${isOverdue(dateStr) ? 'text-[var(--danger-text)]' : 'text-[var(--warning-text)]'}`}
           >
             <IconClipboard />
             <div className="min-w-0">
-              <p className="text-[11px] font-medium truncate">Zpráva: {z.nazev}</p>
-              <p className="text-[10px] opacity-70 truncate">{z.klient}</p>
+              <p className="text-xs font-medium truncate">Zpráva: {z.nazev}</p>
+              <p className="text-xs opacity-80 truncate">{z.klient}</p>
             </div>
           </div>
         ))}
@@ -135,12 +135,12 @@ function DayPopover({ dateStr, allZakazky, onZakazkaClick, onAddClick, onMouseEn
           <div
             key={`ov-${z.id}`}
             onClick={() => onZakazkaClick(z)}
-            className="px-2 py-1.5 rounded-lg cursor-pointer hover:bg-[var(--bg-hover)] transition-colors flex items-start gap-1.5 text-[var(--primary)]"
+            className="px-2 py-1.5 rounded-[var(--radius-md)] cursor-pointer hover:bg-[var(--bg-hover)] transition-colors flex items-start gap-1.5 text-[var(--secondary)]"
           >
             <IconCheck />
             <div className="min-w-0">
-              <p className="text-[11px] font-medium truncate">Odevzdání: {z.nazev}</p>
-              <p className="text-[10px] opacity-70 truncate">{z.klient}</p>
+              <p className="text-xs font-medium truncate">Odevzdání: {z.nazev}</p>
+              <p className="text-xs opacity-80 truncate">{z.klient}</p>
             </div>
           </div>
         ))}
@@ -228,7 +228,7 @@ export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }
     const weekNum = getISOWeek(rowMonday);
     rows.push(
       <div key={`wn-${r}`} className="flex items-start justify-center pt-3 min-h-[90px] border border-[var(--border)] bg-[var(--bg-faint)]">
-        <span className="text-[10px] font-medium text-[var(--text-muted)] opacity-50 leading-none tabular-nums">{weekNum}</span>
+        <span className="text-xs font-medium text-[var(--text-muted)] leading-none tabular-nums">{weekNum}</span>
       </div>
     );
 
@@ -256,9 +256,9 @@ export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }
           <div
             key={day}
             data-datestr={dateStr}
-            className={`p-2 min-h-[90px] border border-[var(--border)] cursor-pointer hover:bg-blue-500/[0.06] transition-colors ${
+            className={`p-2 min-h-[90px] border border-[var(--border)] cursor-pointer hover:bg-[var(--bg-hover)] transition-colors ${
               todayClass
-                ? 'bg-blue-500/[0.12] ring-2 ring-blue-500/[0.40] ring-inset'
+                ? 'bg-[var(--bg-accent)] ring-2 ring-[var(--primary)] ring-inset'
                 : isWeekend
                 ? 'bg-[var(--bg-faint)]'
                 : ''
@@ -276,7 +276,7 @@ export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }
             <span
               className={`text-sm font-medium inline-flex items-center justify-center w-7 h-7 rounded-full ${
                 todayClass
-                  ? 'bg-blue-500 text-white'
+                  ? 'bg-[var(--primary)] text-[var(--primary-fg)] font-bold'
                   : isWeekend
                   ? 'text-[var(--text-muted)]'
                   : 'text-[var(--text-secondary)]'
@@ -291,7 +291,7 @@ export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }
                 return (
                   <div
                     key={z.id}
-                    className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 ${getPriorityColor(z.priorita)} ${!isFirst ? 'opacity-70' : ''}`}
+                    className={`text-xs p-1 rounded-[var(--radius-sm)] truncate cursor-pointer hover:opacity-80 ${getPriorityColor(z.priorita)} ${!isFirst ? 'opacity-70' : ''}`}
                     title={`${z.nazev} — ${z.klient}`}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -313,7 +313,7 @@ export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }
               {deadlineZpravy.map((z) => (
                 <div
                   key={`dl-${z.id}`}
-                  className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 flex items-center ${isOverdue(dateStr) ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]' : 'bg-[var(--warning-bg)] text-[var(--warning-text)]'}`}
+                  className={`text-xs p-1 rounded-[var(--radius-sm)] truncate cursor-pointer hover:opacity-80 flex items-center ${isOverdue(dateStr) ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]' : 'bg-[var(--warning-bg)] text-[var(--warning-text)]'}`}
                   title={`Zpráva: ${z.nazev} — ${z.klient}`}
                   onClick={(e) => { e.stopPropagation(); onZakazkaClick(z); }}
                 >
@@ -323,7 +323,7 @@ export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }
               {odevzdani.map((z) => (
                 <div
                   key={`ov-${z.id}`}
-                  className="text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 flex items-center bg-[var(--bg-accent-badge)] text-[var(--primary)]"
+                  className="text-xs p-1 rounded-[var(--radius-sm)] truncate cursor-pointer hover:opacity-80 flex items-center bg-[var(--bg-secondary-accent)] text-[var(--secondary)]"
                   title={`Odevzdání: ${z.nazev} — ${z.klient}`}
                   onClick={(e) => { e.stopPropagation(); onZakazkaClick(z); }}
                 >
@@ -344,13 +344,13 @@ export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={goToPreviousMonth}
-          className="p-2 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
+          className="p-2 min-w-[40px] min-h-[40px] rounded-[var(--radius-md)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
           title="Předchozí měsíc (←)"
         >
           ◀
         </button>
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-[var(--text)] capitalize flex items-center gap-2">
+          <h2 className="text-base font-semibold text-[var(--text)] capitalize flex items-center gap-2">
             {monthLabel}
             {monthCount > 0 && (
               <span className="text-sm font-normal text-[var(--text-muted)]">{monthCount} zakázek</span>
@@ -358,7 +358,7 @@ export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }
           </h2>
           <button
             onClick={goToToday}
-            className="text-xs px-2 py-1 rounded bg-[var(--bg-accent-badge)] text-[var(--primary)] hover:bg-blue-500/[0.25] transition-colors"
+            className="text-xs font-semibold px-3 h-8 rounded-[var(--radius-md)] bg-[var(--bg-accent-badge)] text-[var(--primary)] hover:brightness-110 transition-colors"
             title="Dnešek (T)"
           >
             Dnes
@@ -366,7 +366,7 @@ export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }
         </div>
         <button
           onClick={goToNextMonth}
-          className="p-2 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
+          className="p-2 min-w-[40px] min-h-[40px] rounded-[var(--radius-md)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
           title="Další měsíc (→)"
         >
           ▶
@@ -375,11 +375,11 @@ export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }
 
       {/* Mřížka */}
       <div className="grid grid-cols-[30px_repeat(7,1fr)] gap-0">
-        <div className="p-2 text-center text-[10px] font-medium bg-[var(--bg-input)] border-b border-[var(--border)] text-[var(--text-muted)] opacity-50">Tý</div>
+        <div className="p-2 text-center text-xs font-medium bg-[var(--bg-input)] border-b border-[var(--border)] text-[var(--text-muted)]">Tý</div>
         {DAY_NAMES.map((den, i) => (
           <div
             key={den}
-            className={`p-2 text-center text-sm font-medium bg-[var(--bg-input)] border-b border-[var(--border)] ${
+            className={`p-2 text-center text-[11px] uppercase tracking-[0.08em] font-semibold bg-[var(--bg-input)] border-b border-[var(--border)] ${
               WEEKEND_INDICES.has(i) ? 'text-[var(--text-muted)]' : 'text-[var(--text-secondary)]'
             }`}
           >
@@ -397,7 +397,7 @@ export function CalendarView({ zakazky: allZakazky, onDayClick, onZakazkaClick }
             {l.label}
           </span>
         ))}
-        <span className="ml-auto text-xs text-[var(--text-muted)] opacity-50">← T →</span>
+        <span className="ml-auto text-xs text-[var(--text-muted)]">← T →</span>
       </div>
     </Card>
     {hoveredCell && (

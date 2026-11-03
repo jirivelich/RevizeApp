@@ -128,12 +128,12 @@ export function ZakazkaForm({
                     type="date"
                     value={day}
                     onChange={(e) => updateExtraDay(day, e.target.value)}
-                    className="flex-1 px-3 py-2 text-sm border border-[var(--border-input)] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-3 min-h-[40px] text-sm bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]"
                   />
                   <button
                     type="button"
                     onClick={() => removeExtraDay(day)}
-                    className="text-[var(--text-secondary)] hover:text-[var(--danger-text)] transition-colors px-2 py-1 text-lg leading-none"
+                    className="text-[var(--text-secondary)] hover:text-[var(--danger-text)] transition-colors min-w-[40px] min-h-[40px] text-lg leading-none"
                     title="Odebrat den"
                   >
                     ×
@@ -145,7 +145,7 @@ export function ZakazkaForm({
           <button
             type="button"
             onClick={addExtraDay}
-            className="mt-2 text-xs text-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            className="mt-2 text-sm font-medium text-[var(--primary)] hover:text-[var(--primary-hover)] transition-colors"
           >
             + Přidat další den realizace
           </button>
@@ -155,7 +155,7 @@ export function ZakazkaForm({
 
         {/* Revizní zpráva */}
         <div className="border-t border-[var(--border-input)] pt-4 space-y-3">
-          <p className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">Revizní zpráva</p>
+          <p className="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.08em]">Revizní zpráva</p>
           <div className="flex items-end gap-3">
             <div className="flex-1">
               <Input
@@ -193,7 +193,7 @@ export function ZakazkaForm({
         <Input label="Poznámka" value={formData.poznamka} onChange={(e) => setFormData((prev) => ({ ...prev, poznamka: e.target.value }))} />
 
         {formError && (
-          <p className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-lg px-3 py-2">
+          <p className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-[var(--radius-md)] px-3 py-2">
             {formError}
           </p>
         )}

@@ -1,4 +1,6 @@
 import { useDialog } from './ui/useDialog';
+import { Button } from './ui';
+import { Icon } from './icons';
 
 interface IdleWarningModalProps {
   remainingSeconds: number;
@@ -14,28 +16,20 @@ export function IdleWarningModal({ remainingSeconds, onStay, onLogout }: IdleWar
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--overlay)]">
-      <div ref={ref} {...dialogProps} className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-xl shadow-[var(--shadow-lg)] p-8 max-w-sm w-full mx-4 text-center outline-none">
-        <div className="text-5xl mb-4">⏱️</div>
+      <div ref={ref} {...dialogProps} className="bg-[var(--surface)] border border-[var(--border-input)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] p-8 max-w-sm w-full mx-4 text-center outline-none">
+        <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-[var(--warning-bg)] text-[var(--warning-text)] grid place-items-center">
+          <Icon name="clock" size={26} />
+        </div>
         <h2 id={titleId} className="text-xl font-semibold text-[var(--text)] mb-2">Brzy budete odhlášeni</h2>
         <p className="text-[var(--text-secondary)] mb-2">
           Kvůli nečinnosti budete automaticky odhlášeni za:
         </p>
-        <div className="text-4xl font-mono font-bold text-[var(--text)] mb-6">
+        <div className="text-4xl font-mono font-bold text-[var(--text)] mb-6 tabular-nums">
           {minutes}:{seconds}
         </div>
         <div className="flex gap-3 justify-center">
-          <button
-            onClick={onStay}
-            className="bg-[var(--primary)] text-white px-5 py-2.5 rounded-lg font-medium hover:bg-[var(--primary-hover)] transition-colors"
-          >
-            Zůstat přihlášen
-          </button>
-          <button
-            onClick={onLogout}
-            className="bg-[var(--bg-surface)] text-[var(--text)] px-5 py-2.5 rounded-lg font-medium border border-[var(--border)] hover:bg-[var(--bg-hover)] transition-colors"
-          >
-            Odhlásit
-          </button>
+          <Button onClick={onStay}>Zůstat přihlášen</Button>
+          <Button variant="secondary" onClick={onLogout}>Odhlásit</Button>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@
  * Data se ukládají do formData.odberneMistoData (JSON) a autosavem do DB.
  * Texty (rozsah, podklady, závěr, přístroje) se vyplňují v záložce "Revidované zařízení".
  */
+import { Select } from '../../components/ui';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Revize } from '../../types';
 import {
@@ -164,14 +165,7 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
             {inp('ean', 'EAN / OPM', { placeholder: '859182400…' })}
             {inp('cisloElektromeru', 'Číslo elektroměru')}
             {inp('parcela', 'Parcela / č.p. / k. ú.')}
-            <Field label="Typ připojení">
-              <select className={TW.selectFull} value={fd.typPripojeni} onChange={e => upd('typPripojeni', e.target.value as OdberneMistoData['typPripojeni'])}>
-                <option value="">— vyberte —</option>
-                <option value="kabel">Kabelová přípojka</option>
-                <option value="vzdusne">Vzdušné vedení</option>
-                <option value="jine">Jiné</option>
-              </select>
-            </Field>
+            <Select label="Typ připojení" value={fd.typPripojeni} onChange={e => upd('typPripojeni', e.target.value as OdberneMistoData['typPripojeni'])} options={[{ value: "", label: "— vyberte —" }, { value: "kabel", label: "Kabelová přípojka" }, { value: "vzdusne", label: "Vzdušné vedení" }, { value: "jine", label: "Jiné" }]} />
             {inp('umisteniRozvadece', 'Umístění rozvaděče', { placeholder: 'např. fasáda objektu, pilíř na hranici pozemku' })}
           </div>
         </div>
@@ -183,52 +177,27 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
         <div className="p-4">
           <div className={TW.grid3}>
             {inp('soustava', 'Napájecí soustava', { placeholder: '3+PEN, 50 Hz, 230/400 V, TN-C' })}
-            <Field label="Způsob měření">
-              <select className={TW.selectFull} value={fd.zpusobMereni} onChange={e => upd('zpusobMereni', e.target.value as OdberneMistoData['zpusobMereni'])}>
-                <option value="">— vyberte —</option>
-                <option value="prime">Přímé (do 80 A včetně)</option>
-                <option value="neprime">Nepřímé (přes transformátory proudu)</option>
-              </select>
-            </Field>
-            <Field label="Počet fází">
-              <select className={TW.selectFull} value={fd.pocetFazi} onChange={e => upd('pocetFazi', e.target.value as OdberneMistoData['pocetFazi'])}>
-                <option value="">— vyberte —</option>
-                <option value="1">1f</option>
-                <option value="3">3f</option>
-              </select>
-            </Field>
+            <Select label="Způsob měření" value={fd.zpusobMereni} onChange={e => upd('zpusobMereni', e.target.value as OdberneMistoData['zpusobMereni'])} options={[{ value: "", label: "— vyberte —" }, { value: "prime", label: "Přímé (do 80 A včetně)" }, { value: "neprime", label: "Nepřímé (přes transformátory proudu)" }]} />
+            <Select label="Počet fází" value={fd.pocetFazi} onChange={e => upd('pocetFazi', e.target.value as OdberneMistoData['pocetFazi'])} options={[{ value: "", label: "— vyberte —" }, { value: "1", label: "1f" }, { value: "3", label: "3f" }]} />
             {inp('jisticTyp', 'Hlavní jistič – typ / výrobce')}
             {inp('jisticProud', 'Hlavní jistič – osazeno (A)')}
             {inp('jisticCharakteristika', 'Charakteristika', { placeholder: 'B / C / E' })}
-            <Field label="Plombovatelnost">
-              <select className={TW.selectFull} value={fd.plombovani} onChange={e => upd('plombovani', e.target.value as OdberneMistoData['plombovani'])}>
-                <option value="">— vyberte —</option>
-                <option value="ano">Ano</option>
-                <option value="ne">Ne</option>
-              </select>
-            </Field>
+            <Select label="Plombovatelnost" value={fd.plombovani} onChange={e => upd('plombovani', e.target.value as OdberneMistoData['plombovani'])} options={[{ value: "", label: "— vyberte —" }, { value: "ano", label: "Ano" }, { value: "ne", label: "Ne" }]} />
             {inp('rozvadecVyrobce', 'Rozvaděč – výrobce')}
             {inp('rozvadecTyp', 'Rozvaděč – typ')}
             {inp('rozvadecIp', 'Stupeň krytí IP')}
             {inp('rozvadecTrida', 'Třída ochrany')}
             {inp('rozvadecProhlaseni', 'Prohlášení o shodě', { placeholder: 'např. EU PROHLÁŠENÍ O SHODĚ 2023-06' })}
             {inp('jisticZkratovaSchopnost', 'Zkratová schopnost jističe (kA)', { placeholder: 'min. 10' })}
-            <Field label="Prostředí rozváděče">
-              <select className={TW.selectFull} value={fd.umisteniProstredi} onChange={e => upd('umisteniProstredi', e.target.value as OdberneMistoData['umisteniProstredi'])}>
-                <option value="">— vyberte —</option>
-                <option value="vnitrni">Vnitřní (min. IP 2XC)</option>
-                <option value="venkovni">Venkovní (min. IP 43)</option>
-                <option value="venkovniKomunikace">Venkovní u komunikace (min. IP 44)</option>
-              </select>
-            </Field>
+            <Select label="Prostředí rozváděče" value={fd.umisteniProstredi} onChange={e => upd('umisteniProstredi', e.target.value as OdberneMistoData['umisteniProstredi'])} options={[{ value: "", label: "— vyberte —" }, { value: "vnitrni", label: "Vnitřní (min. IP 2XC)" }, { value: "venkovni", label: "Venkovní (min. IP 43)" }, { value: "venkovniKomunikace", label: "Venkovní u komunikace (min. IP 44)" }]} />
           </div>
           {upozorneni.length > 0 && (
-            <div className="mt-3 rounded border border-amber-400 bg-[var(--warning-bg)] px-3 py-2 text-xs text-[var(--warning-text)] space-y-0.5">
+            <div className="mt-3 rounded border border-[var(--warning)]/40 bg-[var(--warning-bg)] px-3 py-2 text-xs text-[var(--warning-text)] space-y-0.5">
               <div className="font-semibold">Nesoulad s Připojovacími podmínkami nn:</div>
               {upozorneni.map((u, i) => <div key={i}>⚠ {u}</div>)}
             </div>
           )}
-          <p className="mt-2 text-[11px] text-[var(--text-muted)]">Kontroly vycházejí z dokumentu: {PPNN_ZDROJ}.</p>
+          <p className="mt-2 text-xs text-[var(--text-muted)]">Kontroly vycházejí z dokumentu: {PPNN_ZDROJ}.</p>
         </div>
       </div>
 
@@ -240,14 +209,7 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
             {inp('smlouvaCislo', 'Číslo smlouvy')}
             {inp('smlouvaDatum', 'Datum uzavření', { type: 'date' })}
             {inp('smlouvaPlatnost', 'Platnost do / prodloužení', { type: 'date' })}
-            <Field label="Typ odběru">
-              <select className={TW.selectFull} value={fd.smlouvaTypOdberu} onChange={e => upd('smlouvaTypOdberu', e.target.value as OdberneMistoData['smlouvaTypOdberu'])}>
-                <option value="">— vyberte —</option>
-                <option value="novy">Nový odběr</option>
-                <option value="zmena">Změna odběru</option>
-                <option value="rozsireni">Rozšíření odběru</option>
-              </select>
-            </Field>
+            <Select label="Typ odběru" value={fd.smlouvaTypOdberu} onChange={e => upd('smlouvaTypOdberu', e.target.value as OdberneMistoData['smlouvaTypOdberu'])} options={[{ value: "", label: "— vyberte —" }, { value: "novy", label: "Nový odběr" }, { value: "zmena", label: "Změna odběru" }, { value: "rozsireni", label: "Rozšíření odběru" }]} />
             {inp('smlouvaUcel', 'Účel odběru', { placeholder: 'domácnost / podnikání / FVE…' })}
             {inp('smlouvaPrikon', 'Rezervovaný příkon dle smlouvy (kW)')}
             {inp('smlouvaJistic', 'Hlavní jistič dle smlouvy (A)')}
@@ -259,7 +221,7 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
           </div>
           <div className={`text-xs rounded px-3 py-2 border ${
             shoda === 'shoda' ? 'bg-[var(--success-bg)] border-[var(--success)] text-[var(--success-text)]'
-            : shoda === 'neshoda' ? 'bg-[var(--danger-bg)] border-red-400 text-[var(--danger-text)]'
+            : shoda === 'neshoda' ? 'bg-[var(--danger-bg)] border-[var(--danger)]/50 text-[var(--danger-text)]'
             : 'bg-[var(--bg-surface)] border-[var(--border)] text-[var(--text-muted)]'}`}>
             {shoda === 'shoda' && `✓ Osazený hlavní jistič (${fd.jisticProud} A) odpovídá smlouvě.`}
             {shoda === 'neshoda' && `⚠ Osazený hlavní jistič (${fd.jisticProud} A) NEODPOVÍDÁ smlouvě (${fd.smlouvaJistic} A). Uveďte v závěru.`}

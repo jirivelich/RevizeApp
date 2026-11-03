@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import { FormBuilderPage } from './template/form-builder';
 import OfflineBanner from './components/OfflineBanner';
+import { Icon } from './components/icons';
 import {
   Dashboard,
   RevizePage,
@@ -58,7 +59,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
       return (
         <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-4">
           <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-lg p-8 max-w-md w-full text-center">
-            <div className="text-[var(--danger-text)] text-6xl mb-4">⚠️</div>
+            <div className="text-[var(--danger-text)] mb-4 flex justify-center"><Icon name="warning" size={48} /></div>
             <h1 className="text-2xl font-bold text-[var(--text)] mb-2">Něco se pokazilo</h1>
             <p className="text-[var(--text-secondary)] mb-4">
               {this.state.error?.message || 'Neočekávaná chyba aplikace'}
@@ -68,7 +69,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
                 this.setState({ hasError: false, error: null });
                 window.location.href = '/';
               }}
-              className="bg-[var(--primary)] text-white px-4 py-2 rounded-lg hover:bg-[var(--primary-hover)]"
+              className="bg-[var(--primary)] text-[var(--primary-fg)] px-4 py-2 rounded-lg hover:bg-[var(--primary-hover)]"
             >
               Zpět na úvodní stránku
             </button>

@@ -158,7 +158,7 @@ export function FormBuilderPage() {
             ))}
             {mode === 'fill' && (
               <button
-                style={{ ...T.hBtn, background: C.success, borderColor: C.success, color: '#fff', fontWeight: 600 }}
+                style={{ ...T.hBtn, background: C.success, borderColor: C.success, color: 'var(--background)', fontWeight: 600 }}
                 onClick={() => window.print()}
               >
                 🖨 Tisk / PDF
@@ -194,7 +194,7 @@ export function FormBuilderPage() {
                   onClick={() => { setSelPg(pi); setSelBlk(null); }}
                 >
                   <span style={{ flex: 1, fontSize: 13, fontWeight: selPg === pi ? 600 : 400 }}>{pg.label || `Strana ${pi + 1}`}</span>
-                  <span style={{ fontSize: 10, color: C.muted, marginRight: 4 }}>{pg.overflow ? '∞' : 'A4'}</span>
+                  <span style={{ fontSize: 12, color: C.muted, marginRight: 4 }}>{pg.overflow ? '∞' : 'A4'}</span>
                   <button style={T.sIconBtn} onClick={e => { e.stopPropagation(); movePage(pi, -1); }}>↑</button>
                   <button style={T.sIconBtn} onClick={e => { e.stopPropagation(); movePage(pi, 1); }}>↓</button>
                   <button style={{ ...T.sIconBtn, color: C.danger }} onClick={e => { e.stopPropagation(); delPage(pi); }}>×</button>
@@ -213,7 +213,7 @@ export function FormBuilderPage() {
                   Přetékání (obsah přechází na další stránku)
                 </label>
                 <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>Přidat blok:</div>
+                  <div style={{ fontSize: 12, color: C.muted, marginBottom: 2 }}>Přidat blok:</div>
                   <button style={T.sBtnBlk} onClick={() => addBlock(selPg, mkSection())}>＋ Oddíl (sekce s poli)</button>
                   <button style={T.sBtnBlk} onClick={() => addBlock(selPg, mkTable())}>＋ Tabulka</button>
                   <button style={T.sBtnBlk} onClick={() => addBlock(selPg, mkFreetext())}>＋ Nadpis / text</button>
@@ -225,13 +225,13 @@ export function FormBuilderPage() {
 
                 {/* Okraje stránky */}
                 <div style={{ marginTop: 12 }}>
-                  <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>Okraje (px):</div>
+                  <div style={{ fontSize: 12, color: C.muted, marginBottom: 4 }}>Okraje (px):</div>
                   {(['top', 'right', 'bottom', 'left'] as const).map(side => {
                     const defaults = { top: 64, right: 72, bottom: 64, left: 72 };
                     const val = doc.pages[selPg].margins?.[side] ?? defaults[side];
                     return (
                       <div key={side} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                        <span style={{ fontSize: 11, color: C.muted, width: 50 }}>{side}:</span>
+                        <span style={{ fontSize: 12, color: C.muted, width: 50 }}>{side}:</span>
                         <input
                           type="number" min={0} max={200}
                           style={{ ...T.sInp, flex: 1 }}
@@ -268,7 +268,7 @@ export function FormBuilderPage() {
                   <div key={pg.id} style={{ marginBottom: 40 }}>
                     <div style={T.pgLabel} className="noprint">
                       <span>Strana {pi + 1}{pg.label ? ` — ${pg.label}` : ''}</span>
-                      <span style={{ color: pg.overflow ? C.accent : C.muted, fontSize: 11 }}>
+                      <span style={{ color: pg.overflow ? C.accent : C.muted, fontSize: 12 }}>
                         {pg.overflow ? 'přetékání povoleno' : 'pevná A4'}
                       </span>
                     </div>

@@ -4,15 +4,15 @@ import type { CSSProperties } from 'react';
 
 // ─── Barvy (UI editoru) ──────────────────────────────────────────────────────
 export const C = {
-  bg:      '#0d1117',
-  surface: '#161b26',
-  card:    '#1c2130',
-  border:  '#252d42',
-  accent:  '#4f8ef7',
-  text:    '#dde2f0',
-  muted:   '#6b7490',
-  danger:  '#e05555',
-  success: '#3ecf8e',
+  bg:      'var(--background)',
+  surface: 'var(--surface)',
+  card:    'var(--bg-hover)',
+  border:  'var(--border)',
+  accent:  'var(--primary)',
+  text:    'var(--text)',
+  muted:   'var(--text-muted)',
+  danger:  'var(--danger)',
+  success: 'var(--success)',
 } as const;
 
 // ─── DOC — sdílené tokeny pro renderování dokumentu ──────────────────────────
@@ -102,26 +102,26 @@ export const T: Record<string, CSSProperties> = {
   logo:        { display: 'flex', alignItems: 'center', gap: 8 },
   ltxt:        { fontWeight: 700, fontSize: 15 },
   hTab:        { background: 'transparent', border: `1px solid ${C.border}`, color: C.muted, padding: '5px 14px', borderRadius: 7, cursor: 'pointer', fontSize: 13 },
-  hTabActive:  { background: C.accent, borderColor: C.accent, color: '#fff', fontWeight: 600 },
+  hTabActive:  { background: C.accent, borderColor: C.accent, color: 'var(--primary-fg)', fontWeight: 600 },
   hBtn:        { padding: '5px 14px', borderRadius: 7, cursor: 'pointer', fontSize: 13, border: `1px solid ${C.border}` },
 
   editLayout:  { display: 'grid', gridTemplateColumns: '300px 1fr', minHeight: 'calc(100vh - 50px)' },
   sidebar:     { background: C.surface, borderRight: `1px solid ${C.border}`, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 0 },
   sSection:    { borderBottom: `1px solid ${C.border}`, paddingBottom: 14, marginBottom: 14 },
-  sTitle:      { fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 },
+  sTitle:      { fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 },
   sInp:        { width: '100%', background: C.bg, border: `1px solid ${C.border}`, borderRadius: 7, padding: '6px 9px', color: C.text, fontSize: 12, outline: 'none', boxSizing: 'border-box' },
-  lbl:         { display: 'flex', alignItems: 'center', fontSize: 11, color: C.muted, marginBottom: 4, gap: 4 },
+  lbl:         { display: 'flex', alignItems: 'center', fontSize: 12, color: C.muted, marginBottom: 4, gap: 4 },
   sIconBtn:    { background: 'transparent', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 13, padding: '0 3px' },
-  sBtnAdd:     { background: 'transparent', color: C.accent, border: `1px dashed ${C.accent}`, padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer' },
+  sBtnAdd:     { background: 'transparent', color: C.accent, border: `1px dashed ${C.accent}`, padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' },
   sBtnBlk:     { background: C.card, border: `1px solid ${C.border}`, color: C.text, padding: '7px 10px', borderRadius: 7, fontSize: 12, cursor: 'pointer', textAlign: 'left' },
   pgRow:       { display: 'flex', alignItems: 'center', gap: 3, padding: '6px 8px', borderRadius: 7, cursor: 'pointer', marginBottom: 3 },
   pgRowSel:    { background: C.card },
-  colBtn:      { background: C.bg, border: `1px solid ${C.border}`, color: C.muted, padding: '4px 9px', borderRadius: 6, fontSize: 11, cursor: 'pointer' },
-  colBtnSel:   { background: C.accent, borderColor: C.accent, color: '#fff', fontWeight: 600 },
+  colBtn:      { background: C.bg, border: `1px solid ${C.border}`, color: C.muted, padding: '4px 9px', borderRadius: 6, fontSize: 12, cursor: 'pointer' },
+  colBtnSel:   { background: C.accent, borderColor: C.accent, color: 'var(--primary-fg)', fontWeight: 600 },
 
-  canvas:      { overflowY: 'auto', background: '#1a1a2e', padding: '28px 0' },
+  canvas:      { overflowY: 'auto', background: 'var(--background)', padding: '28px 0' },
   canvasInner: { display: 'flex', flexDirection: 'column', alignItems: 'center' },
-  pgLabel:     { width: 794, display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#6b7490', marginBottom: 6, padding: '0 4px' },
+  pgLabel:     { width: 794, display: 'flex', justifyContent: 'space-between', fontSize: 12, color: C.muted, marginBottom: 6, padding: '0 4px' },
 };
 
 // ─── Print CSS ───────────────────────────────────────────────────────────────

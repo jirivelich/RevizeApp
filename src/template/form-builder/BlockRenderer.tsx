@@ -267,7 +267,7 @@ function SignatureRender({ bl }: { bl: SignatureBlock }) {
 function PageBreakRender({ mode }: { mode: RenderMode }) {
   if (mode === 'edit') {
     return (
-      <div style={{ borderTop: '2px dashed #4f8ef7', textAlign: 'center', padding: '6px 0', margin: '12px 0', color: '#4f8ef7', fontSize: 11, letterSpacing: '0.1em' }}>
+      <div style={{ borderTop: '2px dashed var(--primary)', textAlign: 'center', padding: '6px 0', margin: '12px 0', color: 'var(--primary)', fontSize: 12, letterSpacing: '0.1em' }}>
         ⤓ ZALOMENÍ STRÁNKY ⤓
       </div>
     );

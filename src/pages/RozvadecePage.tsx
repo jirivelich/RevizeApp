@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Card, Input, Select, Modal, ConfirmDialog } from '../components/ui';
+import { Button, Card, Input, Select, Modal, ConfirmDialog, PageHeader, Badge, EmptyState } from '../components/ui';
 import { useOkruhyByRozvadec, useCreateOkruh, useUpdateOkruh, useDeleteOkruh, useCranicByRozvadec, useCreateChranic, useUpdateChranic, useDeleteChranic } from '../hooks/useQueries';
 import { rozvadecService } from '../services/database';
 import type { Okruh, Chranic } from '../types';
@@ -22,25 +22,25 @@ function EditableSelect({ label, value, onChange, options }: {
 
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-sm font-medium text-[var(--text-secondary)]">{label}</label>
+      <label className="text-xs font-semibold text-[var(--text-secondary)]">{label}</label>
       {showCustom ? (
         <div className="relative">
           <input
-            className="w-full px-3 py-2 pr-8 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]/50 text-xs"
+            className="w-full px-3 pr-8 min-h-[40px] border rounded-[var(--radius-md)] bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)] text-sm"
             value={value}
             onChange={(e) => onChange(e.target.value)}
             autoFocus
           />
           <button
             type="button"
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] text-xs"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] text-sm"
             onClick={() => { setShowCustom(false); }}
             title="Zpět na seznam"
           >↩</button>
         </div>
       ) : (
         <select
-          className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]/50 text-xs"
+          className="w-full px-3 min-h-[40px] border rounded-[var(--radius-md)] bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)] text-sm"
           value={options.includes(value) ? value : '__custom__'}
           onChange={(e) => {
             if (e.target.value === '__custom__') {
@@ -242,28 +242,28 @@ export function RozvadecDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">{rozvadec.nazev}</h1>
-          <p className="text-xs text-[var(--text-secondary)]">{rozvadec.oznaceni} • {rozvadec.umisteni}</p>
-        </div>
-        <Button size="sm" variant="secondary" onClick={() => navigate(`/revize/${revizeId}`)}>
-          ← Zpět na revizi
-        </Button>
-      </div>
+      <PageHeader
+        title={rozvadec.nazev}
+        subtitle={`${rozvadec.oznaceni} • ${rozvadec.umisteni}`}
+        actions={
+          <Button size="sm" variant="secondary" onClick={() => navigate(`/revize/${revizeId}`)}>
+            ← Zpět na revizi
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <p className="text-sm text-[var(--text-secondary)]">Typ rozváděče</p>
-          <p className="font-medium text-[var(--text)]">{rozvadec.typRozvadece || '—'}</p>
+        <Card accent="primary">
+          <p className="text-xs font-semibold text-[var(--text-secondary)]">Typ rozváděče</p>
+          <p className="text-lg font-bold text-[var(--text)]">{rozvadec.typRozvadece || '—'}</p>
         </Card>
-        <Card>
-          <p className="text-sm text-[var(--text-secondary)]">Stupeň krytí</p>
-          <p className="font-medium text-[var(--text)]">{rozvadec.stupenKryti}</p>
+        <Card accent="success">
+          <p className="text-xs font-semibold text-[var(--text-secondary)]">Stupeň krytí</p>
+          <p className="text-lg font-bold text-[var(--text)]">{rozvadec.stupenKryti}</p>
         </Card>
-        <Card>
-          <p className="text-sm text-[var(--text-secondary)]">Počet okruhů</p>
-          <p className="font-medium text-[var(--text)]">{okruhy.length}</p>
+        <Card accent="warning">
+          <p className="text-xs font-semibold text-[var(--text-secondary)]">Počet okruhů</p>
+          <p className="text-lg font-bold tabular-nums text-[var(--text)]">{okruhy.length}</p>
         </Card>
       </div>
 
@@ -278,27 +278,25 @@ export function RozvadecDetailPage() {
       >
         {okruhy.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
+            <table className="w-full text-[13px]">
+              <thead className="bg-[var(--bg-faint)]">
                 <tr className="border-b border-[var(--border)]">
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Č.</th>
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Název</th>
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Jistič</th>
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Vodič</th>
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Iz. odpor</th>
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Imp. smyčky</th>
-                  <th className="text-right py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Akce</th>
+                  <th className="text-left h-9 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">Č.</th>
+                  <th className="text-left h-9 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">Název</th>
+                  <th className="text-left h-9 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">Jistič</th>
+                  <th className="text-left h-9 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">Vodič</th>
+                  <th className="text-left h-9 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">Iz. odpor</th>
+                  <th className="text-left h-9 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">Imp. smyčky</th>
+                  <th className="text-right h-9 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">Akce</th>
                 </tr>
               </thead>
               <tbody>
                 {[...okruhy].sort((a, b) => a.cislo - b.cislo).map((o) => (
-                  <tr key={o.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[var(--primary)] hover:bg-[var(--bg-hover)] group">
+                  <tr key={o.id} className="h-11 border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[var(--primary)] hover:bg-[var(--bg-hover)] group">
                     <td className="py-2 px-3 font-medium text-[var(--text)]">{o.cislo}</td>
                     <td className="py-2 px-3 text-[var(--text)]">{o.nazev}</td>
                     <td className="py-2 px-3">
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
-                        {o.jisticTyp}{o.jisticProud}
-                      </span>
+                      <Badge>{o.jisticTyp}{o.jisticProud}</Badge>
                     </td>
                     <td className="py-2 px-3 text-[var(--text-secondary)]">{o.vodic}</td>
                     <td className="py-2 px-3 text-[var(--text-secondary)]">
@@ -323,9 +321,7 @@ export function RozvadecDetailPage() {
             </table>
           </div>
         ) : (
-          <p className="text-center text-[var(--text-muted)] py-8">
-            Zatím žádné okruhy. Přidejte první kliknutím na tlačítko výše.
-          </p>
+          <EmptyState message="Zatím žádné okruhy. Přidejte první kliknutím na tlačítko výše." />
         )}
       </Card>
 
@@ -404,8 +400,8 @@ export function RozvadecDetailPage() {
                 />
               </div>
               <label className="flex items-center gap-1.5 pb-2 cursor-pointer select-none">
-                <input type="checkbox" checked={okruhFormData.impedanceSmyckyMax} onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmyckyMax: e.target.checked })} className="rounded border-[var(--checkbox-border)]" />
-                <span className="text-xs text-[var(--text-secondary)] whitespace-nowrap">max.</span>
+                <input type="checkbox" checked={okruhFormData.impedanceSmyckyMax} onChange={(e) => setOkruhFormData({ ...okruhFormData, impedanceSmyckyMax: e.target.checked })} className="h-4 w-4 rounded-[var(--radius-sm)] border-[var(--checkbox-border)] accent-[var(--primary)]" />
+                <span className="text-sm text-[var(--text-secondary)] whitespace-nowrap">max.</span>
               </label>
             </div>
           </div>
@@ -429,29 +425,27 @@ export function RozvadecDetailPage() {
       >
         {chranice.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
+            <table className="w-full text-[13px]">
+              <thead className="bg-[var(--bg-faint)]">
                 <tr className="border-b border-[var(--border)]">
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Č.</th>
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Název</th>
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Typ</th>
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Proud</th>
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">IΔn [mA]</th>
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Pólů</th>
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">IΔ [mA]</th>
-                  <th className="text-left py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">tA 1× [ms]</th>
-                  <th className="text-right py-2 px-3 font-medium text-[var(--text-secondary)] text-sm">Akce</th>
+                  <th className="text-left h-9 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">Č.</th>
+                  <th className="text-left h-9 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">Název</th>
+                  <th className="text-left h-9 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">Typ</th>
+                  <th className="text-left h-9 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">Proud</th>
+                  <th className="text-left h-9 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">IΔn [mA]</th>
+                  <th className="text-left h-9 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">Pólů</th>
+                  <th className="text-left h-9 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">IΔ [mA]</th>
+                  <th className="text-left h-9 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">tA 1× [ms]</th>
+                  <th className="text-right h-9 px-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">Akce</th>
                 </tr>
               </thead>
               <tbody>
                 {[...chranice].sort((a, b) => a.cislo - b.cislo).map((c) => (
-                  <tr key={c.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[var(--primary)] hover:bg-[var(--bg-hover)] group">
+                  <tr key={c.id} className="h-11 border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[var(--primary)] hover:bg-[var(--bg-hover)] group">
                     <td className="py-2 px-3 font-medium text-[var(--text)]">{c.cislo}</td>
                     <td className="py-2 px-3 text-[var(--text)]">{c.nazev}</td>
                     <td className="py-2 px-3">
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-[var(--bg-accent-badge)] text-[var(--primary)]">
-                        {c.typ}
-                      </span>
+                      <Badge variant="info">{c.typ}</Badge>
                     </td>
                     <td className="py-2 px-3 text-[var(--text-secondary)]">{c.proud}</td>
                     <td className="py-2 px-3 text-[var(--text-secondary)]">{c.citlivostMa}</td>
@@ -474,9 +468,7 @@ export function RozvadecDetailPage() {
             </table>
           </div>
         ) : (
-          <p className="text-center text-[var(--text-muted)] py-8">
-            Zatím žádné chraniče. Přidejte první kliknutím na tlačítko výše.
-          </p>
+          <EmptyState message="Zatím žádné chraniče. Přidejte první kliknutím na tlačítko výše." />
         )}
       </Card>
 
@@ -552,20 +544,20 @@ export function RozvadecDetailPage() {
 
           {/* Měřené hodnoty – společné pro všechny typy */}
           <div className="border-t border-[var(--border)] pt-3">
-            <p className="text-xs font-medium text-[var(--text-secondary)] mb-3">Měřené hodnoty</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)] mb-3">Měřené hodnoty</p>
             <div className="grid grid-cols-2 gap-3">
-              <label className="flex items-center gap-2 text-xs">
+              <label className="flex items-center gap-2 text-sm min-h-[32px]">
                 <input type="checkbox"
                   checked={!!cranicFormData.testovacitlacitko}
                   onChange={(e) => setCranicFormData({ ...cranicFormData, testovacitlacitko: e.target.checked || undefined })}
-                  className="rounded border-[var(--checkbox-border)]" />
+                  className="h-4 w-4 rounded-[var(--radius-sm)] border-[var(--checkbox-border)] accent-[var(--primary)]" />
                 <span>Testovací tlačítko ✓</span>
               </label>
-              <label className="flex items-center gap-2 text-xs">
+              <label className="flex items-center gap-2 text-sm min-h-[32px]">
                 <input type="checkbox"
                   checked={!!cranicFormData.nevybavovaci}
                   onChange={(e) => setCranicFormData({ ...cranicFormData, nevybavovaci: e.target.checked || undefined })}
-                  className="rounded border-[var(--checkbox-border)]" />
+                  className="h-4 w-4 rounded-[var(--radius-sm)] border-[var(--checkbox-border)] accent-[var(--primary)]" />
                 <span>Nevybavení při 0,5×IΔn ✓</span>
               </label>
             </div>
@@ -596,22 +588,22 @@ export function RozvadecDetailPage() {
                   <Input type="number" step="1" label="Čas odpojení tA při 2×IΔn [ms]"
                     value={cranicFormData.casOdpojeni2x ?? ''}
                     onChange={(e) => setCranicFormData({ ...cranicFormData, casOdpojeni2x: e.target.value ? parseFloat(e.target.value) : undefined })} />
-                  <label className="flex items-center gap-2 text-xs col-span-2">
+                  <label className="flex items-center gap-2 text-sm min-h-[32px] col-span-2">
                     <input type="checkbox"
                       checked={!!cranicFormData.zkouskaVypnuti2x}
                       onChange={(e) => setCranicFormData({ ...cranicFormData, zkouskaVypnuti2x: e.target.checked || undefined })}
-                      className="rounded border-[var(--checkbox-border)]" />
+                      className="h-4 w-4 rounded-[var(--radius-sm)] border-[var(--checkbox-border)] accent-[var(--primary)]" />
                     <span>Zkouška vypnutí 2×IΔn nárůstem proudu ✓</span>
                   </label>
                 </>
               )}
             </div>
             <div className="mt-3">
-              <label className="flex items-center gap-2 text-xs">
+              <label className="flex items-center gap-2 text-sm min-h-[32px]">
                 <input type="checkbox"
                   checked={!!cranicFormData.selektivita}
                   onChange={(e) => setCranicFormData({ ...cranicFormData, selektivita: e.target.checked || undefined })}
-                  className="rounded border-[var(--checkbox-border)]" />
+                  className="h-4 w-4 rounded-[var(--radius-sm)] border-[var(--checkbox-border)] accent-[var(--primary)]" />
                 <span>Selektivita (typ S/G) ✓</span>
               </label>
             </div>

@@ -60,10 +60,10 @@ function DraggableTask({ zakazka, onClick, overlay }: DraggableTaskProps) {
       ref={overlay ? undefined : setNodeRef}
       {...(overlay ? {} : listeners)}
       {...(overlay ? {} : attributes)}
-      className={`text-xs p-2 rounded-md border cursor-grab select-none transition-shadow
-        ${getPriorityColor(zakazka.priorita)} border-opacity-30
-        ${isDragging ? 'opacity-40' : 'hover:shadow-md'}
-        ${overlay ? 'shadow-xl ring-2 ring-blue-400 rotate-2' : ''}
+      className={`text-xs p-2 rounded-[var(--radius-md)] border border-[var(--border-medium)] cursor-grab select-none transition-colors
+        ${getPriorityColor(zakazka.priorita)}
+        ${isDragging ? 'opacity-40' : 'hover:border-[var(--border-strong)]'}
+        ${overlay ? 'shadow-[var(--shadow-lg)] ring-2 ring-[var(--primary)]' : ''}
       `}
       onClick={(e) => {
         if (!overlay) {
@@ -73,10 +73,10 @@ function DraggableTask({ zakazka, onClick, overlay }: DraggableTaskProps) {
       }}
     >
       <div className="font-medium truncate">{zakazka.nazev}</div>
-      <div className="text-[10px] opacity-70 truncate mt-0.5">
+      <div className="text-xs opacity-80 truncate mt-0.5">
         {zakazka.casPlanovany || '—'} • {zakazka.klient}
       </div>
-      <span className={`inline-block mt-1 px-1 py-0.5 rounded text-[9px] ${getStatusColor(zakazka.stav)}`}>
+      <span className={`inline-block mt-1 px-1.5 py-0.5 rounded-[var(--radius-sm)] text-xs ${getStatusColor(zakazka.stav)}`}>
         {zakazka.stav}
       </span>
     </div>
@@ -102,9 +102,9 @@ function DroppableSlot({ id, children, onClick, isToday, isCurrentHour }: Droppa
     <div
       ref={setNodeRef}
       className={`min-h-[60px] p-1 border-b border-r border-[var(--border)] transition-colors relative
-        ${isOver ? 'bg-blue-500/[0.12] ring-2 ring-blue-500/[0.40] ring-inset' : ''}
-        ${isToday ? 'bg-blue-500/[0.06]' : ''}
-        ${isCurrentHour ? 'border-l-2 border-l-blue-500' : ''}
+        ${isOver ? 'bg-[var(--bg-accent)] ring-2 ring-[var(--primary)] ring-inset' : ''}
+        ${isToday ? 'bg-[var(--bg-accent)]' : ''}
+        ${isCurrentHour ? 'border-l-2 border-l-[var(--primary)]' : ''}
       `}
       onClick={onClick}
     >
@@ -132,11 +132,11 @@ function WeekDropZone({ id, label, direction, visible }: WeekDropZoneProps) {
       ref={setNodeRef}
       className={`fixed ${direction === 'left' ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 z-50
         w-16 h-48 flex items-center justify-center
-        rounded-${direction === 'left' ? 'r' : 'l'}-xl
+        ${direction === 'left' ? 'rounded-r-[var(--radius-xl)]' : 'rounded-l-[var(--radius-xl)]'}
         transition-all duration-200 cursor-default
         ${isOver
-          ? 'bg-slate-700 text-white shadow-2xl w-24'
-          : 'bg-[var(--bg-hover)] text-[var(--text)] shadow-lg border border-[var(--border-strong)]'
+          ? 'bg-[var(--primary)] text-[var(--primary-fg)] shadow-[var(--shadow-lg)] w-24'
+          : 'bg-[var(--bg-hover)] text-[var(--text)] shadow-[var(--shadow-lg)] border border-[var(--border-strong)]'
         }
       `}
     >
@@ -276,23 +276,23 @@ export function WeekView({ zakazky: allZakazky, onZakazkaClick, onSlotClick, onM
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={goToPreviousWeek}
-          className="p-2 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
+          className="p-2 min-w-[40px] min-h-[40px] rounded-[var(--radius-md)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
           title="Předchozí týden"
         >
           ◀
         </button>
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-[var(--text)]">{weekLabel}</h2>
+          <h2 className="text-base font-semibold text-[var(--text)]">{weekLabel}</h2>
           <button
             onClick={goToToday}
-            className="text-xs px-2 py-1 rounded bg-[var(--bg-accent-badge)] text-[var(--primary)] hover:bg-blue-500/[0.25] transition-colors"
+            className="text-xs font-semibold px-3 h-8 rounded-[var(--radius-md)] bg-[var(--bg-accent-badge)] text-[var(--primary)] hover:brightness-110 transition-colors"
           >
             Tento týden
           </button>
         </div>
         <button
           onClick={goToNextWeek}
-          className="p-2 rounded-lg hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
+          className="p-2 min-w-[40px] min-h-[40px] rounded-[var(--radius-md)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
           title="Další týden"
         >
           ▶
@@ -311,7 +311,7 @@ export function WeekView({ zakazky: allZakazky, onZakazkaClick, onSlotClick, onM
                 <div
                   key={i}
                   className={`sticky top-0 z-10 p-2 text-center border-b border-r border-[var(--border)] ${
-                    isToday_ ? 'bg-[var(--bg-accent-badge)]' : 'bg-[var(--background)]'
+                    isToday_ ? 'bg-[var(--bg-accent)]' : 'bg-[var(--background)]'
                   }`}
                 >
                   <div className="text-xs text-[var(--text-muted)]">{DAY_NAMES_SHORT[i]}</div>
@@ -320,7 +320,7 @@ export function WeekView({ zakazky: allZakazky, onZakazkaClick, onSlotClick, onM
                   }`}>
                     {day.getDate()}
                   </div>
-                  <div className="text-[10px] text-[var(--text-secondary)] hidden sm:block">{DAY_NAMES[i]}</div>
+                  <div className="text-xs text-[var(--text-secondary)] hidden sm:block">{DAY_NAMES[i]}</div>
                 </div>
               );
             })}

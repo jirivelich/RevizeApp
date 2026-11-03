@@ -4,22 +4,38 @@ import { useNotifications } from '../hooks/useNotifications';
 import { useBrowserNotifications } from '../hooks/useBrowserNotifications';
 import { useNastaveni } from '../hooks/useQueries';
 import { NotificationPanel } from './NotificationPanel';
+import { BottomSheet } from './ui';
+import { Icon } from './icons';
 
 interface Props {
 }
 
+/** true, pokud je viewport užší než lg (1024 px) – panel se pak zobrazí jako spodní sheet. */
+function useIsMobile(): boolean {
+  const query = '(max-width: 1023px)';
+  const [mobile, setMobile] = useState(() => typeof window !== 'undefined' && window.matchMedia(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const handler = () => setMobile(mq.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return mobile;
+}
+
 export function NotificationBell({ strongText = false }: Props & { strongText?: boolean }) {
   const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
   const { notifications, count } = useNotifications();
   const { data: nastaveni } = useNastaveni();
   useBrowserNotifications(notifications, !!nastaveni?.browserNotificationsEnabled);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Zavření klikem mimo
+  // Zavření klikem mimo a klávesou Escape (jen desktopový popover; sheet řeší BottomSheet)
   useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
+    if (!open || isMobile) return;
+    const onMouseDown = (e: MouseEvent) => {
       if (
         panelRef.current && !panelRef.current.contains(e.target as Node) &&
         buttonRef.current && !buttonRef.current.contains(e.target as Node)
@@ -27,30 +43,27 @@ export function NotificationBell({ strongText = false }: Props & { strongText?: 
         setOpen(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
-
-  // Zavření klávesou Escape
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [open]);
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open, isMobile]);
 
   // Výpočet pozice panelu z pozice tlačítka
   const [panelStyle, setPanelStyle] = useState<React.CSSProperties>({});
   useEffect(() => {
-    if (!open || !buttonRef.current) return;
+    if (!open || isMobile || !buttonRef.current) return;
     const rect = buttonRef.current.getBoundingClientRect();
     setPanelStyle({
       position: 'fixed',
       left: rect.right + 8,
-      bottom: window.innerHeight - rect.bottom - 8,
+      bottom: Math.max(8, window.innerHeight - rect.bottom - 8),
       zIndex: 50,
     });
-  }, [open]);
+  }, [open, isMobile]);
 
   const criticalCount = notifications.filter(n => n.severity === 'critical').length;
   const badgeCount = count > 9 ? '9+' : String(count);
@@ -61,27 +74,30 @@ export function NotificationBell({ strongText = false }: Props & { strongText?: 
         ref={buttonRef}
         onClick={() => setOpen(v => !v)}
         aria-label={`Upozornění${count > 0 ? ` (${count})` : ''}`}
-        className={`relative w-full flex items-center gap-2.5 px-3 py-2 rounded text-[13px] transition-colors sidebar-nav-item ${strongText ? 'font-bold' : 'font-medium'}`}
-        style={{ color: 'var(--nav-text)' }}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        className={`relative w-full flex items-center gap-2.5 h-[38px] px-2.5 rounded-[var(--radius-md)] text-[13px] text-[var(--nav-text)] hover:bg-[var(--bg-hover)] hover:text-[var(--text)] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring-color)] ${strongText ? 'font-semibold' : 'font-medium'}`}
       >
-        <span className="relative flex-shrink-0">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-          {count > 0 && (
-            <span className={`absolute -top-1.5 -right-1.5 min-w-[16px] h-4 flex items-center justify-center rounded-full text-[9px] font-bold text-white leading-none px-0.5 ${criticalCount > 0 ? 'bg-[var(--danger)]' : 'bg-amber-500'}`}>
-              {badgeCount}
-            </span>
-          )}
-        </span>
+        <Icon name="bell" size={20} />
         <span>Upozornění</span>
+        {count > 0 && (
+          <span className={`ml-auto min-w-[18px] h-[18px] px-[5px] inline-grid place-items-center rounded-full text-[11px] font-bold leading-none text-[var(--background)] ${criticalCount > 0 ? 'bg-[var(--danger)]' : 'bg-[var(--warning)]'}`}>
+            {badgeCount}
+          </span>
+        )}
       </button>
 
-      {open && createPortal(
+      {open && !isMobile && createPortal(
         <div ref={panelRef} style={panelStyle}>
           <NotificationPanel notifications={notifications} onClose={() => setOpen(false)} />
         </div>,
         document.body
+      )}
+
+      {isMobile && (
+        <BottomSheet isOpen={open} onClose={() => setOpen(false)} title="Upozornění">
+          <NotificationPanel notifications={notifications} onClose={() => setOpen(false)} embedded />
+        </BottomSheet>
       )}
     </>
   );

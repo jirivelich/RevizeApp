@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Modal, ConfirmDialog } from '../../components/ui';
+import { Button, Modal, ConfirmDialog, PageHeader } from '../../components/ui';
 import { useRevize, useZakazky, useCreateZakazka, useUpdateZakazka, useDeleteZakazka, useCreateRevize, useZakaznici } from '../../hooks/useQueries';
 import type { Zakazka, KategorieRevize } from '../../types';
 import { emptyFormData, zakazkaToFormData } from './utils';
@@ -219,74 +219,76 @@ export function PlanovaniPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-bold text-[var(--text)]">Plánování</h1>
-          <p className="text-xs text-[var(--text-secondary)]">Správa zakázek a plánování revizí</p>
-        </div>
-        <div className="flex gap-2">
-          <div className="flex rounded-lg overflow-hidden border border-[var(--border-input)]">
+      <PageHeader
+        title="Plánování"
+        subtitle="Správa zakázek a plánování revizí"
+        actions={
+          <div className="flex gap-2 flex-wrap justify-end">
+            <div className="flex rounded-[var(--radius-md)] overflow-hidden border border-[var(--border-input)]">
             <button
               onClick={() => setViewMode('list')}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
+              aria-pressed={viewMode === 'list'}
+              className={`px-4 min-h-[40px] text-sm font-semibold transition-colors ${
                 viewMode === 'list'
-                  ? 'bg-[var(--primary)] text-white'
-                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
+                  ? 'bg-[var(--bg-accent)] text-[var(--primary)]'
+                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
               }`}
             >
               Seznam
             </button>
             <button
               onClick={() => setViewMode('week')}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
+              aria-pressed={viewMode === 'week'}
+              className={`px-4 min-h-[40px] text-sm font-semibold transition-colors ${
                 viewMode === 'week'
-                  ? 'bg-[var(--primary)] text-white'
-                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
+                  ? 'bg-[var(--bg-accent)] text-[var(--primary)]'
+                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
               }`}
             >
               Týden
             </button>
             <button
               onClick={() => setViewMode('calendar')}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
+              aria-pressed={viewMode === 'calendar'}
+              className={`px-4 min-h-[40px] text-sm font-semibold transition-colors ${
                 viewMode === 'calendar'
-                  ? 'bg-[var(--primary)] text-white'
-                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]'
+                  ? 'bg-[var(--bg-accent)] text-[var(--primary)]'
+                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
               }`}
             >
               Měsíc
             </button>
-
+            </div>
+            <Button onClick={() => openCreate()}>+ Nová zakázka</Button>
+            <Button
+              variant="secondary"
+              onClick={handleGcSync}
+              disabled={gcSyncing}
+              title="Synchronizovat zakázky do Google Kalendáře"
+            >
+              <svg className="w-4 h-4 mr-1.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 4v6h-6M1 20v-6h6"/>
+                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+              </svg>
+              {gcSyncing ? 'Sync...' : 'Google Kal.'}
+            </Button>
           </div>
-          <Button onClick={() => openCreate()}>+ Nová zakázka</Button>
-          <Button
-            variant="secondary"
-            onClick={handleGcSync}
-            disabled={gcSyncing}
-            title="Synchronizovat zakázky do Google Kalendáře"
-          >
-            <svg className="w-4 h-4 mr-1.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M23 4v6h-6M1 20v-6h6"/>
-              <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
-            </svg>
-            {gcSyncing ? 'Sync...' : 'Google Kal.'}
-          </Button>
-        </div>
-      </div>
+        }
+      />
       {gcMessage && (
-        <div className={`text-sm px-4 py-2 rounded-lg ${
+        <div className={`text-sm px-4 py-2 rounded-[var(--radius-md)] ${
           gcMessage.startsWith('✅') ? 'bg-[var(--success-bg)] text-[var(--success-text)]' : 'bg-[var(--danger-bg)] text-[var(--danger-text)]'
         }`}>
           {gcMessage}
         </div>
       )}
       {revizeError && (
-        <div className="text-sm px-4 py-2 rounded-lg bg-[var(--danger-bg)] text-[var(--danger-text)]">
+        <div className="text-sm px-4 py-2 rounded-[var(--radius-md)] bg-[var(--danger-bg)] text-[var(--danger-text)]">
           {revizeError}
         </div>
       )}
       {mutationError && (
-        <div className="text-sm px-4 py-2 rounded-lg bg-[var(--danger-bg)] text-[var(--danger-text)]">
+        <div className="text-sm px-4 py-2 rounded-[var(--radius-md)] bg-[var(--danger-bg)] text-[var(--danger-text)]">
           {mutationError}
         </div>
       )}
@@ -358,16 +360,16 @@ export function PlanovaniPage() {
                 key={kat.value}
                 type="button"
                 onClick={() => handleKategorieSelected(kat.value)}
-                className="flex items-center gap-4 p-4 rounded-lg border-2 border-[var(--border-medium)] hover:border-[var(--checkbox-border)] hover:bg-[var(--bg-input)] transition-all text-left group"
+                className="flex items-center gap-4 p-4 rounded-[var(--radius-lg)] border border-[var(--border-medium)] hover:border-[var(--primary)] hover:bg-[var(--bg-accent)] transition-colors text-left group"
               >
-                <div className="flex-shrink-0 text-[var(--text-secondary)] group-hover:text-[var(--text)] transition-colors">
+                <div className="flex-shrink-0 text-[var(--text-secondary)] group-hover:text-[var(--primary)] transition-colors">
                   {kat.icon}
                 </div>
                 <div>
-                  <p className="font-semibold text-[var(--text)] group-hover:text-white">{kat.label}</p>
+                  <p className="font-semibold text-[var(--text)]">{kat.label}</p>
                   <p className="text-xs text-[var(--text-secondary)] mt-0.5">{kat.popis}</p>
                 </div>
-                <div className="flex-shrink-0 ml-auto text-[var(--text)] group-hover:text-[var(--text-muted)]">
+                <div className="flex-shrink-0 ml-auto text-[var(--text-muted)] group-hover:text-[var(--primary)]">
                   <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                   </svg>

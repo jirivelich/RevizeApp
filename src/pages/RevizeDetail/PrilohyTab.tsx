@@ -316,7 +316,7 @@ export function PrilohyTab({ revizeId }: PrilohyTabProps) {
               <label className="flex items-center gap-2 text-xs cursor-pointer select-none">
                 <input type="checkbox" checked={!jeInterni(editing)}
                   onChange={(e) => setEditing({ ...editing, vTisku: e.target.checked })}
-                  className="rounded border-[var(--checkbox-border)]" />
+                  className="w-4 h-4 accent-[var(--primary)]" />
                 <span>Zahrnout do tisku revize</span>
               </label>
             )}

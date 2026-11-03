@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Input, Select, Modal, ConfirmDialog } from '../components/ui';
+import { Button, Card, Input, Select, Modal, ConfirmDialog, PageHeader, EmptyState } from '../components/ui';
 import { useRevize } from '../hooks/useQueries';
 import { mistnostService } from '../services/database';
 import type { Mistnost } from '../types';
@@ -80,55 +80,49 @@ export function MistnostiPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">Místnosti</h1>
-          <p className="text-xs text-[var(--text-secondary)]">Evidence místností</p>
-        </div>
-        <Button size="sm" onClick={() => { resetForm(); setIsModalOpen(true); }}>
-          <span className="sm:hidden text-lg leading-none">+</span>
-          <span className="hidden sm:inline">+ Nová místnost</span>
-        </Button>
-      </div>
+      <PageHeader
+        title="Místnosti"
+        subtitle="Evidence místností"
+        actions={
+          <Button size="sm" onClick={() => { resetForm(); setIsModalOpen(true); }}>
+            <span className="sm:hidden text-lg leading-none">+</span>
+            <span className="hidden sm:inline">+ Nová místnost</span>
+          </Button>
+        }
+      />
 
-      <Card>
-        {mistnosti.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mistnosti.map((m) => (
-              <div
-                key={m.id}
-                className="p-4 rounded-lg bg-[var(--bg-surface)] border border-[var(--border)]"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-medium text-[var(--text)]">{m.nazev}</h3>
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => handleEdit(m)}
-                      className="text-xs text-[var(--text-secondary)] hover:text-[var(--text)]"
-                    >
-                      Upravit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(m)}
-                      className="text-xs text-[var(--text-secondary)] hover:text-[var(--danger-text)]"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-                <div className="space-y-1 text-sm">
-                  {m.patro && <p className="text-[var(--text-secondary)]">Patro: {m.patro}</p>}
-                  <p className="text-xs text-[var(--text-muted)] mt-2">{m.revizeNazev}</p>
+      {mistnosti.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {mistnosti.map((m) => (
+            <Card key={m.id} accent="primary">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <h3 className="text-sm font-semibold text-[var(--text)]">{m.nazev}</h3>
+                <div className="flex gap-1 shrink-0">
+                  <button
+                    onClick={() => handleEdit(m)}
+                    className="min-h-[32px] px-2 rounded-[var(--radius-md)] text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text)]"
+                  >
+                    Upravit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(m)}
+                    aria-label="Smazat místnost"
+                    className="min-h-[32px] min-w-[32px] rounded-[var(--radius-md)] text-sm text-[var(--text-secondary)] hover:bg-[var(--danger-bg)] hover:text-[var(--danger-text)]"
+                  >
+                    ×
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-center text-[var(--text-muted)] py-8">
-            Žádné místnosti. Přidejte první kliknutím na tlačítko výše.
-          </p>
-        )}
-      </Card>
+              <div className="space-y-1 text-sm">
+                {m.patro && <p className="text-[var(--text-secondary)]">Patro: {m.patro}</p>}
+                <p className="text-xs text-[var(--text-muted)] mt-2">{m.revizeNazev}</p>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <EmptyState message="Žádné místnosti. Přidejte první kliknutím na tlačítko výše." />
+      )}
 
       <Modal
         isOpen={isModalOpen}

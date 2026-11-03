@@ -732,7 +732,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
   return (
     <div className="space-y-2">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2 p-2 bg-slate-50 rounded-lg border border-[var(--border-input)]">
+      <div className="flex flex-wrap items-center gap-2 p-2 bg-[var(--bg-faint)] rounded-lg border border-[var(--border-input)]">
         {/* Tools */}
         <div className="flex flex-wrap gap-1">
           {toolDefs.map(td => (
@@ -743,14 +743,14 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
               onClick={() => { setTool(td.id); if (td.id !== 'select') { setSelectedId(null); selRef.current = null; } }}
               className={`px-2.5 py-1.5 text-xs font-medium rounded border transition-colors ${
                 tool === td.id
-                  ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                  : 'bg-white text-[var(--text-secondary)] border-[var(--border-input)] hover:border-[var(--border-strong)]'
+                  ? 'bg-[var(--primary)] text-[var(--primary-fg)] border-[var(--primary)]'
+                  : 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border-input)] hover:border-[var(--border-strong)]'
               }`}
             >{td.label}</button>
           ))}
         </div>
 
-        <div className="w-px h-6 bg-slate-300 mx-1 hidden sm:block" />
+        <div className="w-px h-6 bg-[var(--border-strong)] mx-1 hidden sm:block" />
 
         {/* Color */}
         <div className="flex items-center gap-1">
@@ -758,7 +758,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
           {['#1a1a1a', '#c00000', '#1d4ed8', '#166534'].map(c => (
             <button key={c} type="button" title={c} onClick={() => { setColor(c); styleSelected({ color: c }, true); }}
               style={{ backgroundColor: c }}
-              className={`w-5 h-5 rounded-full border-2 flex-shrink-0 ${color === c ? 'border-slate-700 scale-110' : 'border-white shadow-sm'}`}
+              className={`w-5 h-5 rounded-full border-2 flex-shrink-0 ${color === c ? 'border-[var(--text)] scale-110' : 'border-[var(--surface)]'}`}
             />
           ))}
           <input type="color" value={color}
@@ -767,7 +767,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
             className="w-6 h-6 rounded border border-[var(--border-input)] cursor-pointer p-0" title="Vlastní barva" />
         </div>
 
-        <div className="w-px h-6 bg-slate-300 mx-1 hidden sm:block" />
+        <div className="w-px h-6 bg-[var(--border-strong)] mx-1 hidden sm:block" />
 
         {/* Line width */}
         <div className="flex items-center gap-1">
@@ -775,23 +775,23 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
           {([1, 2, 4] as const).map(w => (
             <button key={w} type="button" onClick={() => { setLineWidth(w); styleSelected({ width: w }, true); }}
               className={`px-2 py-1 text-xs rounded border ${
-                lineWidth === w ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-[var(--text-secondary)] border-[var(--border-input)] hover:border-[var(--border-strong)]'
+                lineWidth === w ? 'bg-[var(--primary)] text-[var(--primary-fg)] border-[var(--primary)]' : 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border-input)] hover:border-[var(--border-strong)]'
               }`}
             >{w === 1 ? 'tenká' : w === 2 ? 'střední' : 'silná'}</button>
           ))}
         </div>
 
-        <div className="w-px h-6 bg-slate-300 mx-1 hidden sm:block" />
+        <div className="w-px h-6 bg-[var(--border-strong)] mx-1 hidden sm:block" />
 
         {/* Rotation controls — for symbol placement or selected symbol */}
         {showRotCtrls && (
           <div className="flex items-center gap-1">
             <span className="text-xs text-[var(--text-muted)]">Otočení:</span>
             <button type="button" onClick={() => rotateBtn(-90)} title="Otočit doleva o 90°"
-              className="px-2 py-1 text-xs rounded border bg-white text-[var(--text-secondary)] border-[var(--border-input)] hover:border-[var(--border-strong)]">↺</button>
+              className="px-2 py-1 text-xs rounded border bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border-input)] hover:border-[var(--border-strong)]">↺</button>
             <span className="text-xs font-medium text-[var(--text-secondary)] w-8 text-center">{rotDisplay}°</span>
             <button type="button" onClick={() => rotateBtn(90)} title="Otočit doprava o 90°"
-              className="px-2 py-1 text-xs rounded border bg-white text-[var(--text-secondary)] border-[var(--border-input)] hover:border-[var(--border-strong)]">↻</button>
+              className="px-2 py-1 text-xs rounded border bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border-input)] hover:border-[var(--border-strong)]">↻</button>
           </div>
         )}
         {tool === 'select' && selectedId && (
@@ -802,7 +802,7 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
 
         <div className="ml-auto flex gap-1">
           <button type="button" onClick={undo} disabled={historyCount <= 1}
-            className="px-2.5 py-1.5 text-xs font-medium rounded border bg-white text-[var(--text-secondary)] border-[var(--border-input)] hover:border-[var(--border-strong)] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-2.5 py-1.5 text-xs font-medium rounded border bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border-input)] hover:border-[var(--border-strong)] disabled:opacity-40 disabled:cursor-not-allowed"
             title="Zpět">↩ Zpět</button>
           <button type="button" onClick={clearAll}
             className="px-2.5 py-1.5 text-xs font-medium rounded border bg-white text-[var(--danger-text)] border-[var(--danger)]/25 hover:bg-[var(--danger-bg)]"
@@ -859,11 +859,11 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-4 p-2 bg-slate-50 rounded border border-slate-100 text-xs text-[var(--text-muted)]">
+      <div className="flex flex-wrap gap-4 p-2 bg-[var(--bg-faint)] rounded border border-[var(--border)] text-xs text-[var(--text-muted)]">
         <span>Legenda LPS (ČSN EN 62305):</span>
         <span className="font-medium text-[var(--primary)]">J = Jímač</span>
-        <span className="font-medium text-green-800">S = Svod</span>
-        <span className="font-medium text-orange-900">E = Uzemnění</span>
+        <span className="font-medium text-[var(--success-text)]">S = Svod</span>
+        <span className="font-medium text-[var(--warning-text)]">E = Uzemnění</span>
         <span>━ = Vedení</span>
         {tool === 'select' && selectedSym && <span className="text-[var(--primary)] font-medium">Symbol vybrán – táhněte nebo otočte ↺↻, smažte ✕</span>}
         {tool === 'select' && selectedShape && <span className="text-[var(--primary)] font-medium">Objekt vybrán – táhněte pro přesun{selectedShape.kind !== 'text' ? ', úchyty mění velikost' : ''}, barvu a tloušťku změníte v liště, smažte ✕ / Delete</span>}

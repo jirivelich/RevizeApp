@@ -35,14 +35,14 @@ export function EditPage({ pg, pi, selBlk, onSelBlk, doc }: EditPageProps) {
         onClick={() => onSelBlk(bi)}
         style={{
           position: 'relative', cursor: 'pointer',
-          outline: isSel ? '2px solid #4f8ef7' : '2px solid transparent',
+          outline: isSel ? '2px solid var(--primary)' : '2px solid transparent',
           borderRadius: 3, transition: 'outline .12s',
           flex: style ? '1 1 0' : undefined,
           ...style,
         }}
       >
         {isSel && (
-          <div style={{ position: 'absolute', top: -10, right: -2, background: '#4f8ef7', color: '#fff', fontSize: 10, padding: '1px 7px', borderRadius: 3, zIndex: 10, pointerEvents: 'none' }}>
+          <div style={{ position: 'absolute', top: -10, right: -2, background: 'var(--primary)', color: 'var(--primary-fg)', fontSize: 12, padding: '1px 7px', borderRadius: 3, zIndex: 10, pointerEvents: 'none' }}>
             {label}
           </div>
         )}
@@ -54,7 +54,7 @@ export function EditPage({ pg, pi, selBlk, onSelBlk, doc }: EditPageProps) {
   return (
     <div style={{
       ...DS.page(pg.overflow, pg.margins),
-      boxShadow: '0 6px 40px rgba(0,0,0,0.55)',
+      boxShadow: 'var(--shadow-lg)',
       position: 'relative',
     }}>
       {pi === 0 && (

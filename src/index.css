@@ -176,7 +176,19 @@ body {
   font-family: 'Inter Variable', 'Inter', 'Segoe UI', system-ui, sans-serif;
   background-color: var(--background);
   color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
+
+::selection { background: var(--bg-accent-badge); }
+
+/* Jednotný focus pro klávesnici */
+:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; }
 
 #root {
   min-height: 100vh;
@@ -194,7 +206,8 @@ button, a, [role="button"] {
 /* Scrollbar styling */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
+::-webkit-scrollbar-thumb { background: var(--border-input); border-radius: 10px; }
+* { scrollbar-width: thin; scrollbar-color: var(--border-input) transparent; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
 /* PDF Designer - Resize handles */
@@ -207,10 +220,9 @@ button, a, [role="button"] {
   width: 12px;
   height: 12px;
   background: var(--primary);
-  border: 2px solid white;
+  border: 2px solid var(--surface);
   border-radius: 50%;
   z-index: 50;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
 .react-resizable-handle:hover {

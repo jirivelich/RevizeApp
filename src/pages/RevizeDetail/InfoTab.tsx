@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { KATEGORIE_LABELS } from '../../types';
 import type { Revize, Firma, Nastaveni, Zakaznik, KategorieRevize } from '../../types';
+import { Input, Select } from '../../components/ui';
 import { TW, SectionHeader, Field } from './tw';
 
 interface InfoTabProps {
@@ -34,13 +35,7 @@ export function InfoTab({
             <Field label="Číslo revize">
               <input className={TW.inputDisabled} value={formData.cisloRevize || ''} disabled />
             </Field>
-            <Field label="Typ revize">
-              <select className={TW.select} value={formData.typRevize || ''} onChange={(e) => { setFormData({ ...formData, typRevize: e.target.value as any }); saveNow?.(); }}>
-                <option value="pravidelná">Pravidelná</option>
-                <option value="výchozí">Výchozí</option>
-                <option value="mimořádná">Mimořádná</option>
-              </select>
-            </Field>
+            <Select label="Typ revize" value={formData.typRevize || ''} onChange={(e) => { setFormData({ ...formData, typRevize: e.target.value as any }); saveNow?.(); }} options={[{ value: "pravidelná", label: "Pravidelná" }, { value: "výchozí", label: "Výchozí" }, { value: "mimořádná", label: "Mimořádná" }]} />
             <Field label="Kategorie">
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-[var(--bg-hover)] text-[var(--text)] border border-[var(--border-medium)]">
                 {KATEGORIE_LABELS[formData.kategorieRevize as KategorieRevize]?.plny ?? 'Elektro'}
@@ -50,9 +45,7 @@ export function InfoTab({
               <label className={TW.label}>Název objektu</label>
               <input className={TW.input} value={formData.nazev || ''} onChange={(e) => setFormData({ ...formData, nazev: e.target.value })} />
             </div>
-            <Field label="Adresa objektu">
-              <input className={TW.input} value={formData.adresa || ''} onChange={(e) => setFormData({ ...formData, adresa: e.target.value })} />
-            </Field>
+            <Input label="Adresa objektu" value={formData.adresa || ''} onChange={(e) => setFormData({ ...formData, adresa: e.target.value })} />
           </div>
         </div>
       </div>
@@ -62,9 +55,7 @@ export function InfoTab({
         <SectionHeader num="02">Objednatel / Provozovatel</SectionHeader>
         <div className="p-4 space-y-3">
           <div className={TW.grid2}>
-            <Field label="Objednatel">
-              <input className={TW.input} placeholder="Nebo vyberte zákazníka níže" value={formData.objednatel || ''} onChange={(e) => setFormData({ ...formData, objednatel: e.target.value })} />
-            </Field>
+            <Input label="Objednatel" placeholder="Nebo vyberte zákazníka níže" value={formData.objednatel || ''} onChange={(e) => setFormData({ ...formData, objednatel: e.target.value })} />
             <Field label="Ze zákazníků">
               <select className={TW.selectFull} value={selectedZakaznikId} onChange={(e) => {
                 const zakaznikId = e.target.value;
@@ -96,25 +87,19 @@ export function InfoTab({
         <SectionHeader num="03">Termíny a data</SectionHeader>
         <div className="p-4">
           <div className={TW.grid3}>
-            <Field label="Datum revize">
-              <input type="date" className={TW.input} value={formData.datum || ''} onChange={(e) => setFormData({ ...formData, datum: e.target.value })} />
-            </Field>
-            <Field label="Datum dokončení">
-              <input type="date" className={TW.input} value={formData.datumDokonceni || ''} onChange={(e) => setFormData({ ...formData, datumDokonceni: e.target.value })} />
-            </Field>
-            <Field label="Datum vypracování">
-              <input type="date" className={TW.input} value={formData.datumVypracovani || ''} onChange={(e) => setFormData({ ...formData, datumVypracovani: e.target.value })} />
-            </Field>
+            <Input label="Datum revize" type="date" value={formData.datum || ''} onChange={(e) => setFormData({ ...formData, datum: e.target.value })} />
+            <Input label="Datum dokončení" type="date" value={formData.datumDokonceni || ''} onChange={(e) => setFormData({ ...formData, datumDokonceni: e.target.value })} />
+            <Input label="Datum vypracování" type="date" value={formData.datumVypracovani || ''} onChange={(e) => setFormData({ ...formData, datumVypracovani: e.target.value })} />
             <Field label="Lhůta platnosti">
               {formData.kategorieRevize === 'stroje' ? (
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <label className="flex items-center gap-1 cursor-pointer text-xs">
-                      <input type="radio" name="lhutaMode" checked={!formData.lhutaText} onChange={() => setFormData({ ...formData, lhutaText: null as any })} />
+                      <input type="radio" className="accent-[var(--primary)]" name="lhutaMode" checked={!formData.lhutaText} onChange={() => setFormData({ ...formData, lhutaText: null as any })} />
                       Výběr
                     </label>
                     <label className="flex items-center gap-1 cursor-pointer text-xs">
-                      <input type="radio" name="lhutaMode" checked={!!formData.lhutaText} onChange={() => setFormData({ ...formData, lhutaText: ' ' })} />
+                      <input type="radio" className="accent-[var(--primary)]" name="lhutaMode" checked={!!formData.lhutaText} onChange={() => setFormData({ ...formData, lhutaText: ' ' })} />
                       Vlastní text
                     </label>
                   </div>
@@ -146,27 +131,8 @@ export function InfoTab({
         <SectionHeader num="04">Stav a výsledek revize</SectionHeader>
         <div className="p-4">
           <div className={TW.grid2}>
-            <Field label="Stav">
-              <select className={TW.select} value={formData.stav || ''} onChange={(e) => {
-                const newStav = e.target.value;
-                let newData: Partial<Revize> = { ...formData, stav: newStav as any };
-                if (newStav === 'dokončeno' && revize.stav !== 'dokončeno') {
-                  const baseDate = formData.datumDokonceni ? new Date(formData.datumDokonceni) : new Date();
-                  const platnostDo = new Date(baseDate);
-                  platnostDo.setMonth(platnostDo.getMonth() + (formData.termin || 36));
-                  newData = { ...newData, datumPlatnosti: platnostDo.toISOString().split('T')[0], datumVypracovani: new Date().toISOString().split('T')[0] };
-                }
-                setFormData(newData);
-                saveNow?.();
-              }}>
-                <option value="rozpracováno">Rozpracováno</option><option value="dokončeno">Dokončeno</option><option value="schváleno">Schváleno</option>
-              </select>
-            </Field>
-            <Field label="Výsledek">
-              <select className={TW.select} value={formData.vysledek || ''} onChange={(e) => { setFormData({ ...formData, vysledek: e.target.value as any }); saveNow?.(); }}>
-                <option value="">-- Nevyplněno --</option><option value="schopno">Schopno provozu</option><option value="neschopno">Neschopno provozu</option>
-              </select>
-            </Field>
+            <Select label="Stav" value={formData.stav || ''} onChange={(e) => { const newStav = e.target.value; let newData: Partial<Revize> = { ...formData, stav: newStav as any }; if (newStav === 'dokončeno' && revize.stav !== 'dokončeno') { const baseDate = formData.datumDokonceni ? new Date(formData.datumDokonceni) : new Date(); const platnostDo = new Date(baseDate); platnostDo.setMonth(platnostDo.getMonth() + (formData.termin || 36)); newData = { ...newData, datumPlatnosti: platnostDo.toISOString().split('T')[0], datumVypracovani: new Date().toISOString().split('T')[0] }; } setFormData(newData); saveNow?.(); }} options={[{ value: "rozpracováno", label: "Rozpracováno" }, { value: "dokončeno", label: "Dokončeno" }, { value: "schváleno", label: "Schváleno" }]} />
+            <Select label="Výsledek" value={formData.vysledek || ''} onChange={(e) => { setFormData({ ...formData, vysledek: e.target.value as any }); saveNow?.(); }} options={[{ value: "", label: "-- Nevyplněno --" }, { value: "schopno", label: "Schopno provozu" }, { value: "neschopno", label: "Neschopno provozu" }]} />
           </div>
         </div>
       </div>
@@ -187,21 +153,13 @@ export function InfoTab({
             </select>
           </Field>
           <div className={TW.grid2}>
-            <Field label="Název firmy">
-              <input className={TW.input} placeholder="Ponechte prázdné → firma z nastavení" value={formData.firmaJmeno || ''} onChange={(e) => setFormData({ ...formData, firmaJmeno: e.target.value })} />
-            </Field>
-            <Field label="IČO">
-              <input className={TW.input} value={formData.firmaIco || ''} onChange={(e) => setFormData({ ...formData, firmaIco: e.target.value })} />
-            </Field>
-            <Field label="Adresa">
-              <input className={TW.input} value={formData.firmaAdresa || ''} onChange={(e) => setFormData({ ...formData, firmaAdresa: e.target.value })} />
-            </Field>
-            <Field label="DIČ">
-              <input className={TW.input} value={formData.firmaDic || ''} onChange={(e) => setFormData({ ...formData, firmaDic: e.target.value })} />
-            </Field>
+            <Input label="Název firmy" placeholder="Ponechte prázdné → firma z nastavení" value={formData.firmaJmeno || ''} onChange={(e) => setFormData({ ...formData, firmaJmeno: e.target.value })} />
+            <Input label="IČO" value={formData.firmaIco || ''} onChange={(e) => setFormData({ ...formData, firmaIco: e.target.value })} />
+            <Input label="Adresa" value={formData.firmaAdresa || ''} onChange={(e) => setFormData({ ...formData, firmaAdresa: e.target.value })} />
+            <Input label="DIČ" value={formData.firmaDic || ''} onChange={(e) => setFormData({ ...formData, firmaDic: e.target.value })} />
           </div>
           {selectedFirmaId === '' && nastaveni && (nastaveni.firmaJmeno || nastaveni.firmaIco) && (
-            <div className="text-xs text-[var(--primary)] bg-[var(--bg-accent)] border border-blue-200 rounded p-2">📋 Z nastavení: <strong>{nastaveni.firmaJmeno}</strong> | IČO: {nastaveni.firmaIco || '—'} | {nastaveni.firmaAdresa || '—'}</div>
+            <div className="text-xs text-[var(--primary)] bg-[var(--bg-accent)] border border-[var(--primary)]/30 rounded-md p-2">📋 Z nastavení: <strong>{nastaveni.firmaJmeno}</strong> | IČO: {nastaveni.firmaIco || '—'} | {nastaveni.firmaAdresa || '—'}</div>
           )}
           {selectedFirmaId === '' && (!nastaveni || (!nastaveni.firmaJmeno && !nastaveni.firmaIco)) && (
             <p className="text-xs text-[var(--warning-text)]">⚠️ Nemáte výchozí firmu. <Link to="/nastaveni" className="underline font-medium">Nastavení</Link></p>
@@ -216,21 +174,11 @@ export function InfoTab({
         <div className="p-4">
           <p className="text-xs text-[var(--text-secondary)] mb-3">Údaje technika přiřazené k této revizi. Lze opravit nezávisle na nastavení.</p>
           <div className={TW.grid2}>
-            <Field label="Jméno a příjmení">
-              <input className={TW.input} value={formData.rtJmeno || ''} onChange={(e) => setFormData({ ...formData, rtJmeno: e.target.value })} />
-            </Field>
-            <Field label="Číslo oprávnění">
-              <input className={TW.input} value={formData.rtCisloOpravneni || ''} onChange={(e) => setFormData({ ...formData, rtCisloOpravneni: e.target.value })} />
-            </Field>
-            <Field label="Platnost oprávnění">
-              <input className={TW.input} placeholder="31.12.2026" value={formData.rtPlatnostOpravneni || ''} onChange={(e) => setFormData({ ...formData, rtPlatnostOpravneni: e.target.value })} />
-            </Field>
-            <Field label="Číslo osvědčení">
-              <input className={TW.input} value={formData.rtCisloOsvedceni || ''} onChange={(e) => setFormData({ ...formData, rtCisloOsvedceni: e.target.value })} />
-            </Field>
-            <Field label="Platnost osvědčení">
-              <input className={TW.input} placeholder="31.12.2026" value={formData.rtPlatnostOsvedceni || ''} onChange={(e) => setFormData({ ...formData, rtPlatnostOsvedceni: e.target.value })} />
-            </Field>
+            <Input label="Jméno a příjmení" value={formData.rtJmeno || ''} onChange={(e) => setFormData({ ...formData, rtJmeno: e.target.value })} />
+            <Input label="Číslo oprávnění" value={formData.rtCisloOpravneni || ''} onChange={(e) => setFormData({ ...formData, rtCisloOpravneni: e.target.value })} />
+            <Input label="Platnost oprávnění" placeholder="31.12.2026" value={formData.rtPlatnostOpravneni || ''} onChange={(e) => setFormData({ ...formData, rtPlatnostOpravneni: e.target.value })} />
+            <Input label="Číslo osvědčení" value={formData.rtCisloOsvedceni || ''} onChange={(e) => setFormData({ ...formData, rtCisloOsvedceni: e.target.value })} />
+            <Input label="Platnost osvědčení" placeholder="31.12.2026" value={formData.rtPlatnostOsvedceni || ''} onChange={(e) => setFormData({ ...formData, rtPlatnostOsvedceni: e.target.value })} />
           </div>
         </div>
       </div>

@@ -6,10 +6,10 @@ import type { BadgeVariant } from '../../components/ui';
 import { getRealizaceDays, getReportDeadline, isOverdue, formatDayShort } from './utils';
 
 const STAV_BORDER_COLOR: Record<Zakazka['stav'], string> = {
-  'plánováno': 'border-l-blue-500',
-  'v realizaci': 'border-l-amber-500',
-  'dokončeno': 'border-l-emerald-500',
-  'zrušeno': 'border-l-red-400',
+  'plánováno': 'border-l-[var(--secondary)]',
+  'v realizaci': 'border-l-[var(--warning)]',
+  'dokončeno': 'border-l-[var(--success)]',
+  'zrušeno': 'border-l-[var(--danger)]',
 };
 
 const PRIORITA_BADGE_VARIANT: Record<Zakazka['priorita'], BadgeVariant> = {
@@ -101,7 +101,7 @@ export function ZakazkaCard({ zakazka: z, onEdit, onUpdateStav, onDelete, onCrea
 
   return (
     <div
-      className={`group rounded-lg border border-[var(--border)] border-l-[3px] ${STAV_BORDER_COLOR[z.stav]} bg-[var(--bg-faint)] px-3 py-2.5 transition-all hover:border-[var(--border-strong)]${isDone ? ' opacity-70' : ''}`}
+      className={`group rounded-[var(--radius-lg)] border border-[var(--border)] border-l-[3px] ${STAV_BORDER_COLOR[z.stav]} bg-[var(--bg-faint)] px-3 py-2.5 transition-colors hover:border-[var(--border-strong)]${isDone ? ' opacity-70' : ''}`}
     >
       {/* Řádek 1: název + datum */}
       <div className="flex items-center gap-2 mb-1.5 min-w-0">
@@ -111,7 +111,7 @@ export function ZakazkaCard({ zakazka: z, onEdit, onUpdateStav, onDelete, onCrea
 
       {/* Řádek 2: klient + badges + ⋮ menu */}
       <div className="flex items-center gap-1.5 min-w-0">
-        <span className="text-xs bg-[var(--bg-hover)] text-[var(--text-secondary)] px-2 py-0.5 rounded-full shrink-0 max-w-[180px] truncate">
+        <span className="text-xs font-semibold bg-[var(--bg-hover)] text-[var(--text-secondary)] px-2 py-0.5 rounded-[var(--radius-sm)] shrink-0 max-w-[180px] truncate">
           {z.klient}
         </span>
         <Badge variant={PRIORITA_BADGE_VARIANT[z.priorita]} className="shrink-0">{z.priorita}</Badge>
@@ -134,7 +134,7 @@ export function ZakazkaCard({ zakazka: z, onEdit, onUpdateStav, onDelete, onCrea
               setMenuOpen(true);
               setStavOpen(false);
             }}
-            className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-secondary)] transition-colors text-base leading-none"
+            className="w-8 h-8 rounded-[var(--radius-md)] flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-secondary)] transition-colors text-base leading-none"
             aria-label="Zobrazit akce"
           >
             ⋮
@@ -146,26 +146,26 @@ export function ZakazkaCard({ zakazka: z, onEdit, onUpdateStav, onDelete, onCrea
         <p className="text-xs text-[var(--text-muted)] mt-1.5 truncate">{z.poznamka}</p>
       )}
 
-      {/* Dropdown portal – mimo backdrop-blur/overflow kontejnery */}
+      {/* Dropdown portal – mimo overflow kontejnery */}
       {menuOpen && createPortal(
         <div
           ref={menuRef}
-          className="fixed z-[9999] bg-[var(--surface)] border border-[var(--border-strong)] rounded-lg shadow-[var(--shadow-elevated)] min-w-[170px] py-1"
+          className="fixed z-[9999] bg-[var(--surface)] border border-[var(--border-strong)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] min-w-[180px] p-1"
           style={{ top: dropdownPos.top, right: dropdownPos.right }}
         >
           <button
             onClick={() => { onEdit(z); setMenuOpen(false); }}
-            className="w-full text-left px-3 py-2 text-sm text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+            className="w-full text-left px-3 min-h-[40px] rounded-[var(--radius-md)] text-sm text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
           ><IconEdit /> Upravit</button>
           <button
             onClick={() => { onCreateRevize(z); setMenuOpen(false); }}
-            className="w-full text-left px-3 py-2 text-sm text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+            className="w-full text-left px-3 min-h-[40px] rounded-[var(--radius-md)] text-sm text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
           ><IconClipboard /> Vytvořit revizi</button>
           {!isDone && (
             <>
               <button
                 onClick={() => setStavOpen(o => !o)}
-                className="w-full text-left px-3 py-2 text-sm text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center justify-between"
+                className="w-full text-left px-3 min-h-[40px] rounded-[var(--radius-md)] text-sm text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center justify-between"
               >
                 <span className="flex items-center gap-2"><IconStatus /> Změnit stav</span>
                 <span className={`text-[var(--text-muted)] transition-transform ${stavOpen ? 'rotate-180' : ''}`}><IconChevron /></span>
@@ -176,7 +176,7 @@ export function ZakazkaCard({ zakazka: z, onEdit, onUpdateStav, onDelete, onCrea
                     <button
                       key={s}
                       onClick={() => { onUpdateStav(z.id!, s); setMenuOpen(false); setStavOpen(false); }}
-                      className={`w-full text-left px-5 py-1.5 text-xs hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]${
+                      className={`w-full text-left px-5 min-h-[36px] text-[13px] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]${
                         z.stav === s ? ' font-semibold text-[var(--text)]' : ''
                       }`}
                     >
@@ -190,7 +190,7 @@ export function ZakazkaCard({ zakazka: z, onEdit, onUpdateStav, onDelete, onCrea
           <div className="border-t border-[var(--border-subtle)] my-1" />
           <button
             onClick={() => { onDelete(z.id!); setMenuOpen(false); }}
-            className="w-full text-left px-3 py-2 text-sm text-[var(--danger-text)] hover:bg-[var(--danger-bg)] flex items-center gap-2"
+            className="w-full text-left px-3 min-h-[40px] rounded-[var(--radius-md)] text-sm text-[var(--danger-text)] hover:bg-[var(--danger-bg)] flex items-center gap-2"
           ><IconTrash /> Smazat</button>
         </div>,
         document.body

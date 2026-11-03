@@ -6,6 +6,7 @@ import { AIChatAssistant } from './AIChatAssistant';
 import { useIdleTimeout } from '../hooks/useIdleTimeout';
 import { IdleWarningModal } from './IdleWarningModal';
 import { logoutApi } from '../services/api';
+import { Icon } from './icons';
 
 export function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -42,13 +43,11 @@ export function Layout() {
           <h1 className="text-lg font-semibold text-[var(--text)]">JV Revize</h1>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)]"
+            className="p-2 rounded-[var(--radius-md)] text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring-color)]"
             aria-label="Menu"
             aria-expanded={isSidebarOpen}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <Icon name="menu" size={24} />
           </button>
         </div>
         <div className="p-4 sm:p-6 pb-24 lg:pb-6 flex-1 overflow-auto">

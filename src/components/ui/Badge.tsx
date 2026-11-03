@@ -12,22 +12,14 @@ const variantClasses: Record<BadgeVariant, string> = {
   success: 'bg-[var(--success-bg)] text-[var(--success-text)]',
   warning: 'bg-[var(--warning-bg)] text-[var(--warning-text)]',
   danger: 'bg-[var(--danger-bg)] text-[var(--danger-text)]',
-  info: 'bg-[var(--bg-accent-badge)] text-[var(--primary)]',
+  info: 'bg-[var(--bg-secondary-accent)] text-[var(--secondary)]',
   neutral: 'bg-[var(--bg-hover)] text-[var(--text-secondary)]',
-};
-
-const dotClasses: Record<BadgeVariant, string> = {
-  success: 'bg-[var(--success-text)]',
-  warning: 'bg-[var(--warning-text)]',
-  danger: 'bg-[var(--danger-text)]',
-  info: 'bg-[var(--primary)]',
-  neutral: 'bg-[var(--text-muted)]',
 };
 
 export function Badge({ variant = 'neutral', children, className = '' }: BadgeProps) {
   return (
-    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${variantClasses[variant]} ${className}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${dotClasses[variant]}`} />
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-sm)] px-2 py-0.5 text-xs font-semibold ${variantClasses[variant]} ${className}`}>
+      <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current" />
       {children}
     </span>
   );

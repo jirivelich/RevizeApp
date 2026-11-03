@@ -133,7 +133,7 @@ export function OkruhyInlineTable({ rozvadecId, okruhy, onEdit, onDelete, onSave
               <td className="py-1.5 pr-2 text-xs font-medium text-[var(--text-secondary)]">{o.cislo}</td>
               <td className="py-1.5 pr-2 text-xs font-medium text-[var(--text)]">{o.nazev}</td>
               <td className="py-1.5 pr-2">
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">{o.jisticTyp}</span>
+                <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">{o.jisticTyp}</span>
               </td>
               <td className="py-1.5 pr-2 text-xs text-[var(--text-secondary)]">{o.jisticProud}</td>
               <td className="py-1.5 pr-2 text-xs text-[var(--text-secondary)]">{o.pocetFazi}P</td>
@@ -143,11 +143,11 @@ export function OkruhyInlineTable({ rozvadecId, okruhy, onEdit, onDelete, onSave
               <td className="py-1.5 pr-2 text-xs text-[var(--text-secondary)]">{o.izolacniOdpor || '—'}</td>
               <td className="py-1.5 pr-2 text-xs text-[var(--text-secondary)]">{o.impedanceSmycky || '—'}</td>
               <td className="py-1.5">
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex gap-1 lg:opacity-0 lg:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                   <button type="button" title="Upravit" onClick={() => onEdit(o)}
-                    className="w-6 h-6 flex items-center justify-center rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] text-xs">✎</button>
+                    className="w-8 h-8 flex items-center justify-center rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] text-xs">✎</button>
                   <button type="button" title="Smazat" onClick={() => onDelete(o.id!)}
-                    className="w-6 h-6 flex items-center justify-center rounded hover:bg-[var(--danger-bg)] text-[var(--text-secondary)] hover:text-[var(--danger-text)] text-xs">✕</button>
+                    className="w-8 h-8 flex items-center justify-center rounded hover:bg-[var(--danger-bg)] text-[var(--text-secondary)] hover:text-[var(--danger-text)] text-xs">✕</button>
                 </div>
               </td>
             </tr>
@@ -232,15 +232,15 @@ export function OkruhyInlineTable({ rozvadecId, okruhy, onEdit, onDelete, onSave
             <td className="py-1">
               <button type="button" title="Uložit (Enter)" onClick={() => handleInlineOkruhSave()}
                 disabled={!inlineOkruhDraft.nazev.trim()}
-                className="w-7 h-7 flex items-center justify-center rounded bg-[var(--primary)] text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-base">↵</button>
+                className="w-8 h-8 flex items-center justify-center rounded bg-[var(--primary)] text-[var(--primary-fg)] hover:bg-[var(--primary-hover)] disabled:opacity-40 disabled:cursor-not-allowed text-base">↵</button>
             </td>
           </tr>
         </tbody>
       </table>
       <p className="text-xs text-[var(--text-secondary)] mt-2 select-none">
-        <kbd className="px-1 bg-[var(--bg-hover)] rounded border border-[var(--border-medium)] text-[10px]">Tab</kbd> přechod &nbsp;·&nbsp;
-        <kbd className="px-1 bg-[var(--bg-hover)] rounded border border-[var(--border-medium)] text-[10px]">Enter</kbd> uložit řádek &nbsp;·&nbsp;
-        <kbd className="px-1 bg-[var(--bg-hover)] rounded border border-[var(--border-medium)] text-[10px]">Shift+Enter</kbd> uložit + zkopírovat celý řádek &nbsp;·&nbsp;
+        <kbd className="px-1 bg-[var(--bg-hover)] rounded border border-[var(--border-medium)] text-xs">Tab</kbd> přechod &nbsp;·&nbsp;
+        <kbd className="px-1 bg-[var(--bg-hover)] rounded border border-[var(--border-medium)] text-xs">Enter</kbd> uložit řádek &nbsp;·&nbsp;
+        <kbd className="px-1 bg-[var(--bg-hover)] rounded border border-[var(--border-medium)] text-xs">Shift+Enter</kbd> uložit + zkopírovat celý řádek &nbsp;·&nbsp;
         ✎ upravit vč. poznámky
       </p>
     </div>

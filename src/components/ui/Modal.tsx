@@ -29,16 +29,16 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
         className="absolute inset-0 bg-[var(--overlay)]"
         onClick={onClose}
       />
-      <div className={`relative bg-[var(--surface)] border border-[var(--border-medium)] rounded-2xl shadow-[var(--shadow-lg)] ${sizeClasses[size]} w-full max-h-[90vh] flex flex-col overflow-hidden outline-none`}
+      <div className={`relative bg-[var(--surface)] border border-[var(--border-input)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] ${sizeClasses[size]} w-full max-h-[90vh] flex flex-col overflow-hidden outline-none`}
         ref={ref}
         {...dialogProps}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)]">
-          <h2 id={titleId} className="text-base font-semibold text-[var(--text)] tracking-tight">{title}</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
+          <h2 id={titleId} className="text-[15px] font-bold text-[var(--text)]">{title}</h2>
           <button
             onClick={onClose}
             aria-label="Zavřít"
-            className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
+            className="w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-md)] text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
           >
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -49,7 +49,7 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
           {children}
         </div>
         {footer && (
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 px-6 py-4 border-t border-[var(--border-subtle)] bg-[var(--bg-faint)] [&>button]:w-full [&>button]:sm:w-auto">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 px-6 py-4 border-t border-[var(--border)] bg-[var(--bg-faint)] [&>button]:w-full [&>button]:sm:w-auto">
             {footer}
           </div>
         )}

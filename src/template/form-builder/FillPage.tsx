@@ -27,7 +27,7 @@ export function FillPage(props: FillPageProps) {
   return (
     <div className={a4Class} style={{
       ...DS.page(pg.overflow, pg.margins),
-      boxShadow: mode === 'fill' ? '0 6px 40px rgba(0,0,0,0.55)' : 'none',
+      boxShadow: mode === 'fill' ? 'var(--shadow-lg)' : 'none',
       marginBottom: mode === 'fill' ? 32 : 0,
     }}>
       {isFirst && (
@@ -125,14 +125,14 @@ function RepeatableSection({ bl, mode, data, set, setData, repeatCounts, setRepe
         <div className="noprint" style={{ display: 'flex', gap: 8, marginTop: 6, marginBottom: 14 }}>
           <button
             onClick={addInstance}
-            style={{ background: 'transparent', border: '1px dashed #4f8ef7', color: '#4f8ef7', padding: '4px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+            style={{ background: 'transparent', border: '1px dashed var(--primary)', color: 'var(--primary)', padding: '4px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
           >
             + Přidat {bl.title || 'položku'}
           </button>
           {count > 1 && (
             <button
               onClick={removeInstance}
-              style={{ background: 'transparent', border: '1px dashed #e05555', color: '#e05555', padding: '4px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
+              style={{ background: 'transparent', border: '1px dashed var(--danger)', color: 'var(--danger)', padding: '4px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
             >
               − Odebrat poslední
             </button>

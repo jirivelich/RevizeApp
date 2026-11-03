@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Card, Input, Select, Modal, ConfirmDialog, PageHeader, DataTable } from '../components/ui';
+import { Button, Card, Input, Select, Modal, ConfirmDialog, PageHeader, DataTable, Badge, EmptyState } from '../components/ui';
 import type { DataTableColumn } from '../components/ui';
 import { usePristroje, useCreatePristroj, useUpdatePristroj, useDeletePristroj, useKalibrace, useCreateKalibrace, useDeleteKalibrace } from '../hooks/useQueries';
 import type { MericiPristroj } from '../types';
@@ -12,6 +12,13 @@ const typyPristroju = [
   { value: 'osciloskop', label: 'Osciloskop' },
   { value: 'jiny', label: 'Jiný' },
 ];
+
+const chipClass = (on: boolean) =>
+  `inline-flex items-center h-8 px-3 rounded-full border text-xs font-semibold cursor-pointer transition-colors ${
+    on
+      ? 'bg-[var(--bg-accent)] border-[var(--primary)] text-[var(--primary)]'
+      : 'bg-[var(--bg-hover)] border-[var(--border-input)] text-[var(--text-secondary)] hover:text-[var(--text)] hover:border-[var(--border-strong)]'
+  }`;
 
 export function PristrojePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -123,9 +130,7 @@ export function PristrojePage() {
       key: 'typ',
       header: 'Typ',
       render: (p) => (
-        <span className="px-2 py-1 bg-[var(--bg-hover)] text-[var(--text-secondary)] rounded text-xs">
-          {getTypLabel(p.typPristroje)}
-        </span>
+        <Badge variant="neutral">{getTypLabel(p.typPristroje)}</Badge>
       ),
     },
     { key: 'vyrobce', header: 'Výrobce / Model', render: (p) => <span className="text-[var(--text-secondary)]">{p.vyrobce} {p.model}</span> },
@@ -135,15 +140,9 @@ export function PristrojePage() {
       key: 'platnost',
       header: 'Platnost',
       render: (p) => (
-        <span className={`px-2 py-1 rounded text-xs font-medium ${
-          isExpired(p.platnostKalibrace)
-            ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]'
-            : isExpiring(p.platnostKalibrace)
-              ? 'bg-[var(--warning-bg)] text-[var(--warning-text)]'
-              : 'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
-        }`}>
+        <Badge variant={isExpired(p.platnostKalibrace) ? 'danger' : isExpiring(p.platnostKalibrace) ? 'warning' : 'neutral'}>
           {new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}
-        </span>
+        </Badge>
       ),
     },
     {
@@ -178,7 +177,7 @@ export function PristrojePage() {
       <div className="lg:hidden">
         <button
           onClick={() => setShowStats(!showStats)}
-          className="flex items-center gap-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text)]"
+          className="flex items-center gap-2 min-h-[44px] text-xs text-[var(--text-secondary)] hover:text-[var(--text)] cursor-pointer"
         >
           <span>{showStats ? '▼' : '▶'}</span>
           <span>{showStats ? 'Skrýt statistiky' : 'Zobrazit statistiky'}</span>
@@ -218,43 +217,40 @@ export function PristrojePage() {
       </div>
 
       {/* Filtry */}
-      <Card>
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="w-48">
-            <Select
-              label="Typ přístroje"
-              value={filterTyp}
-              onChange={(e) => setFilterTyp(e.target.value)}
-              options={[
-                { value: '', label: 'Všechny typy' },
-                ...typyPristroju
-              ]}
-            />
-          </div>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showExpiring}
-              onChange={(e) => setShowExpiring(e.target.checked)}
-            className="w-4 h-4 rounded border-[var(--checkbox-border)]"
-            />
-            <span className="text-sm text-[var(--text)]">Pouze s expirující kalibraci</span>
-          </label>
-        </div>
-      </Card>
+      <div className="flex flex-wrap gap-2 items-center" role="group" aria-label="Filtry přístrojů">
+        {[{ value: '', label: 'Všechny typy' }, ...typyPristroju].map((t) => (
+          <button
+            key={t.value}
+            type="button"
+            aria-pressed={filterTyp === t.value}
+            className={chipClass(filterTyp === t.value)}
+            onClick={() => setFilterTyp(t.value)}
+          >
+            {t.label}
+          </button>
+        ))}
+        <button
+          type="button"
+          aria-pressed={showExpiring}
+          className={chipClass(showExpiring)}
+          onClick={() => setShowExpiring(!showExpiring)}
+        >
+          Pouze s expirující kalibrací
+        </button>
+      </div>
 
       {/* Seznam přístrojů */}
-      <Card title="Seznam přístrojů">
-        {filteredPristroje.length > 0 ? (
+      {filteredPristroje.length > 0 ? (
+        <Card title="Seznam přístrojů">
           <DataTable columns={columns} rows={filteredPristroje} rowKey={(r) => r.id ?? r.nazev} />
-        ) : (
-          <p className="text-center text-[var(--text-muted)] py-8">
-            {filterTyp || showExpiring
-              ? 'Žádné přístroje neodpovídají filtru.'
-              : 'Zatím nemáte žádné měřící přístroje. Přidejte první kliknutím na tlačítko výše.'}
-          </p>
-        )}
-      </Card>
+        </Card>
+      ) : (
+        <EmptyState
+          message={filterTyp || showExpiring
+            ? 'Žádné přístroje neodpovídají filtru.'
+            : 'Zatím nemáte žádné měřící přístroje. Přidejte první kliknutím na tlačítko výše.'}
+        />
+      )}
 
       {/* Modal pro přidání/úpravu */}
       <Modal
@@ -381,7 +377,7 @@ export function PristrojePage() {
 
           {/* Formulář nové kalibrace */}
           {isKalibraceModalOpen && (
-            <div className="border border-[var(--primary)]/[0.20] bg-blue-500/[0.07] rounded-lg p-4 space-y-3">
+            <div className="border border-[var(--primary)]/30 bg-[var(--bg-accent)] rounded-lg p-4 space-y-3">
               <h4 className="text-sm font-semibold text-[var(--primary)]">Nový kalibraciční záznam</h4>
               <div className="grid grid-cols-2 gap-3">
                 <Input
@@ -461,10 +457,10 @@ export function PristrojePage() {
                   </thead>
                   <tbody>
                     {kalibrace.map((k, idx) => (
-                      <tr key={k.id} className={`border-b border-[var(--border-subtle)] ${idx === 0 ? 'bg-emerald-500/[0.07]' : ''}`}>
+                      <tr key={k.id} className={`border-b border-[var(--border-subtle)] ${idx === 0 ? 'bg-[var(--success-bg)]' : ''}`}>
                         <td className="py-2 px-3 font-medium text-[var(--text)]">
                           {new Date(k.datumKalibrace).toLocaleDateString('cs-CZ')}
-                          {idx === 0 && <span className="ml-1.5 text-[10px] px-1.5 py-0.5 bg-[var(--success-bg)] text-[var(--success-text)] rounded font-semibold">aktuální</span>}
+                          {idx === 0 && <Badge variant="success" className="ml-2">aktuální</Badge>}
                         </td>
                         <td className="py-2 px-3 text-[var(--text)]">{new Date(k.platnostKalibrace).toLocaleDateString('cs-CZ')}</td>
                         <td className="py-2 px-3 text-[var(--text-secondary)]">{k.provedl || '—'}</td>
@@ -472,9 +468,11 @@ export function PristrojePage() {
                         <td className="py-2 px-3 text-[var(--text-muted)] text-xs">{k.poznamka || ''}</td>
                         <td className="py-2 px-3 text-center">
                           <button
+                            type="button"
                             onClick={() => { if (k.id && historyPristroj?.id) deleteKalibrace.mutate({ id: k.id, pristrojId: historyPristroj.id }); }}
-                            className="text-[var(--danger-text)] hover:opacity-75 cursor-pointer text-xs"
+                            className="text-[var(--danger-text)] hover:opacity-75 cursor-pointer text-sm min-w-[32px] min-h-[32px]"
                             title="Smazat záznam"
+                            aria-label="Smazat záznam"
                           >✕</button>
                         </td>
                       </tr>

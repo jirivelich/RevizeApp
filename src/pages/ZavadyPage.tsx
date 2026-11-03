@@ -1,11 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Button, Card, Input, Select, Modal, ConfirmDialog, PageHeader, DataTable } from '../components/ui';
+import { Button, Card, Input, Select, Modal, ConfirmDialog, PageHeader, DataTable, Badge, EmptyState, Textarea } from '../components/ui';
 import type { DataTableColumn } from '../components/ui';
 import { useZavadyKatalog, useZavadyKategorie, useCreateZavadaKatalog, useUpdateZavadaKatalog, useDeleteZavadaKatalog } from '../hooks/useQueries';
 import { queryKeys } from '../hooks/queryKeys';
 import { zavadaKatalogService } from '../services/database';
 import type { ZavadaKatalog } from '../types';
+
+const chipClass = (on: boolean) =>
+  `inline-flex items-center h-8 px-3 rounded-full border text-xs font-semibold cursor-pointer transition-colors ${
+    on
+      ? 'bg-[var(--bg-accent)] border-[var(--primary)] text-[var(--primary)]'
+      : 'bg-[var(--bg-hover)] border-[var(--border-input)] text-[var(--text-secondary)] hover:text-[var(--text)] hover:border-[var(--border-strong)]'
+  }`;
+
+const ZAVAZNOST_CHIPS = [
+  { value: '', label: 'Všechny' },
+  { value: 'C1', label: 'C1 Kritická' },
+  { value: 'C2', label: 'C2 Vážná' },
+  { value: 'C3', label: 'C3 Drobná' },
+];
 
 export function ZavadyPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -114,13 +128,9 @@ export function ZavadyPage() {
       key: 'zavaznost',
       header: 'Závažnost',
       render: (z) => (
-        <span className={`px-2 py-1 rounded text-xs font-medium ${
-          z.zavaznost === 'C1' ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]' :
-          z.zavaznost === 'C2' ? 'bg-[var(--warning-bg)] text-[var(--warning-text)]' :
-          'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
-        }`}>
+        <Badge variant={z.zavaznost === 'C1' ? 'danger' : z.zavaznost === 'C2' ? 'warning' : 'neutral'}>
           {z.zavaznost}
-        </span>
+        </Badge>
       ),
     },
     { key: 'kategorie', header: 'Kategorie', render: (z) => z.kategorie || '-' },
@@ -134,7 +144,7 @@ export function ZavadyPage() {
             <button
               type="button"
               onClick={() => setExpandedId(expandedId === z.id ? null : z.id!)}
-              className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] mt-1"
+              className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] mt-1 cursor-pointer"
             >
               {expandedId === z.id ? '▼ Skrýt znění' : '▶ Zobrazit znění'}
             </button>
@@ -152,7 +162,7 @@ export function ZavadyPage() {
       header: 'Norma',
       render: (z) =>
         z.norma ? (
-          <span className="px-2 py-1 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">{z.norma}</span>
+          <Badge variant="neutral">{z.norma}</Badge>
         ) : null,
     },
     { key: 'clanek', header: 'Článek', render: (z) => <span className="text-[var(--text-secondary)]">{z.clanek || '-'}</span> },
@@ -186,35 +196,36 @@ export function ZavadyPage() {
       {/* Statistiky */}
       <div className="lg:hidden">
         <button
+          type="button"
           onClick={() => setShowStats(!showStats)}
-          className="flex items-center gap-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text)]"
+          className="flex items-center gap-2 min-h-[44px] text-xs text-[var(--text-secondary)] hover:text-[var(--text)] cursor-pointer"
         >
           <span>{showStats ? '▼' : '▶'}</span>
           <span>{showStats ? 'Skrýt statistiky' : 'Zobrazit statistiky'}</span>
         </button>
       </div>
       <div className={`grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 ${showStats ? '' : 'hidden lg:grid'}`}>
-        <div className="bg-[var(--bg-surface)] rounded-lg p-3 sm:p-4 border border-[var(--border)]">
+        <Card className="p-3 sm:p-4">
           <p className="text-xs text-[var(--text-secondary)]">Celkem v katalogu</p>
           <p className="text-lg sm:text-xl font-bold text-[var(--text)]">{stats.celkem}</p>
-        </div>
-        <div className="bg-[var(--bg-surface)] rounded-lg p-3 sm:p-4 border border-[var(--border)]">
+        </Card>
+        <Card className="p-3 sm:p-4">
           <p className="text-xs text-[var(--text-secondary)]">C1 - Kritické</p>
           <p className="text-lg sm:text-xl font-bold text-[var(--text)]">{stats.kriticke}</p>
-        </div>
-        <div className="bg-[var(--bg-surface)] rounded-lg p-3 sm:p-4 border border-[var(--border)]">
+        </Card>
+        <Card className="p-3 sm:p-4">
           <p className="text-xs text-[var(--text-secondary)]">C2 - Vážné</p>
           <p className="text-lg sm:text-xl font-bold text-[var(--text)]">{stats.vazne}</p>
-        </div>
-        <div className="bg-[var(--bg-surface)] rounded-lg p-3 sm:p-4 border border-[var(--border)]">
+        </Card>
+        <Card className="p-3 sm:p-4">
           <p className="text-xs text-[var(--text-secondary)]">C3 - Drobné</p>
           <p className="text-lg sm:text-xl font-bold text-[var(--text)]">{stats.drobne}</p>
-        </div>
+        </Card>
       </div>
 
       <Card>
         {/* Filtry */}
-        <div className="flex flex-wrap gap-4 mb-4">
+        <div className="flex flex-wrap gap-4 mb-4 items-center">
           <div className="flex-1 min-w-[200px]">
             <Input
               placeholder="Hledat v popisu, normě, znění..."
@@ -230,26 +241,29 @@ export function ZavadyPage() {
               ...kategorie.map(k => ({ value: k, label: k }))
             ]}
           />
-          <Select
-            value={filterZavaznost}
-            onChange={(e) => setFilterZavaznost(e.target.value)}
-            options={[
-              { value: '', label: 'Všechny závažnosti' },
-              { value: 'C1', label: 'C1 - Kritická' },
-              { value: 'C2', label: 'C2 - Vážná' },
-              { value: 'C3', label: 'C3 - Drobná' },
-            ]}
-          />
+        </div>
+        <div className="flex flex-wrap gap-2 mb-4" role="group" aria-label="Filtr závažnosti">
+          {ZAVAZNOST_CHIPS.map((c) => (
+            <button
+              key={c.value}
+              type="button"
+              aria-pressed={filterZavaznost === c.value}
+              className={chipClass(filterZavaznost === c.value)}
+              onClick={() => setFilterZavaznost(c.value)}
+            >
+              {c.label}
+            </button>
+          ))}
         </div>
 
         {filteredZavady.length > 0 ? (
           <DataTable columns={columns} rows={filteredZavady} rowKey={(r) => r.id ?? r.popis} />
         ) : (
-          <p className="text-center text-[var(--text-muted)] py-8">
-            {filterKategorie || filterZavaznost || searchTerm
+          <EmptyState
+            message={filterKategorie || filterZavaznost || searchTerm
               ? 'Žádné závady neodpovídají filtru.'
               : 'Katalog závad je prázdný. Přidejte první závadu kliknutím na tlačítko výše.'}
-          </p>
+          />
         )}
       </Card>
 
@@ -270,17 +284,13 @@ export function ZavadyPage() {
         }
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-[var(--text-secondary)] block mb-1">Popis závady *</label>
-            <textarea
+          <Textarea label="Popis závady *"
               value={formData.popis}
               onChange={(e) => setFormData({ ...formData, popis: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]/[0.5]"
               rows={2}
               placeholder="Stručný popis typické závady..."
               required
             />
-          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <Select
@@ -294,13 +304,13 @@ export function ZavadyPage() {
               ]}
             />
             <div>
-              <label className="text-sm font-medium text-[var(--text-secondary)] block mb-1">Kategorie</label>
+              <label className="text-xs font-medium text-[var(--text-secondary)] block mb-1">Kategorie</label>
               <input
                 type="text"
                 list="kategorie-list"
                 value={formData.kategorie}
                 onChange={(e) => setFormData({ ...formData, kategorie: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]/[0.5]"
+                className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] placeholder:text-[var(--text-muted)] border-[var(--border-input)] text-sm focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--focus-ring-color)]"
                 placeholder="Rozvaděče, Vedení, Uzemnění..."
               />
               <datalist id="kategorie-list">
@@ -329,16 +339,12 @@ export function ZavadyPage() {
               />
             </div>
 
-            <div className="mt-4">
-              <label className="text-sm font-medium text-[var(--text-secondary)] block mb-1">Znění článku / paragrafu</label>
-              <textarea
+            <Textarea label="Znění článku / paragrafu"
                 value={formData.zneniClanku}
                 onChange={(e) => setFormData({ ...formData, zneniClanku: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]/[0.5]"
                 rows={4}
                 placeholder="Úplné nebo zkrácené znění článku normy či paragrafu zákona..."
               />
-            </div>
           </div>
         </form>
       </Modal>

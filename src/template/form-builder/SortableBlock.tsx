@@ -34,7 +34,7 @@ export function SortableBlock({ id, children, style }: SortableBlockProps) {
           position: 'absolute', left: -22, top: 4,
           width: 18, height: 22,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'grab', color: '#4f8ef7', fontSize: 16,
+          cursor: 'grab', color: 'var(--primary)', fontSize: 16,
           userSelect: 'none', touchAction: 'none',
           opacity: 0.45, transition: 'opacity .12s',
         }}
