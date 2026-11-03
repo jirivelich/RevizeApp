@@ -1,5 +1,4 @@
-﻿@import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
 
 :root {
   --primary: #2B88FF;
@@ -112,7 +111,7 @@ select {
 
 body {
   margin: 0;
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-family: 'Inter Variable', 'Inter', 'Segoe UI', system-ui, sans-serif;
   background-color: var(--background);
   color: var(--text);
 }
@@ -133,8 +132,8 @@ button, a, [role="button"] {
 /* Scrollbar styling */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(226,225,233,0.12); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(226,225,233,0.22); }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
 /* PDF Designer - Resize handles */
 .react-resizable {

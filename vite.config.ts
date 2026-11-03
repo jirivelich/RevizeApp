@@ -18,8 +18,8 @@ export default defineConfig({
         description: 'Aplikace pro správu elektrických revizí v terénu i offline.',
         start_url: '/',
         display: 'standalone',
-        background_color: '#ffffff',
-        theme_color: '#2563eb',
+        background_color: '#0A0E14',
+        theme_color: '#0052CC',
         orientation: 'portrait',
         icons: [
           { src: '/logo192.png', sizes: '192x192', type: 'image/png' },
