@@ -113,7 +113,7 @@ Vytvoř:
 4. Datum příští revize (${data.revize.termin} měsíců od ${data.revize.datum})`;
 
   const response = await ai.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-5',
     max_tokens: 2000,
     system: SYSTEM_REPORT,
     messages: [{ role: 'user', content: prompt }],
@@ -142,7 +142,7 @@ export async function chatWithAssistant(
   }
 
   const response = await ai.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-5',
     max_tokens: 1500,
     system,
     messages: messages.map((m) => ({ role: m.role, content: m.content })),
@@ -174,7 +174,7 @@ Vrať JSON objekt s navrženými hodnotami. Klíče musí odpovídat názvům po
 Navrhni pouze relevantní hodnoty, které dávají smysl v kontextu elektrotechnických revizí.`;
 
   const response = await ai.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-5',
     max_tokens: 500,
     system: SYSTEM_AUTOFILL,
     messages: [{ role: 'user', content: prompt }],
@@ -251,7 +251,7 @@ Identifikuj všechny jističe a jejich okruhy. Vrať JSON array s okruhy.`,
   ];
 
   const response = await ai.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-5',
     max_tokens: 2000,
     system: SYSTEM_PHOTO_ANALYSIS,
     messages: [{ role: 'user', content }],
