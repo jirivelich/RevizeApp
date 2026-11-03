@@ -251,7 +251,7 @@ const FakturaForm: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center gap-2 flex-wrap">
         <div>
-          <h1 className="text-sm font-bold text-[var(--text)]">
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">
             {isNew ? 'Nová faktura' : faktura?.cisloFaktury ? `Faktura ${faktura.cisloFaktury}` : 'Koncept faktury'}
           </h1>
           <div className="mt-1">

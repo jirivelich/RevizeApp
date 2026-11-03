@@ -1,5 +1,6 @@
-﻿import React, { useState } from 'react';
-import { Button, Card, Input, Modal, ConfirmDialog, Badge } from '../components/ui';
+import React, { useState } from 'react';
+import { Button, Card, Input, Modal, ConfirmDialog, Badge, PageHeader, EmptyState, DataTable } from '../components/ui';
+import type { DataTableColumn } from '../components/ui';
 import type { BadgeVariant } from '../components/ui';
 import { zakazniciService } from '../services/database';
 import { useZakaznici, useCreateZakaznik, useUpdateZakaznik, useDeleteZakaznik } from '../hooks/useQueries';
@@ -125,21 +126,65 @@ const ZakazniciPage: React.FC = () => {
     );
   }
 
+  const columns: DataTableColumn<Zakaznik>[] = [
+    { key: 'nazev', header: 'Název', render: (r) => <span className="font-medium">{r.nazev}</span> },
+    { key: 'ico', header: 'IČO', render: (r) => <span className="font-mono text-[var(--text-secondary)]">{r.ico || '-'}</span> },
+    { key: 'adresa', header: 'Adresa', render: (r) => <span className="text-[var(--text-secondary)]">{r.adresa || '-'}</span> },
+    { key: 'kontakt', header: 'Kontakt', render: (r) => r.kontaktOsoba || '-' },
+    {
+      key: 'kontakt2',
+      header: 'Telefon / Email',
+      render: (r) => (
+        <div className="text-[var(--text-secondary)]">
+          {r.telefon && <div>{r.telefon}</div>}
+          {r.email && <div>{r.email}</div>}
+          {!r.telefon && !r.email && '-'}
+        </div>
+      ),
+    },
+    {
+      key: 'revize',
+      header: 'Revizí',
+      render: (r) => (
+        <button
+          type="button"
+          className="px-2 py-1 text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)] rounded hover:bg-[var(--bg-hover-strong)] cursor-pointer"
+          onClick={() => handleShowRevize(r)}
+          title="Zobrazit revize zákazníka"
+        >
+          {r.pocetRevizi || 0}
+        </button>
+      ),
+    },
+    {
+      key: 'akce',
+      header: 'Akce',
+      align: 'right',
+      actions: true,
+      render: (r) => (
+        <>
+          <Button variant="secondary" size="sm" onClick={() => handleEditZakaznik(r)}>Upravit</Button>
+          <Button variant="danger" size="sm" onClick={() => handleDelete(r)}>Smazat</Button>
+        </>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-sm font-bold text-[var(--text)]">Zákazníci</h1>
-          <p className="text-xs text-[var(--text-secondary)]">Správa zákazníků a jejich revizí</p>
-        </div>
-        <Button onClick={handleNewZakaznik}>
-          <span className="sm:hidden text-lg leading-none">+</span>
-          <span className="hidden sm:inline">Nový zákazník</span>
-        </Button>
-      </div>
+      <PageHeader
+        title="Zákazníci"
+        subtitle="Správa zákazníků a jejich revizí"
+        actions={
+          <Button onClick={handleNewZakaznik}>
+            <span className="sm:hidden text-lg leading-none">+</span>
+            <span className="hidden sm:inline">Nový zákazník</span>
+          </Button>
+        }
+      />
 
       {formError && (
-        <p className="text-xs font-medium text-[var(--danger-text)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+        <p className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-lg px-3 py-2">
           {formError}
         </p>
       )}
@@ -155,75 +200,13 @@ const ZakazniciPage: React.FC = () => {
 
       {/* Seznam zákazníků */}
       {filteredZakaznici.length === 0 ? (
-        <Card className="p-8 text-center">
-          <p className="text-xs text-[var(--text-secondary)]">
-            {searchTerm ? 'Žádní zákazníci nenalezeni' : 'Zatím nemáte žádné zákazníky'}
-          </p>
-          {!searchTerm && (
-            <Button onClick={handleNewZakaznik} className="mt-4">
-              Přidat prvního zákazníka
-            </Button>
-          )}
-        </Card>
+        <EmptyState
+          message={searchTerm ? 'Žádní zákazníci nenalezeni' : 'Zatím nemáte žádné zákazníky'}
+          action={!searchTerm && <Button onClick={handleNewZakaznik}>Přidat prvního zákazníka</Button>}
+        />
       ) : (
         <Card title="Seznam zákazníků">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[var(--border)]">
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Název</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">ČO</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Adresa</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Kontakt</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Telefon / Email</th>
-                  <th className="text-center py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Revizí</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Akce</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredZakaznici.map((zakaznik) => (
-                  <tr key={zakaznik.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[var(--primary)] hover:bg-[var(--bg-hover)] group">
-                    <td className="py-2 px-3 text-xs font-medium text-[var(--text)]">{zakaznik.nazev}</td>
-                    <td className="py-2 px-3 font-mono text-xs text-[var(--text-secondary)]">{zakaznik.ico || '-'}</td>
-                    <td className="py-2 px-3 text-xs text-[var(--text-secondary)] max-w-xs truncate">{zakaznik.adresa || '-'}</td>
-                    <td className="py-2 px-3 text-xs text-[var(--text)]">{zakaznik.kontaktOsoba || '-'}</td>
-                    <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">
-                      {zakaznik.telefon && <div>{zakaznik.telefon}</div>}
-                      {zakaznik.email && <div className="text-[var(--text-secondary)]">{zakaznik.email}</div>}
-                      {!zakaznik.telefon && !zakaznik.email && '-'}
-                    </td>
-                    <td className="py-2 px-3 text-center">
-                      <span 
-                        className="px-2 py-1 text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)] rounded cursor-pointer hover:bg-[var(--bg-hover-strong)]"
-                        onClick={() => handleShowRevize(zakaznik)}
-                        title="Zobrazit revize zákazníka"
-                      >
-                        {zakaznik.pocetRevizi || 0}
-                      </span>
-                    </td>
-                    <td className="py-2 px-3">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleEditZakaznik(zakaznik)}
-                        >
-                          Upravit
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleDelete(zakaznik)}
-                        >
-                          Smazat
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable columns={columns} rows={filteredZakaznici} rowKey={(z) => z.id ?? z.nazev} />
         </Card>
       )}
 
@@ -286,7 +269,7 @@ const ZakazniciPage: React.FC = () => {
           </div>
 
           {formError && isModalOpen && (
-            <p className="text-xs font-medium text-[var(--danger-text)] bg-red-500/[0.10] border border-red-500/[0.25] rounded-lg px-3 py-2">
+            <p className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-lg px-3 py-2">
               {formError}
             </p>
           )}

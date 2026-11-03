@@ -304,7 +304,7 @@ export function RevizePage() {
     <div className="flex flex-col gap-4 h-full">
       <div className="flex items-center justify-between flex-shrink-0">
         <div>
-          <h1 className="text-lg font-bold text-[var(--text)]">Revize</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">Revize</h1>
           <p className="text-xs text-[var(--text-secondary)]">Správa revizí elektrických instalací, hromosvodů a strojních zařízení</p>
         </div>
         <Button onClick={openModal}>

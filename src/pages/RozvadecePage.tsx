@@ -244,7 +244,7 @@ export function RozvadecDetailPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-[var(--text)]">{rozvadec.nazev}</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">{rozvadec.nazev}</h1>
           <p className="text-xs text-[var(--text-secondary)]">{rozvadec.oznaceni} • {rozvadec.umisteni}</p>
         </div>
         <Button size="sm" variant="secondary" onClick={() => navigate(`/revize/${revizeId}`)}>

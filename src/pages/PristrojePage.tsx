@@ -120,7 +120,7 @@ export function PristrojePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-sm font-bold text-[var(--text)]">Přístroje a kalibrace</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">Přístroje a kalibrace</h1>
           <p className="text-xs text-[var(--text-secondary)]">Správa měřících přístrojů a jejich kalibračních termínů</p>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }}>

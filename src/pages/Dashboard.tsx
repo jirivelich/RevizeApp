@@ -518,7 +518,7 @@ export function Dashboard() {
       {/* ═══ Header + Počasí inline ═══ */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1.5">
-          <h1 className="text-lg font-bold text-[var(--text)]">{greeting}</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">{greeting}</h1>
           <p className="text-xs text-[var(--text-secondary)] capitalize">{todayLabel}</p>
           <WeatherInline />
         </div>

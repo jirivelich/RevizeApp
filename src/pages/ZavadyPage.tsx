@@ -112,7 +112,7 @@ export function ZavadyPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-sm font-bold text-[var(--text)]">Katalog závad</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">Katalog závad</h1>
           <p className="text-xs text-[var(--text-secondary)]">Databáze typických závad s odkazy na normy a zákony</p>
         </div>
         <Button size="sm" onClick={() => { resetForm(); setIsModalOpen(true); }}>

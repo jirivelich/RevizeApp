@@ -82,7 +82,7 @@ export function MistnostiPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-[var(--text)]">Místnosti</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">Místnosti</h1>
           <p className="text-xs text-[var(--text-secondary)]">Evidence místností</p>
         </div>
         <Button size="sm" onClick={() => { resetForm(); setIsModalOpen(true); }}>

@@ -401,7 +401,7 @@ export function NastaveniPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-lg font-bold text-[var(--text)]">Nastavení</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">Nastavení</h1>
         <p className="text-xs text-[var(--text-secondary)]">Konfigurace aplikace a údaje o firmě</p>
       </div>
 

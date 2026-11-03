@@ -93,7 +93,7 @@ const CenikPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-sm font-bold text-[var(--text)]">Ceník</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">Ceník</h1>
           <p className="text-xs text-[var(--text-secondary)]">Položky pro rychlé vystavení faktur</p>
         </div>
         <Button onClick={handleNew}>

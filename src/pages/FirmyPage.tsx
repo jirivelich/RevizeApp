@@ -1,5 +1,6 @@
-﻿import { useState } from 'react';
-import { Button, Card, Input, Modal, ConfirmDialog } from '../components/ui';
+import { useState } from 'react';
+import { Button, Card, Input, Modal, ConfirmDialog, PageHeader, EmptyState, DataTable } from '../components/ui';
+import type { DataTableColumn } from '../components/ui';
 import { useFirmy, useCreateFirma, useUpdateFirma, useDeleteFirma } from '../hooks/useQueries';
 import type { Firma } from '../types';
 
@@ -84,84 +85,57 @@ export function FirmyPage() {
     setDeleteTarget(null);
   };
 
+  const columns: DataTableColumn<Firma>[] = [
+    { key: 'nazev', header: 'Název', render: (r) => <span className="font-medium">{r.nazev}</span> },
+    { key: 'ico', header: 'IČO', render: (r) => <span className="font-mono text-[var(--text-secondary)]">{r.ico || '-'}</span> },
+    { key: 'adresa', header: 'Adresa', render: (r) => <span className="text-[var(--text-secondary)]">{r.adresa || '-'}</span> },
+    { key: 'kontakt', header: 'Kontakt', render: (r) => r.kontaktOsoba || '-' },
+    {
+      key: 'kontakt2',
+      header: 'Telefon / Email',
+      render: (r) => (
+        <div className="text-[var(--text-secondary)]">
+          {r.telefon && <div>{r.telefon}</div>}
+          {r.email && <div>{r.email}</div>}
+          {!r.telefon && !r.email && '-'}
+        </div>
+      ),
+    },
+    {
+      key: 'akce',
+      header: 'Akce',
+      align: 'right',
+      actions: true,
+      render: (r) => (
+        <>
+          <Button variant="secondary" size="sm" onClick={() => handleOpenModal(r)}>Upravit</Button>
+          <Button variant="danger" size="sm" onClick={() => handleDelete(r)}>Smazat</Button>
+        </>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-sm font-bold text-[var(--text)]">Firmy</h1>
-          <p className="text-xs text-[var(--text-secondary)] mt-1">
-            Seznam firem, pro které provádíte revize. Tyto firmy můžete vybírat při vytváření revize.
-          </p>
-        </div>
-        <Button onClick={() => handleOpenModal()}>
-          <span className="sm:hidden text-lg leading-none">+</span>
-          <span className="hidden sm:inline">+ Přidat firmu</span>
-        </Button>
-      </div>
+      <PageHeader
+        title="Firmy"
+        subtitle="Seznam firem, pro které provádíte revize. Tyto firmy můžete vybírat při vytváření revize."
+        actions={
+          <Button onClick={() => handleOpenModal()}>
+            <span className="sm:hidden text-lg leading-none">+</span>
+            <span className="hidden sm:inline">+ Přidat firmu</span>
+          </Button>
+        }
+      />
 
       {firmy.length === 0 ? (
-        <Card>
-          <div className="text-center py-12">
-            <h3 className="text-xs font-medium text-[var(--text)] mb-2">
-              Zatím nemáte žádné firmy
-            </h3>
-            <p className="text-xs text-[var(--text-secondary)] mb-4">
-              Přidejte firmy, pro které provádíte revize jako externí technik.
-            </p>
-            <Button onClick={() => handleOpenModal()}>
-              + Přidat první firmu
-            </Button>
-          </div>
-        </Card>
+        <EmptyState
+          message="Zatím nemáte žádné firmy. Přidejte firmy, pro které provádíte revize jako externí technik."
+          action={<Button onClick={() => handleOpenModal()}>+ Přidat první firmu</Button>}
+        />
       ) : (
         <Card title="Seznam firem">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[var(--border)]">
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Název</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">ČO</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Adresa</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Kontakt</th>
-                  <th className="text-left py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Telefon / Email</th>
-                  <th className="text-right py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Akce</th>
-                </tr>
-              </thead>
-              <tbody>
-                {firmy.map((firma) => (
-                  <tr key={firma.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[var(--primary)] hover:bg-[var(--bg-hover)] group">
-                    <td className="py-2 px-3 text-xs font-medium text-[var(--text)]">{firma.nazev}</td>
-                    <td className="py-2 px-3 font-mono text-xs text-[var(--text-secondary)]">{firma.ico || '-'}</td>
-                    <td className="py-2 px-3 text-xs text-[var(--text-secondary)] max-w-xs truncate">{firma.adresa || '-'}</td>
-                    <td className="py-2 px-3 text-xs text-[var(--text)]">{firma.kontaktOsoba || '-'}</td>
-                    <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">
-                      {firma.telefon && <div>{firma.telefon}</div>}
-                      {firma.email && <div className="text-[var(--text-secondary)]">{firma.email}</div>}
-                      {!firma.telefon && !firma.email && '-'}
-                    </td>
-                    <td className="py-2 px-3">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleOpenModal(firma)}
-                        >
-                          Upravit
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleDelete(firma)}
-                        >
-                          Smazat
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable columns={columns} rows={firmy} rowKey={(f) => f.id ?? f.nazev} />
         </Card>
       )}
 
