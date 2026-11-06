@@ -1,6 +1,7 @@
 // Database service - komunikuje s backend API
 // Všechna data jsou uložena na serveru a synchronizována mezi zařízeními
 
+import { getZavadovnikZavady } from './zavadovnikData';
 import type { Revize, Rozvadec, Okruh, Chranic, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, MericiPristroj, Firma, ZavadaKatalog, Zakaznik, PredvolenyText, Kalibrace, RevizePriloha, Faktura, FakturaFilter, FakturaStav, CenikPolozka } from '../types';
 import { safeApiRequest } from './safeApiRequest';
 import { db } from '../db';
@@ -1119,6 +1120,11 @@ export const zavadaKatalogService = {
     const all = await this.getAll();
     const kategorie = [...new Set(all.map(z => z.kategorie).filter(Boolean))];
     return kategorie as string[];
+  },
+
+  /** 101 kontrolních bodů závadovníku dle ČSN 33 2000 jako položky katalogu. */
+  getZavadovnik(): Omit<ZavadaKatalog, 'id' | 'createdAt' | 'updatedAt'>[] {
+    return getZavadovnikZavady();
   },
 
   getDefaultZavady(): Omit<ZavadaKatalog, 'id' | 'createdAt' | 'updatedAt'>[] {

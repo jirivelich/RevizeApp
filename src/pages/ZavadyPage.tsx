@@ -53,7 +53,7 @@ export function ZavadyPage() {
     if (!isLoading && zavady.length === 0 && !seeded.current) {
       seeded.current = true;
       (async () => {
-        const defaultZavady = zavadaKatalogService.getDefaultZavady();
+        const defaultZavady = [...zavadaKatalogService.getDefaultZavady(), ...zavadaKatalogService.getZavadovnik()];
         for (const z of defaultZavady) {
           await zavadaKatalogService.create(z);
         }
@@ -62,6 +62,21 @@ export function ZavadyPage() {
       })();
     }
   }, [isLoading, zavady.length, qc]);
+
+  const [importing, setImporting] = useState(false);
+  const handleDoplnitZavadovnik = async () => {
+    setImporting(true);
+    try {
+      const existujici = new Set(zavady.map(z => z.popis.trim().toLowerCase()));
+      for (const z of zavadaKatalogService.getZavadovnik()) {
+        if (!existujici.has(z.popis.trim().toLowerCase())) await zavadaKatalogService.create(z);
+      }
+      qc.invalidateQueries({ queryKey: queryKeys.zavadyKatalog.all });
+      qc.invalidateQueries({ queryKey: queryKeys.zavadyKatalog.kategorie });
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,10 +201,15 @@ export function ZavadyPage() {
         title="Katalog závad"
         subtitle="Databáze typických závad s odkazy na normy a zákony"
         actions={
+          <>
+          <Button size="sm" variant="secondary" onClick={handleDoplnitZavadovnik} disabled={importing}>
+            {importing ? 'Doplňuji…' : 'Doplnit ze závadovníku'}
+          </Button>
           <Button size="sm" onClick={() => { resetForm(); setIsModalOpen(true); }}>
             <span className="sm:hidden text-lg leading-none">+</span>
             <span className="hidden sm:inline">+ Nová závada</span>
           </Button>
+          </>
         }
       />
 
