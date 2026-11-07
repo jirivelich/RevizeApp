@@ -6,7 +6,12 @@ interface ReportTableProps {
 
 export function ReportTable({ columns, widths, rows }: ReportTableProps) {
   return (
-    <table className="report-data-table">
+    <table className={widths ? 'report-data-table report-data-table--fixed' : 'report-data-table'}>
+      {widths && (
+        <colgroup>
+          {columns.map((_, i) => <col key={i} style={widths[i] ? { width: widths[i] } : undefined} />)}
+        </colgroup>
+      )}
       <thead>
         <tr>
           {columns.map((col, i) => (

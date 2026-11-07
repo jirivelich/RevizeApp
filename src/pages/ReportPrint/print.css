@@ -271,6 +271,15 @@
   break-inside: auto;
 }
 
+.report-data-table--fixed {
+  table-layout: fixed;
+}
+
+.report-data-table--fixed th,
+.report-data-table--fixed td {
+  overflow-wrap: anywhere;
+}
+
 .report-data-table th {
   background: #3e4a5b;
   color: white;
