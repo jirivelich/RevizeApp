@@ -338,7 +338,9 @@ export function ReportPrintPage() {
   const isSekceVisible = (key: string) => tiskSekce[key] !== false; // default true
 
   // Závady s fotkami (zachováme původní pořadové číslo ze sekce 13)
-  const zavadySFotkami = zavady
+  const zavadyPouze = zavady.filter(z => z.typ !== 'doporuceni');
+  const doporuceni = zavady.filter(z => z.typ === 'doporuceni');
+  const zavadySFotkami = zavadyPouze
     .map((z, i) => ({ ...z, cisloZavady: i + 1 }))
     .filter(z => Array.isArray(z.fotky) && z.fotky.length > 0);
 
@@ -392,6 +394,7 @@ export function ReportPrintPage() {
       rozvadece:              num(true),
       prostory:               num(mistnosti.length > 0),
       zavady:                 num(true),
+      doporuceni:             num(doporuceni.length > 0),
       vyhodnoceniPredchozich: num(isSekceVisible('vyhodnoceniPredchozich')),
       lhuta:                  num(true),
       oduvodneni:             num(isSekceVisible('vysledekOduvodneni') && !!revize.vysledekOduvodneni),
@@ -603,6 +606,12 @@ export function ReportPrintPage() {
         ) : (
           <p className="report-empty">Nebylo vyplněno</p>
         )}
+        {revize.datumUvedeniDoProvozu && (
+          <p className="report-text">
+            Zařízení bylo uvedeno do provozu: <strong>{revize.datumUvedeniDoProvozu}</strong>
+            {revize.zdrojUvedeniDoProvozu && <> (zjištěno na základě: {revize.zdrojUvedeniDoProvozu})</>}.
+          </p>
+        )}
       </ReportSection>
       )}
 
@@ -652,7 +661,7 @@ export function ReportPrintPage() {
             {roz.chranice.length > 0 && (
               <>
                 <div className="report-subsection-subtitle">Proudové chraniče</div>
-                <table className="report-data-table">
+                <table className="report-data-table report-data-table--fixed">
                   <thead>
                     <tr>
                       <th style={{ width: '5%' }}>Č.</th>
@@ -745,8 +754,8 @@ export function ReportPrintPage() {
 
       {/* ZÁVADY */}
       <ReportSection title={`${sectionNums.zavady}. Přehled zjištěných závad`}>
-        {zavady.length > 0 ? (
-          <table className="report-data-table">
+        {zavadyPouze.length > 0 ? (
+          <table className="report-data-table report-data-table--fixed">
             <thead>
               <tr>
                 <th style={{ width: '5%' }}>#</th>
@@ -757,7 +766,7 @@ export function ReportPrintPage() {
               </tr>
             </thead>
             <tbody>
-              {zavady.map((z, i) => (
+              {zavadyPouze.map((z, i) => (
                 <tr key={z.id ?? i}>
                   <td>{i + 1}</td>
                   <td>
@@ -776,7 +785,7 @@ export function ReportPrintPage() {
         ) : (
           <p className="report-text"><strong>Při revizi nebyly zjištěny žádné závady.</strong></p>
         )}
-        {zavady.length > 0 && (
+        {zavadyPouze.length > 0 && (
           <div className="report-zavada-legenda">
             <strong>Kategorie závad:</strong>{' '}
             <span><strong>C1</strong> – Kritická závada (bezprostřední nebezpečí, je nutné ihned odpojit zařízení od napájení);</span>{' '}
@@ -790,6 +799,37 @@ export function ReportPrintPage() {
           </p>
         )}
       </ReportSection>
+
+      {/* DOPORUČENÍ */}
+      {doporuceni.length > 0 && (
+      <ReportSection title={`${sectionNums.doporuceni}. Doporučení (nesoulad se současnými normami)`}>
+        <p className="report-text">
+          Doporučení nejsou závadami. Nezakládají provozovateli povinnost nápravy a nemají vliv na posouzení
+          schopnosti zařízení provozu; jde o odbornou radu ke zvýšení bezpečnosti.
+        </p>
+        <table className="report-data-table report-data-table--fixed">
+          <thead>
+            <tr>
+              <th style={{ width: '5%' }}>#</th>
+              <th style={{ width: '50%' }}>Doporučení</th>
+              <th style={{ width: '45%' }}>Zdůvodnění (snížené riziko)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {doporuceni.map((z, i) => (
+              <tr key={z.id ?? i}>
+                <td>{i + 1}</td>
+                <td>
+                  <div>{z.popis}</div>
+                  {z.poznamka && <div className="report-zavada-poznamka">{z.poznamka}</div>}
+                </td>
+                <td>{z.zduvodneni || '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </ReportSection>
+      )}
 
       {/* VYHODNOCENÍ PŘEDCHOZÍCH REVIZÍ */}
       {isSekceVisible('vyhodnoceniPredchozich') && (

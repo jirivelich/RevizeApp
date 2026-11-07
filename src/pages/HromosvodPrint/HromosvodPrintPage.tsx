@@ -2,6 +2,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { Previewer } from 'pagedjs';
 import { revizeService, zavadaService, revizePristrojService, nastaveniService, zakazniciService } from '../../services/database';
+import { ReportDoporuceni } from '../ReportPrint/ReportDoporuceni';
 import type { Revize, Zavada, MericiPristroj, Nastaveni, Zakaznik } from '../../types';
 import { ReportHeader } from '../ReportPrint/ReportHeader';
 import { ReportSection } from '../ReportPrint/ReportSection';
@@ -531,6 +532,12 @@ export function HromosvodPrintPage() {
         ) : (
           <p className="report-empty">Nebylo vyplněno</p>
         )}
+        {revize.datumUvedeniDoProvozu && (
+          <p className="report-text">
+            Zařízení bylo uvedeno do provozu: <strong>{revize.datumUvedeniDoProvozu}</strong>
+            {revize.zdrojUvedeniDoProvozu && <> (zjištěno na základě: {revize.zdrojUvedeniDoProvozu})</>}.
+          </p>
+        )}
       </ReportSection>
       )}
 
@@ -564,11 +571,11 @@ export function HromosvodPrintPage() {
 
       {/* p) ZÁVADY */}
       <ReportSection title="16. Přehled zjištěných závad">
-        {zavady.length > 0 ? (
+        {zavady.filter(z => z.typ !== 'doporuceni').length > 0 ? (
           <ReportTable
             columns={['#', 'Popis závady', 'Závažnost', 'Stav', 'Zjištěna']}
             widths={['5%', '45%', '15%', '15%', '20%']}
-            rows={zavady.map((z, i) => [
+            rows={zavady.filter(z => z.typ !== 'doporuceni').map((z, i) => [
               String(i + 1),
               z.popis,
               z.zavaznost === 'C1' ? 'C1 – Kritická' : z.zavaznost === 'C2' ? 'C2 – Vážná' : 'C3 – Méně závažná',
@@ -579,6 +586,7 @@ export function HromosvodPrintPage() {
         ) : (
           <p className="report-text"><strong>Při revizi nebyly zjištěny žádné závady.</strong></p>
         )}
+        <ReportDoporuceni doporuceni={zavady.filter(z => z.typ === 'doporuceni')} />
       </ReportSection>
 
       {/* q) ZÁVĚREČNÉ ZHODNOCENÍ */}

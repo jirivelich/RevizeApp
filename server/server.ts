@@ -205,7 +205,7 @@ async function startServer() {
         // Odběrné místo (JSON)
         'odberneMistoData',
         // Normy soulad + vlastní text lhůty
-        'normySoulad', 'lhutaText',
+        'normySoulad', 'lhutaText', 'datumUvedeniDoProvozu', 'zdrojUvedeniDoProvozu',
         // Historie / návaznost revizí
         'predchoziRevizeId', 'skupinaRevizi',
         // Snapshot revizního technika
@@ -854,14 +854,14 @@ async function startServer() {
 
   app.post('/api/zavady', authMiddleware, async (req, res) => {
     try {
-      const { revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, fotky, poznamka } = req.body;
+      const { revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, fotky, poznamka, typ, zduvodneni } = req.body;
       const datumZjisteni = new Date().toISOString().split('T')[0];
-      
+
       const result = await pool.query(`
-        INSERT INTO zavada ("revizeId", "rozvadecId", "mistnostId", popis, zavaznost, stav, fotky, "datumZjisteni", poznamka)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        INSERT INTO zavada ("revizeId", "rozvadecId", "mistnostId", popis, zavaznost, stav, fotky, "datumZjisteni", poznamka, typ, zduvodneni)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id
-      `, [revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, JSON.stringify(fotky || []), datumZjisteni, poznamka]);
+      `, [revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, JSON.stringify(fotky || []), datumZjisteni, poznamka, typ || 'zavada', zduvodneni]);
       
       res.json({ id: result.rows[0].id });
     } catch (error) {

@@ -334,6 +334,33 @@ export function DokumentaceTab({
             onChange={(e) => setFormData({ ...formData, podklady: e.target.value })}
             placeholder="Projekty, předchozí revize, protokoly o měření..."
           />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+            <div>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Zařízení uvedeno do provozu</label>
+              <input
+                className={TW.input}
+                value={formData.datumUvedeniDoProvozu || ''}
+                onChange={(e) => setFormData({ ...formData, datumUvedeniDoProvozu: e.target.value })}
+                placeholder="Datum nebo rok, např. 1987"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Zjištěno na základě</label>
+              <input
+                className={TW.input}
+                value={formData.zdrojUvedeniDoProvozu || ''}
+                onChange={(e) => setFormData({ ...formData, zdrojUvedeniDoProvozu: e.target.value })}
+                placeholder="Kolaudace, předchozí revize, projekt..."
+                list="zdroj-uvedeni-do-provozu"
+              />
+              <datalist id="zdroj-uvedeni-do-provozu">
+                <option value="kolaudační rozhodnutí" />
+                <option value="předchozí revizní zpráva" />
+                <option value="projektová dokumentace" />
+                <option value="sdělení provozovatele" />
+              </datalist>
+            </div>
+          </div>
         </div>
         )}
       </div>

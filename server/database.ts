@@ -460,6 +460,10 @@ export async function initializeDatabase() {
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "normySoulad" TEXT',
       // Lhůta – vlastní text místo počtu měsíců
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "lhutaText" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "datumUvedeniDoProvozu" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "zdrojUvedeniDoProvozu" TEXT',
+      "ALTER TABLE zavada ADD COLUMN IF NOT EXISTS typ TEXT DEFAULT 'zavada'",
+      'ALTER TABLE zavada ADD COLUMN IF NOT EXISTS zduvodneni TEXT',
       // Snapshot kalibrací v revizePristroj – při změně kalibrace na přístroji zůstane v revizi původní
       'ALTER TABLE "revizePristroj" ADD COLUMN IF NOT EXISTS "datumKalibrace" TEXT',
       'ALTER TABLE "revizePristroj" ADD COLUMN IF NOT EXISTS "platnostKalibrace" TEXT',

@@ -11,7 +11,7 @@ import {
 import { saveAs } from 'file-saver';
 import type { Revize, Nastaveni, Zakaznik, Zavada, MericiPristroj } from '../types';
 import {
-  sectionTitle, textParagraph, kvTable, dataTable,
+  sectionTitle, subsectionTitle, textParagraph, kvTable, dataTable,
   emptyText, resultBox, signatureSection,
   parseTiskSekce, isSekceVisible, fmtDate,
 } from './wordExport';
@@ -326,6 +326,12 @@ export async function exportHromosvodToWord(data: HromosvodWordData): Promise<vo
   if (isSekce('podklady')) {
     children.push(sectionTitle('n) Seznam podkladů použitých k provedení revize'));
     children.push(revize.podklady ? textParagraph(revize.podklady) : emptyText());
+    if (revize.datumUvedeniDoProvozu) {
+      children.push(textParagraph(
+        `Zařízení bylo uvedeno do provozu: ${revize.datumUvedeniDoProvozu}` +
+        (revize.zdrojUvedeniDoProvozu ? ` (zjištěno na základě: ${revize.zdrojUvedeniDoProvozu})` : '') + '.',
+      ));
+    }
   }
 
   // ── o) VYHODNOCENÍ PŘEDCHOZÍCH ──
@@ -336,11 +342,13 @@ export async function exportHromosvodToWord(data: HromosvodWordData): Promise<vo
 
   // ── p) ZÁVADY ──
   children.push(sectionTitle('p) Přehled zjištěných závad'));
-  if (zavady.length > 0) {
+  const zavadyPouze = zavady.filter(z => z.typ !== 'doporuceni');
+  const doporuceni = zavady.filter(z => z.typ === 'doporuceni');
+  if (zavadyPouze.length > 0) {
     children.push(dataTable(
       ['#', 'Popis závady', 'Závažnost', 'Stav', 'Zjištěna'],
       [5, 45, 15, 15, 20],
-      zavady.map((z, i) => [
+      zavadyPouze.map((z, i) => [
         String(i + 1),
         z.popis,
         z.zavaznost === 'C1' ? 'C1 – Kritická' : z.zavaznost === 'C2' ? 'C2 – Vážná' : 'C3 – Méně závažná',
@@ -350,6 +358,15 @@ export async function exportHromosvodToWord(data: HromosvodWordData): Promise<vo
     ));
   } else {
     children.push(textParagraph('Při revizi nebyly zjištěny žádné závady.', { bold: true }));
+  }
+  if (doporuceni.length > 0) {
+    children.push(subsectionTitle('Doporučení (nesoulad se současnými normami)'));
+    children.push(textParagraph('Doporučení nejsou závadami. Nezakládají provozovateli povinnost nápravy a nemají vliv na posouzení schopnosti zařízení provozu; jde o odbornou radu ke zvýšení bezpečnosti.'));
+    children.push(dataTable(
+      ['#', 'Doporučení', 'Zdůvodnění (snížené riziko)'],
+      [5, 50, 45],
+      doporuceni.map((z, i) => [String(i + 1), z.popis, z.zduvodneni || '—']),
+    ));
   }
 
   // ── q) ZÁVĚREČNÉ ZHODNOCENÍ ──

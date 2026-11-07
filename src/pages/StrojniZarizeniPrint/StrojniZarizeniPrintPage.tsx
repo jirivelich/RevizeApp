@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Previewer } from 'pagedjs';
 import { revizeService, zavadaService, revizePristrojService, nastaveniService, zakazniciService } from '../../services/database';
+import { ReportDoporuceni } from '../ReportPrint/ReportDoporuceni';
 import type { Revize, Zavada, MericiPristroj, Nastaveni, Zakaznik } from '../../types';
 import { ReportHeader } from '../ReportPrint/ReportHeader';
 import { ReportSection } from '../ReportPrint/ReportSection';
@@ -533,11 +534,11 @@ export function StrojniZarizeniPrintPage() {
 
       {/* l) ZÁVADY */}
       <ReportSection title="13. Přehled zjištěných závad">
-        {zavady.length > 0 ? (
+        {zavady.filter(z => z.typ !== 'doporuceni').length > 0 ? (
           <ReportTable
             columns={['#', 'Popis závady', 'Závažnost', 'Stav', 'Zjištěna']}
             widths={['5%', '45%', '15%', '15%', '20%']}
-            rows={zavady.map((z, i) => [
+            rows={zavady.filter(z => z.typ !== 'doporuceni').map((z, i) => [
               String(i + 1),
               z.popis,
               z.zavaznost === 'C1' ? 'C1 – Kritická' : z.zavaznost === 'C2' ? 'C2 – Vážná' : 'C3 – Méně závažná',
@@ -553,6 +554,7 @@ export function StrojniZarizeniPrintPage() {
         ) : (
           <p className="report-text"><strong>Při ověření nebyly zjištěny žádné závady.</strong></p>
         )}
+        <ReportDoporuceni doporuceni={zavady.filter(z => z.typ === 'doporuceni')} />
         {sd?.posudekDoporuceni && (
           <div className="report-text" style={{ marginTop: '8px' }}>
             <strong>Doporučení / termín odstranění závad:</strong>
