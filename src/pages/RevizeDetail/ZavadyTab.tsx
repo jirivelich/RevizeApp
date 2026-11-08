@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Button, Card, Select, Modal, ConfirmDialog } from '../../components/ui';
-import { zavadaService, revizeService } from '../../services/database';
+import { revizeService } from '../../services/database';
 import { useCreateZavada, useUpdateZavada, useDeleteZavada } from '../../hooks/useQueries';
 import type { Zavada, Rozvadec, Mistnost, ZavadaKatalog } from '../../types';
 
@@ -68,14 +68,12 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
     }
   };
 
-  const updateRevizeVysledek = async (rId: number) => {
-    const zavadyRevize = await zavadaService.getByRevize(rId);
-    const hasC1orC2 = zavadyRevize.some(z => z.typ !== 'doporuceni' && (z.zavaznost === 'C1' || z.zavaznost === 'C2') && z.stav !== 'vyřešená');
-    if (hasC1orC2) {
-      await revizeService.update(rId, { vysledek: 'neschopno' });
-    } else {
-      await revizeService.update(rId, { vysledek: 'schopno' });
-    }
+  // Závěr revize se NIKDY nenastavuje automaticky. Aplikace pouze navrhne, rozhodnutí potvrzuje technik.
+  const blokujiciZavady = zavady.filter(z => z.typ !== 'doporuceni' && (z.zavaznost === 'C1' || z.zavaznost === 'C2') && z.stav !== 'vyřešená');
+
+  const potvrditNeschopno = async () => {
+    await revizeService.update(revizeId, { vysledek: 'neschopno' });
+    _onReload();
   };
 
   const handleAddZavada = async (e: React.FormEvent) => {
@@ -85,7 +83,6 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
       ? { ...zavadaFormData, zavaznost: 'C3' as const }
       : { ...zavadaFormData, zduvodneni: '' };
     const onDone = async () => {
-      await updateRevizeVysledek(revizeId);
       setIsZavadaModalOpen(false);
       resetZavadaForm();
     };
@@ -120,8 +117,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
     const zavadaId = deleteZavadaId;
     setDeleteZavadaId(null);
     deleteZavada.mutate(
-      { id: zavadaId, revizeId },
-      { onSuccess: () => updateRevizeVysledek(revizeId) }
+      { id: zavadaId, revizeId }
     );
   };
 
@@ -131,7 +127,6 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
       { ...inlineDraft, revizeId, datumZjisteni: new Date(), fotky: [] } as any,
       {
         onSuccess: async () => {
-          await updateRevizeVysledek(revizeId);
           setInlineDraft({ popis: '', zavaznost: 'C2', stav: 'otevřená', poznamka: '' });
           setTimeout(() => inlinePopisRef.current?.focus(), 50);
         },
@@ -177,6 +172,15 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
         </div>
       }
     >
+      {blokujiciZavady.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--warning-text)] bg-[var(--warning-bg)] p-3 text-sm text-[var(--warning-text)]">
+          <span>
+            Návrh závěru: nevyřešené závady C1/C2 ({blokujiciZavady.length}) – revidované zařízení by nemělo být označeno jako schopné provozu.
+            Závěr se nenastavuje automaticky, rozhodnutí potvrzuje revizní technik.
+          </span>
+          <Button size="sm" variant="secondary" onClick={potvrditNeschopno}>Potvrdit „neschopno provozu“</Button>
+        </div>
+      )}
       {inlineMode ? (
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm border-collapse">
