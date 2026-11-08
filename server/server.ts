@@ -7,6 +7,7 @@ import { authMiddleware, loginUser, registerUser, logoutSession, changePassword,
 import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion, analyzeRozvadecPhotos } from './ai';
 import { getAuthUrl, exchangeCodeAndSave, deleteTokens, getTokens, saveTokens, listCalendars, syncZakazkyToCalendar } from './googleCalendar';
 import { PolozkaInput, toNum, vypocitejPolozku, vypocitejCelkem, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj } from './faktura-utils';
+import { diffZmen, zapisAudit } from './audit';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -231,9 +232,15 @@ async function startServer() {
       const keys = Object.keys(updates);
       const values = Object.values(updates);
       
+      const puvodniRes = await pool.query('SELECT * FROM revize WHERE id = $1', [req.params.id]);
       const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
       await pool.query(`UPDATE revize SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
-      
+
+      const zmeny = diffZmen(puvodniRes.rows[0] ?? {}, updates);
+      if (zmeny.length > 0) {
+        await zapisAudit({ entita: 'revize', entitaId: req.params.id, revizeId: req.params.id, akce: 'zmeneno', uzivatel: (req as AuthRequest).user?.username, zmeny });
+      }
+
       res.json({ success: true });
     } catch (error: any) {
       console.error('Error updating revize:', error);
@@ -862,7 +869,8 @@ async function startServer() {
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id
       `, [revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, JSON.stringify(fotky || []), datumZjisteni, poznamka, typ || 'zavada', zduvodneni]);
-      
+
+      await zapisAudit({ entita: 'zavada', entitaId: result.rows[0].id, revizeId, akce: 'vytvoreno', uzivatel: (req as AuthRequest).user?.username, zmeny: { popis, zavaznost, stav, typ: typ || 'zavada' } });
       res.json({ id: result.rows[0].id });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -877,9 +885,16 @@ async function startServer() {
       const keys = Object.keys(updates);
       const values = Object.values(updates);
       
+      const puvodniRes = await pool.query('SELECT * FROM zavada WHERE id = $1', [req.params.id]);
       const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
       await pool.query(`UPDATE zavada SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
-      
+
+      const puvodni = puvodniRes.rows[0] ?? {};
+      const zmeny = diffZmen(puvodni, updates);
+      if (zmeny.length > 0) {
+        await zapisAudit({ entita: 'zavada', entitaId: req.params.id, revizeId: puvodni.revizeId, akce: 'zmeneno', uzivatel: (req as AuthRequest).user?.username, zmeny });
+      }
+
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -888,7 +903,12 @@ async function startServer() {
 
   app.delete('/api/zavady/:id', authMiddleware, async (req, res) => {
     try {
+      const puvodniRes = await pool.query('SELECT * FROM zavada WHERE id = $1', [req.params.id]);
       await pool.query('DELETE FROM zavada WHERE id = $1', [req.params.id]);
+      const z = puvodniRes.rows[0];
+      if (z) {
+        await zapisAudit({ entita: 'zavada', entitaId: z.id, revizeId: z.revizeId, akce: 'smazano', uzivatel: (req as AuthRequest).user?.username, zmeny: { popis: z.popis, zavaznost: z.zavaznost, stav: z.stav, typ: z.typ } });
+      }
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });

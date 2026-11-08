@@ -613,6 +613,27 @@ export async function initializeDatabase() {
       'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "fakturaPrefix" TEXT',
       'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "fakturaPoznamkaPata" TEXT',
       'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS razitko TEXT',
+      // ===== Verzování schématu a auditní stopa (aditivní, bez dopadu na stávající data) =====
+      `CREATE TABLE IF NOT EXISTS schema_migrations (
+        version INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        "appliedAt" TEXT NOT NULL
+      )`,
+      `CREATE TABLE IF NOT EXISTS audit_log (
+        id SERIAL PRIMARY KEY,
+        cas TEXT NOT NULL,
+        entita TEXT NOT NULL,
+        "entitaId" INTEGER,
+        "revizeId" INTEGER,
+        akce TEXT NOT NULL,
+        uzivatel TEXT,
+        zmeny TEXT
+      )`,
+      'CREATE INDEX IF NOT EXISTS idx_audit_revize ON audit_log("revizeId")',
+      'CREATE INDEX IF NOT EXISTS idx_audit_entita ON audit_log(entita, "entitaId")',
+      `INSERT INTO schema_migrations (version, name, "appliedAt")
+        VALUES (1, 'audit_log a schema_migrations', '${new Date().toISOString()}')
+        ON CONFLICT (version) DO NOTHING`,
     ];
     
     for (const migration of migrations) {
