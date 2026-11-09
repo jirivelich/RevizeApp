@@ -629,10 +629,38 @@ export async function initializeDatabase() {
         uzivatel TEXT,
         zmeny TEXT
       )`,
+      // ===== Rozsah revize a evidence podkladů =====
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "druhRozsahu" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "ucelRevize" TEXT',
+      `CREATE TABLE IF NOT EXISTS "revizeRozsahPolozka" (
+        id SERIAL PRIMARY KEY,
+        "revizeId" INTEGER NOT NULL REFERENCES revize(id) ON DELETE CASCADE,
+        typ TEXT NOT NULL,
+        nazev TEXT NOT NULL,
+        duvod TEXT,
+        "createdAt" TEXT NOT NULL
+      )`,
+      `CREATE TABLE IF NOT EXISTS "revizeDokument" (
+        id SERIAL PRIMARY KEY,
+        "revizeId" INTEGER NOT NULL REFERENCES revize(id) ON DELETE CASCADE,
+        nazev TEXT NOT NULL,
+        druh TEXT,
+        "datumDokumentu" TEXT,
+        stav TEXT NOT NULL DEFAULT 'predlozeno',
+        "znemoznujeOvereni" BOOLEAN NOT NULL DEFAULT FALSE,
+        poznamka TEXT,
+        "prilohaId" INTEGER REFERENCES "revizePriloha"(id) ON DELETE SET NULL,
+        "createdAt" TEXT NOT NULL
+      )`,
+      'CREATE INDEX IF NOT EXISTS idx_rozsah_revize ON "revizeRozsahPolozka"("revizeId")',
+      'CREATE INDEX IF NOT EXISTS idx_dokument_revize ON "revizeDokument"("revizeId")',
       'CREATE INDEX IF NOT EXISTS idx_audit_revize ON audit_log("revizeId")',
       'CREATE INDEX IF NOT EXISTS idx_audit_entita ON audit_log(entita, "entitaId")',
       `INSERT INTO schema_migrations (version, name, "appliedAt")
         VALUES (1, 'audit_log a schema_migrations', '${new Date().toISOString()}')
+        ON CONFLICT (version) DO NOTHING`,
+      `INSERT INTO schema_migrations (version, name, "appliedAt")
+        VALUES (2, 'rozsah revize a evidence podkladu', '${new Date().toISOString()}')
         ON CONFLICT (version) DO NOTHING`,
     ];
     

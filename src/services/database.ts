@@ -2,7 +2,7 @@
 // Všechna data jsou uložena na serveru a synchronizována mezi zařízeními
 
 import { getZavadovnikZavady } from './zavadovnikData';
-import type { Revize, Rozvadec, Okruh, Chranic, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, MericiPristroj, Firma, ZavadaKatalog, Zakaznik, PredvolenyText, Kalibrace, RevizePriloha, Faktura, FakturaFilter, FakturaStav, CenikPolozka } from '../types';
+import type { Revize, Rozvadec, Okruh, Chranic, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, MericiPristroj, Firma, ZavadaKatalog, Zakaznik, PredvolenyText, Kalibrace, RevizePriloha, RozsahPolozka, RevizeDokument, Faktura, FakturaFilter, FakturaStav, CenikPolozka } from '../types';
 import { safeApiRequest } from './safeApiRequest';
 import { db } from '../db';
 import { buildApiUrl, getAuthHeaders, handleResponse } from './httpClient';
@@ -1617,6 +1617,45 @@ export const prilohaService = {
 
   async delete(id: number): Promise<void> {
     const res = await fetch(buildApiUrl(`/prilohy/${id}`), { method: 'DELETE', headers: getAuthHeaders() });
+    await handleResponse<{ success: boolean }>(res);
+  },
+};
+
+// ==================== ROZSAH REVIZE A PODKLADY ====================
+export const rozsahService = {
+  async getByRevize(revizeId: number): Promise<RozsahPolozka[]> {
+    const res = await fetch(buildApiUrl(`/revize/${revizeId}/rozsah-polozky`), { headers: getAuthHeaders() });
+    return handleResponse<RozsahPolozka[]>(res);
+  },
+  async create(p: Omit<RozsahPolozka, 'id'>): Promise<number> {
+    const res = await fetch(buildApiUrl(`/revize/${p.revizeId}/rozsah-polozky`), { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(p) });
+    return (await handleResponse<{ id: number }>(res)).id;
+  },
+  async update(id: number, changes: Partial<Pick<RozsahPolozka, 'typ' | 'nazev' | 'duvod'>>): Promise<void> {
+    const res = await fetch(buildApiUrl(`/rozsah-polozky/${id}`), { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(changes) });
+    await handleResponse<{ success: boolean }>(res);
+  },
+  async delete(id: number): Promise<void> {
+    const res = await fetch(buildApiUrl(`/rozsah-polozky/${id}`), { method: 'DELETE', headers: getAuthHeaders() });
+    await handleResponse<{ success: boolean }>(res);
+  },
+};
+
+export const dokumentService = {
+  async getByRevize(revizeId: number): Promise<RevizeDokument[]> {
+    const res = await fetch(buildApiUrl(`/revize/${revizeId}/dokumenty`), { headers: getAuthHeaders() });
+    return handleResponse<RevizeDokument[]>(res);
+  },
+  async create(d: Omit<RevizeDokument, 'id'>): Promise<number> {
+    const res = await fetch(buildApiUrl(`/revize/${d.revizeId}/dokumenty`), { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(d) });
+    return (await handleResponse<{ id: number }>(res)).id;
+  },
+  async update(id: number, changes: Partial<Omit<RevizeDokument, 'id' | 'revizeId'>>): Promise<void> {
+    const res = await fetch(buildApiUrl(`/dokumenty/${id}`), { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(changes) });
+    await handleResponse<{ success: boolean }>(res);
+  },
+  async delete(id: number): Promise<void> {
+    const res = await fetch(buildApiUrl(`/dokumenty/${id}`), { method: 'DELETE', headers: getAuthHeaders() });
     await handleResponse<{ success: boolean }>(res);
   },
 };

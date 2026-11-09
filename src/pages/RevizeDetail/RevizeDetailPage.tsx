@@ -27,6 +27,7 @@ import { HromosvodNacrtTab } from './HromosvodNacrtTab';
 import { StrojniZarizeniTab } from './StrojniZarizeniTab';
 import { OdberneMistoTab } from './OdberneMistoTab';
 import { PrilohyTab } from './PrilohyTab';
+import { RozsahTab } from './RozsahTab';
 
 export function RevizeDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -35,7 +36,7 @@ export function RevizeDetailPage() {
 
   // Core state (local)
   const [formData, setFormData] = useState<Partial<Revize>>({});
-  const [activeTab, setActiveTab] = useState<'info' | 'dokumentace' | 'rozvadece' | 'zavady' | 'mistnosti' | 'hromosvod_zarizeni' | 'hromosvod_nacrt' | 'strojni_zarizeni' | 'odberne_misto' | 'prilohy'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'dokumentace' | 'rozvadece' | 'zavady' | 'mistnosti' | 'hromosvod_zarizeni' | 'hromosvod_nacrt' | 'strojni_zarizeni' | 'odberne_misto' | 'rozsah' | 'prilohy'>('info');
   const [selectedFirmaId, setSelectedFirmaId] = useState<string>('');
   const [selectedZakaznikId, setSelectedZakaznikId] = useState<string>('');
 
@@ -201,6 +202,7 @@ export function RevizeDetailPage() {
         { id: 'info', label: 'Základní údaje', icon: '' },
         { id: 'odberne_misto', label: 'Odběrné místo', icon: '' },
         { id: 'dokumentace', label: 'Revidované zařízení', icon: '' },
+        { id: 'rozsah', label: 'Rozsah a podklady', icon: '' },
         { id: 'zavady', label: 'Závady', icon: '', count: zavady.length, danger: true },
         { id: 'prilohy', label: 'Přílohy', icon: '' },
       ]
@@ -209,6 +211,7 @@ export function RevizeDetailPage() {
         { id: 'info', label: 'Základní údaje', icon: '' },
         { id: 'hromosvod_zarizeni', label: 'Revidované zařízení', icon: '' },
         { id: 'hromosvod_nacrt', label: '✏️ Náčrt LPS', icon: '' },
+        { id: 'rozsah', label: 'Rozsah a podklady', icon: '' },
         { id: 'zavady', label: 'Závady', icon: '', count: zavady.length, danger: true },
         { id: 'prilohy', label: 'Přílohy', icon: '' },
       ]
@@ -216,6 +219,7 @@ export function RevizeDetailPage() {
     ? [
         { id: 'info', label: 'Základní údaje', icon: '' },
         { id: 'strojni_zarizeni', label: 'Protokol strojního zařízení', icon: '' },
+        { id: 'rozsah', label: 'Rozsah a podklady', icon: '' },
         { id: 'zavady', label: 'Závady', icon: '', count: zavady.length, danger: true },
         { id: 'prilohy', label: 'Přílohy', icon: '' },
       ]
@@ -224,6 +228,7 @@ export function RevizeDetailPage() {
         { id: 'dokumentace', label: 'Revidované zařízení', icon: '' },
         { id: 'rozvadece', label: 'Rozvaděče', icon: '', count: rozvadece.length },
         { id: 'mistnosti', label: 'Místnosti', icon: '', count: mistnosti.length },
+        { id: 'rozsah', label: 'Rozsah a podklady', icon: '' },
         { id: 'zavady', label: 'Závady', icon: '', count: zavady.length, danger: true },
         { id: 'prilohy', label: 'Přílohy', icon: '' },
       ];
@@ -371,10 +376,14 @@ export function RevizeDetailPage() {
         />
       )}
 
+      {activeTab === 'rozsah' && (
+        <RozsahTab revizeId={revize.id!} formData={formData} setFormData={setFormData} saveNow={saveNow} />
+      )}
+
       {activeTab === 'prilohy' && <PrilohyTab revizeId={revize.id!} />}
 
       {/* Fixed save bar */}
-      {(activeTab === 'info' || activeTab === 'dokumentace' || activeTab === 'hromosvod_zarizeni' || activeTab === 'hromosvod_nacrt' || activeTab === 'strojni_zarizeni' || activeTab === 'odberne_misto') && (
+      {(activeTab === 'info' || activeTab === 'dokumentace' || activeTab === 'hromosvod_zarizeni' || activeTab === 'hromosvod_nacrt' || activeTab === 'strojni_zarizeni' || activeTab === 'odberne_misto' || activeTab === 'rozsah') && (
         <div className="fixed bottom-[calc(56px+env(safe-area-inset-bottom))] lg:bottom-0 left-0 lg:left-64 right-0 z-40 bg-[var(--surface)] border-t border-[var(--border-medium)]">
           <div className="max-w-4xl mx-auto px-4 py-2 flex items-center justify-between gap-4">
             <div className="text-sm min-w-[140px]" role="status" aria-live="polite">
