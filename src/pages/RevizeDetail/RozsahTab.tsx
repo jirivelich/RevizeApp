@@ -161,11 +161,8 @@ export function RozsahTab({ revizeId, formData, setFormData, saveNow }: RozsahTa
                   {seznam.length > 0 && typ === 'revidovano' && (
                     <Button size="sm" variant="secondary" onClick={() => vlozitDoPole('rozsahRevize', navrhRozsah.rozsah)}>Vložit do pole „Předmět revize je“</Button>
                   )}
-                  {seznam.length > 0 && typ === 'vyloucenoRozsah' && (
-                    <Button size="sm" variant="secondary" onClick={() => vlozitDoPole('predmetNeni', navrhRozsah.predmetNeni)}>Vložit do pole „Předmětem revize není“</Button>
-                  )}
-                  {seznam.length > 0 && typ === 'neovereno' && (
-                    <Button size="sm" variant="secondary" onClick={() => vlozitDoPole('predmetNeni', `Nebylo možné ověřit:\n${navrhRozsah.neovereno}`)}>Vložit do pole „Předmětem revize není“</Button>
+                  {typ !== 'revidovano' && seznam.length > 0 && (
+                    <span className="text-xs text-[var(--text-muted)] self-center">Tisknou se do zprávy automaticky v tabulce, ručně vkládat nemusíte.</span>
                   )}
                 </div>
               </div>

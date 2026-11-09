@@ -1,8 +1,9 @@
 ﻿import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Previewer } from 'pagedjs';
-import { revizeService, rozvadecService, okruhService, cranicService, zavadaService, mistnostService, zarizeniService, revizePristrojService, nastaveniService, zakazniciService } from '../../services/database';
-import type { Revize, Rozvadec, Okruh, Chranic, Zavada, Mistnost, Zarizeni, MericiPristroj, Nastaveni, Zakaznik } from '../../types';
+import { revizeService, rozvadecService, okruhService, cranicService, zavadaService, mistnostService, zarizeniService, revizePristrojService, nastaveniService, zakazniciService, rozsahService, dokumentService } from '../../services/database';
+import { DRUH_ROZSAHU_LABELS, DOKUMENT_STAV_LABELS } from '../../services/rozsahKontrola';
+import type { Revize, Rozvadec, Okruh, Chranic, Zavada, Mistnost, Zarizeni, MericiPristroj, Nastaveni, Zakaznik, RozsahPolozka, RevizeDokument } from '../../types';
 import { ReportHeader } from './ReportHeader';
 import { ReportSection } from './ReportSection';
 import { ReportTable } from './ReportTable';
@@ -88,6 +89,9 @@ export interface ReportData {
   mistnosti: MistnostWithZarizeni[];
   pristroje: MericiPristroj[];
   prilohy: PrilohaPrintItem[];
+  /** Rozsah a podklady (volitelné, starší revize je nemají). */
+  rozsahPolozky?: RozsahPolozka[];
+  dokumenty?: RevizeDokument[];
 }
 
 export interface RozvadecWithOkruhy extends Rozvadec {
@@ -155,7 +159,13 @@ export function ReportPrintPage() {
       }
 
       const prilohy = await loadPrilohyForPrint(revizeId);
-      setData({ revize, nastaveni: nastaveniData || null, zakaznik, rozvadece, zavady, mistnosti, pristroje, prilohy });
+      // Rozsah a podklady: chyba jejich načtení nesmí znemožnit tisk zprávy
+      const nacistVolitelne = async <T,>(fn: () => Promise<T[]>): Promise<T[]> => { try { return await fn(); } catch { return []; } };
+      const [rozsahPolozky, dokumenty] = await Promise.all([
+        nacistVolitelne(() => rozsahService.getByRevize(revizeId)),
+        nacistVolitelne(() => dokumentService.getByRevize(revizeId)),
+      ]);
+      setData({ revize, nastaveni: nastaveniData || null, zakaznik, rozvadece, zavady, mistnosti, pristroje, prilohy, rozsahPolozky, dokumenty });
 
       // Nastavit document.title pro výchozí název PDF souboru
       const titleParts = [
@@ -329,6 +339,10 @@ export function ReportPrintPage() {
   }
 
   const { revize, nastaveni, zakaznik, rozvadece, zavady, mistnosti, pristroje, prilohy } = data;
+  const rozsahPolozky = data.rozsahPolozky ?? [];
+  const dokumenty = data.dokumenty ?? [];
+  const vyloucene = rozsahPolozky.filter(p => p.typ === 'vyloucenoRozsah');
+  const neovereno = rozsahPolozky.filter(p => p.typ === 'neovereno');
 
   // Parsovat tiskSekce – které sekce jsou viditelné v tisku
   let tiskSekce: Record<string, boolean> = {};
@@ -533,6 +547,14 @@ export function ReportPrintPage() {
       {/* ROZSAH REVIZE */}
       {isSekceVisible('rozsahRevize') && (
       <ReportSection title={`${sectionNums.rozsahRevize}. Vymezení rozsahu revize`}>
+        {revize.druhRozsahu && (
+          <p className="report-text">
+            <strong>Druh revize z hlediska rozsahu:</strong> {DRUH_ROZSAHU_LABELS[revize.druhRozsahu]}
+          </p>
+        )}
+        {revize.ucelRevize && (
+          <p className="report-text"><strong>Účel revize:</strong> {revize.ucelRevize}</p>
+        )}
         {revize.rozsahRevize && (
           <div className="report-text">
             <strong>Předmět revize je:</strong>
@@ -545,7 +567,27 @@ export function ReportPrintPage() {
             <p>{revize.predmetNeni}</p>
           </div>
         )}
-        {!revize.rozsahRevize && !revize.predmetNeni && <p className="report-empty">Nebylo vyplněno</p>}
+        {vyloucene.length > 0 && (
+          <div className="report-text" style={{ marginTop: '6px' }}>
+            <strong>Části vyloučené z rozsahu revize:</strong>
+            <ReportTable
+              columns={['Část', 'Důvod omezení rozsahu']}
+              widths={['50%', '50%']}
+              rows={vyloucene.map(p => [p.nazev, p.duvod || '—'])}
+            />
+          </div>
+        )}
+        {neovereno.length > 0 && (
+          <div className="report-text" style={{ marginTop: '6px' }}>
+            <strong>Části, které nebylo možné ověřit:</strong>
+            <ReportTable
+              columns={['Část', 'Důvod']}
+              widths={['50%', '50%']}
+              rows={neovereno.map(p => [p.nazev, p.duvod || '—'])}
+            />
+          </div>
+        )}
+        {!revize.rozsahRevize && !revize.predmetNeni && !revize.druhRozsahu && vyloucene.length === 0 && neovereno.length === 0 && <p className="report-empty">Nebylo vyplněno</p>}
       </ReportSection>
       )}
 
@@ -603,8 +645,15 @@ export function ReportPrintPage() {
       <ReportSection title={`${sectionNums.podklady}. Seznam podkladů použitých k provedení revize`}>
         {revize.podklady ? (
           <p className="report-text">{revize.podklady}</p>
-        ) : (
+        ) : dokumenty.length === 0 ? (
           <p className="report-empty">Nebylo vyplněno</p>
+        ) : null}
+        {dokumenty.length > 0 && (
+          <ReportTable
+            columns={['Dokument', 'Druh', 'Datum / revize', 'Stav', 'Poznámka']}
+            widths={['27%', '16%', '14%', '16%', '27%']}
+            rows={dokumenty.map(d => [d.nazev, d.druh || '—', d.datumDokumentu || '—', DOKUMENT_STAV_LABELS[d.stav], d.poznamka || '—'])}
+          />
         )}
         {revize.datumUvedeniDoProvozu && (
           <p className="report-text">
