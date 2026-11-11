@@ -27,6 +27,7 @@ import { HromosvodNacrtTab } from './HromosvodNacrtTab';
 import { StrojniZarizeniTab } from './StrojniZarizeniTab';
 import { OdberneMistoTab } from './OdberneMistoTab';
 import { PrilohyTab } from './PrilohyTab';
+import { ZamekPruh, jeRevizeZamcena, useZamekDom } from './ZamekRevize';
 import { RozsahTab } from './RozsahTab';
 
 export function RevizeDetailPage() {
@@ -233,6 +234,11 @@ export function RevizeDetailPage() {
         { id: 'prilohy', label: 'Přílohy', icon: '' },
       ];
 
+  // Zamčená (dokončená) revize: jen čtení a kopírování textu, odemknutí opsáním čísla revize
+  const obsahRef = useRef<HTMLDivElement>(null);
+  const zamcena = jeRevizeZamcena(formData.stav);
+  useZamekDom(obsahRef, zamcena);
+
   const handleReload = () => {
     // React Query handles refetch automatically via cache invalidation
     // This is kept for child components that call onReload after mutations
@@ -290,7 +296,13 @@ export function RevizeDetailPage() {
         ))}
       </div>
 
+      {zamcena && revize.id && (
+        <ZamekPruh revizeId={revize.id} cisloRevize={revize.cisloRevize}
+          onOdemceno={() => setFormData(prev => ({ ...prev, stav: 'rozpracováno' }))} />
+      )}
+
       {/* Tab content */}
+      <div ref={obsahRef}>
       {activeTab === 'info' && (
         isHromosvod ? (
           <HromosvodInfoTab
@@ -382,8 +394,10 @@ export function RevizeDetailPage() {
 
       {activeTab === 'prilohy' && <PrilohyTab revizeId={revize.id!} />}
 
+      </div>
+
       {/* Fixed save bar */}
-      {(activeTab === 'info' || activeTab === 'dokumentace' || activeTab === 'hromosvod_zarizeni' || activeTab === 'hromosvod_nacrt' || activeTab === 'strojni_zarizeni' || activeTab === 'odberne_misto' || activeTab === 'rozsah') && (
+      {!zamcena && (activeTab === 'info' || activeTab === 'dokumentace' || activeTab === 'hromosvod_zarizeni' || activeTab === 'hromosvod_nacrt' || activeTab === 'strojni_zarizeni' || activeTab === 'odberne_misto' || activeTab === 'rozsah') && (
         <div className="fixed bottom-[calc(56px+env(safe-area-inset-bottom))] lg:bottom-0 left-0 lg:left-64 right-0 z-40 bg-[var(--surface)] border-t border-[var(--border-medium)]">
           <div className="max-w-4xl mx-auto px-4 py-2 flex items-center justify-between gap-4">
             <div className="text-sm min-w-[140px]" role="status" aria-live="polite">

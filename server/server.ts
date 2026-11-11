@@ -8,6 +8,7 @@ import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestio
 import { getAuthUrl, exchangeCodeAndSave, deleteTokens, getTokens, saveTokens, listCalendars, syncZakazkyToCalendar } from './googleCalendar';
 import { PolozkaInput, toNum, vypocitejPolozku, vypocitejCelkem, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj } from './faktura-utils';
 import { diffZmen, zapisAudit } from './audit';
+import { hlidejZamek, jeZamceny } from './zamek';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -27,6 +28,9 @@ app.use(cors({
 }));
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+
+// Dokončené (zamčené) revize nelze měnit, dokud se neodemknou
+app.use('/api', hlidejZamek);
 
 // Servírovat statické soubory frontendu (dist/)
 const possibleDistPaths = [
@@ -261,6 +265,26 @@ async function startServer() {
           return res.status(500).json({ error: (retryError as Error).message });
         }
       }
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Odemknutí dokončené revize: uživatel musí opsat její číslo
+  app.post('/api/revize/:id/odemknout', authMiddleware, async (req, res) => {
+    try {
+      const r = await pool.query('SELECT "cisloRevize", stav FROM revize WHERE id = $1', [req.params.id]);
+      const revize = r.rows[0];
+      if (!revize) return res.status(404).json({ error: 'Revize nebyla nalezena' });
+      const zadane = typeof req.body?.cisloRevize === 'string' ? req.body.cisloRevize.trim() : '';
+      if (zadane !== String(revize.cisloRevize).trim()) {
+        return res.status(400).json({ error: 'Opsané číslo revize nesouhlasí.' });
+      }
+      if (!jeZamceny(revize.stav)) return res.json({ success: true, stav: revize.stav });
+      await pool.query('UPDATE revize SET stav = $1, "updatedAt" = $2 WHERE id = $3', ['rozpracováno', new Date().toISOString(), req.params.id]);
+      await zapisAudit({ entita: 'revize', entitaId: req.params.id, revizeId: req.params.id, akce: 'zmeneno', uzivatel: (req as AuthRequest).user?.username,
+        zmeny: [{ pole: 'stav', puvodni: revize.stav, nova: 'rozpracováno (odemčeno opsáním čísla revize)' }] });
+      res.json({ success: true, stav: 'rozpracováno' });
+    } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
   });
