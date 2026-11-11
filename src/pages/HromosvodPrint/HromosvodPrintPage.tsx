@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Previewer } from 'pagedjs';
+import { restoreSplitTableColumns } from '../ReportPrint/pagedTables';
 import { revizeService, zavadaService, revizePristrojService, nastaveniService, zakazniciService } from '../../services/database';
 import { ReportDoporuceni } from '../ReportPrint/ReportDoporuceni';
 import type { Revize, Zavada, MericiPristroj, Nastaveni, Zakaznik } from '../../types';
@@ -182,6 +183,7 @@ export function HromosvodPrintPage() {
       const previewer = new Previewer();
       const flow = await previewer.preview(content, [cssUrl], previewRef.current);
       URL.revokeObjectURL(cssUrl);
+      restoreSplitTableColumns(previewRef.current);
       setPageCount(flow?.total || 1);
       // Odpojit ResizeObserver ze všech pagedjs stránek (zabrání crashům v checkUnderflowAfterResize)
       try { flow?.pages?.forEach((p: any) => p.removeListeners?.()); } catch { /* ok */ }

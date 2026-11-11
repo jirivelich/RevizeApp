@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Previewer } from 'pagedjs';
+import { restoreSplitTableColumns } from '../ReportPrint/pagedTables';
 import { revizeService, rozvadecService, okruhService, cranicService, zavadaService, mistnostService, zarizeniService, revizePristrojService, nastaveniService, zakazniciService, rozsahService, dokumentService } from '../../services/database';
 import { DRUH_ROZSAHU_LABELS, DOKUMENT_STAV_LABELS } from '../../services/rozsahKontrola';
 import type { Revize, Rozvadec, Okruh, Chranic, Zavada, Mistnost, Zarizeni, MericiPristroj, Nastaveni, Zakaznik, RozsahPolozka, RevizeDokument } from '../../types';
@@ -231,6 +232,7 @@ export function ReportPrintPage() {
         previewRef.current
       );
       URL.revokeObjectURL(cssUrl);
+      restoreSplitTableColumns(previewRef.current);
 
       const total = flow?.total || 1;
       setPageCount(total);

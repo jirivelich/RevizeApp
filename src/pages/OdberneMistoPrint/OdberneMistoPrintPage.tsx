@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Previewer } from 'pagedjs';
+import { restoreSplitTableColumns } from '../ReportPrint/pagedTables';
 import { revizeService, zavadaService, revizePristrojService, nastaveniService, zakazniciService } from '../../services/database';
 import { ReportDoporuceni } from '../ReportPrint/ReportDoporuceni';
 import type { Revize, Zavada, MericiPristroj, Nastaveni, Zakaznik } from '../../types';
@@ -114,6 +115,7 @@ export function OdberneMistoPrintPage() {
       const previewer = new Previewer();
       const flow = await previewer.preview(content, [cssUrl], previewRef.current);
       URL.revokeObjectURL(cssUrl);
+      restoreSplitTableColumns(previewRef.current);
       try { flow?.pages?.forEach((p: any) => p.removeListeners?.()); } catch { /* ok */ }
     } catch (err) {
       console.error('Pagedjs error:', err);
