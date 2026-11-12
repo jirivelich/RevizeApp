@@ -301,7 +301,8 @@ export function RevizeDetailPage() {
       {!zamcena && revize.id && (
         <KontrolaPanel revizeId={revize.id} formData={formData} zavady={zavady}
           pocetPristroju={pouzitePristroje.length} aktualniZalozka={activeTab}
-          onPrejit={(z) => { flush(); setActiveTab(z); }} />
+          onPrejit={(z) => { flush(); setActiveTab(z); }}
+          onPouzitVysledek={(vysledek) => setFormData(prev => ({ ...prev, vysledek }))} />
       )}
 
       {zamcena && revize.id && (

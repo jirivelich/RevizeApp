@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { zkontrolujPredDokoncenim, jeBlokujiciZavada, type VstupKontroly } from '../../services/kontrolaPredDokoncenim';
+import { zkontrolujPredDokoncenim, jeBlokujiciZavada, navrhniZaver, type VstupKontroly } from '../../services/kontrolaPredDokoncenim';
 import type { Zavada } from '../../types';
 
 const zavada = (p: Partial<Zavada> = {}): Zavada => ({
@@ -104,5 +104,50 @@ describe('jeBlokujiciZavada', () => {
     expect(jeBlokujiciZavada(zavada({ zavaznost: 'C3' }))).toBe(false);
     expect(jeBlokujiciZavada(zavada({ stav: 'vyřešená' }))).toBe(false);
     expect(jeBlokujiciZavada(zavada({ typ: 'doporuceni' }))).toBe(false);
+  });
+});
+
+describe('navrhniZaver', () => {
+  it('A: bez závad a omezení', () => {
+    const n = navrhniZaver(kompletni());
+    expect(n.navrh).toBe('A');
+    expect(n.vysledek).toBe('schopno');
+  });
+
+  it('B: nevyřešená závada C1/C2, s důvody', () => {
+    const v = kompletni();
+    v.zavady = [zavada({ zavaznost: 'C1', popis: 'Neúčinná ochrana' })];
+    const n = navrhniZaver(v);
+    expect(n.navrh).toBe('B');
+    expect(n.vysledek).toBe('neschopno');
+    expect(n.duvody.join(' ')).toContain('Neúčinná ochrana');
+  });
+
+  it('C: neověřená část brání kladnému závěru a nenastavuje výsledek', () => {
+    const v = kompletni();
+    v.rozsahPolozky = [{ revizeId: 1, typ: 'neovereno', nazev: 'Půda', duvod: 'zamčeno' } as any];
+    const n = navrhniZaver(v);
+    expect(n.navrh).toBe('C');
+    expect(n.vysledek).toBeNull();
+  });
+
+  it('C: chybějící dokumentace bránící ověření', () => {
+    const v = kompletni();
+    v.dokumenty = [{ revizeId: 1, nazev: 'Schéma', druh: 'schema', stav: 'nepredlozeno', znemoznujeOvereni: true } as any];
+    expect(navrhniZaver(v).navrh).toBe('C');
+  });
+
+  it('A nikdy nevznikne při kritickém rozporu v rozsahu', () => {
+    const v = kompletni();
+    v.revize.druhRozsahu = 'nedokoncena';
+    expect(navrhniZaver(v).navrh).not.toBe('A');
+  });
+
+  it('C3 a vyřešené závady A nebrání, ale zmíní se', () => {
+    const v = kompletni();
+    v.zavady = [zavada({ zavaznost: 'C3' }), zavada({ stav: 'vyřešená' })];
+    const n = navrhniZaver(v);
+    expect(n.navrh).toBe('A');
+    expect(n.duvody.join(' ')).toContain('C3');
   });
 });

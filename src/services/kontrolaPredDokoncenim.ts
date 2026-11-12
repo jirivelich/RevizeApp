@@ -123,7 +123,49 @@ export function zkontrolujPredDokoncenim(v: VstupKontroly): ZjisteniKontroly[] {
   return z;
 }
 
-export const POCET_UROVNI = (z: ZjisteniKontroly[]) => ({
+export type NavrhZaveru = 'A' | 'B' | 'C';
+
+export interface VysledekNavrhu {
+  navrh: NavrhZaveru;
+  popis: string;
+  /** Důvody návrhu, aby byl vysvětlitelný a technik mohl posoudit, zda s nimi souhlasí. */
+  duvody: string[];
+  /** Hodnota pole výsledek, kterou lze nastavit. U C je null: nedostatečně ověřeno nemá samostatnou hodnotu. */
+  vysledek: 'schopno' | 'neschopno' | null;
+}
+
+/**
+ * Návrh závěru A (vyhovující) / B (nevyhovující) / C (nedostatečně ověřeno).
+ * Pouze doporučení: nikdy nic nezapisuje samo. Kladný závěr A se nenavrhne, pokud existuje
+ * závada C1/C2, neověřená část, chybějící dokumentace nutná k ověření nebo jiný kritický rozpor.
+ */
+export function navrhniZaver(v: VstupKontroly): VysledekNavrhu {
+  const blokujici = v.zavady.filter(jeBlokujiciZavada);
+  const rozsah = zkontrolujRozsahAPodklady(v.revize.druhRozsahu, v.rozsahPolozky, v.dokumenty);
+  const omezeni: string[] = [];
+  const neovereno = v.rozsahPolozky.filter(p => p.typ === 'neovereno');
+  if (neovereno.length > 0) omezeni.push(`Neověřené části: ${neovereno.map(p => p.nazev).join(', ')}.`);
+  if (v.revize.druhRozsahu === 'nedokoncena') omezeni.push('Revize je označena jako nedokončená.');
+  for (const f of rozsah) if (f.kod === 'DOK_CHYBI_BRANI_OVERENI') omezeni.push(f.text);
+
+  if (blokujici.length > 0) {
+    const duvody = [`Nevyřešené závady C1/C2: ${blokujici.length}.`, ...blokujici.slice(0, 5).map(z => `${z.zavaznost}: ${z.popis || 'bez popisu'}`)];
+    if (omezeni.length > 0) duvody.push('Zároveň existují omezení ověření (viz níže), uveďte je ve zprávě:', ...omezeni);
+    return { navrh: 'B', popis: 'Nevyhovující: zařízení nesplňuje požadavky pro bezpečný provoz.', duvody, vysledek: 'neschopno' };
+  }
+  if (omezeni.length > 0) {
+    return {
+      navrh: 'C', popis: 'Nedostatečně ověřeno: rozsah ověření neumožňuje vydat kladný závěr.',
+      duvody: omezeni, vysledek: null,
+    };
+  }
+  const c3 = v.zavady.filter(z => z.typ !== 'doporuceni' && z.zavaznost === 'C3' && z.stav !== 'vyřešená').length;
+  const duvody = ['Žádná nevyřešená závada C1/C2.', 'Rozsah neobsahuje neověřené části ani chybějící dokumentaci bránící ověření.'];
+  if (c3 > 0) duvody.push(`Zbývá ${c3} závad C3, uveďte je ve zprávě.`);
+  return { navrh: 'A', popis: 'Vyhovující: podle evidovaných údajů nebrání provozu nic z toho, co kontrola sleduje.', duvody, vysledek: 'schopno' };
+}
+
+export const POCET_UROVNI =(z: ZjisteniKontroly[]) => ({
   kriticka: z.filter(x => x.uroven === 'kriticka').length,
   upozorneni: z.filter(x => x.uroven === 'upozorneni').length,
   doporuceni: z.filter(x => x.uroven === 'doporuceni').length,

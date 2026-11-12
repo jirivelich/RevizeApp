@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Revize, RevizeDokument, RozsahPolozka, Zavada } from '../../types';
 import { rozsahService, dokumentService } from '../../services/database';
-import { POCET_UROVNI, zkontrolujPredDokoncenim, type ZalozkaRevize, type ZjisteniKontroly } from '../../services/kontrolaPredDokoncenim';
+import { POCET_UROVNI, navrhniZaver, zkontrolujPredDokoncenim, type ZalozkaRevize, type ZjisteniKontroly } from '../../services/kontrolaPredDokoncenim';
 
 const STYL: Record<ZjisteniKontroly['uroven'], { stitek: string; barva: string }> = {
   kriticka: { stitek: 'Kritická chyba', barva: 'text-[var(--danger-text)] bg-[var(--danger-bg)] border-[var(--danger)]/30' },
@@ -22,10 +22,12 @@ interface Props {
   /** Mění se při přepnutí záložky, aby se rozsah a podklady načetly znovu. */
   aktualniZalozka: string;
   onPrejit: (zalozka: ZalozkaRevize) => void;
+  /** Technik potvrdil návrh: nastaví výsledek revize. Změna se zapíše do historie změn. */
+  onPouzitVysledek: (vysledek: 'schopno' | 'neschopno') => void;
 }
 
 /** Panel „Kontrola před dokončením“: ukáže, co je před dokončením třeba doplnit nebo posoudit. */
-export function KontrolaPanel({ revizeId, formData, zavady, pocetPristroju, aktualniZalozka, onPrejit }: Props) {
+export function KontrolaPanel({ revizeId, formData, zavady, pocetPristroju, aktualniZalozka, onPrejit, onPouzitVysledek }: Props) {
   const [polozky, setPolozky] = useState<RozsahPolozka[]>([]);
   const [dokumenty, setDokumenty] = useState<RevizeDokument[]>([]);
   const [nacteno, setNacteno] = useState(false);
@@ -41,6 +43,10 @@ export function KontrolaPanel({ revizeId, formData, zavady, pocetPristroju, aktu
 
   const zjisteni = useMemo(
     () => zkontrolujPredDokoncenim({ revize: formData, zavady, rozsahPolozky: polozky, dokumenty, pocetPristroju }),
+    [formData, zavady, polozky, dokumenty, pocetPristroju],
+  );
+  const navrh = useMemo(
+    () => navrhniZaver({ revize: formData, zavady, rozsahPolozky: polozky, dokumenty, pocetPristroju }),
     [formData, zavady, polozky, dokumenty, pocetPristroju],
   );
   const pocty = POCET_UROVNI(zjisteni);
@@ -77,6 +83,26 @@ export function KontrolaPanel({ revizeId, formData, zavady, pocetPristroju, aktu
             </li>
           ))}
         </ul>
+      )}
+      {nacteno && (
+        <div className="mt-3 rounded-md border border-[var(--border)] bg-[var(--bg-card,transparent)] p-2.5 text-[var(--text)]">
+          <p><strong>Návrh závěru {navrh.navrh}:</strong> {navrh.popis}</p>
+          <ul className="mt-1 list-disc pl-5 text-xs text-[var(--text-secondary)]">
+            {navrh.duvody.map((d, i) => <li key={i}>{d}</li>)}
+          </ul>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            {navrh.vysledek ? (
+              formData.vysledek === navrh.vysledek
+                ? <span>Výsledek revize již odpovídá návrhu.</span>
+                : <button type="button" className="underline cursor-pointer" onClick={() => onPouzitVysledek(navrh.vysledek!)}>
+                    Potvrzuji a nastavit výsledek „{navrh.vysledek === 'schopno' ? 'schopno provozu' : 'neschopno provozu'}“
+                  </button>
+            ) : (
+              <span>Aplikace nemá samostatnou hodnotu „nedostatečně ověřeno“. Výsledek určete sami a omezení uveďte v rozsahu a závěru.</span>
+            )}
+            <button type="button" className="underline cursor-pointer" onClick={() => onPrejit('rozsah')}>Přejít: Rozsah a podklady</button>
+          </div>
+        </div>
       )}
       <p className="mt-2 text-xs opacity-80">Kontrola je pomůcka. O obsahu a závěru revize rozhoduje a odpovídá revizní technik.</p>
     </section>
