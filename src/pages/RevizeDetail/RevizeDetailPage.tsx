@@ -28,6 +28,7 @@ import { StrojniZarizeniTab } from './StrojniZarizeniTab';
 import { OdberneMistoTab } from './OdberneMistoTab';
 import { PrilohyTab } from './PrilohyTab';
 import { ZamekPruh, jeRevizeZamcena, useZamekDom } from './ZamekRevize';
+import { KontrolaPanel } from './KontrolaPanel';
 import { RozsahTab } from './RozsahTab';
 
 export function RevizeDetailPage() {
@@ -75,6 +76,12 @@ export function RevizeDetailPage() {
   }, [revize?.id, updateRevize]);
 
   const { status: autoStatus, saveNow, flush } = useAutosave(formData, revize, handleAutosave);
+
+  // Zamčená (dokončená) revize: jen čtení a kopírování textu, odemknutí opsáním čísla revize.
+  // Hooky musí být před předčasnými return níže.
+  const obsahRef = useRef<HTMLDivElement>(null);
+  const zamcena = jeRevizeZamcena(formData.stav);
+  useZamekDom(obsahRef, zamcena);
 
   const vytvorFakturu = useVytvorFakturuZRevize();
   const [fakturaError, setFakturaError] = useState<string | null>(null);
@@ -234,11 +241,6 @@ export function RevizeDetailPage() {
         { id: 'prilohy', label: 'Přílohy', icon: '' },
       ];
 
-  // Zamčená (dokončená) revize: jen čtení a kopírování textu, odemknutí opsáním čísla revize
-  const obsahRef = useRef<HTMLDivElement>(null);
-  const zamcena = jeRevizeZamcena(formData.stav);
-  useZamekDom(obsahRef, zamcena);
-
   const handleReload = () => {
     // React Query handles refetch automatically via cache invalidation
     // This is kept for child components that call onReload after mutations
@@ -295,6 +297,12 @@ export function RevizeDetailPage() {
           </button>
         ))}
       </div>
+
+      {!zamcena && revize.id && (
+        <KontrolaPanel revizeId={revize.id} formData={formData} zavady={zavady}
+          pocetPristroju={pouzitePristroje.length} aktualniZalozka={activeTab}
+          onPrejit={(z) => { flush(); setActiveTab(z); }} />
+      )}
 
       {zamcena && revize.id && (
         <ZamekPruh revizeId={revize.id} cisloRevize={revize.cisloRevize}
