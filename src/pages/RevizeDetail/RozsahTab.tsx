@@ -36,6 +36,9 @@ export function RozsahTab({ revizeId, formData, setFormData, saveNow }: RozsahTa
   const [chyba, setChyba] = useState<string | null>(null);
   const [drafty, setDrafty] = useState<Record<string, { nazev: string; duvod: string }>>({});
   const [novyDokument, setNovyDokument] = useState(prazdnyDokument);
+  // Úprava existujících záznamů (inline)
+  const [upravaPolozky, setUpravaPolozky] = useState<{ id: number; nazev: string; duvod: string } | null>(null);
+  const [upravaDokumentu, setUpravaDokumentu] = useState<(typeof prazdnyDokument & { id: number }) | null>(null);
 
   const nacist = useCallback(async () => {
     try {
@@ -137,12 +140,31 @@ export function RozsahTab({ revizeId, formData, setFormData, saveNow }: RozsahTa
               <SectionHeader right={<span className="text-xs text-[var(--text-muted)]">{seznam.length}</span>}>{info.nadpis}</SectionHeader>
               <div className="p-4 flex flex-col gap-2">
                 <p className="text-xs text-[var(--text-muted)]">{info.popis}</p>
-                {seznam.map(p => (
+                {seznam.map(p => upravaPolozky?.id === p.id ? (
+                  <div key={p.id} className="flex flex-col gap-2 border-b border-[var(--border)] pb-2">
+                    <div className={info.duvodPovinny ? TW.grid2 : ''}>
+                      <input className={TW.input} aria-label="Název položky" value={upravaPolozky.nazev}
+                        onChange={(e) => setUpravaPolozky({ ...upravaPolozky, nazev: e.target.value })} />
+                      {info.duvodPovinny && (
+                        <input className={TW.input} aria-label="Důvod" placeholder="Důvod *" value={upravaPolozky.duvod}
+                          onChange={(e) => setUpravaPolozky({ ...upravaPolozky, duvod: e.target.value })} />
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" disabled={!upravaPolozky.nazev.trim()} onClick={() => {
+                        const u = upravaPolozky;
+                        void guard(async () => { await rozsahService.update(u.id, { nazev: u.nazev, duvod: u.duvod }); setUpravaPolozky(null); });
+                      }}>Uložit</Button>
+                      <Button size="sm" variant="secondary" onClick={() => setUpravaPolozky(null)}>Zrušit</Button>
+                    </div>
+                  </div>
+                ) : (
                   <div key={p.id} className="flex items-start gap-2 text-sm border-b border-[var(--border)] pb-2">
                     <div className="flex-1">
                       <div className="text-[var(--text)]">{p.nazev}</div>
                       {p.duvod && <div className="text-xs text-[var(--text-secondary)]">Důvod: {p.duvod}</div>}
                     </div>
+                    <Button size="sm" variant="secondary" onClick={() => setUpravaPolozky({ id: p.id!, nazev: p.nazev, duvod: p.duvod || '' })}>Upravit</Button>
                     <Button size="sm" variant="secondary" onClick={() => guard(() => rozsahService.delete(p.id!))}>Smazat</Button>
                   </div>
                 ))}
@@ -175,7 +197,36 @@ export function RozsahTab({ revizeId, formData, setFormData, saveNow }: RozsahTa
       <div className={TW.card} id="rozsah-dokumenty">
         <SectionHeader right={<span className="text-xs text-[var(--text-muted)]">{dokumenty.length}</span>}>Technická dokumentace (podklady)</SectionHeader>
         <div className="p-4 flex flex-col gap-3">
-          {dokumenty.map(d => (
+          {dokumenty.map(d => upravaDokumentu?.id === d.id ? (
+            <div key={d.id} className="rounded-lg border border-[var(--border)] p-3 flex flex-col gap-2">
+              <div className={TW.grid2}>
+                <input className={TW.input} aria-label="Název dokumentu" placeholder="Název dokumentu *" value={upravaDokumentu.nazev}
+                  onChange={(e) => setUpravaDokumentu({ ...upravaDokumentu, nazev: e.target.value })} />
+                <input className={TW.input} aria-label="Druh dokumentu" placeholder="Druh" value={upravaDokumentu.druh}
+                  onChange={(e) => setUpravaDokumentu({ ...upravaDokumentu, druh: e.target.value })} />
+                <input className={TW.input} aria-label="Datum dokumentu" placeholder="Datum nebo revize dokumentu" value={upravaDokumentu.datumDokumentu}
+                  onChange={(e) => setUpravaDokumentu({ ...upravaDokumentu, datumDokumentu: e.target.value })} />
+                <select className={TW.selectFull} aria-label="Stav dokumentu" value={upravaDokumentu.stav}
+                  onChange={(e) => setUpravaDokumentu({ ...upravaDokumentu, stav: e.target.value as RevizeDokument['stav'] })}>
+                  {(Object.keys(DOKUMENT_STAV_LABELS) as RevizeDokument['stav'][]).map(k => <option key={k} value={k}>{DOKUMENT_STAV_LABELS[k]}</option>)}
+                </select>
+              </div>
+              <input className={TW.input} aria-label="Poznámka" placeholder="Poznámka revizního technika" value={upravaDokumentu.poznamka}
+                onChange={(e) => setUpravaDokumentu({ ...upravaDokumentu, poznamka: e.target.value })} />
+              <label className="flex items-center gap-2 text-sm text-[var(--text)]">
+                <input type="checkbox" checked={upravaDokumentu.znemoznujeOvereni}
+                  onChange={(e) => setUpravaDokumentu({ ...upravaDokumentu, znemoznujeOvereni: e.target.checked })} />
+                Chybějící nebo nevyhovující dokument znemožňuje potřebné ověření
+              </label>
+              <div className="flex gap-2">
+                <Button size="sm" disabled={!upravaDokumentu.nazev.trim()} onClick={() => {
+                  const { id: dokId, ...zmeny } = upravaDokumentu;
+                  void guard(async () => { await dokumentService.update(dokId, zmeny); setUpravaDokumentu(null); });
+                }}>Uložit</Button>
+                <Button size="sm" variant="secondary" onClick={() => setUpravaDokumentu(null)}>Zrušit</Button>
+              </div>
+            </div>
+          ) : (
             <div key={d.id} className="flex flex-wrap items-start gap-2 text-sm border-b border-[var(--border)] pb-2">
               <div className="flex-1 min-w-[200px]">
                 <div className="text-[var(--text)]">{d.nazev}{d.druh ? ` (${d.druh})` : ''}{d.datumDokumentu ? `, ${d.datumDokumentu}` : ''}</div>
@@ -186,6 +237,10 @@ export function RozsahTab({ revizeId, formData, setFormData, saveNow }: RozsahTa
                 onChange={(e) => guard(() => dokumentService.update(d.id!, { stav: e.target.value as RevizeDokument['stav'] }))}>
                 {(Object.keys(DOKUMENT_STAV_LABELS) as RevizeDokument['stav'][]).map(k => <option key={k} value={k}>{DOKUMENT_STAV_LABELS[k]}</option>)}
               </select>
+              <Button size="sm" variant="secondary" onClick={() => setUpravaDokumentu({
+                id: d.id!, nazev: d.nazev, druh: d.druh || '', datumDokumentu: d.datumDokumentu || '', stav: d.stav,
+                znemoznujeOvereni: !!d.znemoznujeOvereni, poznamka: d.poznamka || '',
+              })}>Upravit</Button>
               <Button size="sm" variant="secondary" onClick={() => guard(() => dokumentService.delete(d.id!))}>Smazat</Button>
             </div>
           ))}
