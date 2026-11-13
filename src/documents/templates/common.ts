@@ -138,7 +138,11 @@ export function zavadyTable(ctx: DocContext, withPoznamka = false): string {
     ['5%', '45%', '17%', '13%', '20%'],
     zavady.map((z, i) => [
       String(i + 1),
-      H.esc(z.popis) + (withPoznamka && z.poznamka ? `<div class="small muted">${H.lines(z.poznamka)}</div>` : ''),
+      H.esc(z.popis)
+        // Závada musí uvádět, s jakým ustanovením normy / předpisu je v rozporu, popř. riziko (ČSN 33 1500)
+        + `<div class="small">V rozporu s: ${H.v(z.norma, 30)}</div>`
+        + (z.riziko ? `<div class="small">Riziko: ${H.esc(z.riziko)}</div>` : '')
+        + (withPoznamka && z.poznamka ? `<div class="small muted">${H.lines(z.poznamka)}</div>` : ''),
       ZAVAZNOST_LABEL[z.zavaznost] ?? H.esc(z.zavaznost),
       zavadaStavLabel(z.stav),
       H.v(H.d(z.datumZjisteni), 10),
@@ -175,6 +179,31 @@ export function doporuceniBlock(ctx: DocContext): string {
 }
 
 /** Věta o uvedení zařízení do provozu (prázdná, když není zadáno). */
+/** Místo uložení podkladů; když jsou podklady uvedeny a místo chybí, vytiskne tečky k doplnění. */
+export function ulozeniPodkladu(ctx: DocContext): string {
+  const { H, revize, dokumenty } = ctx;
+  const maPodklady = !!revize.podklady?.trim() || dokumenty.length > 0;
+  if (!revize.mistoUlozeniPodkladu?.trim() && !maPodklady) return '';
+  return `<p>Podklady jsou uloženy: ${revize.mistoUlozeniPodkladu?.trim() ? `<b>${H.esc(revize.mistoUlozeniPodkladu)}</b>` : H.dots(40)}</p>`;
+}
+
+/** Data revize dle ČSN 33 1500: zahájení, ukončení, vypracování a předání zprávy. */
+export function datumyRevize(ctx: DocContext): [[string, string], [string, string]][] {
+  const { H, revize } = ctx;
+  return [
+    [['Zahájení revize:', H.v(H.d(revize.datum), 14)], ['Ukončení revize:', H.v(H.d(revize.datumDokonceni), 14)]],
+    [['Vypracování zprávy:', H.v(H.d(revize.datumVypracovani), 14)], ['Předání zprávy:', H.v(H.d(revize.datumPredani), 14)]],
+  ];
+}
+
+/** Drobné nápravné úkony provedené revizním technikem (prázdné = nic). */
+export function napravneUkonyBody(ctx: DocContext): string {
+  const t = ctx.revize.napravneUkony;
+  return t?.trim() ? ctx.H.paras(t) : '';
+}
+
+export const NAPRAVNE_UKONY_TITLE = 'Drobné nápravné úkony provedené revizním technikem';
+
 export function uvedeniDoProvozu(ctx: DocContext): string {
   const { H, revize } = ctx;
   if (!revize.datumUvedeniDoProvozu) return '';
@@ -211,8 +240,35 @@ export function podpisy(ctx: DocContext, certLabel = 'Oprávnění'): string {
  * Závěr revize vyhrazeného elektrického zařízení – ustálená formulace dle ČSN 33 1500:
  * „Revidované vyhrazené elektrické zařízení je (není) z hlediska bezpečnosti schopno provozu.“
  */
-export function zaverVyhrazene(ctx: DocContext): string {
-  return resultBox(`Revidované vyhrazené elektrické zařízení ${ctx.H.vn(ctx.revize.vysledek, ['je', 'není'])} z hlediska bezpečnosti schopno provozu.`);
+export function zaverVyhrazene(ctx: DocContext, sOduvodnenim = true): string {
+  const { H, revize } = ctx;
+  return resultBox(`Revidované vyhrazené elektrické zařízení ${H.vn(revize.vysledek, ['je', 'není'])} z hlediska bezpečnosti schopno provozu.`)
+    + (sOduvodnenim ? zduvodneniNeschopno(ctx, revize.vysledek === 'neschopno') : '');
+}
+
+/**
+ * Zdůvodnění, proč zařízení (nebo jeho část) nelze provozovat – musí být přímo v závěru.
+ * Při „není schopno“ se vytiskne vždy (prázdné = tečky k doplnění), jinak jen když je vyplněno.
+ */
+export function zduvodneniNeschopno(ctx: DocContext, povinne: boolean): string {
+  const { H, revize } = ctx;
+  if (!povinne && !revize.vysledekOduvodneni?.trim()) return '';
+  return `<div class="split"><p class="keep"><b>Zdůvodnění, proč zařízení nelze provozovat:</b></p>${H.paras(revize.vysledekOduvodneni)}</div>`;
+}
+
+/**
+ * Závěr revize ochrany před bleskem (ČSN 33 1500 Z4): neuvádí se „schopno provozu“,
+ * ale zda provedení odpovídá normě platné v době zřízení a zda jsou součásti v dobrém funkčním stavu.
+ */
+export function zaverLps(ctx: DocContext): string {
+  const { H, revize } = ctx;
+  const b = (v?: string) => (v === 'ano' ? true : v === 'ne' ? false : null);
+  const norma = revize.hromosvodNormaZrizeni || revize.hromosvodNorma;
+  const nevyhovuje = revize.hromosvodOdpovidaNorme === 'ne' || revize.hromosvodFunkcniStav === 'ne';
+  return resultBox(
+    `Provedení ochrany před bleskem ${H.vn(b(revize.hromosvodOdpovidaNorme), ['odpovídá', 'neodpovídá'])} normě platné v době jejího zřízení`
+    + ` (${H.v(norma, 16)}) a její součásti ${H.vn(b(revize.hromosvodFunkcniStav), ['jsou', 'nejsou'])} v dobrém funkčním stavu.`,
+  ) + zduvodneniNeschopno(ctx, nevyhovuje);
 }
 
 /** Rámeček s výsledkem revize. */

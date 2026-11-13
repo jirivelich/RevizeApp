@@ -81,7 +81,7 @@ describe('Escapování uživatelských dat', () => {
 
 describe('Elektro – obsah zprávy', () => {
   it('závěr: ustálená formulace „je (není) z hlediska bezpečnosti schopno provozu“', () => {
-    for (const k of ['elektro', 'odberne_misto', 'hromosvod'] as KategorieRevize[]) {
+    for (const k of ['elektro', 'odberne_misto'] as KategorieRevize[]) {
       expect(text(zprava(ctxWith(k, { vysledek: 'schopno' }))), k)
         .toContain('Revidované vyhrazené elektrické zařízení je z hlediska bezpečnosti schopno provozu.');
       expect(text(zprava(ctxWith(k, { vysledek: 'neschopno' }))), k)
@@ -256,5 +256,54 @@ describe('Pevné šířky sloupců', () => {
   it('mřížka se šířkami má colgroup a třídu fixcols', () => {
     const html = zprava(sampleContext('elektro'));
     expect(html).toContain('<table class="grid fixcols"><colgroup><col style="width:25%">');
+  });
+});
+
+describe('Náležitosti zprávy dle ČSN 33 1500', () => {
+  it('data zahájení, ukončení, vypracování a předání ve všech zprávách', () => {
+    for (const k of KATEGORIE_VSECHNY) {
+      const t = text(zprava(sampleContext(k)));
+      expect(t, k).toMatch(/(Zahájení revize|Revize zahájena):21\. 07\. 2026/);
+      expect(t, k).toMatch(/(Předání zprávy|Zpráva předána):07\. 08\. 2026/);
+    }
+  });
+
+  it('závady uvádějí ustanovení, se kterým jsou v rozporu, a riziko', () => {
+    const t = text(zprava(sampleContext('elektro')));
+    expect(t).toContain('V rozporu s: ČSN 33 2000-5-51 čl. 514.1');
+    expect(t).toContain('Riziko: Záměna obvodů při odpojování.');
+  });
+
+  it('závada bez ustanovení → tečky k doplnění', () => {
+    const base = sampleContext('elektro');
+    const ctx = createContext({ ...base, zavady: base.zavady.map(z => ({ ...z, norma: undefined })) });
+    expect(zprava(ctx)).toMatch(/V rozporu s: <span class="dotline">/);
+  });
+
+  it('„není schopno“ → zdůvodnění přímo v závěru (i prázdné jako tečky)', () => {
+    const s1 = text(zprava(ctxWith('elektro', { vysledek: 'neschopno', vysledekOduvodneni: 'Chybí ochrana automatickým odpojením (ČSN 33 2000-4-41 čl. 411).' })));
+    const iZaver = s1.indexOf('5. Vyhodnocení');
+    expect(s1.indexOf('Zdůvodnění, proč zařízení nelze provozovat')).toBeGreaterThan(iZaver);
+    expect(s1.indexOf('Chybí ochrana automatickým odpojením')).toBeLessThan(s1.indexOf('6. Potvrzení o předání zprávy'));
+    expect(zprava(ctxWith('elektro', { vysledek: 'neschopno', vysledekOduvodneni: '' }))).toContain('Zdůvodnění, proč zařízení nelze provozovat');
+  });
+
+  it('hromosvod: závěr o souladu s normou z doby zřízení a funkčním stavu, bez „schopno provozu“', () => {
+    const t = text(zprava(sampleContext('hromosvod')));
+    expect(t).toContain('Provedení ochrany před bleskem odpovídá normě platné v době jejího zřízení (ČSN 34 1390) a její součásti jsou v dobrém funkčním stavu.');
+    expect(t).not.toContain('schopno provozu');
+    const ne = text(zprava(ctxWith('hromosvod', { hromosvodOdpovidaNorme: 'ne', hromosvodFunkcniStav: 'ne' })));
+    expect(ne).toContain('neodpovídá normě platné v době jejího zřízení');
+    expect(ne).toContain('nejsou v dobrém funkčním stavu');
+    expect(ne).toContain('Zdůvodnění, proč zařízení nelze provozovat');
+  });
+
+  it('místo uložení podkladů a drobné nápravné úkony', () => {
+    for (const k of ['elektro', 'hromosvod', 'odberne_misto', 'stroje'] as KategorieRevize[]) {
+      const t = text(zprava(sampleContext(k)));
+      expect(t, k).toContain('Podklady jsou uloženy: u provozovatele – kancelář správy budovy');
+      expect(t, k).toContain('Drobné nápravné úkony provedené revizním technikem');
+      expect(t, k).toContain('Dotažení svorek v rozvaděči RH.');
+    }
   });
 });

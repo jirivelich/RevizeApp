@@ -10,7 +10,7 @@ import { DEFAULT_NORMY_SOULAD } from '../../pages/RevizeDetail/constants';
 import { DRUH_ROZSAHU_LABELS, DOKUMENT_STAV_LABELS } from '../../services/rozsahKontrola';
 import {
   flowPage, firmaHeader, titleBlock, sec, kv, kv4, grid, p, provozovatelRows, technikRows, pristrojeTable,
-  zavadyTable, ZAVADY_LEGENDA, doporuceniBody, DOPORUCENI_TITLE, uvedeniDoProvozu, rozdelovnikTable, podpisy, zaverVyhrazene, fotoZavad, prilohyPages, seznamPriloh, lhutaText,
+  zavadyTable, ZAVADY_LEGENDA, doporuceniBody, DOPORUCENI_TITLE, uvedeniDoProvozu, ulozeniPodkladu, datumyRevize, napravneUkonyBody, NAPRAVNE_UKONY_TITLE, rozdelovnikTable, podpisy, zaverVyhrazene, fotoZavad, prilohyPages, seznamPriloh, lhutaText,
 } from './common';
 
 export const OCHRANA_LABELS: Record<string, string> = {
@@ -125,13 +125,13 @@ function renderZprava(ctx: DocContext): string {
     pristroje: num(vis('pristroje')),
     podklady: num(vis('podklady')),
     provedeneUkony: num(vis('provedeneUkony')),
+    napravneUkony: num(!!revize.napravneUkony?.trim()),
     rozvadece: num(true),
     prostory: num(mistnosti.length > 0),
     zavady: num(true),
     doporuceni: num(doporuceni.length > 0),
     vyhodnoceniPredchozich: num(vis('vyhodnoceniPredchozich')),
     lhuta: num(true),
-    oduvodneni: num(vis('vysledekOduvodneni') && !!revize.vysledekOduvodneni),
     zaver: num(vis('zaver') && !!revize.zaver),
     rozdelovnik: num(vis('rozdelovnik') && !!revize.rozdelovnik),
     prilohy: num(vis('prilohy') && !!(revize.prilohy || ctx.prilohy.length > 0)),
@@ -139,8 +139,7 @@ function renderZprava(ctx: DocContext): string {
   const t = (k: keyof typeof nums, text: string) => `${nums[k]}. ${text}`;
 
   const datumy = kv4([
-    [['Datum revize:', H.v(H.d(revize.datum), 14)], ['Vypracování zprávy:', H.v(H.d(revize.datumVypracovani), 14)]],
-    ...(revize.datumDokonceni ? [[['Datum dokončení:', H.esc(H.d(revize.datumDokonceni))], null] as [[string, string], null]] : []),
+    ...datumyRevize(ctx),
     [['Platnost do:', H.v(H.d(revize.datumPlatnosti), 14)], ['Lhůta příští revize:', revize.termin ? `${H.esc(revize.termin)} měsíců` : H.dots(14)]],
   ]);
 
@@ -190,9 +189,11 @@ function renderZprava(ctx: DocContext): string {
         ['27%', '16%', '14%', '16%', '27%'],
         dokumenty.map(d => [H.esc(d.nazev), H.v(d.druh, 6), H.v(d.datumDokumentu, 6), H.esc(DOKUMENT_STAV_LABELS[d.stav] ?? d.stav), H.esc(d.poznamka)]),
       ) : '',
-      uvedeniDoProvozu(ctx)));
+      uvedeniDoProvozu(ctx),
+      ulozeniPodkladu(ctx)));
   }
   if (nums.provedeneUkony) parts.push(sec(t('provedeneUkony', 'Soupis provedených úkonů'), H.paras(revize.provedeneUkony)));
+  if (nums.napravneUkony) parts.push(sec(t('napravneUkony', NAPRAVNE_UKONY_TITLE), napravneUkonyBody(ctx)));
 
   parts.push(sec(t('rozvadece', 'Naměřené hodnoty – rozvaděče a okruhy'),
     rozvadece.length ? rozvadece.map(r => rozvadecBlock(ctx, r)).join('') : p(ctx, 'Žádné rozvaděče.')));
@@ -222,7 +223,6 @@ function renderZprava(ctx: DocContext): string {
   if (nums.vyhodnoceniPredchozich) parts.push(sec(t('vyhodnoceniPredchozich', 'Vyhodnocení předchozích revizí'), H.paras(revize.vyhodnoceniPredchozich)));
   parts.push(sec(t('lhuta', 'Doporučená lhůta provedení příští revize'),
     `<p>Příští revize by měla být provedena nejpozději do <b>${lhutaText(ctx)}</b>.</p>`));
-  if (nums.oduvodneni) parts.push(sec(t('oduvodneni', 'Odůvodnění'), H.paras(revize.vysledekOduvodneni)));
   if (nums.zaver) parts.push(sec(t('zaver', 'Závěr'), H.paras(revize.zaver)));
   if (nums.rozdelovnik) parts.push(sec(t('rozdelovnik', 'Rozdělovník'), rozdelovnikTable(ctx, revize.rozdelovnik || '')));
   if (nums.prilohy) parts.push(sec(t('prilohy', 'Přílohy'), seznamPriloh(ctx)));

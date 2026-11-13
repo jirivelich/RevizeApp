@@ -8,6 +8,7 @@ import type { DocContext } from '../context';
 import {
   flowPage, firmaHeader, titleBlock, sec, kv, kv4, grid, p, provozovatelRows, technikRows, pristrojeTable,
   zavadyTable, doporuceniBlock, podpisy, resultBox, prilohyPages, lhutaText,
+  datumyRevize, zduvodneniNeschopno, ulozeniPodkladu, napravneUkonyBody, NAPRAVNE_UKONY_TITLE,
 } from './common';
 
 /** Výsledek V/N jako text do tabulky. */
@@ -60,13 +61,11 @@ function render(ctx: DocContext): string {
 
   parts.push(
     sec('4. Revizní technik', kv(technikRows(ctx))),
-    sec('5. Důležitá data', kv([
-      ['Datum provedení ověření:', H.v(H.d(revize.datum), 14)],
-      ...(revize.datumDokonceni ? [['Datum dokončení:', H.esc(H.d(revize.datumDokonceni))] as [string, string]] : []),
-      ['Datum vypracování protokolu:', H.v(H.d(revize.datumVypracovani), 14)],
-      ...(!revize.lhutaText?.trim() && revize.datumPlatnosti ? [['Platnost do:', H.esc(H.d(revize.datumPlatnosti))] as [string, string]] : []),
-      ['Lhůta příštího ověření:', revize.lhutaText?.trim() ? H.esc(revize.lhutaText.trim()) : revize.termin ? `${H.esc(revize.termin)} měsíců` : H.dots(14)],
-    ])),
+    sec('5. Důležitá data', kv4([
+      ...datumyRevize(ctx),
+      [['Lhůta příštího ověření:', revize.lhutaText?.trim() ? H.esc(revize.lhutaText.trim()) : revize.termin ? `${H.esc(revize.termin)} měsíců` : H.dots(14)],
+        !revize.lhutaText?.trim() && revize.datumPlatnosti ? ['Platnost do:', H.esc(H.d(revize.datumPlatnosti))] : null],
+    ]), ulozeniPodkladu(ctx)),
   );
 
   if (revize.typRevize === 'mimořádná' && revize.duvodMimoradne) {
@@ -121,9 +120,11 @@ function render(ctx: DocContext): string {
       : '<p><b>Při ověření nebyly zjištěny žádné závady.</b></p>',
     doporuceniBlock(ctx),
     sd?.posudekDoporuceni ? `<p class="keep"><b>Doporučení / termín odstranění závad:</b></p>${H.paras(sd.posudekDoporuceni)}` : ''));
+  if (revize.napravneUkony?.trim()) parts.push(sec(NAPRAVNE_UKONY_TITLE, napravneUkonyBody(ctx)));
 
   parts.push(sec('14. Vyhodnocení',
     resultBox(`Revidované strojní zařízení ${H.vn(sd?.verdikt, ['je', 'není'])} z hlediska zajištění ochrany před úrazem el. proudem schopno provozu.`),
+    zduvodneniNeschopno(ctx, sd?.verdikt === 'fail'),
     '<p class="small"><i>Tato revize nemůže nahradit kontrolu bezpečnosti provozu strojního zařízení podle nařízení vlády č.&nbsp;378/2001&nbsp;Sb.</i></p>'));
 
   parts.push(sec('15. Doporučená lhůta provedení příštího ověření',

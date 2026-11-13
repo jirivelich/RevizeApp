@@ -5,8 +5,8 @@
 import { TPL } from '../registry';
 import type { DocContext } from '../context';
 import {
-  flowPage, firmaHeader, titleBlock, sec, kv, grid, p, provozovatelRows, technikRows, pristrojeTable,
-  zavadyTable, doporuceniBlock, uvedeniDoProvozu, rozdelovnikTable, podpisy, zaverVyhrazene, prilohyPages, lhutaText,
+  flowPage, firmaHeader, titleBlock, sec, kv, kv4, grid, p, provozovatelRows, technikRows, pristrojeTable,
+  zavadyTable, doporuceniBlock, uvedeniDoProvozu, ulozeniPodkladu, datumyRevize, napravneUkonyBody, NAPRAVNE_UKONY_TITLE, rozdelovnikTable, podpisy, zaverLps, prilohyPages, lhutaText,
 } from './common';
 
 interface MereniOdporu { bod: string; hodnota: string; limit: string; vyhovuje: boolean }
@@ -86,12 +86,9 @@ function render(ctx: DocContext): string {
     sec('5. Údaje o revizním technikovi', kv(technikRows(ctx))),
     sec('6. Druh revize', `<p><b>${H.esc(ctx.typRevizeLabel)}</b></p>`,
       revize.typRevize === 'mimořádná' && revize.duvodMimoradne ? H.paras(revize.duvodMimoradne) : ''),
-    sec('7. Důležitá data', kv([
-      ['Datum provedení revize:', H.v(H.d(revize.datum), 14)],
-      ...(revize.datumDokonceni ? [['Datum dokončení:', H.esc(H.d(revize.datumDokonceni))] as [string, string]] : []),
-      ['Datum vypracování zprávy:', H.v(H.d(revize.datumVypracovani), 14)],
-      ...(revize.datumPlatnosti ? [['Platnost do:', H.esc(H.d(revize.datumPlatnosti))] as [string, string]] : []),
-      ['Lhůta příští revize:', revize.termin ? `${H.esc(revize.termin)} měsíců` : H.dots(14)],
+    sec('7. Důležitá data', kv4([
+      ...datumyRevize(ctx),
+      [['Platnost do:', H.v(H.d(revize.datumPlatnosti), 14)], ['Lhůta příští revize:', revize.termin ? `${H.esc(revize.termin)} měsíců` : H.dots(14)]],
     ])),
   );
 
@@ -141,8 +138,9 @@ function render(ctx: DocContext): string {
   }
 
   if (vis('pristroje')) parts.push(sec('13. Soupis použitých měřicích přístrojů', pristrojeTable(ctx)));
-  if (vis('podklady')) parts.push(sec('14. Seznam podkladů použitých k provedení revize', H.paras(revize.podklady), uvedeniDoProvozu(ctx)));
+  if (vis('podklady')) parts.push(sec('14. Seznam podkladů použitých k provedení revize', H.paras(revize.podklady), uvedeniDoProvozu(ctx), ulozeniPodkladu(ctx)));
   if (vis('vyhodnoceniPredchozich')) parts.push(sec('15. Vyhodnocení předchozích revizí', H.paras(revize.vyhodnoceniPredchozich)));
+  if (revize.napravneUkony?.trim()) parts.push(sec(NAPRAVNE_UKONY_TITLE, napravneUkonyBody(ctx)));
 
   const nacrt = nacrtSrc(revize.hromosvodNacrt);
   if (nacrt) parts.push(sec('Příloha – Schéma hromosvodu (LPS)', `<div class="nacrt"><img src="${H.esc(nacrt)}" alt="Schéma hromosvodu LPS"></div>`));
@@ -150,7 +148,7 @@ function render(ctx: DocContext): string {
   parts.push(
     sec('16. Přehled zjištěných závad', zavady.length ? zavadyTable(ctx) : '<p><b>Při revizi nebyly zjištěny žádné závady.</b></p>', doporuceniBlock(ctx)),
     sec('17. Závěrečné zhodnocení',
-      zaverVyhrazene(ctx),
+      zaverLps(ctx),
       vis('zaver') && revize.zaver ? `<p class="keep"><b>Závěr:</b></p>${H.paras(revize.zaver)}` : ''),
     sec('18. Doporučená lhůta provedení příští revize', `<p>Příští revize by měla být provedena nejpozději do <b>${lhutaText(ctx)}</b>.</p>`),
   );

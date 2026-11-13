@@ -186,7 +186,8 @@ async function startServer() {
       // Definovat povolené sloupce pro revize
       const allowedColumns = [
         'cisloRevize', 'nazev', 'adresa', 'objednatel', 'zakaznikId',
-        'datum', 'datumDokonceni', 'datumPlatnosti', 'termin', 'datumVypracovani',
+        'datum', 'datumDokonceni', 'datumPlatnosti', 'termin', 'datumVypracovani', 'datumPredani',
+        'mistoUlozeniPodkladu', 'napravneUkony',
         'typRevize', 'duvodMimoradne', 'stav', 'poznamka', 'vysledek',
         'vysledekOduvodneni', 'rozsahRevize', 'predmetNeni', 'napetovaSoustava',
         'ochranaOpatreni', 'podklady', 'vyhodnoceniPredchozich',
@@ -196,6 +197,7 @@ async function startServer() {
         // Hromosvod (LPS) sloupce
         'hromosvodTridaLps', 'hromosvodTypOchrany', 'hromosvodRokInstalace',
         'hromosvodNorma', 'hromosvodPopisLps',
+        'hromosvodNormaZrizeni', 'hromosvodOdpovidaNorme', 'hromosvodFunkcniStav',
         'hromosvodJimaciTyp', 'hromosvodJimaciMaterial', 'hromosvodJimaciStav',
         'hromosvodJimaciPoznamka',
         'hromosvodSvodyPocet', 'hromosvodSvodyMaterial', 'hromosvodSvodyPrurez',
@@ -1012,14 +1014,14 @@ async function startServer() {
 
   app.post('/api/zavady', authMiddleware, async (req, res) => {
     try {
-      const { revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, fotky, poznamka, typ, zduvodneni } = req.body;
+      const { revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, fotky, poznamka, typ, zduvodneni, norma, riziko } = req.body;
       const datumZjisteni = new Date().toISOString().split('T')[0];
 
       const result = await pool.query(`
-        INSERT INTO zavada ("revizeId", "rozvadecId", "mistnostId", popis, zavaznost, stav, fotky, "datumZjisteni", poznamka, typ, zduvodneni)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        INSERT INTO zavada ("revizeId", "rozvadecId", "mistnostId", popis, zavaznost, stav, fotky, "datumZjisteni", poznamka, typ, zduvodneni, norma, riziko)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING id
-      `, [revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, JSON.stringify(fotky || []), datumZjisteni, poznamka, typ || 'zavada', zduvodneni]);
+      `, [revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, JSON.stringify(fotky || []), datumZjisteni, poznamka, typ || 'zavada', zduvodneni, norma, riziko]);
 
       await zapisAudit({ entita: 'zavada', entitaId: result.rows[0].id, revizeId, akce: 'vytvoreno', uzivatel: (req as AuthRequest).user?.username, zmeny: { popis, zavaznost, stav, typ: typ || 'zavada' } });
       res.json({ id: result.rows[0].id });

@@ -8,7 +8,7 @@ import type { DocContext } from '../context';
 import { porovnejJistic, validujParametry, PPNN_ZDROJ, STAV_LABEL, type KontrolaPolozka, type Vysledek } from '../../types/odberneMisto';
 import {
   flowPage, firmaHeader, titleBlock, sec, kv, kv4, grid, provozovatelRows, technikRows, pristrojeTable,
-  zavadyTable, doporuceniBlock, uvedeniDoProvozu, podpisy, zaverVyhrazene, prilohyPages, lhutaText,
+  zavadyTable, doporuceniBlock, uvedeniDoProvozu, ulozeniPodkladu, napravneUkonyBody, NAPRAVNE_UKONY_TITLE, podpisy, zaverVyhrazene, prilohyPages, lhutaText,
 } from './common';
 
 /** Řádky s vyplněným výsledkem; N/A se v tisku vynechává. */
@@ -41,7 +41,8 @@ function render(ctx: DocContext): string {
     parametry: num(vis('parametry') && parametryVyplneny),
     rozsah: num(vis('rozsahRevize')),
     popis: num(vis('popisZarizeni') && !!revize.popisZarizeni),
-    podklady: num(vis('podklady') && !!revize.podklady),
+    podklady: num(vis('podklady') && !!(revize.podklady || revize.mistoUlozeniPodkladu)),
+    napravneUkony: num(!!revize.napravneUkony?.trim()),
     pristroje: num(vis('pristroje')),
     prohlidka: num(vis('prohlidka') && prohlidka.length > 0),
     zkouseni: num(vis('zkouseni') && zkouseni.length > 0),
@@ -55,7 +56,8 @@ function render(ctx: DocContext): string {
     predani: num(true),
   };
   const t = (k: keyof typeof nums, text: string) => `${nums[k]}. ${text}`;
-  const vysledek = zaverVyhrazene(ctx);
+  // Na první straně stručně, zdůvodnění „není schopno“ je v sekci Vyhodnocení
+  const vysledek = zaverVyhrazene(ctx, false);
   const typPripojeni = om.typPripojeni === 'kabel' ? 'Kabelová přípojka' : om.typPripojeni === 'vzdusne' ? 'Vzdušné vedení' : om.typPripojeni === 'jine' ? 'Jiné' : '';
 
   const parts: string[] = [
@@ -75,9 +77,10 @@ function render(ctx: DocContext): string {
     ])),
     sec('3. Revizní technik', kv(technikRows(ctx))),
     sec('4. Důležitá data', kv([
-      ['Revize provedena:', H.v(H.d(revize.datum), 14)],
+      ['Revize zahájena:', H.v(H.d(revize.datum), 14)],
       ['Revize ukončena:', H.v(H.d(revize.datumDokonceni), 14)],
-      ['Revize vystavena:', H.v(H.d(revize.datumVypracovani), 14)],
+      ['Zpráva vypracována:', H.v(H.d(revize.datumVypracovani), 14)],
+      ['Zpráva předána:', H.v(H.d(revize.datumPredani), 14)],
       ...(!revize.lhutaText?.trim() && revize.datumPlatnosti ? [['Platnost do:', H.esc(H.d(revize.datumPlatnosti))] as [string, string]] : []),
     ]), revize.typRevize === 'mimořádná' && revize.duvodMimoradne ? `<p><b>Důvod mimořádné revize:</b> ${H.esc(revize.duvodMimoradne)}</p>` : ''),
     sec('5. Celkové vyhodnocení', vysledek),
@@ -115,7 +118,8 @@ function render(ctx: DocContext): string {
     `<p><b>Revize zahrnuje:</b> ${H.v(revize.rozsahRevize, 40)}</p>`,
     revize.predmetNeni ? `<p><b>Revize nezahrnuje:</b> ${H.esc(revize.predmetNeni)}</p>` : ''));
   if (nums.popis) parts.push(sec(t('popis', 'Stručný technický popis'), H.paras(revize.popisZarizeni)));
-  if (nums.podklady) parts.push(sec(t('podklady', 'Předložené podklady'), H.paras(revize.podklady), uvedeniDoProvozu(ctx)));
+  if (nums.podklady) parts.push(sec(t('podklady', 'Předložené podklady'), H.paras(revize.podklady), uvedeniDoProvozu(ctx), ulozeniPodkladu(ctx)));
+  if (nums.napravneUkony) parts.push(sec(t('napravneUkony', NAPRAVNE_UKONY_TITLE), napravneUkonyBody(ctx)));
   if (nums.pristroje) parts.push(sec(t('pristroje', 'Použité měřicí přístroje'), pristrojeTable(ctx)));
 
   const kontrolaGrid = (rows: KontrolaPolozka[], first: string, second: string, widths: string[]) => grid(
@@ -141,8 +145,7 @@ function render(ctx: DocContext): string {
 
   parts.push(sec(t('zavady', 'Přehled zjištěných závad'), zavady.length ? zavadyTable(ctx) : '<p><b>Při revizi nebyly zjištěny žádné závady.</b></p>', doporuceniBlock(ctx)));
   parts.push(sec(t('vyhodnoceni', 'Vyhodnocení provedené revize'),
-    vysledek,
-    revize.vysledekOduvodneni && vis('vysledekOduvodneni') ? H.paras(revize.vysledekOduvodneni) : '',
+    zaverVyhrazene(ctx),
     upozorneni.length ? `<p class="keep"><b>Zjištěný nesoulad s Připojovacími podmínkami nn:</b></p><ul>${upozorneni.map(u => `<li>${H.esc(u)}</li>`).join('')}</ul>` : ''));
   if (nums.zaver) parts.push(sec(t('zaver', 'Závěr'), H.paras(revize.zaver)));
   parts.push(sec(t('lhuta', 'Doporučená lhůta příští revize'),

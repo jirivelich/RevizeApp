@@ -65,6 +65,20 @@ URL: /revize/:id/nahled
 | `.nosplit` | Nikdy se nedělí (podpisy, výsledek) |
 | `<div class="pb"></div>` | Vynucený nový list |
 
+## Náležitosti zprávy dle ČSN 33 1500
+
+| Požadavek | Kde se zadává | Ve zprávě |
+|-----------|---------------|-----------|
+| Datum zahájení, ukončení, vypracování a **předání** | Základní údaje → Termíny | Sekce s daty (`datumyRevize`) |
+| Závada: s jakým **ustanovením normy** je v rozporu, **riziko** | Závady (předvyplní se z katalogu) | Pod popisem závady; chybí-li, tečky |
+| **Zdůvodnění** „není schopno provozu“ | Základní údaje → Stav a výsledek | Přímo v závěru (`zduvodneniNeschopno`) |
+| Závěr **hromosvodu**: soulad s normou platnou v době zřízení + funkční stav | Základní údaje (hromosvod) → Stav a výsledek | `zaverLps` – bez „schopno provozu“ |
+| **Místo uložení podkladů** | Rozsah a podklady | U podkladů (`ulozeniPodkladu`) |
+| **Drobné nápravné úkony** technika | Rozsah a podklady | Samostatná sekce, je-li vyplněno |
+
+Kontrola před dokončením (`kontrolaPredDokoncenim.ts`) na chybějící údaje upozorní
+(`DATUM_PREDANI`, `ZAVADA_BEZ_NORMY`, `ZAVER_LPS`, `ZAVER_LPS_NORMA`, `PODKLADY_ULOZENI`).
+
 ## Ověření
 
 - Testy: `src/__tests__/documents/` (helpery, obsah šablon, escapování, `tiskSekce`, číslování).

@@ -46,6 +46,9 @@ function baseRevize(kategorie: KategorieRevize, extra: Partial<Revize> = {}): Re
     datum: '2026-07-21',
     datumDokonceni: '2026-07-21',
     datumVypracovani: '2026-08-06',
+    datumPredani: '2026-08-07',
+    mistoUlozeniPodkladu: 'u provozovatele – kancelář správy budovy',
+    napravneUkony: 'Dotažení svorek v rozvaděči RH.',
     datumPlatnosti: '2030-07-21',
     termin: 48,
     typRevize: 'pravidelná',
@@ -111,8 +114,8 @@ function rozvadece(): RozvadecWithOkruhy[] {
 
 function zavady(): Zavada[] {
   return [
-    { id: 1, revizeId: 1, popis: 'Chybí označení obvodů v rozvaděči RH.', zavaznost: 'C3', stav: 'otevřená', fotky: [], datumZjisteni: now, poznamka: 'Doplnit štítky.' },
-    { id: 2, revizeId: 1, popis: 'Poškozený kryt zásuvky v kuchyni.', zavaznost: 'C2', stav: 'otevřená', fotky: [], datumZjisteni: now },
+    { id: 1, revizeId: 1, popis: 'Chybí označení obvodů v rozvaděči RH.', zavaznost: 'C3', stav: 'otevřená', fotky: [], datumZjisteni: now, poznamka: 'Doplnit štítky.', norma: 'ČSN 33 2000-5-51 čl. 514.1', riziko: 'Záměna obvodů při odpojování.' },
+    { id: 2, revizeId: 1, popis: 'Poškozený kryt zásuvky v kuchyni.', zavaznost: 'C2', stav: 'otevřená', fotky: [], datumZjisteni: now, norma: 'ČSN 33 2000-4-41 čl. A.1' },
     { id: 3, revizeId: 1, typ: 'doporuceni', popis: 'Doplnit proudový chránič pro zásuvkové obvody v koupelně.', zavaznost: 'C3', stav: 'otevřená', fotky: [], datumZjisteni: now, zduvodneni: 'Snížení rizika úrazu elektrickým proudem při nepřímém dotyku.' },
   ];
 }
@@ -155,6 +158,7 @@ export function sampleContext(kategorie: KategorieRevize, empty = false): DocCon
   if (kategorie === 'hromosvod') {
     Object.assign(extra, {
       hromosvodTridaLps: 'III', hromosvodTypOchrany: 'vnější', hromosvodRokInstalace: '2008', hromosvodNorma: 'ČSN EN 62305-3',
+      hromosvodNormaZrizeni: 'ČSN 34 1390', hromosvodOdpovidaNorme: 'ano', hromosvodFunkcniStav: 'ano',
       hromosvodJimaciTyp: 'mřížový', hromosvodJimaciMaterial: 'FeZn', hromosvodJimaciStav: 'vyhovující',
       hromosvodSvodyPocet: 4, hromosvodSvodyMaterial: 'FeZn Ø8', hromosvodSvodyZkusebniSvorky: 4, hromosvodSvodyStav: 'částečně vyhovující',
       hromosvodSvodyPoznamka: 'Uvolněná podpěra svodu S3.',
