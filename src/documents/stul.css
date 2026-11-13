@@ -1,0 +1,99 @@
+/* Náhled dokumentů – „list A4 na stole“. */
+.stul-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: #2f3237;
+}
+
+.stul-toolbar {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #1c1e22;
+  color: #e8e8e8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-size: 14px;
+}
+
+.stul-toolbar .grow { flex: 1; }
+
+.stul-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  min-height: 36px;
+  border-radius: 8px;
+  border: 1px solid #44484f;
+  background: #2a2d33;
+  color: #f2f2f2;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.stul-btn:hover:not(:disabled) { background: #363a41; }
+.stul-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.stul-btn--primary { background: #0052cc; border-color: #0052cc; }
+.stul-btn--primary:hover:not(:disabled) { background: #0065ff; }
+
+.stul-select {
+  min-height: 36px;
+  max-width: 340px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #44484f;
+  background: #2a2d33;
+  color: #f2f2f2;
+  font: inherit;
+}
+
+.stul-zoom { display: inline-flex; align-items: center; gap: 8px; }
+.stul-zoom input { width: 120px; accent-color: #4c9aff; }
+.stul-zoom output { min-width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+
+.stul-info { color: #b8bcc4; font-size: 13px; }
+.stul-msg { width: 100%; font-size: 13px; padding: 6px 10px; border-radius: 6px; }
+.stul-msg--error { background: #4a1f22; color: #ffd7d9; }
+.stul-msg--warn { background: #4a3a14; color: #ffe9b3; }
+
+.stul-scroll {
+  flex: 1;
+  overflow: auto;
+  padding: 24px 16px 40px;
+}
+
+.stul-scroll .doc-root { zoom: var(--doc-zoom, 1); }
+
+.stul-waiting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #c9ccd2;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+}
+
+/* Přetečený list (jen ve vývoji) */
+.stul-scroll .doc-root .page[data-overflow] { outline: 3px solid #e53e3e; }
+
+@media (max-width: 640px) {
+  .stul-toolbar { padding: 8px; }
+  .stul-select { max-width: 100%; flex: 1 1 100%; }
+  .stul-zoom input { width: 90px; }
+  .stul-scroll { padding: 12px 0 24px; }
+}
+
+@media print {
+  .stul-shell { display: block; height: auto; overflow: visible; background: #fff; }
+  .stul-toolbar { display: none !important; }
+  .stul-scroll { overflow: visible; padding: 0; }
+  .stul-scroll .doc-root { zoom: 1; }
+}

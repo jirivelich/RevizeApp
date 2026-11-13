@@ -1,0 +1,220 @@
+/**
+ * Společné stavební bloky šablon. Vše vrací HTML string; uživatelská data jdou přes ctx.H.
+ * Layout jen tabulkami (kvůli Wordu).
+ */
+import type { DocContext } from '../context';
+import type { Zavada } from '../../types';
+
+type Row = [label: string, valueHtml: string];
+
+/** Otevře stránku s plynulým obsahem (data-flow) a opakovanou hlavičkou. */
+export function flowPage(ctx: DocContext, footText: string, content: string): string {
+  const { H, revize, firma, technik } = ctx;
+  const left = [firma.nazev, technik.jmeno && `${technik.jmeno}${firma.telefon ? `, tel.: ${firma.telefon}` : ''}`]
+    .filter(Boolean)
+    .map(H.esc)
+    .join(' &nbsp;|&nbsp; ');
+  const head = `<table class="page-head"><tbody><tr><td>${left}</td><td class="r">ev. č. ${H.v(revize.cisloRevize, 12)}</td></tr></tbody></table>`;
+  return `<div class="page" data-flow data-foot="${H.esc(footText)}">${head}${content}</div>`;
+}
+
+/** Hlavička s logem a údaji firmy (na titulní straně). */
+export function firmaHeader(ctx: DocContext): string {
+  const { H, firma, revize } = ctx;
+  const detail = [
+    firma.adresa,
+    [firma.ico && `IČO: ${firma.ico}`, firma.dic && `DIČ: ${firma.dic}`].filter(Boolean).join(', '),
+    [firma.telefon && `tel.: ${firma.telefon}`, firma.email].filter(Boolean).join(', '),
+  ].filter(Boolean).map(H.esc).join('<br>');
+  const logo = firma.logo ? `<td class="logo"><img src="${H.esc(firma.logo)}" alt="Logo"></td>` : '';
+  return `<table class="firma"><tbody><tr>${logo}
+    <td><div class="nazev">${H.v(firma.nazev)}</div><div class="small">${detail}</div></td>
+    <td class="r small">Číslo zprávy: <b>${H.v(revize.cisloRevize, 12)}</b><br>Datum: ${H.v(H.d(revize.datum), 14)}</td>
+  </tr></tbody></table>`;
+}
+
+/** Titul dokumentu (normy, nadpis, podtitul). */
+export function titleBlock(ctx: DocContext, title: string, subtitle: string, normy?: string): string {
+  const { H } = ctx;
+  return `<div class="title-block">
+    ${normy ? `<div class="normy">${H.esc(normy)}</div>` : ''}
+    <div class="title">${H.esc(title)}</div>
+    <div class="subtitle">${subtitle}</div>
+  </div>`;
+}
+
+/** Sekce s nadpisem; obsah lze stránkovat po blocích. */
+export function sec(title: string, ...body: string[]): string {
+  return `<div class="sec split"><div class="sec-title keep">${title}</div>${body.join('')}</div>`;
+}
+
+/** Tabulka popisek/hodnota. Hodnoty už musí být HTML (escapované). */
+export function kv(rows: Row[]): string {
+  if (rows.length === 0) return '';
+  return `<table class="kv"><tbody>${rows.map(([l, v]) => `<tr><td class="l">${l}</td><td>${v}</td></tr>`).join('')}</tbody></table>`;
+}
+
+/** Tabulka popisek/hodnota ve dvou sloupcových párech. */
+export function kv4(rows: [Row, Row | null][]): string {
+  return `<table class="kv kv4"><tbody>${rows.map(([a, b]) =>
+    `<tr><td class="l">${a[0]}</td><td>${a[1]}</td>${b ? `<td class="l">${b[0]}</td><td>${b[1]}</td>` : '<td colspan="2"></td>'}</tr>`,
+  ).join('')}</tbody></table>`;
+}
+
+/** Mřížka s rámečky. Buňky už musí být HTML (escapované). */
+export function grid(cols: string[], widths: string[], rows: string[][], center: number[] = []): string {
+  const th = cols.map((c, i) => `<th${widths[i] ? ` style="width:${widths[i]}"` : ''}${center.includes(i) ? ' class="c"' : ''}>${c}</th>`).join('');
+  const body = rows.map(r => `<tr>${r.map((c, i) => `<td${center.includes(i) ? ' class="c"' : ''}>${c}</td>`).join('')}</tr>`).join('');
+  return `<table class="grid"><thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;
+}
+
+/** Odstavec textu (escapuje). */
+export function p(ctx: DocContext, text: string, cls = ''): string {
+  return `<p${cls ? ` class="${cls}"` : ''}>${ctx.H.esc(text)}</p>`;
+}
+
+// ── Opakující se sekce ──
+
+export function provozovatelRows(ctx: DocContext, adresaFallback = ''): Row[] {
+  const { H, provozovatel: pv } = ctx;
+  const rows: Row[] = [
+    ['Název / Jméno:', H.v(pv.nazev)],
+    ['Adresa / Sídlo:', H.v(pv.adresa || adresaFallback)],
+  ];
+  if (pv.ico) rows.push(['IČO:', H.esc(pv.ico)]);
+  if (pv.kontakt) rows.push(['Kontaktní osoba:', H.esc(pv.kontakt)]);
+  if (pv.telefon) rows.push(['Telefon:', H.esc(pv.telefon)]);
+  if (pv.email) rows.push(['E-mail:', H.esc(pv.email)]);
+  return rows;
+}
+
+export function technikRows(ctx: DocContext): Row[] {
+  const { H, technik: t } = ctx;
+  const rows: Row[] = [
+    ['Jméno:', H.v(t.jmeno)],
+    ['Oprávnění:', H.v(t.opravneni)],
+  ];
+  if (t.osvedceni) rows.push(['Osvědčení:', H.esc(t.osvedceni)]);
+  if (t.adresa) rows.push(['Adresa:', H.esc(t.adresa)]);
+  if (t.ico) rows.push(['IČO:', H.esc(t.ico)]);
+  return rows;
+}
+
+export function pristrojeTable(ctx: DocContext): string {
+  const { H, pristroje } = ctx;
+  if (pristroje.length === 0) return p(ctx, 'Žádné přístroje nebyly přiřazeny.');
+  return grid(
+    ['Název', 'Výrobce / Model', 'Výrobní číslo', 'Kalibrace', 'Platnost'],
+    ['25%', '25%', '20%', '15%', '15%'],
+    pristroje.map(x => [
+      H.v(x.nazev, 10),
+      H.v(`${x.vyrobce || ''} ${x.model || ''}`.trim(), 10),
+      H.v(x.vyrobniCislo, 10),
+      H.v(H.d(x.datumKalibrace), 10),
+      H.v(H.d(x.platnostKalibrace), 10),
+    ]),
+  );
+}
+
+export const ZAVAZNOST_LABEL: Record<Zavada['zavaznost'], string> = {
+  C1: 'C1 – Kritická',
+  C2: 'C2 – Vážná',
+  C3: 'C3 – Méně závažná',
+};
+
+export function zavadaStavLabel(stav: Zavada['stav']): string {
+  return stav === 'otevřená' ? 'Otevřená' : stav === 'v řešení' ? 'V řešení' : 'Vyřešená';
+}
+
+/** Tabulka závad (bez nadpisu sekce). */
+export function zavadyTable(ctx: DocContext, withPoznamka = false): string {
+  const { H, zavady } = ctx;
+  return grid(
+    ['#', 'Popis závady', 'Závažnost', 'Stav', 'Zjištěna'],
+    ['5%', '45%', '17%', '13%', '20%'],
+    zavady.map((z, i) => [
+      String(i + 1),
+      H.esc(z.popis) + (withPoznamka && z.poznamka ? `<div class="small muted">${H.lines(z.poznamka)}</div>` : ''),
+      ZAVAZNOST_LABEL[z.zavaznost] ?? H.esc(z.zavaznost),
+      zavadaStavLabel(z.stav),
+      H.v(H.d(z.datumZjisteni), 10),
+    ]),
+    [0],
+  );
+}
+
+export const ZAVADY_LEGENDA = '<p class="small"><b>Kategorie závad:</b> <b>C1</b> – kritická závada (bezprostřední nebezpečí, je nutné ihned odpojit zařízení od napájení); <b>C2</b> – vážná závada (nutná náprava v co nejkratší době); <b>C3</b> – méně závažná závada (doporučení ke zlepšení, zařízení může být provozováno).</p>';
+
+/** Rozdělovník „příjemce: počet“ po řádcích. */
+export function rozdelovnikTable(ctx: DocContext, text: string): string {
+  const { H } = ctx;
+  const rows = text.split('\n').filter(r => r.trim()).map(radek => {
+    const sep = radek.lastIndexOf(':');
+    const prijemce = sep >= 0 ? radek.substring(0, sep).trim() : radek.trim();
+    const pocet = sep >= 0 ? radek.substring(sep + 1).trim() : '';
+    return [H.esc(prijemce), H.esc(pocet)];
+  });
+  return grid(['Příjemce', 'Počet'], ['', '20mm'], rows, [1]);
+}
+
+/** Podpisy technika a objednatele + místo a datum. */
+export function podpisy(ctx: DocContext, certLabel = 'Oprávnění'): string {
+  const { H, technik, provozovatel, revize } = ctx;
+  const objednatel = provozovatel.kontakt || provozovatel.nazev;
+  const datum = H.d(revize.datumVypracovani) || H.d(new Date());
+  return `<div class="nosplit"><p>V ${H.dots(30)} dne ${H.esc(datum)}</p>
+  <table class="sig"><tbody>
+    <tr>
+      <td><div class="line">revizní technik</div><div class="name">${H.v(technik.jmeno)}</div><div class="small">${certLabel}: ${H.v(technik.opravneni, 16)}</div></td>
+      <td><div class="line">za provozovatele / objednatele</div><div class="name">${H.v(objednatel)}</div><div class="small">&nbsp;</div></td>
+    </tr>
+  </tbody></table></div>`;
+}
+
+/** Výsledek revize s přeškrtnutím neplatné varianty. */
+export function resultBox(innerHtml: string): string {
+  return `<table class="result nosplit"><tbody><tr><td>${innerHtml}</td></tr></tbody></table>`;
+}
+
+/** Fotodokumentace závad (na novém listu), dvě fotky vedle sebe. */
+export function fotoZavad(ctx: DocContext): string {
+  const { H, zavady } = ctx;
+  const sFotkou = zavady.map((z, i) => ({ z, cislo: i + 1 })).filter(x => Array.isArray(x.z.fotky) && x.z.fotky.length > 0);
+  if (sFotkou.length === 0) return '';
+  const entries = sFotkou.map(({ z, cislo }) => {
+    const rows = H.paginate(z.fotky, 2).map(pair =>
+      `<tr>${pair.map((src, idx) => `<td><img src="${H.esc(src)}" alt="Závada ${cislo} – foto ${idx + 1}"></td>`).join('')}${pair.length < 2 ? '<td></td>' : ''}</tr>`,
+    ).join('');
+    return `<div class="split"><p class="keep"><b>#${cislo}</b> ${H.esc(z.popis)} <span class="small">(${ZAVAZNOST_LABEL[z.zavaznost] ?? ''})</span></p><table class="foto"><tbody>${rows}</tbody></table></div>`;
+  }).join('');
+  return `<div class="pb"></div>${sec('Příloha – Fotodokumentace závad', entries)}`;
+}
+
+/** Přílohy revize – každá stránka přílohy na vlastním listu. */
+export function prilohyPages(ctx: DocContext): string {
+  const { H, prilohy } = ctx;
+  return prilohy.flatMap((pr, i) => pr.images.map((src, pageIdx) => `<div class="pb"></div>
+    <div class="priloha">
+      <div class="sec-title">Příloha ${i + 1} – ${H.esc(pr.nazev)}${pr.images.length > 1 ? ` (strana ${pageIdx + 1}/${pr.images.length})` : ''}</div>
+      ${pageIdx === 0 && pr.poznamka ? `<p class="small">${H.lines(pr.poznamka)}</p>` : ''}
+      <img src="${H.esc(src)}" alt="${H.esc(pr.nazev)}">
+    </div>`)).join('');
+}
+
+/** Seznam příloh (text revize.prilohy + nahrané soubory). */
+export function seznamPriloh(ctx: DocContext): string {
+  const { H, revize, prilohy } = ctx;
+  const items = [
+    ...(revize.prilohy || '').split('\n').filter(r => r.trim()).map(r => H.esc(r.trim())),
+    ...prilohy.map((pr, i) => `${H.esc(pr.nazev)} (příloha ${i + 1})`),
+  ];
+  return `<ol>${items.map(it => `<li>${it}</li>`).join('')}</ol>`;
+}
+
+/** Lhůta příští revize (datum, vlastní text, nebo počet měsíců). */
+export function lhutaText(ctx: DocContext, useLhutaText = false): string {
+  const { H, revize } = ctx;
+  if (useLhutaText && revize.lhutaText?.trim()) return H.esc(revize.lhutaText.trim());
+  if (revize.datumPlatnosti) return H.esc(H.d(revize.datumPlatnosti));
+  return revize.termin ? `${H.esc(revize.termin)} měsíců od data provedení` : H.dots(20);
+}
