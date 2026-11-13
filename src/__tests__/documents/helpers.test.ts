@@ -39,20 +39,21 @@ describe('H.v', () => {
 });
 
 describe('H.vn a H.an', () => {
-  it('přeškrtne neplatnou variantu', () => {
-    expect(H.vn(true)).toBe('<b>VYHOVĚL</b> – <span class="strike">NEVYHOVĚL</span>');
-    expect(H.vn('N')).toBe('<span class="strike">VYHOVĚL</span> – <b>NEVYHOVĚL</b>');
-    expect(H.vn('schopno', ['SCHOPNA', 'NESCHOPNA'])).toContain('<span class="strike">NESCHOPNA</span>');
-    expect(H.vn('fail', ['JE', 'NENÍ'])).toContain('<span class="strike">JE</span>');
+  it('vrátí jen platnou variantu, bez přeškrtnutí', () => {
+    expect(H.vn(true)).toBe('<b>VYHOVĚL</b>');
+    expect(H.vn('N')).toBe('<b>NEVYHOVĚL</b>');
+    expect(H.vn('schopno', ['SCHOPNA', 'NESCHOPNA'])).toBe('<b>SCHOPNA</b>');
+    expect(H.vn('neschopno', ['SCHOPNA', 'NESCHOPNA'])).toBe('<b>NESCHOPNA</b>');
+    expect(H.vn('fail', ['JE', 'NENÍ'])).toBe('<b>NENÍ</b>');
   });
-  it('nerozhodnutý stav nechá obě varianty k ručnímu škrtnutí', () => {
-    expect(H.vn(undefined)).toBe('VYHOVĚL – NEVYHOVĚL');
-    expect(H.vn('NA')).toBe('VYHOVĚL – NEVYHOVĚL');
-    expect(H.an(null)).toBe('ANO – NE');
+  it('nerozhodnutý stav → tečky k ručnímu doplnění', () => {
+    expect(H.vn(undefined)).toBe(H.dots(12));
+    expect(H.vn('NA')).toBe(H.dots(12));
+    expect(H.an(null)).toBe(H.dots(12));
   });
-  it('ANO – NE', () => {
-    expect(H.an(true)).toBe('<b>ANO</b> – <span class="strike">NE</span>');
-    expect(H.an(false)).toBe('<span class="strike">ANO</span> – <b>NE</b>');
+  it('ANO nebo NE', () => {
+    expect(H.an(true)).toBe('<b>ANO</b>');
+    expect(H.an(false)).toBe('<b>NE</b>');
   });
 });
 

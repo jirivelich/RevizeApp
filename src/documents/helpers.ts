@@ -42,14 +42,13 @@ function v(x: unknown, n = 24): string {
 }
 
 /**
- * Dvě varianty oddělené pomlčkou, neplatná varianta je přeškrtnutá.
- * Když není rozhodnuto (null/undefined), nepřeškrtne se nic – technik škrtne ručně.
+ * Jen platná varianta (tučně), např. „SCHOPNA“ nebo „NESCHOPNA“ – bez přeškrtnuté druhé možnosti.
+ * Když není rozhodnuto (null/undefined), vrátí tečkovanou linku k ručnímu doplnění.
  */
 function choice(first: boolean | null | undefined, labels: [string, string]): string {
-  const [a, b] = labels.map(esc);
-  if (first === true) return `<b>${a}</b> – <span class="strike">${b}</span>`;
-  if (first === false) return `<span class="strike">${a}</span> – <b>${b}</b>`;
-  return `${a} – ${b}`;
+  if (first === true) return `<b>${esc(labels[0])}</b>`;
+  if (first === false) return `<b>${esc(labels[1])}</b>`;
+  return dots(12);
 }
 
 type VnStav = boolean | 'V' | 'N' | 'pass' | 'fail' | 'schopno' | 'neschopno' | '' | 'NA' | null | undefined;
@@ -60,12 +59,12 @@ function toBool(stav: VnStav): boolean | null {
   return null;
 }
 
-/** „VYHOVĚL – NEVYHOVĚL“ s přeškrtnutím neplatné varianty. Vlastní popisky volitelně. */
+/** „VYHOVĚL“ nebo „NEVYHOVĚL“ podle stavu (vlastní popisky volitelně); nerozhodnuto → tečky. */
 function vn(stav: VnStav, labels: [string, string] = ['VYHOVĚL', 'NEVYHOVĚL']): string {
   return choice(toBool(stav), labels);
 }
 
-/** „ANO – NE“ s přeškrtnutím neplatné varianty. */
+/** „ANO“ nebo „NE“; nerozhodnuto → tečky. */
 function an(b: boolean | null | undefined): string {
   return choice(b === null || b === undefined ? null : !!b, ['ANO', 'NE']);
 }

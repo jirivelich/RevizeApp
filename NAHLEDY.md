@@ -50,7 +50,7 @@ URL: /revize/:id/nahled
 - `render(ctx)` vrací HTML string; šablona **čte jen z `ctx`**.
 - Všechna uživatelská data přes `H.esc` nebo `H.v` (prázdná hodnota → tečkovaná linka pro ruční doplnění).
 - Rozložení **jen tabulkami** (kvůli Wordu): `table.kv` (popisek/hodnota), `table.grid` (mřížka).
-- `H.vn(stav, [a, b])` – „A – B“ s přeškrtnutím neplatné varianty; nerozhodnuto = nic se nepřeškrtne.
+- `H.vn(stav, [a, b])` – vytiskne jen platnou variantu (např. „SCHOPNA“ nebo „NESCHOPNA“); nerozhodnuto = tečky k ručnímu doplnění.
 - `scope`: `record` (1× na revizi), `group` (1× na prvek z `groups(ctx)`, např. rozvaděč), `all` (1× za celek).
 
 ### Pravidla stránkování (`paginate.ts`)

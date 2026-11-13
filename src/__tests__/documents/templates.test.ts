@@ -80,9 +80,19 @@ describe('Escapování uživatelských dat', () => {
 });
 
 describe('Elektro – obsah zprávy', () => {
-  it('výsledek: neplatná varianta je přeškrtnutá', () => {
-    expect(zprava(ctxWith('elektro', { vysledek: 'neschopno' }))).toContain('<span class="strike">SCHOPNA</span>');
-    expect(zprava(ctxWith('elektro', { vysledek: 'schopno' }))).toContain('<span class="strike">NESCHOPNA</span>');
+  it('výsledek: jen platná varianta, bez přeškrtnutí', () => {
+    const neschopna = zprava(ctxWith('elektro', { vysledek: 'neschopno' }));
+    expect(neschopna).toContain('Z HLEDISKA BEZPEČNOSTI <b>NESCHOPNA</b> PROVOZU');
+    expect(neschopna).not.toContain('SCHOPNA –');
+    const schopna = text(zprava(ctxWith('elektro', { vysledek: 'schopno' })));
+    expect(schopna).toContain('ELEKTRICKÁ INSTALACE JE Z HLEDISKA BEZPEČNOSTI SCHOPNA PROVOZU');
+    expect(schopna).not.toContain('NESCHOPNA');
+  });
+
+  it('žádná zpráva neobsahuje přeškrtnutí', () => {
+    for (const k of KATEGORIE_VSECHNY) {
+      for (const d of TPL.instances(sampleContext(k))) expect(d.html, d.key).not.toContain('strike');
+    }
   });
 
   it('tiskSekce skryje sekci a přečísluje následující', () => {
@@ -147,7 +157,9 @@ describe('Strojní zařízení', () => {
   });
 
   it('verdikt přeškrtne neplatnou variantu', () => {
-    expect(zprava(sampleContext('stroje'))).toContain('<b>JE</b> – <span class="strike">NENÍ</span>');
+    const html = zprava(sampleContext('stroje'));
+    expect(html).toContain('Revidované strojní zařízení <b>JE</b> z hlediska');
+    expect(html).not.toContain('NENÍ');
   });
 
   it('bez strojních dat chybí sekce identifikace stroje', () => {

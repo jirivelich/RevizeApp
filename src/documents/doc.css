@@ -119,7 +119,6 @@
 
 /* ── Drobnosti ── */
 .doc-root .dotline { letter-spacing: 1pt; color: #000; }
-.doc-root .strike { text-decoration: line-through; }
 .doc-root .small { font-size: 9pt; }
 .doc-root .muted { color: #333; }
 .doc-root .b { font-weight: bold; }

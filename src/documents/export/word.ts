@@ -35,7 +35,6 @@ table.grid td.c, table.grid th.c { text-align: center; }
 table.sig { width: 100%; margin-top: 30pt; }
 table.sig td { width: 50%; text-align: center; vertical-align: top; }
 table.sig .line { border-top: 0.75pt dotted #000; }
-.strike { text-decoration: line-through; }
 .small { font-size: 9pt; }
 .b { font-weight: bold; }
 .center { text-align: center; }
@@ -68,7 +67,6 @@ const INLINE_RULES: [string, string][] = [
   ['table.result td', 'border:1pt solid #000;padding:8pt;text-align:center;font-size:12pt;'],
   ['table.sig td', 'width:50%;text-align:center;vertical-align:top;'],
   ['table.sig .line', 'border-top:0.75pt dotted #000;margin-top:24pt;'],
-  ['.strike', 'text-decoration:line-through;'],
   ['.small', 'font-size:9pt;'],
 ];
 
