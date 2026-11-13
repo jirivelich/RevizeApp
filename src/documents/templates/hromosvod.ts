@@ -50,7 +50,7 @@ function nacrtSrc(raw?: string): string {
 
 function render(ctx: DocContext): string {
   const { H, revize, zavadyPouze: zavady, vis } = ctx;
-  const stav = (s?: string) => stavLabel(s) || H.dots(16);
+  const stav = (s?: string) => stavLabel(s) || '—';
 
   let mereni: MereniOdporu[] = [];
   try { mereni = revize.hromosvodMereniOdporu ? JSON.parse(revize.hromosvodMereniOdporu) : []; } catch { mereni = []; }
@@ -65,8 +65,8 @@ function render(ctx: DocContext): string {
     sec('1. Provozovatel (objednatel)', kv(provozovatelRows(ctx))),
     sec('2. Identifikace revidovaného objektu a místo umístění', kv([['Název objektu:', H.v(revize.nazev)], ['Adresa objektu:', H.v(revize.adresa)]])),
     sec('3. Charakteristika systému ochrany před bleskem (LPS)', kv([
-      ['Třída LPS:', H.v(tridaLpsLabel(revize.hromosvodTridaLps))],
-      ['Typ ochrany:', H.v(typOchranyLabel(revize.hromosvodTypOchrany))],
+      ['Třída LPS:', H.o(tridaLpsLabel(revize.hromosvodTridaLps))],
+      ['Typ ochrany:', H.o(typOchranyLabel(revize.hromosvodTypOchrany))],
       ...(revize.hromosvodRokInstalace ? [['Rok instalace:', H.esc(revize.hromosvodRokInstalace)] as [string, string]] : []),
       ...poznamka('Popis LPS:', revize.hromosvodPopisLps),
     ])),
@@ -88,29 +88,29 @@ function render(ctx: DocContext): string {
       revize.typRevize === 'mimořádná' && revize.duvodMimoradne ? H.paras(revize.duvodMimoradne) : ''),
     sec('7. Důležitá data', kv4([
       ...datumyRevize(ctx),
-      [['Platnost do:', H.v(H.d(revize.datumPlatnosti), 14)], ['Lhůta příští revize:', revize.termin ? `${H.esc(revize.termin)} měsíců` : H.dots(14)]],
+      [['Platnost do:', H.o(H.d(revize.datumPlatnosti), 14)], ['Lhůta příští revize:', revize.termin ? `${H.esc(revize.termin)} měsíců` : '—']],
     ])),
   );
 
   if (vis('jimaciSoustava')) parts.push(sec('8. Jímací soustava', kv([
-    ['Typ jímače:', H.v(revize.hromosvodJimaciTyp)],
-    ['Materiál:', H.v(revize.hromosvodJimaciMaterial)],
+    ['Typ jímače:', H.o(revize.hromosvodJimaciTyp)],
+    ['Materiál:', H.o(revize.hromosvodJimaciMaterial)],
     ['Stav:', stav(revize.hromosvodJimaciStav)],
     ...poznamka('Poznámka:', revize.hromosvodJimaciPoznamka),
   ])));
 
   if (vis('svodoveVedeni')) parts.push(sec('9. Svodové vedení', kv([
-    ['Počet svodů:', H.v(revize.hromosvodSvodyPocet, 8)],
-    ['Materiál:', H.v(revize.hromosvodSvodyMaterial)],
+    ['Počet svodů:', H.o(revize.hromosvodSvodyPocet, 8)],
+    ['Materiál:', H.o(revize.hromosvodSvodyMaterial)],
     ...(revize.hromosvodSvodyPrurez ? [['Průřez / profil:', H.esc(revize.hromosvodSvodyPrurez)] as [string, string]] : []),
-    ['Zkušební svorky:', `${H.v(revize.hromosvodSvodyZkusebniSvorky, 6)} ks`],
+    ['Zkušební svorky:', `${H.o(revize.hromosvodSvodyZkusebniSvorky, 6)} ks`],
     ['Stav:', stav(revize.hromosvodSvodyStav)],
     ...poznamka('Poznámka:', revize.hromosvodSvodyPoznamka),
   ])));
 
   if (vis('uzemnovaciSoustava')) parts.push(sec('10. Uzemňovací soustava', kv([
-    ['Typ uzemnění:', H.v(revize.hromosvodUzemneniTyp)],
-    ['Materiál:', H.v(revize.hromosvodUzemneniMaterial)],
+    ['Typ uzemnění:', H.o(revize.hromosvodUzemneniTyp)],
+    ['Materiál:', H.o(revize.hromosvodUzemneniMaterial)],
     ['Stav:', stav(revize.hromosvodUzemneniStav)],
     ...poznamka('Poznámka:', revize.hromosvodUzemneniPoznamka),
   ])));
@@ -130,7 +130,7 @@ function render(ctx: DocContext): string {
         : '';
       parts.push(sec('12. Měření odporů uzemnění',
         grid(['Měřicí bod', 'Naměřeno [Ω]', 'Limit [Ω]', 'Výsledek'], ['35%', '20%', '20%', '25%'],
-          mereni.map(m => [H.v(m.bod, 8), H.v(m.hodnota, 6), H.v(m.limit, 6), H.vn(m.vyhovuje, ['VYHOVUJE', 'NEVYHOVUJE'])]), [1, 2, 3]),
+          mereni.map(m => [H.o(m.bod, 8), H.o(m.hodnota, 6), H.o(m.limit, 6), H.vn(m.vyhovuje, ['VYHOVUJE', 'NEVYHOVUJE'])]), [1, 2, 3]),
         `<p class="small">Celkem bodů: ${mereni.length} | Vyhovuje: ${mereni.filter(m => m.vyhovuje).length} | Nevyhovuje: ${mereni.filter(m => !m.vyhovuje).length}${prumer ? ` | Průměrná hodnota: ${prumer} Ω` : ''}</p>`));
     } else {
       parts.push(sec('12. Měření odporů uzemnění', p(ctx, 'Měření odporů uzemnění nebylo provedeno.')));
@@ -139,7 +139,7 @@ function render(ctx: DocContext): string {
 
   if (vis('pristroje')) parts.push(sec('13. Soupis použitých měřicích přístrojů', pristrojeTable(ctx)));
   if (vis('podklady')) parts.push(sec('14. Seznam podkladů použitých k provedení revize', H.paras(revize.podklady), uvedeniDoProvozu(ctx), ulozeniPodkladu(ctx)));
-  if (vis('vyhodnoceniPredchozich')) parts.push(sec('15. Vyhodnocení předchozích revizí', H.paras(revize.vyhodnoceniPredchozich)));
+  if (vis('vyhodnoceniPredchozich')) parts.push(sec('15. Vyhodnocení předchozích revizí', H.paras(revize.vyhodnoceniPredchozich, 0)));
   if (revize.napravneUkony?.trim()) parts.push(sec(NAPRAVNE_UKONY_TITLE, napravneUkonyBody(ctx)));
 
   const nacrt = nacrtSrc(revize.hromosvodNacrt);

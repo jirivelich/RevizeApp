@@ -16,7 +16,7 @@ const filled = (rows: KontrolaPolozka[]) => rows.filter(r => r.nazev.trim() && r
 
 function render(ctx: DocContext): string {
   const { H, revize, zavadyPouze: zavady, om, vis } = ctx;
-  const stav = (v: Vysledek) => (v === 'N' ? `<b>${STAV_LABEL.N}</b>` : v ? STAV_LABEL[v] : H.dots(8));
+  const stav = (v: Vysledek) => (v === 'N' ? `<b>${STAV_LABEL.N}</b>` : v ? STAV_LABEL[v] : '—');
 
   const prohlidka = filled(om.prohlidka);
   const zkouseni = filled(om.zkouseni);
@@ -69,10 +69,10 @@ function render(ctx: DocContext): string {
       ['Revidovaný objekt:', H.v(revize.nazev)],
       ['Adresa:', H.v(revize.adresa)],
       ...(om.parcela ? [['Parcela / č.p.:', H.esc(om.parcela)] as [string, string]] : []),
-      ['Distributor:', H.v(om.distributor)],
-      ['EAN / OPM:', H.v(om.ean)],
-      ['Číslo elektroměru:', H.v(om.cisloElektromeru)],
-      ['Typ připojení:', H.v(typPripojeni)],
+      ['Distributor:', H.o(om.distributor)],
+      ['EAN / OPM:', H.o(om.ean)],
+      ['Číslo elektroměru:', H.o(om.cisloElektromeru)],
+      ['Typ připojení:', H.o(typPripojeni)],
       ...(om.umisteniRozvadece ? [['Umístění rozvaděče:', H.esc(om.umisteniRozvadece)] as [string, string]] : []),
     ])),
     sec('3. Revizní technik', kv(technikRows(ctx))),
@@ -91,10 +91,10 @@ function render(ctx: DocContext): string {
     const typOdberu = om.smlouvaTypOdberu === 'novy' ? 'Nový odběr' : om.smlouvaTypOdberu === 'zmena' ? 'Změna odběru' : om.smlouvaTypOdberu === 'rozsireni' ? 'Rozšíření odběru' : '';
     parts.push(sec(t('smlouva', 'Smlouva o připojení a tarif odběru'),
       kv4([
-        [['Číslo smlouvy:', H.v(om.smlouvaCislo, 12)], ['Datum uzavření:', H.v(H.d(om.smlouvaDatum), 12)]],
-        [['Platnost do:', H.v(H.d(om.smlouvaPlatnost), 12)], ['Typ odběru:', H.v(typOdberu, 12)]],
-        [['Rezervovaný příkon:', om.smlouvaPrikon ? `${H.esc(om.smlouvaPrikon)} kW` : H.dots(10)], ['Hlavní jistič dle smlouvy:', om.smlouvaJistic ? `${H.esc(om.smlouvaJistic)} A` : H.dots(10)]],
-        [['Distribuční sazba:', H.v(om.tarif, 10)], ['HDO:', H.v(om.hdoKod, 10)]],
+        [['Číslo smlouvy:', H.o(om.smlouvaCislo, 12)], ['Datum uzavření:', H.o(H.d(om.smlouvaDatum), 12)]],
+        [['Platnost do:', H.o(H.d(om.smlouvaPlatnost), 12)], ['Typ odběru:', H.o(typOdberu, 12)]],
+        [['Rezervovaný příkon:', om.smlouvaPrikon ? `${H.esc(om.smlouvaPrikon)} kW` : '—'], ['Hlavní jistič dle smlouvy:', om.smlouvaJistic ? `${H.esc(om.smlouvaJistic)} A` : '—']],
+        [['Distribuční sazba:', H.o(om.tarif, 10)], ['HDO:', H.o(om.hdoKod, 10)]],
       ]),
       om.smlouvaUcel ? kv([['Účel odběru:', H.esc(om.smlouvaUcel)]]) : '',
       shoda !== 'neurceno' ? `<p><b>Soulad se smlouvou:</b> ${shoda === 'shoda'
@@ -106,10 +106,10 @@ function render(ctx: DocContext): string {
   if (nums.parametry) {
     parts.push(sec(t('parametry', 'Technické parametry odběrného místa'),
       kv4([
-        [['Napájecí soustava:', H.v(om.soustava || revize.napetovaSoustava, 12)], ['Způsob měření:', H.v(om.zpusobMereni === 'prime' ? 'Přímé' : om.zpusobMereni === 'neprime' ? 'Nepřímé' : '', 12)]],
-        [['Hlavní jistič:', H.v([om.jisticTyp, om.jisticProud && `${om.jisticProud} A`, om.jisticCharakteristika].filter(Boolean).join(', '), 12)],
-          ['Počet fází / plombovatelnost:', H.v([om.pocetFazi && `${om.pocetFazi}f`, om.plombovani && (om.plombovani === 'ano' ? 'plombovatelný' : 'neplombovatelný')].filter(Boolean).join(', '), 12)]],
-        [['Rozvaděč:', H.v([om.rozvadecVyrobce, om.rozvadecTyp].filter(Boolean).join(' '), 12)], ['Krytí / třída ochrany:', H.v([om.rozvadecIp, om.rozvadecTrida].filter(Boolean).join(' / '), 12)]],
+        [['Napájecí soustava:', H.o(om.soustava || revize.napetovaSoustava, 12)], ['Způsob měření:', H.o(om.zpusobMereni === 'prime' ? 'Přímé' : om.zpusobMereni === 'neprime' ? 'Nepřímé' : '', 12)]],
+        [['Hlavní jistič:', H.o([om.jisticTyp, om.jisticProud && `${om.jisticProud} A`, om.jisticCharakteristika].filter(Boolean).join(', '), 12)],
+          ['Počet fází / plombovatelnost:', H.o([om.pocetFazi && `${om.pocetFazi}f`, om.plombovani && (om.plombovani === 'ano' ? 'plombovatelný' : 'neplombovatelný')].filter(Boolean).join(', '), 12)]],
+        [['Rozvaděč:', H.o([om.rozvadecVyrobce, om.rozvadecTyp].filter(Boolean).join(' '), 12)], ['Krytí / třída ochrany:', H.o([om.rozvadecIp, om.rozvadecTrida].filter(Boolean).join(' / '), 12)]],
       ]),
       om.rozvadecProhlaseni ? kv([['Prohlášení o shodě:', H.esc(om.rozvadecProhlaseni)]]) : ''));
   }
@@ -124,7 +124,7 @@ function render(ctx: DocContext): string {
 
   const kontrolaGrid = (rows: KontrolaPolozka[], first: string, second: string, widths: string[]) => grid(
     [first, second, 'Výsledek', 'Poznámka'], widths,
-    rows.map(r => [H.esc(r.nazev), H.v(r.norma, 6), stav(r.vysledek), H.esc(r.poznamka)]));
+    rows.map(r => [H.esc(r.nazev), H.o(r.norma, 6), stav(r.vysledek), H.esc(r.poznamka)]));
 
   if (nums.prohlidka) parts.push(sec(t('prohlidka', 'Prohlídka'), kontrolaGrid(prohlidka, 'Kontrolovaná položka', 'Norma / článek', ['45%', '25%', '14%', '16%'])));
   if (nums.zkouseni) parts.push(sec(t('zkouseni', 'Zkoušení'), kontrolaGrid(zkouseni, 'Zkouška', 'Norma / článek', ['45%', '25%', '14%', '16%'])));
@@ -134,7 +134,7 @@ function render(ctx: DocContext): string {
       (om.napetiU0 || om.prechodovyOdpor) ? `<p>${om.napetiU0 ? `Měřené napětí U0 = ${H.esc(om.napetiU0)} V. ` : ''}${om.prechodovyOdpor ? `Při měření přechodových odporů nebyla překročena hodnota ${H.esc(om.prechodovyOdpor)} Ω.` : ''}</p>` : '',
       grid(['Obvod', 'Jištění', 'Kabel', 'Zs (Ω)', 'U (V)', 'I (A)', 'ta (ms)', 'IΔn (mA)', 'Riz (MΩ)', 'Výsl.'],
         ['16%', '14%', '12%', '8%', '8%', '8%', '8%', '8%', '8%', '10%'],
-        mereni.map(m => [H.v(m.oznaceni, 6), H.v(m.jisteni, 4), H.v(m.typKabelu, 4), H.v(m.zs, 3), H.v(m.u, 3), H.v(m.i, 3), H.v(m.ta, 3), H.v(m.idn, 3), H.v(m.riz, 3), stav(m.vysledek)]))));
+        mereni.map(m => [H.o(m.oznaceni, 6), H.o(m.jisteni, 4), H.o(m.typKabelu, 4), H.o(m.zs, 3), H.o(m.u, 3), H.o(m.i, 3), H.o(m.ta, 3), H.o(m.idn, 3), H.o(m.riz, 3), stav(m.vysledek)]))));
   }
 
   if (nums.checklist) {

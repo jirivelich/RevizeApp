@@ -307,3 +307,26 @@ describe('Náležitosti zprávy dle ČSN 33 1500', () => {
     }
   });
 });
+
+describe('Prázdné hodnoty – tečky jen u povinných náležitostí', () => {
+  it('povinné údaje (datum předání, provozovatel) mají tečky, nepovinné „—“', () => {
+    const base = sampleContext('elektro');
+    const ctx = createContext({
+      ...base,
+      revize: { ...base.revize, datumPredani: undefined, vyhodnoceniPredchozich: '' },
+      pristroje: base.pristroje.map(x => ({ ...x, vyrobniCislo: '' })),
+    });
+    const html = zprava(ctx);
+    expect(html).toMatch(/Předání zprávy:<\/td><td><span class="dotline">/);
+    // výrobní číslo přístroje je nepovinné → „—“
+    expect(html).toContain('<td>Metrel MI 3125</td><td>—</td>');
+    // vyhodnocení předchozích revizí bez textu → „—“
+    expect(html).toMatch(/Vyhodnocení předchozích revizí<\/div><p class="para">—<\/p>/);
+  });
+
+  it('prázdná zpráva má tečky jen u povinných polí, ne v tabulkách měření', () => {
+    const html = zprava(sampleContext('stroje', true));
+    expect(html).toContain('dotline');
+    expect(text(html)).not.toMatch(/Rok výroby:\.{3}/);
+  });
+});

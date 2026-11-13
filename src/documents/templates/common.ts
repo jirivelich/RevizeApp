@@ -111,11 +111,11 @@ export function pristrojeTable(ctx: DocContext): string {
     ['Název', 'Výrobce / Model', 'Výrobní číslo', 'Kalibrace', 'Platnost'],
     ['25%', '25%', '20%', '15%', '15%'],
     pristroje.map(x => [
-      H.v(x.nazev, 10),
-      H.v(`${x.vyrobce || ''} ${x.model || ''}`.trim(), 10),
-      H.v(x.vyrobniCislo, 10),
-      H.v(H.d(x.datumKalibrace), 10),
-      H.v(H.d(x.platnostKalibrace), 10),
+      H.o(x.nazev, 10),
+      H.o(`${x.vyrobce || ''} ${x.model || ''}`.trim(), 10),
+      H.o(x.vyrobniCislo, 10),
+      H.o(H.d(x.datumKalibrace), 10),
+      H.o(H.d(x.platnostKalibrace), 10),
     ]),
   );
 }
@@ -145,7 +145,7 @@ export function zavadyTable(ctx: DocContext, withPoznamka = false): string {
         + (withPoznamka && z.poznamka ? `<div class="small muted">${H.lines(z.poznamka)}</div>` : ''),
       ZAVAZNOST_LABEL[z.zavaznost] ?? H.esc(z.zavaznost),
       zavadaStavLabel(z.stav),
-      H.v(H.d(z.datumZjisteni), 10),
+      H.o(H.d(z.datumZjisteni), 10),
     ]),
     [0],
   );
@@ -166,7 +166,7 @@ export function doporuceniBody(ctx: DocContext): string {
     doporuceni.map((z, i) => [
       String(i + 1),
       H.esc(z.popis) + (z.poznamka ? `<div class="small muted">${H.lines(z.poznamka)}</div>` : ''),
-      H.v(z.zduvodneni, 10),
+      H.o(z.zduvodneni, 10),
     ]),
     [0],
   );

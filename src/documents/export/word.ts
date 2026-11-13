@@ -7,35 +7,37 @@ import { asBlob } from 'html-docx-js-typescript';
 
 // Zjednodušené styly pro Word (Word nezná absolutní pozicování, stíny ani calc)
 const WORD_CSS = `
-body { font-family: Calibri, Carlito, Arial, sans-serif; font-size: 11pt; line-height: 1.2; color: #000; }
+body { font-family: Calibri, Carlito, Arial, sans-serif; font-size: 10pt; line-height: 1.3; color: #000; }
 p { margin: 0 0 3pt; }
 table { border-collapse: collapse; }
-.page-head { width: 100%; border-bottom: 0.75pt solid #000; font-size: 9pt; margin-bottom: 10pt; }
+.page-head { width: 100%; border-bottom: 1px solid #b0b0b0; font-size: 8pt; color: #374151; margin-bottom: 10pt; }
 .page-head td { padding-bottom: 2pt; }
-.page-foot { width: 100%; border-top: 0.5pt solid #000; font-size: 8.5pt; margin-top: 8pt; }
+.page-foot { width: 100%; border-top: 1px solid #b0b0b0; font-size: 8pt; color: #374151; margin-top: 8pt; }
 .r { text-align: right; }
-.firma { width: 100%; margin-bottom: 8pt; }
+.firma { width: 100%; border-bottom: 2px solid #b0b0b0; margin-bottom: 6pt; }
 .firma td { vertical-align: top; }
-.firma .nazev { font-size: 12pt; font-weight: bold; }
-.normy { text-align: center; font-size: 9pt; font-style: italic; }
-.title { text-align: center; font-size: 18pt; font-weight: bold; text-transform: uppercase; margin-top: 8pt; }
-.subtitle { text-align: center; font-size: 12.5pt; font-weight: bold; margin-bottom: 12pt; }
+.firma .nazev { font-size: 13pt; font-weight: bold; }
+.normy { text-align: center; font-size: 8pt; color: #374151; }
+.title { text-align: center; font-size: 22pt; font-weight: bold; text-transform: uppercase; margin-top: 6pt; }
+.subtitle { text-align: center; font-size: 10.5pt; font-weight: bold; margin-bottom: 10pt; }
 .sec { margin-top: 10pt; }
-.sec-title { font-size: 11.5pt; font-weight: bold; border-bottom: 0.5pt solid #000; margin-bottom: 4pt; }
-.sub-title { font-weight: bold; margin-top: 6pt; }
-table.kv { width: 100%; }
+.sec-title { font-size: 10.5pt; font-weight: bold; border-bottom: 1px solid #b0b0b0; margin-bottom: 4pt; }
+.sub-title { font-size: 9.5pt; font-weight: bold; background: #f1f5f9; border-left: 3px solid #b0b0b0; padding: 3pt 6pt; margin-top: 6pt; }
+table.kv { width: 100%; font-size: 9.5pt; }
 table.kv td { padding: 1pt 4pt 1pt 0; vertical-align: top; }
-table.kv td.l { width: 150pt; }
-table.grid { width: 100%; font-size: 9.5pt; }
-table.grid th, table.grid td { border: 0.5pt solid #000; padding: 2pt 3pt; vertical-align: top; text-align: left; }
-table.grid th { font-weight: bold; background: #ececec; }
+table.kv td.l { width: 150pt; font-weight: bold; color: #374151; }
+table.grid { width: 100%; font-size: 8.5pt; }
+table.grid th, table.grid td { padding: 2pt 4pt; vertical-align: top; text-align: left; }
+table.grid th { font-weight: bold; color: #ffffff; background: #3e4a5b; border: 1px solid #2d3748; }
+table.grid td { border: 1px solid #cbd5e1; }
 table.grid td.c, table.grid th.c { text-align: center; }
 .result { width: 100%; }
-.result td { border: 1pt solid #000; padding: 8pt; text-align: center; font-size: 12pt; }
+.result td { border: 1.5pt solid #1e293b; padding: 8pt; text-align: center; font-size: 11pt; }
 table.sig { width: 100%; margin-top: 30pt; }
 table.sig td { width: 50%; text-align: center; vertical-align: top; }
 table.sig .line { border-top: 0.75pt dotted #000; }
-.small { font-size: 9pt; }
+.small { font-size: 8.5pt; }
+.muted { color: #475569; }
 .b { font-weight: bold; }
 .center { text-align: center; }
 img { max-width: 100%; }
@@ -48,26 +50,32 @@ img { max-width: 100%; }
 const INLINE_RULES: [string, string][] = [
   ['table', 'border-collapse:collapse;'],
   ['table.page-head, table.kv, table.grid, table.sig, table.result, table.firma, table.page-foot, table.foto', 'width:100%;'],
-  ['table.page-head', 'border-bottom:0.75pt solid #000;font-size:9pt;margin-bottom:10pt;'],
-  ['table.page-foot', 'border-top:0.5pt solid #000;font-size:8.5pt;margin-top:8pt;'],
+  ['table.page-head', 'border-bottom:1px solid #b0b0b0;font-size:8pt;color:#374151;margin-bottom:10pt;'],
+  ['table.page-foot', 'border-top:1px solid #b0b0b0;font-size:8pt;color:#374151;margin-top:8pt;'],
+  ['table.firma', 'border-bottom:2px solid #b0b0b0;margin-bottom:6pt;'],
   ['.r', 'text-align:right;'],
-  ['.firma .nazev', 'font-size:12pt;font-weight:bold;'],
-  ['.normy', 'text-align:center;font-size:9pt;font-style:italic;'],
-  ['.title', 'text-align:center;font-size:18pt;font-weight:bold;text-transform:uppercase;margin-top:8pt;'],
-  ['.subtitle', 'text-align:center;font-size:12.5pt;font-weight:bold;margin-bottom:12pt;'],
-  ['.sec-title', 'font-size:11.5pt;font-weight:bold;border-bottom:0.5pt solid #000;margin-top:8pt;margin-bottom:3pt;'],
-  ['.sub-title', 'font-weight:bold;margin-top:6pt;'],
+  ['.firma .nazev', 'font-size:13pt;font-weight:bold;'],
+  ['.firma .small', 'color:#374151;'],
+  ['.normy', 'text-align:center;font-size:8pt;color:#374151;'],
+  ['.title', 'text-align:center;font-size:22pt;font-weight:bold;text-transform:uppercase;margin-top:6pt;'],
+  ['.subtitle', 'text-align:center;font-size:10.5pt;font-weight:bold;margin-bottom:10pt;'],
+  ['.sec-title', 'font-size:10.5pt;font-weight:bold;border-bottom:1px solid #b0b0b0;margin-top:8pt;margin-bottom:3pt;'],
+  ['.sub-title', 'font-size:9.5pt;font-weight:bold;background:#f1f5f9;border-left:3px solid #b0b0b0;padding:3pt 6pt;margin-top:6pt;'],
+  ['table.kv', 'font-size:9.5pt;'],
   ['table.kv td', 'padding:0 4pt 0 0;vertical-align:top;'],
-  ['table.kv td.l', 'width:150pt;'],
+  ['table.kv td.l', 'width:150pt;font-weight:bold;color:#374151;'],
   ['table.kv4 td.l', 'width:105pt;'],
-  ['table.grid', 'font-size:9.5pt;'],
-  ['table.grid th, table.grid td', 'border:0.5pt solid #000;padding:2pt 3pt;vertical-align:top;text-align:left;'],
-  ['table.grid th', 'font-weight:bold;background:#ececec;'],
+  ['table.grid', 'font-size:8.5pt;'],
+  ['table.grid th, table.grid td', 'padding:2pt 4pt;vertical-align:top;text-align:left;'],
+  ['table.grid th', 'font-weight:bold;color:#ffffff;background:#3e4a5b;border:1px solid #2d3748;'],
+  ['table.grid td', 'border:1px solid #cbd5e1;'],
+  ['table.grid tbody tr:nth-child(even) td', 'background:#f8fafc;'],
   ['table.grid td.c, table.grid th.c', 'text-align:center;'],
-  ['table.result td', 'border:1pt solid #000;padding:8pt;text-align:center;font-size:12pt;'],
+  ['table.result td', 'border:1.5pt solid #1e293b;padding:8pt;text-align:center;font-size:11pt;'],
   ['table.sig td', 'width:50%;text-align:center;vertical-align:top;'],
   ['table.sig .line', 'border-top:0.75pt dotted #000;margin-top:24pt;'],
-  ['.small', 'font-size:9pt;'],
+  ['.small', 'font-size:8.5pt;'],
+  ['.muted', 'color:#475569;'],
 ];
 
 function inlineStyles(root: HTMLElement): void {
@@ -81,7 +89,7 @@ function inlineStyles(root: HTMLElement): void {
     t.setAttribute('width', '100%');
     t.setAttribute('cellspacing', '0');
     t.setAttribute('cellpadding', t.classList.contains('grid') ? '3' : '1');
-    if (t.classList.contains('grid')) t.setAttribute('border', '1');
+    
   });
 }
 

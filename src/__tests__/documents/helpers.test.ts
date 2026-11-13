@@ -38,6 +38,18 @@ describe('H.v', () => {
   });
 });
 
+describe('H.o', () => {
+  it('nepovinná hodnota: escapovaná, nebo „—“', () => {
+    expect(H.o('A < B')).toBe('A &lt; B');
+    expect(H.o('')).toBe('—');
+    expect(H.o(undefined, 10)).toBe('—');
+    expect(H.o(0)).toBe('0');
+  });
+  it('H.paras(…, 0) vrátí pro prázdný text „—“ místo teček', () => {
+    expect(H.paras('', 0)).toBe('<p class="para">—</p>');
+  });
+});
+
 describe('H.vn a H.an', () => {
   it('vrátí jen platnou variantu, bez přeškrtnutí', () => {
     expect(H.vn(true)).toBe('<b>VYHOVĚL</b>');

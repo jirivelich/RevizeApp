@@ -36,7 +36,13 @@ function dots(n = 24): string {
   return `<span class="dotline">${'.'.repeat(Math.max(3, n))}</span>`;
 }
 
-/** Hodnota (escapovaná), nebo tečkovaná linka, když je prázdná. */
+/** Nepovinná hodnota: escapovaná, nebo „—“, když je prázdná. */
+function o(x: unknown, _n?: number): string {
+  void _n;
+  return isEmpty(x) ? '—' : esc(x);
+}
+
+/** Povinná hodnota (náležitost zprávy): escapovaná, nebo tečkovaná linka k ručnímu doplnění. */
 function v(x: unknown, n = 24): string {
   return isEmpty(x) ? dots(n) : esc(x);
 }
@@ -77,12 +83,13 @@ function lines(text: unknown): string {
 /**
  * Víceřádkový text → samostatné odstavce (<p class="para">).
  * Odstavce lze stránkovat po jednom, proto je používáme pro dlouhé texty.
- * Prázdný text → n řádků teček pro ruční doplnění.
+ * Prázdný text → n řádků teček pro ruční doplnění (povinné údaje), při emptyLines = 0 → „—“.
  */
 function paras(text: unknown, emptyLines = 2): string {
   const t = isEmpty(text) ? '' : String(text);
   const parts = t.split(/\r?\n/).filter(p => p.trim() !== '');
   if (parts.length === 0) {
+    if (emptyLines <= 0) return '<p class="para">—</p>';
     return Array.from({ length: emptyLines }, () => `<p class="para">${dots(95)}</p>`).join('');
   }
   return parts.map(p => `<p class="para">${esc(p)}</p>`).join('');
@@ -107,5 +114,5 @@ function fileName(s: string): string {
     .slice(0, 120) || 'dokument';
 }
 
-export const H = { esc, d, v, vn, an, lines, paras, dots, paginate, fileName, isEmpty };
+export const H = { esc, d, v, o, vn, an, lines, paras, dots, paginate, fileName, isEmpty };
 export type Helpers = typeof H;

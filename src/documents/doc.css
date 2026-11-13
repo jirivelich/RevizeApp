@@ -7,8 +7,8 @@
 .doc-root {
   --doc-zoom: 1;
   font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif;
-  font-size: 11pt;
-  line-height: 1.25;
+  font-size: 10pt;
+  line-height: 1.4;
   color: #000;
 }
 
@@ -30,8 +30,9 @@
 .doc-root .page-head {
   width: 100%;
   border-collapse: collapse;
-  border-bottom: 0.75pt solid #000;
-  font-size: 9pt;
+  border-bottom: 1px solid #b0b0b0;
+  font-size: 8pt;
+  color: #374151;
   margin-bottom: 5mm;
 }
 .doc-root .page-head td { padding: 0 0 1mm; vertical-align: bottom; }
@@ -43,8 +44,9 @@
   bottom: 9mm;
   width: calc(100% - 40mm);
   border-collapse: collapse;
-  border-top: 0.5pt solid #000;
-  font-size: 8.5pt;
+  border-top: 1px solid #b0b0b0;
+  font-size: 8pt;
+  color: #374151;
 }
 .doc-root .page-foot td { padding-top: 1mm; }
 .doc-root .page-foot .r { text-align: right; white-space: nowrap; }
@@ -53,50 +55,63 @@
 .doc-root .firma {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 4mm;
+  border-bottom: 2px solid #b0b0b0;
+  margin-bottom: 3mm;
 }
-.doc-root .firma td { vertical-align: top; padding: 0; }
+.doc-root .firma td { vertical-align: top; padding: 0 0 6px; }
 .doc-root .firma .logo { width: 32mm; padding-right: 4mm; }
 .doc-root .firma .logo img { max-width: 30mm; max-height: 18mm; display: block; }
-.doc-root .firma .nazev { font-size: 12pt; font-weight: bold; }
+.doc-root .firma .nazev { font-size: 13pt; font-weight: bold; }
+.doc-root .firma .small { font-size: 8.5pt; color: #374151; }
 .doc-root .firma .r { text-align: right; white-space: nowrap; }
 
-.doc-root .normy { text-align: center; font-size: 9pt; font-style: italic; margin: 2mm 0 4mm; }
+.doc-root .normy { text-align: center; font-size: 8pt; color: #374151; margin: 1mm 0 3mm; }
 .doc-root .title {
   text-align: center;
-  font-size: 18pt;
-  font-weight: bold;
+  font-size: 22pt;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.5pt;
-  margin: 4mm 0 1mm;
+  letter-spacing: 0.3px;
+  line-height: 1.15;
+  margin: 3mm 0 1mm;
 }
-.doc-root .subtitle { text-align: center; font-size: 12.5pt; font-weight: bold; margin: 0 0 6mm; }
+.doc-root .subtitle { text-align: center; font-size: 10.5pt; font-weight: 600; margin: 0 0 5mm; }
 
 /* ── Sekce ── */
-.doc-root .sec { margin-top: 3.5mm; }
+.doc-root .sec { margin-top: 4mm; }
 .doc-root .sec-title {
-  font-size: 11.5pt;
+  font-size: 10.5pt;
   font-weight: bold;
-  border-bottom: 0.5pt solid #000;
-  padding-bottom: 0.8mm;
+  border-bottom: 1px solid #b0b0b0;
+  padding-bottom: 3px;
   margin-bottom: 2mm;
 }
-.doc-root .sub-title { font-weight: bold; margin: 3mm 0 1mm; }
+.doc-root .sub-title {
+  font-size: 9.5pt;
+  font-weight: 600;
+  background: #f1f5f9;
+  border-left: 3px solid #b0b0b0;
+  border-radius: 3px;
+  padding: 4px 8px;
+  margin: 3mm 0 1.5mm;
+}
 .doc-root p, .doc-root .para { margin: 0 0 1.5mm; }
 .doc-root ol, .doc-root ul { margin: 0 0 1.5mm; padding-left: 6mm; }
 
 /* ── Popisek / hodnota ── */
-.doc-root table.kv { width: 100%; border-collapse: collapse; }
-.doc-root table.kv td { padding: 0.25mm 2mm 0.25mm 0; vertical-align: top; }
-.doc-root table.kv td.l { width: 52mm; }
+.doc-root table.kv { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+.doc-root table.kv td { padding: 1.5px 4px 1.5px 0; vertical-align: top; }
+.doc-root table.kv td.l { width: 52mm; font-weight: 600; color: #374151; }
 .doc-root table.kv.kv4 td.l { width: 38mm; }
 
 /* ── Mřížka (měření, závady) ── */
 /* display: table – Tailwind má vlastní utilitu .grid (display: grid) */
-.doc-root table.grid { display: table; width: 100%; border-collapse: collapse; font-size: 9.5pt; margin: 1mm 0 2mm; }
+.doc-root table.grid { display: table; width: 100%; border-collapse: collapse; font-size: 8.5pt; margin: 1mm 0 2mm; }
 .doc-root table.grid th,
-.doc-root table.grid td { border: 0.5pt solid #000; padding: 0.8mm 1.4mm; vertical-align: top; text-align: left; }
-.doc-root table.grid th { font-weight: bold; background: #ececec; }
+.doc-root table.grid td { padding: 3px 6px; vertical-align: top; text-align: left; }
+.doc-root table.grid th { font-size: 8pt; font-weight: 600; color: #fff; background: #3e4a5b; border: 1px solid #2d3748; }
+.doc-root table.grid td { border: 1px solid #cbd5e1; }
+.doc-root table.grid tbody tr:nth-child(even) td { background: #f8fafc; }
 .doc-root table.grid.fixcols { table-layout: fixed; }
 .doc-root table.grid.fixcols th,
 .doc-root table.grid.fixcols td { overflow-wrap: anywhere; }
@@ -109,7 +124,7 @@
   border-collapse: collapse;
   margin: 2mm 0;
 }
-.doc-root .result td { border: 1pt solid #000; padding: 2.5mm; text-align: center; font-size: 12pt; }
+.doc-root .result td { border: 1.5pt solid #1e293b; padding: 2.5mm; text-align: center; font-size: 11pt; }
 
 /* ── Podpisy ── */
 .doc-root table.sig { width: 100%; border-collapse: collapse; margin-top: 14mm; }
@@ -120,7 +135,7 @@
 /* ── Drobnosti ── */
 .doc-root .dotline { letter-spacing: 1pt; color: #000; }
 .doc-root .small { font-size: 9pt; }
-.doc-root .muted { color: #333; }
+.doc-root .muted { color: #475569; }
 .doc-root .b { font-weight: bold; }
 .doc-root .center { text-align: center; }
 
@@ -141,5 +156,7 @@
     page-break-after: always;
   }
   .doc-root .page:last-child { break-after: auto; page-break-after: auto; }
-  .doc-root table.grid th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .doc-root table.grid th,
+  .doc-root table.grid td,
+  .doc-root .sub-title { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

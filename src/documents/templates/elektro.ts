@@ -62,11 +62,11 @@ function okruhyTable(ctx: DocContext, roz: RozvadecWithOkruhy): string {
     ['6%', '14%', '30%', '18%', '16%', '16%'],
     roz.okruhy.map(o => [
       H.esc(o.cislo),
-      H.v(jisticText(o), 6),
-      H.v(o.nazev, 10),
-      H.v(vodicText(o), 6),
-      H.v(o.izolacniOdpor, 6),
-      H.v(o.impedanceSmycky, 6),
+      H.o(jisticText(o), 6),
+      H.o(o.nazev, 10),
+      H.o(vodicText(o), 6),
+      H.o(o.izolacniOdpor, 6),
+      H.o(o.impedanceSmycky, 6),
     ]),
     [0, 4, 5],
   );
@@ -86,7 +86,7 @@ function chraniceTable(ctx: DocContext, chranice: Chranic[]): string {
     if (c.casOdpojeni2x != null) details.push(`tA 2×IΔn: ${c.casOdpojeni2x} ms`);
     if (c.zkouskaVypnuti2x != null) details.push(`Zkouška 2×IΔn: ${ok(c.zkouskaVypnuti2x)}`);
     if (c.selektivita != null) details.push(`Selektivita: ${ok(c.selektivita)}`);
-    const main = `<tr><td class="c">${H.esc(c.cislo)}</td><td>${H.v(c.nazev, 8)}</td><td>${H.v(c.typ, 4)}</td><td>${H.v(c.proud, 4)}</td><td class="c">${H.v(c.citlivostMa, 4)}</td><td class="c">${H.v(c.pocetPolu, 3)}</td><td class="c">${H.v(c.vybavovacProud, 4)}</td><td class="c">${H.v(c.casOdpojeni1x, 4)}</td></tr>`;
+    const main = `<tr><td class="c">${H.esc(c.cislo)}</td><td>${H.o(c.nazev, 8)}</td><td>${H.o(c.typ, 4)}</td><td>${H.o(c.proud, 4)}</td><td class="c">${H.o(c.citlivostMa, 4)}</td><td class="c">${H.o(c.pocetPolu, 3)}</td><td class="c">${H.o(c.vybavovacProud, 4)}</td><td class="c">${H.o(c.casOdpojeni1x, 4)}</td></tr>`;
     return details.length ? `${main}<tr class="detail"><td colspan="8">${H.esc(details.join('  •  '))}</td></tr>` : main;
   }).join('');
   return `<div class="sub-title keep">Proudové chrániče</div><table class="grid"><thead><tr>
@@ -140,7 +140,7 @@ function renderZprava(ctx: DocContext): string {
 
   const datumy = kv4([
     ...datumyRevize(ctx),
-    [['Platnost do:', H.v(H.d(revize.datumPlatnosti), 14)], ['Lhůta příští revize:', revize.termin ? `${H.esc(revize.termin)} měsíců` : H.dots(14)]],
+    [['Platnost do:', H.o(H.d(revize.datumPlatnosti), 14)], ['Lhůta příští revize:', revize.termin ? `${H.esc(revize.termin)} měsíců` : '—']],
   ]);
 
   const parts: string[] = [
@@ -159,7 +159,7 @@ function renderZprava(ctx: DocContext): string {
   if (nums.popisZarizeni) parts.push(sec(t('popisZarizeni', 'Popis revidovaného zařízení'), H.paras(revize.popisZarizeni)));
   if (nums.rozsahRevize) {
     const castiTable = (rows: typeof vyloucene, druhy: string) => grid(['Část', druhy], ['50%', '50%'],
-      rows.map(r => [H.esc(r.nazev), H.v(r.duvod, 10)]));
+      rows.map(r => [H.esc(r.nazev), H.o(r.duvod, 10)]));
     const hasAny = !!(revize.rozsahRevize || revize.predmetNeni || revize.druhRozsahu || vyloucene.length || neovereno.length);
     const body = hasAny
       ? [
@@ -187,7 +187,7 @@ function renderZprava(ctx: DocContext): string {
       dokumenty.length ? grid(
         ['Dokument', 'Druh', 'Datum / revize', 'Stav', 'Poznámka'],
         ['27%', '16%', '14%', '16%', '27%'],
-        dokumenty.map(d => [H.esc(d.nazev), H.v(d.druh, 6), H.v(d.datumDokumentu, 6), H.esc(DOKUMENT_STAV_LABELS[d.stav] ?? d.stav), H.esc(d.poznamka)]),
+        dokumenty.map(d => [H.esc(d.nazev), H.o(d.druh, 6), H.o(d.datumDokumentu, 6), H.esc(DOKUMENT_STAV_LABELS[d.stav] ?? d.stav), H.esc(d.poznamka)]),
       ) : '',
       uvedeniDoProvozu(ctx),
       ulozeniPodkladu(ctx)));
@@ -205,8 +205,8 @@ function renderZprava(ctx: DocContext): string {
         ['Zařízení', 'Označení', 'Ks', 'Třída', 'Příkon [W]', 'Ochrana', 'Stav'],
         ['22%', '13%', '7%', '8%', '12%', '20%', '18%'],
         m.zarizeniList.map(z => [
-          H.v(z.nazev, 8), H.v(z.oznaceni, 6), H.esc(z.pocetKs), H.esc(z.trida), H.v(z.prikonW, 4), H.v(z.ochranaPredDotykem, 6),
-          z.stav === 'OK' ? 'OK' : z.stav === 'závada' ? '<b>Závada</b>' : H.dots(6),
+          H.o(z.nazev, 8), H.o(z.oznaceni, 6), H.esc(z.pocetKs), H.esc(z.trida), H.o(z.prikonW, 4), H.o(z.ochranaPredDotykem, 6),
+          z.stav === 'OK' ? 'OK' : z.stav === 'závada' ? '<b>Závada</b>' : '—',
         ]),
         [2, 3, 4],
       ) : p(ctx, 'Žádná zařízení.')}
@@ -220,7 +220,7 @@ function renderZprava(ctx: DocContext): string {
       : '<p><b>Při revizi nebyly zjištěny žádné závady.</b></p>'));
   if (nums.doporuceni) parts.push(sec(t('doporuceni', DOPORUCENI_TITLE), doporuceniBody(ctx)));
 
-  if (nums.vyhodnoceniPredchozich) parts.push(sec(t('vyhodnoceniPredchozich', 'Vyhodnocení předchozích revizí'), H.paras(revize.vyhodnoceniPredchozich)));
+  if (nums.vyhodnoceniPredchozich) parts.push(sec(t('vyhodnoceniPredchozich', 'Vyhodnocení předchozích revizí'), H.paras(revize.vyhodnoceniPredchozich, 0)));
   parts.push(sec(t('lhuta', 'Doporučená lhůta provedení příští revize'),
     `<p>Příští revize by měla být provedena nejpozději do <b>${lhutaText(ctx)}</b>.</p>`));
   if (nums.zaver) parts.push(sec(t('zaver', 'Závěr'), H.paras(revize.zaver)));
@@ -242,10 +242,10 @@ function renderProtokolMereni(ctx: DocContext): string {
     sec('Identifikace', kv([
       ['Objekt:', H.v(revize.nazev)],
       ['Adresa:', H.v(revize.adresa)],
-      ['Rozvaděč:', H.v(roz.nazev)],
-      ['Označení:', H.v(roz.oznaceni)],
-      ['Umístění:', H.v(roz.umisteni)],
-      ['Typ / krytí:', H.v([roz.typRozvadece, roz.stupenKryti].filter(Boolean).join(' / '))],
+      ['Rozvaděč:', H.o(roz.nazev)],
+      ['Označení:', H.o(roz.oznaceni)],
+      ['Umístění:', H.o(roz.umisteni)],
+      ['Typ / krytí:', H.o([roz.typRozvadece, roz.stupenKryti].filter(Boolean).join(' / '))],
       ['Datum měření:', H.v(H.d(revize.datum), 14)],
     ])),
     sec('Naměřené hodnoty – okruhy', okruhyTable(ctx, roz)),
