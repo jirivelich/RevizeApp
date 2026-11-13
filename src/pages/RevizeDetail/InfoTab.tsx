@@ -87,9 +87,10 @@ export function InfoTab({
         <SectionHeader num="03">Termíny a data</SectionHeader>
         <div className="p-4">
           <div className={TW.grid3}>
-            <Input label="Datum revize" type="date" value={formData.datum || ''} onChange={(e) => setFormData({ ...formData, datum: e.target.value })} />
-            <Input label="Datum dokončení" type="date" value={formData.datumDokonceni || ''} onChange={(e) => setFormData({ ...formData, datumDokonceni: e.target.value })} />
-            <Input label="Datum vypracování" type="date" value={formData.datumVypracovani || ''} onChange={(e) => setFormData({ ...formData, datumVypracovani: e.target.value })} />
+            <Input label="Datum zahájení revize" type="date" value={formData.datum || ''} onChange={(e) => setFormData({ ...formData, datum: e.target.value })} />
+            <Input label="Datum ukončení revize" type="date" value={formData.datumDokonceni || ''} onChange={(e) => setFormData({ ...formData, datumDokonceni: e.target.value })} />
+            <Input label="Datum vypracování zprávy" type="date" value={formData.datumVypracovani || ''} onChange={(e) => setFormData({ ...formData, datumVypracovani: e.target.value })} />
+            <Input label="Datum předání zprávy" type="date" value={formData.datumPredani || ''} onChange={(e) => setFormData({ ...formData, datumPredani: e.target.value })} />
             <Field label="Lhůta platnosti">
               {formData.kategorieRevize === 'stroje' ? (
                 <div className="space-y-1">
@@ -133,6 +134,13 @@ export function InfoTab({
           <div className={TW.grid2}>
             <Select label="Stav" value={formData.stav || ''} onChange={(e) => { const newStav = e.target.value; let newData: Partial<Revize> = { ...formData, stav: newStav as any }; if (newStav === 'dokončeno' && revize.stav !== 'dokončeno') { const baseDate = formData.datumDokonceni ? new Date(formData.datumDokonceni) : new Date(); const platnostDo = new Date(baseDate); platnostDo.setMonth(platnostDo.getMonth() + (formData.termin || 36)); newData = { ...newData, datumPlatnosti: platnostDo.toISOString().split('T')[0], datumVypracovani: new Date().toISOString().split('T')[0] }; } setFormData(newData); saveNow?.(); }} options={[{ value: "rozpracováno", label: "Rozpracováno" }, { value: "dokončeno", label: "Dokončeno" }, { value: "schváleno", label: "Schváleno" }]} />
             <Select label="Výsledek" value={formData.vysledek || ''} onChange={(e) => { setFormData({ ...formData, vysledek: e.target.value as any }); saveNow?.(); }} options={[{ value: "", label: "-- Nevyplněno --" }, { value: "schopno", label: "Schopno provozu" }, { value: "neschopno", label: "Neschopno provozu" }]} />
+          </div>
+          <div className="mt-3">
+            <label className={TW.label} htmlFor="vysledek-oduvodneni">Zdůvodnění, proč zařízení (nebo jeho část) nelze provozovat</label>
+            <textarea id="vysledek-oduvodneni" className={TW.textarea} rows={3}
+              value={formData.vysledekOduvodneni || ''}
+              onChange={(e) => setFormData({ ...formData, vysledekOduvodneni: e.target.value })}
+              placeholder="Vyplňte při závěru „není schopno provozu“ – nejlépe s odkazem na ustanovení norem a předpisů." />
           </div>
         </div>
       </div>

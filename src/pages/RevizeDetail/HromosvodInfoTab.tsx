@@ -107,9 +107,10 @@ export function HromosvodInfoTab({
         <SectionHeader num="04">Termíny a data</SectionHeader>
         <div className="p-4">
           <div className={TW.grid3}>
-            <Input label="Datum revize" type="date" value={formData.datum || ''} onChange={(e) => setFormData({ ...formData, datum: e.target.value })} />
-            <Input label="Datum dokončení" type="date" value={formData.datumDokonceni || ''} onChange={(e) => setFormData({ ...formData, datumDokonceni: e.target.value })} />
-            <Input label="Datum vypracování" type="date" value={formData.datumVypracovani || ''} onChange={(e) => setFormData({ ...formData, datumVypracovani: e.target.value })} />
+            <Input label="Datum zahájení revize" type="date" value={formData.datum || ''} onChange={(e) => setFormData({ ...formData, datum: e.target.value })} />
+            <Input label="Datum ukončení revize" type="date" value={formData.datumDokonceni || ''} onChange={(e) => setFormData({ ...formData, datumDokonceni: e.target.value })} />
+            <Input label="Datum vypracování zprávy" type="date" value={formData.datumVypracovani || ''} onChange={(e) => setFormData({ ...formData, datumVypracovani: e.target.value })} />
+            <Input label="Datum předání zprávy" type="date" value={formData.datumPredani || ''} onChange={(e) => setFormData({ ...formData, datumPredani: e.target.value })} />
             <Select label="Lhůta platnosti" value={String(formData.termin || 48)} onChange={(e) => { setFormData({ ...formData, termin: parseInt(e.target.value) }); saveNow?.(); }} options={[{ value: "12", label: "1 rok" }, { value: "24", label: "2 roky (LPS I/II - vizuální)" }, { value: "48", label: "4 roky (LPS III/IV - vizuální)" }, { value: "60", label: "5 let" }]} />
             <Field label="Platnost do">
               <span className={`text-sm py-1 ${formData.datumPlatnosti ? 'font-medium' : 'text-[var(--text-secondary)]'}`}>
@@ -127,6 +128,27 @@ export function HromosvodInfoTab({
           <div className={TW.grid2}>
             <Select label="Stav" value={formData.stav || ''} onChange={(e) => { const newStav = e.target.value; let newData: Partial<Revize> = { ...formData, stav: newStav as any }; if (newStav === 'dokončeno' && revize.stav !== 'dokončeno') { const baseDate = formData.datumDokonceni ? new Date(formData.datumDokonceni) : new Date(); const platnostDo = new Date(baseDate); platnostDo.setMonth(platnostDo.getMonth() + (formData.termin || 36)); newData = { ...newData, datumPlatnosti: platnostDo.toISOString().split('T')[0], datumVypracovani: new Date().toISOString().split('T')[0] }; } setFormData(newData); saveNow?.(); }} options={[{ value: "rozpracováno", label: "Rozpracováno" }, { value: "dokončeno", label: "Dokončeno" }, { value: "schváleno", label: "Schváleno" }]} />
             <Select label="Výsledek" value={formData.vysledek || ''} onChange={(e) => { setFormData({ ...formData, vysledek: e.target.value as any }); saveNow?.(); }} options={[{ value: "", label: "-- Nevyplněno --" }, { value: "schopno", label: "Schopno provozu" }, { value: "neschopno", label: "Neschopno provozu" }]} />
+          </div>
+          <div className="mt-3">
+            <span className={TW.label}>Závěr revize LPS (ČSN 33 1500 Z4)</span>
+            <div className={TW.grid3}>
+              <Select label="Provedení odpovídá normě platné v době zřízení" value={formData.hromosvodOdpovidaNorme || ''}
+                onChange={(e) => { setFormData({ ...formData, hromosvodOdpovidaNorme: (e.target.value || undefined) as Revize['hromosvodOdpovidaNorme'] }); saveNow?.(); }}
+                options={[{ value: '', label: '-- Nevyplněno --' }, { value: 'ano', label: 'Odpovídá' }, { value: 'ne', label: 'Neodpovídá' }]} />
+              <Input label="Norma platná v době zřízení" placeholder="např. ČSN 34 1390, ČSN EN 62305-3"
+                value={formData.hromosvodNormaZrizeni || ''} onChange={(e) => setFormData({ ...formData, hromosvodNormaZrizeni: e.target.value })} />
+              <Select label="Součásti jsou v dobrém funkčním stavu" value={formData.hromosvodFunkcniStav || ''}
+                onChange={(e) => { setFormData({ ...formData, hromosvodFunkcniStav: (e.target.value || undefined) as Revize['hromosvodFunkcniStav'] }); saveNow?.(); }}
+                options={[{ value: '', label: '-- Nevyplněno --' }, { value: 'ano', label: 'Ano' }, { value: 'ne', label: 'Ne' }]} />
+            </div>
+            <p className="text-xs text-[var(--text-muted)] mt-1">U ochrany před bleskem se ve zprávě neuvádí „schopno provozu“ – uvádí se soulad s normou platnou v době zřízení a funkční stav součástí.</p>
+          </div>
+          <div className="mt-3">
+            <label className={TW.label} htmlFor="vysledek-oduvodneni">Zdůvodnění, proč zařízení (nebo jeho část) nelze provozovat</label>
+            <textarea id="vysledek-oduvodneni" className={TW.textarea} rows={3}
+              value={formData.vysledekOduvodneni || ''}
+              onChange={(e) => setFormData({ ...formData, vysledekOduvodneni: e.target.value })}
+              placeholder="Vyplňte při závěru „není schopno provozu“ – nejlépe s odkazem na ustanovení norem a předpisů." />
           </div>
         </div>
       </div>

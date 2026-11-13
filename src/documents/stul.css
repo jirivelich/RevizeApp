@@ -1,0 +1,101 @@
+/* Náhled dokumentů – „list A4 na stole“. Barvy z tokenů Dark Pro (s náhradními hodnotami). */
+.stul-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--background, #0B0F16);
+}
+
+.stul-toolbar {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--surface, #131925);
+  color: var(--text, #F3F4F6);
+  border-bottom: 1px solid var(--border-medium, #2B3850);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-size: 14px;
+}
+
+.stul-toolbar .grow { flex: 1; }
+
+.stul-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  min-height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border-medium, #2B3850);
+  background: var(--bg-input, #0E131D);
+  color: var(--text, #F3F4F6);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.stul-btn:hover:not(:disabled) { background: var(--bg-hover-strong, #243044); }
+.stul-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.stul-btn--primary { background: var(--primary, #FFB74D); border-color: var(--primary, #FFB74D); color: var(--primary-fg, #1A1203); }
+.stul-btn--primary:hover:not(:disabled) { background: var(--primary-hover, #FFC670); }
+.stul-btn:focus-visible, .stul-select:focus-visible, .stul-zoom input:focus-visible { outline: 2px solid var(--focus-ring-color, rgba(255,183,77,0.45)); outline-offset: 2px; }
+
+.stul-select {
+  min-height: 36px;
+  max-width: 340px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-input, #344158);
+  background: var(--bg-input, #0E131D);
+  color: var(--text, #F3F4F6);
+  font: inherit;
+}
+
+.stul-zoom { display: inline-flex; align-items: center; gap: 8px; }
+.stul-zoom input { width: 120px; accent-color: var(--primary, #FFB74D); }
+.stul-zoom output { min-width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+
+.stul-info { color: var(--text-secondary, #A8B0BD); font-size: 13px; }
+.stul-msg { width: 100%; font-size: 13px; padding: 6px 10px; border-radius: 6px; }
+.stul-msg--error { background: var(--danger-bg, rgba(248,113,113,0.13)); color: var(--danger-text, #F87171); }
+.stul-msg--warn { background: var(--warning-bg, rgba(255,183,77,0.13)); color: var(--warning-text, #FFB74D); }
+
+.stul-scroll {
+  flex: 1;
+  overflow: auto;
+  padding: 24px 16px 40px;
+}
+
+.stul-scroll .doc-root { zoom: var(--doc-zoom, 1); }
+
+.stul-waiting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary, #A8B0BD);
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+}
+
+/* Přetečený list (jen ve vývoji) */
+.stul-scroll .doc-root .page[data-overflow] { outline: 3px solid #e53e3e; }
+
+@media (max-width: 640px) {
+  .stul-toolbar { padding: 8px; }
+  .stul-select { max-width: 100%; flex: 1 1 100%; }
+  .stul-zoom input { width: 90px; }
+  .stul-scroll { padding: 12px 0 24px; }
+}
+
+@media print {
+  .stul-shell { display: block; height: auto; overflow: visible; background: #fff; }
+  .stul-toolbar { display: none !important; }
+  .stul-scroll { overflow: visible; padding: 0; }
+  .stul-scroll .doc-root { zoom: 1; }
+}

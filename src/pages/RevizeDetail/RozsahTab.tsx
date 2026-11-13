@@ -140,7 +140,7 @@ export function RozsahTab({ revizeId, formData, setFormData, saveNow }: RozsahTa
               <SectionHeader right={<span className="text-xs text-[var(--text-muted)]">{seznam.length}</span>}>{info.nadpis}</SectionHeader>
               <div className="p-4 flex flex-col gap-2">
                 <p className="text-xs text-[var(--text-muted)]">{info.popis}</p>
-                {seznam.map(p => upravaPolozky?.id === p.id ? (
+                {seznam.map(p => upravaPolozky && upravaPolozky.id === p.id ? (
                   <div key={p.id} className="flex flex-col gap-2 border-b border-[var(--border)] pb-2">
                     <div className={info.duvodPovinny ? TW.grid2 : ''}>
                       <input className={TW.input} aria-label="Název položky" value={upravaPolozky.nazev}
@@ -197,7 +197,7 @@ export function RozsahTab({ revizeId, formData, setFormData, saveNow }: RozsahTa
       <div className={TW.card} id="rozsah-dokumenty">
         <SectionHeader right={<span className="text-xs text-[var(--text-muted)]">{dokumenty.length}</span>}>Technická dokumentace (podklady)</SectionHeader>
         <div className="p-4 flex flex-col gap-3">
-          {dokumenty.map(d => upravaDokumentu?.id === d.id ? (
+          {dokumenty.map(d => upravaDokumentu && upravaDokumentu.id === d.id ? (
             <div key={d.id} className="rounded-lg border border-[var(--border)] p-3 flex flex-col gap-2">
               <div className={TW.grid2}>
                 <input className={TW.input} aria-label="Název dokumentu" placeholder="Název dokumentu *" value={upravaDokumentu.nazev}
@@ -272,6 +272,25 @@ export function RozsahTab({ revizeId, formData, setFormData, saveNow }: RozsahTa
               <div><Button size="sm" variant="secondary" onClick={() => vlozitDoPole('podklady', navrhDokumentace)}>Vložit do pole „Podklady“</Button></div>
             </div>
           )}
+        </div>
+      </div>
+
+      <div className={TW.card} id="rozsah-ulozeni">
+        <SectionHeader>Uložení podkladů a nápravné úkony</SectionHeader>
+        <div className="p-4 flex flex-col gap-3">
+          <div>
+            <label className={TW.label} htmlFor="misto-ulozeni-podkladu">Místo uložení podkladů</label>
+            <input id="misto-ulozeni-podkladu" className={TW.input} value={formData.mistoUlozeniPodkladu || ''}
+              onChange={(e) => setFormData({ ...formData, mistoUlozeniPodkladu: e.target.value })} onBlur={() => saveNow?.()}
+              placeholder="např. u provozovatele – kancelář správy budovy; přílohou této zprávy" />
+            <p className="text-xs text-[var(--text-muted)] mt-1">Využívá-li zpráva písemné doklady, musí obsahovat jejich seznam a místo uložení. Při revizi dodavatelským způsobem jsou doklady součástí zprávy.</p>
+          </div>
+          <div>
+            <label className={TW.label} htmlFor="napravne-ukony">Drobné nápravné úkony provedené revizním technikem</label>
+            <textarea id="napravne-ukony" className={TW.textarea} rows={3} value={formData.napravneUkony || ''}
+              onChange={(e) => setFormData({ ...formData, napravneUkony: e.target.value })} onBlur={() => saveNow?.()}
+              placeholder="např. dotažení svorek v rozvaděči RH, odstranění prachové vrstvy" />
+          </div>
         </div>
       </div>
     </div>

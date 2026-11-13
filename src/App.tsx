@@ -28,6 +28,9 @@ import { useOfflineQueueSync } from './hooks/useOfflineQueue';
 import { ThemeProvider } from './context/ThemeContext';
 
 const FakturaPrintPage = lazy(() => import('./pages/FakturaPrint/FakturaPrintPage'));
+// Vývojová stránka se vzorovými daty šablon zpráv (jen v dev režimu)
+const DevSablony = import.meta.env.DEV ? lazy(() => import('./documents/DevSablony')) : null;
+const DevPlanovani = import.meta.env.DEV ? lazy(() => import('./pages/Planovani/DevPlanovani')) : null;
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -113,6 +116,12 @@ function App() {
           <OfflineBanner />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            {DevSablony && (
+              <Route path="/dev/sablony" element={<Suspense fallback={null}><DevSablony /></Suspense>} />
+            )}
+            {DevPlanovani && (
+              <Route path="/dev/planovani" element={<Suspense fallback={null}><DevPlanovani /></Suspense>} />
+            )}
             <Route path="/revize/:id/nahled" element={
               <ProtectedRoute>
                 <NahledRouter />

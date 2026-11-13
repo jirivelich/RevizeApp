@@ -11,6 +11,7 @@ const kompletni = (): VstupKontroly => ({
     cisloRevize: '2026/001', nazev: 'RD', adresa: 'Ulice 1', objednatel: 'Novák', kategorieRevize: 'elektro',
     datum: '2026-05-01', datumDokonceni: '2026-05-02', typRevize: 'pravidelná', druhRozsahu: 'celkova',
     rtJmeno: 'Jan Technik', rtCisloOpravneni: '123', vysledek: 'schopno', zaver: 'Zařízení je schopno provozu.',
+    datumPredani: '2026-05-03', mistoUlozeniPodkladu: 'u provozovatele',
   },
   zavady: [],
   rozsahPolozky: [],
@@ -23,6 +24,29 @@ const kody = (v: VstupKontroly) => zkontrolujPredDokoncenim(v).map(z => z.kod);
 describe('zkontrolujPredDokoncenim', () => {
   it('kompletní revize nemá žádné zjištění', () => {
     expect(kody(kompletni())).toEqual([]);
+  });
+
+  it('náležitosti dle ČSN 33 1500: datum předání a místo uložení podkladů', () => {
+    const v = kompletni();
+    v.revize.datumPredani = ''; v.revize.mistoUlozeniPodkladu = '';
+    expect(kody(v)).toEqual(expect.arrayContaining(['DATUM_PREDANI', 'PODKLADY_ULOZENI']));
+  });
+
+  it('závada bez ustanovení normy i rizika je upozornění', () => {
+    const v = kompletni();
+    v.zavady = [zavada({ zavaznost: 'C3' })];
+    expect(kody(v)).toContain('ZAVADA_BEZ_NORMY');
+    v.zavady = [zavada({ zavaznost: 'C3', norma: 'ČSN 33 2000-4-41 čl. 411' })];
+    expect(kody(v)).not.toContain('ZAVADA_BEZ_NORMY');
+  });
+
+  it('hromosvod: závěr musí uvést soulad s normou a funkční stav', () => {
+    const v = kompletni();
+    v.revize.kategorieRevize = 'hromosvod';
+    expect(kody(v)).toEqual(expect.arrayContaining(['ZAVER_LPS', 'ZAVER_LPS_NORMA']));
+    Object.assign(v.revize, { hromosvodOdpovidaNorme: 'ano', hromosvodFunkcniStav: 'ano', hromosvodNormaZrizeni: 'ČSN 34 1390' });
+    expect(kody(v)).not.toContain('ZAVER_LPS');
+    expect(kody(v)).not.toContain('ZAVER_LPS_NORMA');
   });
 
   it('chybějící identifikace a technik jsou kritické', () => {

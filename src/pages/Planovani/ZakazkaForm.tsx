@@ -1,6 +1,7 @@
 ﻿import { useState } from 'react';
 import { Input, Select, Modal, Button } from '../../components/ui';
-import type { Revize, Zakaznik } from '../../types';
+import type { Revize, Zakaznik, KategorieRevize } from '../../types';
+import { KATEGORIE_LABELS } from '../../types';
 import type { ZakazkaFormData } from './utils';
 import { PRIORITA_OPTIONS, STAV_OPTIONS, addDays } from './utils';
 
@@ -151,7 +152,27 @@ export function ZakazkaForm({
           </button>
         </div>
 
-        <Input type="time" label="Plánovaný čas (1. den)" value={formData.casPlanovany} onChange={(e) => setFormData((prev) => ({ ...prev, casPlanovany: e.target.value }))} />
+        <label className="flex items-center gap-2 text-sm text-[var(--text)] min-h-[40px]">
+          <input type="checkbox" className="w-4 h-4 accent-[var(--primary)]" checked={formData.celyDen}
+            onChange={(e) => setFormData((prev) => ({ ...prev, celyDen: e.target.checked }))} />
+          Celý den (bez konkrétního času)
+        </label>
+        {!formData.celyDen && (
+          <div className="grid grid-cols-2 gap-3">
+            <Input type="time" label="Čas od" value={formData.casPlanovany} onChange={(e) => setFormData((prev) => ({ ...prev, casPlanovany: e.target.value }))} />
+            <Input type="time" label="Čas do (volitelné)" value={formData.casKonec} onChange={(e) => setFormData((prev) => ({ ...prev, casKonec: e.target.value }))} />
+          </div>
+        )}
+
+        <Select
+          label="Kategorie revize (barva v kalendáři)"
+          value={formData.kategorie}
+          onChange={(e) => setFormData((prev) => ({ ...prev, kategorie: e.target.value as KategorieRevize | '' }))}
+          options={[
+            { value: '', label: '-- Neurčeno --' },
+            ...(Object.keys(KATEGORIE_LABELS) as KategorieRevize[]).map((k) => ({ value: k, label: KATEGORIE_LABELS[k].plny })),
+          ]}
+        />
 
         {/* Revizní zpráva */}
         <div className="border-t border-[var(--border-input)] pt-4 space-y-3">
