@@ -6,7 +6,7 @@ import { TPL } from '../registry';
 import type { DocContext } from '../context';
 import {
   flowPage, firmaHeader, titleBlock, sec, kv, grid, p, provozovatelRows, technikRows, pristrojeTable,
-  zavadyTable, doporuceniBlock, uvedeniDoProvozu, rozdelovnikTable, podpisy, resultBox, prilohyPages, lhutaText,
+  zavadyTable, doporuceniBlock, uvedeniDoProvozu, rozdelovnikTable, podpisy, zaverVyhrazene, prilohyPages, lhutaText,
 } from './common';
 
 interface MereniOdporu { bod: string; hodnota: string; limit: string; vyhovuje: boolean }
@@ -150,8 +150,7 @@ function render(ctx: DocContext): string {
   parts.push(
     sec('16. Přehled zjištěných závad', zavady.length ? zavadyTable(ctx) : '<p><b>Při revizi nebyly zjištěny žádné závady.</b></p>', doporuceniBlock(ctx)),
     sec('17. Závěrečné zhodnocení',
-      p(ctx, 'Systém ochrany před bleskem (LPS) je:'),
-      resultBox(`${H.vn(revize.vysledek, ['SCHOPEN', 'NESCHOPEN'])} BEZPEČNÉHO PROVOZU`),
+      zaverVyhrazene(ctx),
       vis('zaver') && revize.zaver ? `<p class="keep"><b>Závěr:</b></p>${H.paras(revize.zaver)}` : ''),
     sec('18. Doporučená lhůta provedení příští revize', `<p>Příští revize by měla být provedena nejpozději do <b>${lhutaText(ctx)}</b>.</p>`),
   );

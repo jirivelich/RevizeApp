@@ -123,7 +123,7 @@ function render(ctx: DocContext): string {
     sd?.posudekDoporuceni ? `<p class="keep"><b>Doporučení / termín odstranění závad:</b></p>${H.paras(sd.posudekDoporuceni)}` : ''));
 
   parts.push(sec('14. Vyhodnocení',
-    resultBox(`Revidované strojní zařízení ${H.vn(sd?.verdikt, ['JE', 'NENÍ'])} z hlediska zajištění ochrany před úrazem el. proudem schopné provozu.`),
+    resultBox(`Revidované strojní zařízení ${H.vn(sd?.verdikt, ['je', 'není'])} z hlediska zajištění ochrany před úrazem el. proudem schopno provozu.`),
     '<p class="small"><i>Tato revize nemůže nahradit kontrolu bezpečnosti provozu strojního zařízení podle nařízení vlády č.&nbsp;378/2001&nbsp;Sb.</i></p>'));
 
   parts.push(sec('15. Doporučená lhůta provedení příštího ověření',

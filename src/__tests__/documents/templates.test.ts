@@ -80,13 +80,18 @@ describe('Escapování uživatelských dat', () => {
 });
 
 describe('Elektro – obsah zprávy', () => {
-  it('výsledek: jen platná varianta, bez přeškrtnutí', () => {
-    const neschopna = zprava(ctxWith('elektro', { vysledek: 'neschopno' }));
-    expect(neschopna).toContain('Z HLEDISKA BEZPEČNOSTI <b>NESCHOPNA</b> PROVOZU');
-    expect(neschopna).not.toContain('SCHOPNA –');
-    const schopna = text(zprava(ctxWith('elektro', { vysledek: 'schopno' })));
-    expect(schopna).toContain('ELEKTRICKÁ INSTALACE JE Z HLEDISKA BEZPEČNOSTI SCHOPNA PROVOZU');
-    expect(schopna).not.toContain('NESCHOPNA');
+  it('závěr: ustálená formulace „je (není) z hlediska bezpečnosti schopno provozu“', () => {
+    for (const k of ['elektro', 'odberne_misto', 'hromosvod'] as KategorieRevize[]) {
+      expect(text(zprava(ctxWith(k, { vysledek: 'schopno' }))), k)
+        .toContain('Revidované vyhrazené elektrické zařízení je z hlediska bezpečnosti schopno provozu.');
+      expect(text(zprava(ctxWith(k, { vysledek: 'neschopno' }))), k)
+        .toContain('Revidované vyhrazené elektrické zařízení není z hlediska bezpečnosti schopno provozu.');
+    }
+  });
+
+  it('závěr bez vyplněného výsledku → tečky k ručnímu doplnění', () => {
+    const html = zprava(ctxWith('elektro', { vysledek: undefined }));
+    expect(html).toMatch(/elektrické zařízení <span class="dotline">\.+<\/span> z hlediska bezpečnosti/);
   });
 
   it('žádná zpráva neobsahuje přeškrtnutí', () => {
@@ -158,8 +163,8 @@ describe('Strojní zařízení', () => {
 
   it('verdikt přeškrtne neplatnou variantu', () => {
     const html = zprava(sampleContext('stroje'));
-    expect(html).toContain('Revidované strojní zařízení <b>JE</b> z hlediska');
-    expect(html).not.toContain('NENÍ');
+    expect(html).toContain('Revidované strojní zařízení <b>je</b> z hlediska');
+    expect(html).not.toContain('<b>není</b>');
   });
 
   it('bez strojních dat chybí sekce identifikace stroje', () => {

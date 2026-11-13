@@ -10,7 +10,7 @@ import { DEFAULT_NORMY_SOULAD } from '../../pages/RevizeDetail/constants';
 import { DRUH_ROZSAHU_LABELS, DOKUMENT_STAV_LABELS } from '../../services/rozsahKontrola';
 import {
   flowPage, firmaHeader, titleBlock, sec, kv, kv4, grid, p, provozovatelRows, technikRows, pristrojeTable,
-  zavadyTable, ZAVADY_LEGENDA, doporuceniBody, DOPORUCENI_TITLE, uvedeniDoProvozu, rozdelovnikTable, podpisy, resultBox, fotoZavad, prilohyPages, seznamPriloh, lhutaText,
+  zavadyTable, ZAVADY_LEGENDA, doporuceniBody, DOPORUCENI_TITLE, uvedeniDoProvozu, rozdelovnikTable, podpisy, zaverVyhrazene, fotoZavad, prilohyPages, seznamPriloh, lhutaText,
 } from './common';
 
 export const OCHRANA_LABELS: Record<string, string> = {
@@ -152,8 +152,7 @@ function renderZprava(ctx: DocContext): string {
     sec('3. Revizní technik', kv(technikRows(ctx))),
     sec('4. Data a termíny', datumy),
     sec('5. Vyhodnocení',
-      p(ctx, 'Revidované elektrické zařízení je:'),
-      resultBox(`ELEKTRICKÁ INSTALACE JE Z HLEDISKA BEZPEČNOSTI ${H.vn(revize.vysledek, ['SCHOPNA', 'NESCHOPNA'])} PROVOZU`)),
+      zaverVyhrazene(ctx)),
     sec('6. Potvrzení o předání zprávy', podpisy(ctx)),
     '<div class="pb"></div>',
   ];

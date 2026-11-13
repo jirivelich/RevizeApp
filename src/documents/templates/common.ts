@@ -207,7 +207,15 @@ export function podpisy(ctx: DocContext, certLabel = 'Oprávnění'): string {
   </tbody></table></div>`;
 }
 
-/** Výsledek revize s přeškrtnutím neplatné varianty. */
+/**
+ * Závěr revize vyhrazeného elektrického zařízení – ustálená formulace dle ČSN 33 1500:
+ * „Revidované vyhrazené elektrické zařízení je (není) z hlediska bezpečnosti schopno provozu.“
+ */
+export function zaverVyhrazene(ctx: DocContext): string {
+  return resultBox(`Revidované vyhrazené elektrické zařízení ${ctx.H.vn(ctx.revize.vysledek, ['je', 'není'])} z hlediska bezpečnosti schopno provozu.`);
+}
+
+/** Rámeček s výsledkem revize. */
 export function resultBox(innerHtml: string): string {
   return `<table class="result nosplit"><tbody><tr><td>${innerHtml}</td></tr></tbody></table>`;
 }

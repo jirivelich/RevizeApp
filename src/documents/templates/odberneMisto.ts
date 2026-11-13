@@ -8,7 +8,7 @@ import type { DocContext } from '../context';
 import { porovnejJistic, validujParametry, PPNN_ZDROJ, STAV_LABEL, type KontrolaPolozka, type Vysledek } from '../../types/odberneMisto';
 import {
   flowPage, firmaHeader, titleBlock, sec, kv, kv4, grid, provozovatelRows, technikRows, pristrojeTable,
-  zavadyTable, doporuceniBlock, uvedeniDoProvozu, podpisy, resultBox, prilohyPages, lhutaText,
+  zavadyTable, doporuceniBlock, uvedeniDoProvozu, podpisy, zaverVyhrazene, prilohyPages, lhutaText,
 } from './common';
 
 /** Řádky s vyplněným výsledkem; N/A se v tisku vynechává. */
@@ -55,7 +55,7 @@ function render(ctx: DocContext): string {
     predani: num(true),
   };
   const t = (k: keyof typeof nums, text: string) => `${nums[k]}. ${text}`;
-  const vysledek = resultBox(`ELEKTRICKÁ INSTALACE ODBĚRNÉHO MÍSTA ${H.vn(revize.vysledek, ['JE', 'NENÍ'])} Z HLEDISKA BEZPEČNOSTI SCHOPNA PROVOZU`);
+  const vysledek = zaverVyhrazene(ctx);
   const typPripojeni = om.typPripojeni === 'kabel' ? 'Kabelová přípojka' : om.typPripojeni === 'vzdusne' ? 'Vzdušné vedení' : om.typPripojeni === 'jine' ? 'Jiné' : '';
 
   const parts: string[] = [
