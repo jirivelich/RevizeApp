@@ -140,7 +140,7 @@ export function RozsahTab({ revizeId, formData, setFormData, saveNow }: RozsahTa
               <SectionHeader right={<span className="text-xs text-[var(--text-muted)]">{seznam.length}</span>}>{info.nadpis}</SectionHeader>
               <div className="p-4 flex flex-col gap-2">
                 <p className="text-xs text-[var(--text-muted)]">{info.popis}</p>
-                {seznam.map(p => upravaPolozky?.id === p.id ? (
+                {seznam.map(p => upravaPolozky && upravaPolozky.id === p.id ? (
                   <div key={p.id} className="flex flex-col gap-2 border-b border-[var(--border)] pb-2">
                     <div className={info.duvodPovinny ? TW.grid2 : ''}>
                       <input className={TW.input} aria-label="Název položky" value={upravaPolozky.nazev}
@@ -197,7 +197,7 @@ export function RozsahTab({ revizeId, formData, setFormData, saveNow }: RozsahTa
       <div className={TW.card} id="rozsah-dokumenty">
         <SectionHeader right={<span className="text-xs text-[var(--text-muted)]">{dokumenty.length}</span>}>Technická dokumentace (podklady)</SectionHeader>
         <div className="p-4 flex flex-col gap-3">
-          {dokumenty.map(d => upravaDokumentu?.id === d.id ? (
+          {dokumenty.map(d => upravaDokumentu && upravaDokumentu.id === d.id ? (
             <div key={d.id} className="rounded-lg border border-[var(--border)] p-3 flex flex-col gap-2">
               <div className={TW.grid2}>
                 <input className={TW.input} aria-label="Název dokumentu" placeholder="Název dokumentu *" value={upravaDokumentu.nazev}
