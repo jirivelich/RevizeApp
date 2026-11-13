@@ -8,14 +8,14 @@ import type { DocContext } from '../context';
 import { porovnejJistic, validujParametry, PPNN_ZDROJ, STAV_LABEL, type KontrolaPolozka, type Vysledek } from '../../types/odberneMisto';
 import {
   flowPage, firmaHeader, titleBlock, sec, kv, kv4, grid, provozovatelRows, technikRows, pristrojeTable,
-  zavadyTable, podpisy, resultBox, prilohyPages, lhutaText,
+  zavadyTable, doporuceniBlock, uvedeniDoProvozu, podpisy, resultBox, prilohyPages, lhutaText,
 } from './common';
 
 /** Řádky s vyplněným výsledkem; N/A se v tisku vynechává. */
 const filled = (rows: KontrolaPolozka[]) => rows.filter(r => r.nazev.trim() && r.vysledek && r.vysledek !== 'NA');
 
 function render(ctx: DocContext): string {
-  const { H, revize, zavady, om, vis } = ctx;
+  const { H, revize, zavadyPouze: zavady, om, vis } = ctx;
   const stav = (v: Vysledek) => (v === 'N' ? `<b>${STAV_LABEL.N}</b>` : v ? STAV_LABEL[v] : H.dots(8));
 
   const prohlidka = filled(om.prohlidka);
@@ -115,7 +115,7 @@ function render(ctx: DocContext): string {
     `<p><b>Revize zahrnuje:</b> ${H.v(revize.rozsahRevize, 40)}</p>`,
     revize.predmetNeni ? `<p><b>Revize nezahrnuje:</b> ${H.esc(revize.predmetNeni)}</p>` : ''));
   if (nums.popis) parts.push(sec(t('popis', 'Stručný technický popis'), H.paras(revize.popisZarizeni)));
-  if (nums.podklady) parts.push(sec(t('podklady', 'Předložené podklady'), H.paras(revize.podklady)));
+  if (nums.podklady) parts.push(sec(t('podklady', 'Předložené podklady'), H.paras(revize.podklady), uvedeniDoProvozu(ctx)));
   if (nums.pristroje) parts.push(sec(t('pristroje', 'Použité měřicí přístroje'), pristrojeTable(ctx)));
 
   const kontrolaGrid = (rows: KontrolaPolozka[], first: string, second: string, widths: string[]) => grid(
@@ -139,7 +139,7 @@ function render(ctx: DocContext): string {
       ...skupiny.map(([skupina, rows]) => `<div class="split"><div class="sub-title keep">${H.esc(skupina)}</div>${kontrolaGrid(rows, 'Požadavek', 'Kapitola', ['52%', '14%', '14%', '20%'])}</div>`)));
   }
 
-  parts.push(sec(t('zavady', 'Přehled zjištěných závad'), zavady.length ? zavadyTable(ctx) : '<p><b>Při revizi nebyly zjištěny žádné závady.</b></p>'));
+  parts.push(sec(t('zavady', 'Přehled zjištěných závad'), zavady.length ? zavadyTable(ctx) : '<p><b>Při revizi nebyly zjištěny žádné závady.</b></p>', doporuceniBlock(ctx)));
   parts.push(sec(t('vyhodnoceni', 'Vyhodnocení provedené revize'),
     vysledek,
     revize.vysledekOduvodneni && vis('vysledekOduvodneni') ? H.paras(revize.vysledekOduvodneni) : '',

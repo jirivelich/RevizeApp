@@ -7,7 +7,7 @@ import { TPL } from '../registry';
 import type { DocContext } from '../context';
 import {
   flowPage, firmaHeader, titleBlock, sec, kv, kv4, grid, p, provozovatelRows, technikRows, pristrojeTable,
-  zavadyTable, podpisy, resultBox, prilohyPages, lhutaText,
+  zavadyTable, doporuceniBlock, podpisy, resultBox, prilohyPages, lhutaText,
 } from './common';
 
 /** Výsledek V/N jako text do tabulky. */
@@ -21,7 +21,7 @@ export function stavText(ctx: DocContext, v: string): string {
 }
 
 function render(ctx: DocContext): string {
-  const { H, revize, zavady, pristroje } = ctx;
+  const { H, revize, zavadyPouze: zavady, pristroje } = ctx;
   const sd = ctx.strojni;
   const s = (v: string) => stavText(ctx, v);
   const has = (...xs: (string | undefined)[]) => xs.some(x => !!x && String(x).trim() !== '');
@@ -119,6 +119,7 @@ function render(ctx: DocContext): string {
     zavady.length ? zavadyTable(ctx)
       : sd?.posudekZavady ? `<p class="keep"><b>Zjištěné nedostatky:</b></p>${H.paras(sd.posudekZavady)}`
       : '<p><b>Při ověření nebyly zjištěny žádné závady.</b></p>',
+    doporuceniBlock(ctx),
     sd?.posudekDoporuceni ? `<p class="keep"><b>Doporučení / termín odstranění závad:</b></p>${H.paras(sd.posudekDoporuceni)}` : ''));
 
   parts.push(sec('14. Vyhodnocení',

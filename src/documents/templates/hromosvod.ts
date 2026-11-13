@@ -6,7 +6,7 @@ import { TPL } from '../registry';
 import type { DocContext } from '../context';
 import {
   flowPage, firmaHeader, titleBlock, sec, kv, grid, p, provozovatelRows, technikRows, pristrojeTable,
-  zavadyTable, rozdelovnikTable, podpisy, resultBox, prilohyPages, lhutaText,
+  zavadyTable, doporuceniBlock, uvedeniDoProvozu, rozdelovnikTable, podpisy, resultBox, prilohyPages, lhutaText,
 } from './common';
 
 interface MereniOdporu { bod: string; hodnota: string; limit: string; vyhovuje: boolean }
@@ -49,7 +49,7 @@ function nacrtSrc(raw?: string): string {
 }
 
 function render(ctx: DocContext): string {
-  const { H, revize, zavady, vis } = ctx;
+  const { H, revize, zavadyPouze: zavady, vis } = ctx;
   const stav = (s?: string) => stavLabel(s) || H.dots(16);
 
   let mereni: MereniOdporu[] = [];
@@ -141,14 +141,14 @@ function render(ctx: DocContext): string {
   }
 
   if (vis('pristroje')) parts.push(sec('13. Soupis použitých měřicích přístrojů', pristrojeTable(ctx)));
-  if (vis('podklady')) parts.push(sec('14. Seznam podkladů použitých k provedení revize', H.paras(revize.podklady)));
+  if (vis('podklady')) parts.push(sec('14. Seznam podkladů použitých k provedení revize', H.paras(revize.podklady), uvedeniDoProvozu(ctx)));
   if (vis('vyhodnoceniPredchozich')) parts.push(sec('15. Vyhodnocení předchozích revizí', H.paras(revize.vyhodnoceniPredchozich)));
 
   const nacrt = nacrtSrc(revize.hromosvodNacrt);
   if (nacrt) parts.push(sec('Příloha – Schéma hromosvodu (LPS)', `<div class="nacrt"><img src="${H.esc(nacrt)}" alt="Schéma hromosvodu LPS"></div>`));
 
   parts.push(
-    sec('16. Přehled zjištěných závad', zavady.length ? zavadyTable(ctx) : '<p><b>Při revizi nebyly zjištěny žádné závady.</b></p>'),
+    sec('16. Přehled zjištěných závad', zavady.length ? zavadyTable(ctx) : '<p><b>Při revizi nebyly zjištěny žádné závady.</b></p>', doporuceniBlock(ctx)),
     sec('17. Závěrečné zhodnocení',
       p(ctx, 'Systém ochrany před bleskem (LPS) je:'),
       resultBox(`${H.vn(revize.vysledek, ['SCHOPEN', 'NESCHOPEN'])} BEZPEČNÉHO PROVOZU`),

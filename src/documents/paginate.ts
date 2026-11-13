@@ -45,9 +45,12 @@ function getSplitter(node: HTMLElement): Splitter | null {
   if (node.tagName === 'TABLE') {
     const rows = [...node.querySelectorAll(':scope > tbody > tr')] as HTMLElement[];
     if (rows.length === 0) return null;
+    const colgroup = node.querySelector(':scope > colgroup');
     const thead = node.querySelector(':scope > thead');
     const makeTable = () => {
       const t = node.cloneNode(false) as HTMLElement;
+      // Šířky sloupců i záhlaví se opakují na každém pokračování tabulky
+      if (colgroup) t.appendChild(colgroup.cloneNode(true));
       if (thead) t.appendChild(thead.cloneNode(true));
       const tb = document.createElement('tbody');
       t.appendChild(tb);

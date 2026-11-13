@@ -174,3 +174,70 @@ describe('Odběrné místo', () => {
     expect(text(zprava(ctx))).not.toContain(na!.nazev);
   });
 });
+
+describe('Doporučení (dark-pro)', () => {
+  it('elektro: doporučení nejsou v tabulce závad a mají vlastní sekci', () => {
+    const ctx = sampleContext('elektro');
+    const t = text(zprava(ctx));
+    expect(ctx.doporuceni).toHaveLength(1);
+    expect(t).toContain('Doplnit proudový chránič pro zásuvkové obvody v koupelně.');
+    expect(t).toContain('Snížení rizika úrazu elektrickým proudem');
+    const zavadyIdx = t.indexOf('Přehled zjištěných závad');
+    const dopIdx = t.indexOf('Doporučení (nesoulad se současnými normami)');
+    expect(dopIdx).toBeGreaterThan(zavadyIdx);
+    // Tabulka závad končí legendou dřív, než začne sekce doporučení
+    expect(t.slice(zavadyIdx, dopIdx)).not.toContain('Doplnit proudový chránič');
+  });
+
+  it('elektro: sekce doporučení posune číslování dalších sekcí', () => {
+    const s = text(zprava(sampleContext('elektro')));
+    const nDop = parseInt(/(\d+)\. Doporučení \(nesoulad/.exec(s)![1], 10);
+    expect(s).toContain(`${nDop + 1}. Vyhodnocení předchozích revizí`);
+
+    const bez = sampleContext('elektro');
+    const ctx = createContext({ ...bez, zavady: bez.zavady.filter(z => z.typ !== 'doporuceni') });
+    const s2 = text(zprava(ctx));
+    expect(s2).not.toContain('Doporučení (nesoulad');
+    expect(s2).toContain(`${nDop}. Vyhodnocení předchozích revizí`);
+  });
+
+  for (const k of ['hromosvod', 'stroje', 'odberne_misto'] as KategorieRevize[]) {
+    it(`${k}: doporučení jako blok v sekci závad`, () => {
+      const t = text(zprava(sampleContext(k)));
+      expect(t).toContain('Doporučení (nesoulad se současnými normami)');
+      expect(t).toContain('Doplnit proudový chránič');
+    });
+  }
+});
+
+describe('Rozsah a podklady (dark-pro)', () => {
+  it('elektro: druh rozsahu, účel a tabulky vyloučených/neověřených částí', () => {
+    const t = text(zprava(sampleContext('elektro')));
+    expect(t).toContain('Druh revize z hlediska rozsahu: Dílčí revize');
+    expect(t).toContain('Účel revize: Pravidelná kontrola po 4 letech provozu.');
+    expect(t).toContain('Části vyloučené z rozsahu revize:');
+    expect(t).toContain('Rozvaděč R3 (sklad nájemce)');
+    expect(t).toContain('Části, které nebylo možné ověřit:');
+    expect(t).toContain('Obvody venkovního osvětlení');
+  });
+
+  it('elektro: tabulka dokumentů se stavem a uvedení do provozu', () => {
+    const t = text(zprava(sampleContext('elektro')));
+    expect(t).toContain('Projekt skutečného provedení');
+    expect(t).toContain('Neaktuální');
+    expect(t).toContain('Zařízení bylo uvedeno do provozu: 2004 (zjištěno na základě: kolaudační rozhodnutí).');
+  });
+
+  it('hromosvod a odběrné místo: uvedení do provozu v podkladech', () => {
+    for (const k of ['hromosvod', 'odberne_misto'] as KategorieRevize[]) {
+      expect(text(zprava(sampleContext(k))), k).toContain('Zařízení bylo uvedeno do provozu: 2004');
+    }
+  });
+});
+
+describe('Pevné šířky sloupců', () => {
+  it('mřížka se šířkami má colgroup a třídu fixcols', () => {
+    const html = zprava(sampleContext('elektro'));
+    expect(html).toContain('<table class="grid fixcols"><colgroup><col style="width:25%">');
+  });
+});

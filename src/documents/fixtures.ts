@@ -61,6 +61,10 @@ function baseRevize(kategorie: KategorieRevize, extra: Partial<Revize> = {}): Re
     vyhodnoceniPredchozich: 'Závady uvedené v předchozí revizi byly odstraněny.',
     zaver: 'Elektrická instalace odpovídá platným normám a je schopna bezpečného provozu.',
     rozdelovnik: 'Provozovatel: 2\nRevizní technik: 1',
+    druhRozsahu: 'dilci',
+    ucelRevize: 'Pravidelná kontrola po 4 letech provozu.',
+    datumUvedeniDoProvozu: '2004',
+    zdrojUvedeniDoProvozu: 'kolaudační rozhodnutí',
     prilohy: 'Protokol o určení vnějších vlivů',
     rtJmeno: 'Jan Novák',
     rtCisloOpravneni: '15368/5/22/R-EZ-E2A',
@@ -109,6 +113,7 @@ function zavady(): Zavada[] {
   return [
     { id: 1, revizeId: 1, popis: 'Chybí označení obvodů v rozvaděči RH.', zavaznost: 'C3', stav: 'otevřená', fotky: [], datumZjisteni: now, poznamka: 'Doplnit štítky.' },
     { id: 2, revizeId: 1, popis: 'Poškozený kryt zásuvky v kuchyni.', zavaznost: 'C2', stav: 'otevřená', fotky: [], datumZjisteni: now },
+    { id: 3, revizeId: 1, typ: 'doporuceni', popis: 'Doplnit proudový chránič pro zásuvkové obvody v koupelně.', zavaznost: 'C3', stav: 'otevřená', fotky: [], datumZjisteni: now, zduvodneni: 'Snížení rizika úrazu elektrickým proudem při nepřímém dotyku.' },
   ];
 }
 
@@ -190,6 +195,14 @@ export function sampleContext(kategorie: KategorieRevize, empty = false): DocCon
     zavady: zavady(),
     pristroje,
     prilohy: [],
+    rozsahPolozky: isElektro ? [
+      { id: 1, revizeId: 1, typ: 'vyloucenoRozsah', nazev: 'Rozvaděč R3 (sklad nájemce)', duvod: 'Nepřístupný – nájemce nepředal klíče.' },
+      { id: 2, revizeId: 1, typ: 'neovereno', nazev: 'Obvody venkovního osvětlení', duvod: 'Nebylo možné vypnout během provozu.' },
+    ] : [],
+    dokumenty: isElektro ? [
+      { id: 1, revizeId: 1, nazev: 'Projekt skutečného provedení', druh: 'projekt', datumDokumentu: '2004', stav: 'predlozeno' },
+      { id: 2, revizeId: 1, nazev: 'Předchozí revizní zpráva', druh: 'revize', datumDokumentu: '015/22/JN', stav: 'neaktualni', poznamka: 'Bez měření okruhů R2.' },
+    ] : [],
   });
 }
 

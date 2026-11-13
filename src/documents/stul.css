@@ -1,11 +1,11 @@
-/* Náhled dokumentů – „list A4 na stole“. */
+/* Náhled dokumentů – „list A4 na stole“. Barvy z tokenů Dark Pro (s náhradními hodnotami). */
 .stul-shell {
   display: flex;
   flex-direction: column;
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background: #2f3237;
+  background: var(--background, #0B0F16);
 }
 
 .stul-toolbar {
@@ -15,8 +15,9 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: #1c1e22;
-  color: #e8e8e8;
+  background: var(--surface, #131925);
+  color: var(--text, #F3F4F6);
+  border-bottom: 1px solid var(--border-medium, #2B3850);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
   font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
   font-size: 14px;
@@ -31,38 +32,39 @@
   padding: 7px 14px;
   min-height: 36px;
   border-radius: 8px;
-  border: 1px solid #44484f;
-  background: #2a2d33;
-  color: #f2f2f2;
+  border: 1px solid var(--border-medium, #2B3850);
+  background: var(--bg-input, #0E131D);
+  color: var(--text, #F3F4F6);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
 }
-.stul-btn:hover:not(:disabled) { background: #363a41; }
+.stul-btn:hover:not(:disabled) { background: var(--bg-hover-strong, #243044); }
 .stul-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.stul-btn--primary { background: #0052cc; border-color: #0052cc; }
-.stul-btn--primary:hover:not(:disabled) { background: #0065ff; }
+.stul-btn--primary { background: var(--primary, #FFB74D); border-color: var(--primary, #FFB74D); color: var(--primary-fg, #1A1203); }
+.stul-btn--primary:hover:not(:disabled) { background: var(--primary-hover, #FFC670); }
+.stul-btn:focus-visible, .stul-select:focus-visible, .stul-zoom input:focus-visible { outline: 2px solid var(--focus-ring-color, rgba(255,183,77,0.45)); outline-offset: 2px; }
 
 .stul-select {
   min-height: 36px;
   max-width: 340px;
   padding: 6px 10px;
   border-radius: 8px;
-  border: 1px solid #44484f;
-  background: #2a2d33;
-  color: #f2f2f2;
+  border: 1px solid var(--border-input, #344158);
+  background: var(--bg-input, #0E131D);
+  color: var(--text, #F3F4F6);
   font: inherit;
 }
 
 .stul-zoom { display: inline-flex; align-items: center; gap: 8px; }
-.stul-zoom input { width: 120px; accent-color: #4c9aff; }
+.stul-zoom input { width: 120px; accent-color: var(--primary, #FFB74D); }
 .stul-zoom output { min-width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
 
-.stul-info { color: #b8bcc4; font-size: 13px; }
+.stul-info { color: var(--text-secondary, #A8B0BD); font-size: 13px; }
 .stul-msg { width: 100%; font-size: 13px; padding: 6px 10px; border-radius: 6px; }
-.stul-msg--error { background: #4a1f22; color: #ffd7d9; }
-.stul-msg--warn { background: #4a3a14; color: #ffe9b3; }
+.stul-msg--error { background: var(--danger-bg, rgba(248,113,113,0.13)); color: var(--danger-text, #F87171); }
+.stul-msg--warn { background: var(--warning-bg, rgba(255,183,77,0.13)); color: var(--warning-text, #FFB74D); }
 
 .stul-scroll {
   flex: 1;
@@ -77,7 +79,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #c9ccd2;
+  color: var(--text-secondary, #A8B0BD);
   font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
 }
 

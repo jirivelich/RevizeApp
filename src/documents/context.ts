@@ -2,7 +2,7 @@
  * Kontext dokumentu – jeden objekt se všemi daty, která šablona smí použít.
  * Šablony nesahají nikam jinam než do ctx.
  */
-import type { Revize, Rozvadec, Okruh, Chranic, Zavada, Mistnost, Zarizeni, MericiPristroj, Nastaveni, Zakaznik } from '../types';
+import type { Revize, Rozvadec, Okruh, Chranic, Zavada, Mistnost, Zarizeni, MericiPristroj, Nastaveni, Zakaznik, RozsahPolozka, RevizeDokument } from '../types';
 import { parseOdberneMisto, type OdberneMistoData } from '../types/odberneMisto';
 import type { PrilohaPrintItem } from '../services/prilohyUtils';
 import { H, type Helpers } from './helpers';
@@ -45,9 +45,18 @@ export interface DocData {
   zavady: Zavada[];
   pristroje: MericiPristroj[];
   prilohy: PrilohaPrintItem[];
+  /** Rozsah a podklady (volitelné – starší revize je nemají). */
+  rozsahPolozky?: RozsahPolozka[];
+  dokumenty?: RevizeDokument[];
 }
 
 export interface DocContext extends DocData {
+  rozsahPolozky: RozsahPolozka[];
+  dokumenty: RevizeDokument[];
+  /** Závady bez doporučení (typ !== 'doporuceni'). */
+  zavadyPouze: Zavada[];
+  /** Doporučení – nesoulad se současnými normami, nezakládá povinnost nápravy. */
+  doporuceni: Zavada[];
   /** Strojní data (jen kategorie „stroje“), jinak null. */
   strojni: StrojniPrintData | null;
   /** Data odběrného místa (vždy objekt, prázdný když nejsou vyplněna). */
@@ -74,6 +83,10 @@ export function createContext(data: DocData): DocContext {
   const tiskSekce = parseJson<Record<string, boolean>>(revize.tiskSekce, {});
   return {
     ...data,
+    rozsahPolozky: data.rozsahPolozky ?? [],
+    dokumenty: data.dokumenty ?? [],
+    zavadyPouze: data.zavady.filter(z => z.typ !== 'doporuceni'),
+    doporuceni: data.zavady.filter(z => z.typ === 'doporuceni'),
     strojni: parseJson<StrojniPrintData | null>(revize.strojniData, null),
     om: parseOdberneMisto(revize.odberneMistoData),
     vis: (key: string) => tiskSekce[key] !== false,
@@ -151,6 +164,12 @@ export async function buildContext(revizeId: number): Promise<DocContext> {
   }
 
   const prilohy = await loadPrilohyForPrint(revizeId);
+  // Rozsah a podklady: chyba jejich načtení nesmí znemožnit tisk zprávy
+  const volitelne = async <T,>(fn: () => Promise<T[]>): Promise<T[]> => { try { return await fn(); } catch { return []; } };
+  const [rozsahPolozky, dokumenty] = await Promise.all([
+    volitelne(() => db.rozsahService.getByRevize(revizeId)),
+    volitelne(() => db.dokumentService.getByRevize(revizeId)),
+  ]);
 
   return createContext({
     revize: { ...revize, kategorieRevize: (isElektro ? 'elektro' : kategorie) as Revize['kategorieRevize'] },
@@ -161,5 +180,7 @@ export async function buildContext(revizeId: number): Promise<DocContext> {
     zavady,
     pristroje,
     prilohy,
+    rozsahPolozky,
+    dokumenty,
   });
 }

@@ -97,6 +97,9 @@
 .doc-root table.grid th,
 .doc-root table.grid td { border: 0.5pt solid #000; padding: 0.8mm 1.4mm; vertical-align: top; text-align: left; }
 .doc-root table.grid th { font-weight: bold; background: #ececec; }
+.doc-root table.grid.fixcols { table-layout: fixed; }
+.doc-root table.grid.fixcols th,
+.doc-root table.grid.fixcols td { overflow-wrap: anywhere; }
 .doc-root table.grid td.c, .doc-root table.grid th.c { text-align: center; }
 .doc-root table.grid tr.detail td { font-size: 8.5pt; }
 

@@ -7,9 +7,10 @@ import { TPL } from '../registry';
 import type { DocContext, RozvadecWithOkruhy } from '../context';
 import type { Okruh, Chranic } from '../../types';
 import { DEFAULT_NORMY_SOULAD } from '../../pages/RevizeDetail/constants';
+import { DRUH_ROZSAHU_LABELS, DOKUMENT_STAV_LABELS } from '../../services/rozsahKontrola';
 import {
   flowPage, firmaHeader, titleBlock, sec, kv, kv4, grid, p, provozovatelRows, technikRows, pristrojeTable,
-  zavadyTable, ZAVADY_LEGENDA, rozdelovnikTable, podpisy, resultBox, fotoZavad, prilohyPages, seznamPriloh, lhutaText,
+  zavadyTable, ZAVADY_LEGENDA, doporuceniBody, DOPORUCENI_TITLE, uvedeniDoProvozu, rozdelovnikTable, podpisy, resultBox, fotoZavad, prilohyPages, seznamPriloh, lhutaText,
 } from './common';
 
 export const OCHRANA_LABELS: Record<string, string> = {
@@ -108,7 +109,9 @@ function rozvadecBlock(ctx: DocContext, roz: RozvadecWithOkruhy): string {
 }
 
 function renderZprava(ctx: DocContext): string {
-  const { H, revize, rozvadece, mistnosti, zavady, vis } = ctx;
+  const { H, revize, rozvadece, mistnosti, zavadyPouze: zavady, doporuceni, rozsahPolozky, dokumenty, vis } = ctx;
+  const vyloucene = rozsahPolozky.filter(p => p.typ === 'vyloucenoRozsah');
+  const neovereno = rozsahPolozky.filter(p => p.typ === 'neovereno');
   const ochrana = ochranaList(ctx);
 
   // Dynamické číslování – sekce 1–6 jsou pevné
@@ -125,6 +128,7 @@ function renderZprava(ctx: DocContext): string {
     rozvadece: num(true),
     prostory: num(mistnosti.length > 0),
     zavady: num(true),
+    doporuceni: num(doporuceni.length > 0),
     vyhodnoceniPredchozich: num(vis('vyhodnoceniPredchozich')),
     lhuta: num(true),
     oduvodneni: num(vis('vysledekOduvodneni') && !!revize.vysledekOduvodneni),
@@ -156,10 +160,17 @@ function renderZprava(ctx: DocContext): string {
 
   if (nums.popisZarizeni) parts.push(sec(t('popisZarizeni', 'Popis revidovaného zařízení'), H.paras(revize.popisZarizeni)));
   if (nums.rozsahRevize) {
-    const body = (revize.rozsahRevize || revize.predmetNeni)
+    const castiTable = (rows: typeof vyloucene, druhy: string) => grid(['Část', druhy], ['50%', '50%'],
+      rows.map(r => [H.esc(r.nazev), H.v(r.duvod, 10)]));
+    const hasAny = !!(revize.rozsahRevize || revize.predmetNeni || revize.druhRozsahu || vyloucene.length || neovereno.length);
+    const body = hasAny
       ? [
+          revize.druhRozsahu ? `<p><b>Druh revize z hlediska rozsahu:</b> ${H.esc(DRUH_ROZSAHU_LABELS[revize.druhRozsahu] ?? revize.druhRozsahu)}</p>` : '',
+          revize.ucelRevize ? `<p><b>Účel revize:</b> ${H.esc(revize.ucelRevize)}</p>` : '',
           revize.rozsahRevize ? `<p class="keep"><b>Předmět revize je:</b></p>${H.paras(revize.rozsahRevize)}` : '',
           revize.predmetNeni ? `<p class="keep"><b>Předmětem revize není/nejsou:</b></p>${H.paras(revize.predmetNeni)}` : '',
+          vyloucene.length ? `<p class="keep"><b>Části vyloučené z rozsahu revize:</b></p>${castiTable(vyloucene, 'Důvod omezení rozsahu')}` : '',
+          neovereno.length ? `<p class="keep"><b>Části, které nebylo možné ověřit:</b></p>${castiTable(neovereno, 'Důvod')}` : '',
         ].join('')
       : H.paras('');
     parts.push(sec(t('rozsahRevize', 'Vymezení rozsahu revize'), body));
@@ -172,7 +183,16 @@ function renderZprava(ctx: DocContext): string {
     parts.push(sec(t('charakteristika', 'Charakteristika revidovaného zařízení'), kv(rows)));
   }
   if (nums.pristroje) parts.push(sec(t('pristroje', 'Soupis použitých měřicích přístrojů'), pristrojeTable(ctx)));
-  if (nums.podklady) parts.push(sec(t('podklady', 'Seznam podkladů použitých k provedení revize'), H.paras(revize.podklady)));
+  if (nums.podklady) {
+    parts.push(sec(t('podklady', 'Seznam podkladů použitých k provedení revize'),
+      revize.podklady ? H.paras(revize.podklady) : dokumenty.length === 0 ? H.paras('') : '',
+      dokumenty.length ? grid(
+        ['Dokument', 'Druh', 'Datum / revize', 'Stav', 'Poznámka'],
+        ['27%', '16%', '14%', '16%', '27%'],
+        dokumenty.map(d => [H.esc(d.nazev), H.v(d.druh, 6), H.v(d.datumDokumentu, 6), H.esc(DOKUMENT_STAV_LABELS[d.stav] ?? d.stav), H.esc(d.poznamka)]),
+      ) : '',
+      uvedeniDoProvozu(ctx)));
+  }
   if (nums.provedeneUkony) parts.push(sec(t('provedeneUkony', 'Soupis provedených úkonů'), H.paras(revize.provedeneUkony)));
 
   parts.push(sec(t('rozvadece', 'Naměřené hodnoty – rozvaděče a okruhy'),
@@ -198,6 +218,7 @@ function renderZprava(ctx: DocContext): string {
     zavady.length
       ? zavadyTable(ctx, true) + ZAVADY_LEGENDA + (maFotky ? p(ctx, 'Fotografie k závadám jsou přiloženy na následujících stranách.', 'small') : '')
       : '<p><b>Při revizi nebyly zjištěny žádné závady.</b></p>'));
+  if (nums.doporuceni) parts.push(sec(t('doporuceni', DOPORUCENI_TITLE), doporuceniBody(ctx)));
 
   if (nums.vyhodnoceniPredchozich) parts.push(sec(t('vyhodnoceniPredchozich', 'Vyhodnocení předchozích revizí'), H.paras(revize.vyhodnoceniPredchozich)));
   parts.push(sec(t('lhuta', 'Doporučená lhůta provedení příští revize'),

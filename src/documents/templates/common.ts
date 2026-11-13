@@ -63,9 +63,13 @@ export function kv4(rows: [Row, Row | null][]): string {
 
 /** Mřížka s rámečky. Buňky už musí být HTML (escapované). */
 export function grid(cols: string[], widths: string[], rows: string[][], center: number[] = []): string {
+  // Pevné šířky sloupců (colgroup + table-layout: fixed) – pokračování tabulky na dalším listu
+  // dostane colgroup také (paginate.ts), takže sloupce nepřeskakují.
+  const fixed = widths.some(Boolean);
+  const colgroup = fixed ? `<colgroup>${cols.map((_, i) => `<col${widths[i] ? ` style="width:${widths[i]}"` : ''}>`).join('')}</colgroup>` : '';
   const th = cols.map((c, i) => `<th${widths[i] ? ` style="width:${widths[i]}"` : ''}${center.includes(i) ? ' class="c"' : ''}>${c}</th>`).join('');
   const body = rows.map(r => `<tr>${r.map((c, i) => `<td${center.includes(i) ? ' class="c"' : ''}>${c}</td>`).join('')}</tr>`).join('');
-  return `<table class="grid"><thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;
+  return `<table class="grid${fixed ? ' fixcols' : ''}">${colgroup}<thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
 /** Odstavec textu (escapuje). */
@@ -126,9 +130,9 @@ export function zavadaStavLabel(stav: Zavada['stav']): string {
   return stav === 'otevřená' ? 'Otevřená' : stav === 'v řešení' ? 'V řešení' : 'Vyřešená';
 }
 
-/** Tabulka závad (bez nadpisu sekce). */
+/** Tabulka závad (bez nadpisu sekce, bez doporučení). */
 export function zavadyTable(ctx: DocContext, withPoznamka = false): string {
-  const { H, zavady } = ctx;
+  const { H, zavadyPouze: zavady } = ctx;
   return grid(
     ['#', 'Popis závady', 'Závažnost', 'Stav', 'Zjištěna'],
     ['5%', '45%', '17%', '13%', '20%'],
@@ -144,6 +148,38 @@ export function zavadyTable(ctx: DocContext, withPoznamka = false): string {
 }
 
 export const ZAVADY_LEGENDA = '<p class="small"><b>Kategorie závad:</b> <b>C1</b> – kritická závada (bezprostřední nebezpečí, je nutné ihned odpojit zařízení od napájení); <b>C2</b> – vážná závada (nutná náprava v co nejkratší době); <b>C3</b> – méně závažná závada (doporučení ke zlepšení, zařízení může být provozováno).</p>';
+
+export const DOPORUCENI_TITLE = 'Doporučení (nesoulad se současnými normami)';
+const DOPORUCENI_TEXT = '<p>Doporučení nejsou závadami. Nezakládají provozovateli povinnost nápravy a nemají vliv na posouzení schopnosti zařízení provozu; jde o odbornou radu ke zvýšení bezpečnosti.</p>';
+
+/** Doporučení – vysvětlující text a tabulka (bez nadpisu sekce). Bez doporučení vrací ''. */
+export function doporuceniBody(ctx: DocContext): string {
+  const { H, doporuceni } = ctx;
+  if (doporuceni.length === 0) return '';
+  return DOPORUCENI_TEXT + grid(
+    ['#', 'Doporučení', 'Zdůvodnění (snížené riziko)'],
+    ['5%', '50%', '45%'],
+    doporuceni.map((z, i) => [
+      String(i + 1),
+      H.esc(z.popis) + (z.poznamka ? `<div class="small muted">${H.lines(z.poznamka)}</div>` : ''),
+      H.v(z.zduvodneni, 10),
+    ]),
+    [0],
+  );
+}
+
+/** Doporučení jako blok uvnitř sekce závad (hromosvod, stroje, odběrné místo). */
+export function doporuceniBlock(ctx: DocContext): string {
+  const body = doporuceniBody(ctx);
+  return body ? `<div class="split"><div class="sub-title keep">${DOPORUCENI_TITLE}</div>${body}</div>` : '';
+}
+
+/** Věta o uvedení zařízení do provozu (prázdná, když není zadáno). */
+export function uvedeniDoProvozu(ctx: DocContext): string {
+  const { H, revize } = ctx;
+  if (!revize.datumUvedeniDoProvozu) return '';
+  return `<p>Zařízení bylo uvedeno do provozu: <b>${H.esc(revize.datumUvedeniDoProvozu)}</b>${revize.zdrojUvedeniDoProvozu ? ` (zjištěno na základě: ${H.esc(revize.zdrojUvedeniDoProvozu)})` : ''}.</p>`;
+}
 
 /** Rozdělovník „příjemce: počet“ po řádcích. */
 export function rozdelovnikTable(ctx: DocContext, text: string): string {
@@ -178,7 +214,7 @@ export function resultBox(innerHtml: string): string {
 
 /** Fotodokumentace závad (na novém listu), dvě fotky vedle sebe. */
 export function fotoZavad(ctx: DocContext): string {
-  const { H, zavady } = ctx;
+  const { H, zavadyPouze: zavady } = ctx;
   const sFotkou = zavady.map((z, i) => ({ z, cislo: i + 1 })).filter(x => Array.isArray(x.z.fotky) && x.z.fotky.length > 0);
   if (sFotkou.length === 0) return '';
   const entries = sFotkou.map(({ z, cislo }) => {
