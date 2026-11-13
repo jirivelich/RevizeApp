@@ -1,123 +1,341 @@
-﻿import { useMemo, useState, useEffect } from 'react';
+﻿import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery as useRQQuery } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
-import { useRevize, usePristroje, useZakazky } from '../hooks/useQueries';
+import { Link } from 'react-router-dom';
+import { useRevize, useZakazky, useZavady, useFaktury } from '../hooks/useQueries';
+import { useNotifications } from '../hooks/useNotifications';
 import { Badge } from '../components/ui';
 import type { BadgeVariant } from '../components/ui';
-import type { MericiPristroj, Revize, Zakazka } from '../types';
+import { KATEGORIE_LABELS } from '../types';
+import type { AppNotification, NotificationSeverity, NotificationType, Revize, Zakazka } from '../types';
 
 /* ═══ Helpers ═══ */
-const formatDate = (d: string) => new Date(d).toLocaleDateString('cs-CZ');
 
-function daysUntil(dateStr: string) {
-  const diff = new Date(dateStr).getTime() - Date.now();
-  return Math.ceil(diff / 86_400_000);
+const DAY_MS = 86_400_000;
+
+function startOfToday() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
 }
 
-/* ═══ Sub-components ═══ */
+/** Počet dní od dneška (záporné = v minulosti). */
+function daysFromToday(dateStr: string | undefined | null): number {
+  if (!dateStr) return Infinity;
+  const d = new Date(dateStr);
+  d.setHours(0, 0, 0, 0);
+  return Math.round((d.getTime() - startOfToday().getTime()) / DAY_MS);
+}
 
-type StatTint = 'blue' | 'amber' | 'danger' | 'success';
+const formatKcCele = (n: number) =>
+  `${new Intl.NumberFormat('cs-CZ', { maximumFractionDigits: 0 }).format(Math.round(n))} Kč`;
 
-const tintClasses: Record<StatTint, string> = {
-  blue: 'bg-[var(--bg-accent-badge)] text-[var(--primary)]',
-  amber: 'bg-[var(--warning-bg)] text-[var(--warning-text)]',
-  danger: 'bg-[var(--danger-bg)] text-[var(--danger-text)]',
-  success: 'bg-[var(--success-bg)] text-[var(--success-text)]',
-};
+const pluralDni = (n: number) => (n === 1 ? 'den' : n >= 2 && n <= 4 ? 'dny' : 'dní');
 
-function StatCard({ title, value, subtitle, icon, tint, link }: {
-  title: string; value: number; subtitle?: string;
-  icon: ReactNode; tint: StatTint; link: string;
+function relDays(days: number): string {
+  if (days === 0) return 'dnes';
+  if (days < 0) return `po termínu ${-days} ${pluralDni(-days)}`;
+  return `za ${days} ${pluralDni(days)}`;
+}
+
+/* ═══ Ikony (stroke, 24×24) ═══ */
+
+const ICON_PATHS = {
+  clock: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
+  alert: 'M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z',
+  gauge: 'M12 14l4-4M3.3 17a9 9 0 1 1 17.4 0',
+  doc: 'M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5',
+  user: 'M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10z',
+  plus: 'M12 5v14M5 12h14',
+  chevron: 'm9 6 6 6-6 6',
+  check: 'M20 6 9 17l-5-5',
+} as const;
+
+function Icon({ name, size = 18, strokeWidth = 2 }: { name: keyof typeof ICON_PATHS; size?: number; strokeWidth?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={ICON_PATHS[name]} />
+    </svg>
+  );
+}
+
+/* ═══ Stavební bloky ═══ */
+
+function Panel({ title, action, children, className = '', bodyClassName = '' }: {
+  title: string; action?: ReactNode; children: ReactNode; className?: string; bodyClassName?: string;
 }) {
   return (
-    <Link to={link} className="group block rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] p-3 transition-all hover:border-[var(--border-strong)] active:scale-[0.98]">
-      <div className={`mb-2 flex h-7 w-7 items-center justify-center rounded-md ${tintClasses[tint]}`}>
-        {icon}
+    <section className={`min-w-0 flex flex-col rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] ${className}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-[var(--border)]">
+        <h2 className="text-[15px] font-semibold text-[var(--text)]">{title}</h2>
+        {action}
       </div>
-      <p className="text-[11px] font-medium text-[var(--text-secondary)] uppercase tracking-wide">{title}</p>
-      <p className="mt-1 text-2xl font-bold text-[var(--text)] tracking-tight">{value}</p>
-      {subtitle && <p className="mt-0.5 text-[10px] text-[var(--text-muted)]">{subtitle}</p>}
+      <div className={`flex-1 ${bodyClassName}`}>{children}</div>
+    </section>
+  );
+}
+
+function PanelLink({ to, children }: { to: string; children: ReactNode }) {
+  return (
+    <Link to={to} className="text-[13px] font-medium text-[var(--nav-text-active)] hover:underline">
+      {children}
     </Link>
   );
 }
 
-const STAV_BADGE_VARIANT: Record<string, BadgeVariant> = {
-  'dokončeno': 'success',
-  'rozpracováno': 'warning',
-  'schváleno': 'info',
+function EmptyNote({ children }: { children: ReactNode }) {
+  return <p className="px-4 py-8 text-center text-[13px] text-[var(--text-muted)]">{children}</p>;
+}
+
+type KpiTone = 'info' | 'danger' | 'warning' | 'success' | 'neutral';
+
+const KPI_VALUE_COLOR: Record<KpiTone, string> = {
+  info: 'text-[var(--text)]',
+  danger: 'text-[var(--danger-text)]',
+  warning: 'text-[var(--text)]',
+  success: 'text-[var(--text)]',
+  neutral: 'text-[var(--text)]',
 };
 
-function RevizeRow({ r }: { r: Revize }) {
-  return (
-    <Link to={`/revize/${r.id}`} className="group flex items-center gap-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-faint)] px-2.5 py-2 transition-all hover:border-[var(--border-strong)]">
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-medium text-[var(--text)] transition-colors">{r.nazev}</p>
-        <p className="text-[11px] text-[var(--text-secondary)]">{r.cisloRevize} · {formatDate(r.datum)}</p>
-      </div>
-      <Badge variant={STAV_BADGE_VARIANT[r.stav] ?? 'neutral'}>{r.stav}</Badge>
-    </Link>
-  );
-}
-
-function ZakazkaRow({ z }: { z: Zakazka }) {
-  const days = daysUntil(z.datumPlanovany);
-  const urgencyVariant: BadgeVariant = days < 0 ? 'danger' : days <= 3 ? 'warning' : 'neutral';
-  const prioritaColor = {
-    'vysoká': 'border-l-red-500',
-    'střední': 'border-l-amber-400',
-    'nizká': 'border-l-blue-400',
-  }[z.priorita] ?? 'border-l-slate-600';
-
-  return (
-    <Link to={`/planovani`} className={`group flex items-center gap-2.5 rounded-lg border border-[var(--border)] border-l-[3px] ${prioritaColor} bg-[var(--bg-faint)] px-2.5 py-2 transition-all hover:border-[var(--border-strong)]`}>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-medium text-[var(--text)] transition-colors">{z.nazev}</p>
-        <p className="text-[11px] text-[var(--text-secondary)]">{z.klient}</p>
-      </div>
-      <Badge variant={urgencyVariant}>{days < 0 ? `${Math.abs(days)}d po` : days === 0 ? 'Dnes' : `za ${days}d`}</Badge>
-    </Link>
-  );
-}
-
-function SectionCard({ title, icon: _icon, count, viewAllLink, viewAllLabel, empty, emptyLink, emptyLabel, children }: {
-  title: string; icon: string; count?: number;
-  viewAllLink: string; viewAllLabel?: string;
-  empty: string; emptyLink: string; emptyLabel: string;
-  children: React.ReactNode[];
+function KpiCard({ title, value, sub, tag, tone, to }: {
+  title: string; value: number; sub: string; tag?: string; tone: KpiTone; to: string;
 }) {
+  // Nulová hodnota = vše v pořádku, nezvýrazňovat
+  const effectiveTone: KpiTone = value === 0 ? 'neutral' : tone;
   return (
-    <div className="h-full flex flex-col rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)]">
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border-subtle)]">
-        <h2 className="text-[13px] font-semibold text-[var(--text)]">{title}</h2>
-        <div className="flex items-center gap-2">
-          {count !== undefined && (
-            <span className="text-[10px] font-medium text-[var(--text-muted)]">{count}</span>
-          )}
-          <Link to={viewAllLink} className="text-[11px] font-medium text-[var(--text-secondary)] hover:text-[var(--text)] transition-colors">
-            {viewAllLabel ?? 'Vše →'}
-          </Link>
-        </div>
-      </div>
-      <div className="flex-1 p-3">
-        {children.length > 0 ? (
-          <div className="space-y-1.5">{children}</div>
-        ) : (
-          <div className="py-6 text-center">
-            <p className="text-xs text-[var(--text-secondary)] mb-1.5">{empty}</p>
-            <Link to={emptyLink} className="text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text)] transition-colors hover:underline">
-              {emptyLabel}
-            </Link>
-          </div>
+    <Link
+      to={to}
+      className="flex flex-col gap-1 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] px-4 py-3.5 transition-colors hover:border-[var(--border-strong)] active:scale-[0.99]"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-[13px] font-medium text-[var(--text-secondary)]">{title}</span>
+        {tag && value > 0 && (
+          <span className="hidden sm:block"><Badge variant={effectiveTone === 'neutral' ? 'neutral' : effectiveTone}>{tag}</Badge></span>
         )}
       </div>
-    </div>
+      <span className={`text-[30px] leading-tight font-semibold tracking-tight tabular-nums ${KPI_VALUE_COLOR[effectiveTone]}`}>{value}</span>
+      <span className="text-[12px] text-[var(--text-muted)]">{sub}</span>
+    </Link>
   );
 }
 
-/* ═══ Revize Bar Chart ═══ */
+/* ═══ Vyžaduje pozornost ═══ */
 
-const CZ_MONTHS = ['Led','Úno','Bře','Dub','Kvě','Čvn','Čvc','Srp','Zář','Říj','Lis','Pro'];
+type AttentionFilter = 'vse' | 'terminy' | 'revize' | 'pristroje';
+
+const FILTERS: { id: AttentionFilter; label: string; types: NotificationType[] | null }[] = [
+  { id: 'vse', label: 'Vše', types: null },
+  { id: 'terminy', label: 'Termíny', types: ['revize_platnost_expiry', 'zakazka_upcoming', 'report_deadline'] },
+  { id: 'revize', label: 'Revize', types: ['revize_overdue'] },
+  { id: 'pristroje', label: 'Přístroje a osvědčení', types: ['kalibrace_expiring', 'technik_expiry'] },
+];
+
+const SEVERITY_VARIANT: Record<NotificationSeverity, BadgeVariant> = {
+  critical: 'danger',
+  warning: 'warning',
+  info: 'info',
+};
+
+const SEVERITY_ICON_BOX: Record<NotificationSeverity, string> = {
+  critical: 'bg-[var(--danger-bg)] text-[var(--danger-text)]',
+  warning: 'bg-[var(--warning-bg)] text-[var(--warning-text)]',
+  info: 'bg-[var(--bg-accent-badge)] text-[var(--primary)]',
+};
+
+const TYPE_ICON: Record<NotificationType, keyof typeof ICON_PATHS> = {
+  zakazka_upcoming: 'clock',
+  revize_platnost_expiry: 'clock',
+  report_deadline: 'doc',
+  revize_overdue: 'alert',
+  kalibrace_expiring: 'gauge',
+  technik_expiry: 'user',
+};
+
+function attentionWhen(n: AppNotification): string {
+  if (n.type === 'revize_overdue') return `rozpracováno ${-n.daysUntil} ${pluralDni(-n.daysUntil)}`;
+  return relDays(n.daysUntil);
+}
+
+const VISIBLE_ATTENTION = 6;
+
+function AttentionPanel({ notifications }: { notifications: AppNotification[] }) {
+  const [filter, setFilter] = useState<AttentionFilter>('vse');
+  const [expanded, setExpanded] = useState(false);
+
+  const types = FILTERS.find(f => f.id === filter)?.types;
+  const filtered = types ? notifications.filter(n => types.includes(n.type)) : notifications;
+  const shown = expanded ? filtered : filtered.slice(0, VISIBLE_ATTENTION);
+
+  return (
+    <Panel
+      title="Vyžaduje pozornost"
+      className="lg:col-span-2"
+      action={
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtr upozornění">
+          {FILTERS.map(f => {
+            const active = f.id === filter;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                aria-pressed={active}
+                onClick={() => { setFilter(f.id); setExpanded(false); }}
+                className={`h-8 rounded-full px-3 text-[13px] font-medium border transition-colors ${
+                  active
+                    ? 'border-transparent bg-[var(--active-bg)] text-[var(--nav-text-active)]'
+                    : 'border-[var(--border-input)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+                }`}
+              >
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
+      }
+    >
+      {shown.length === 0 ? (
+        <EmptyNote>
+          <span className="inline-flex items-center gap-2 text-[var(--success-text)]"><Icon name="check" size={16} /> Vše je v pořádku, nic nehoří.</span>
+        </EmptyNote>
+      ) : (
+        <ul>
+          {shown.map(n => (
+            <li key={n.id} className="border-b border-[var(--border)] last:border-b-0">
+              <Link to={n.link} className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--bg-hover)] transition-colors">
+                <span className={`flex h-9 w-9 flex-none items-center justify-center rounded-[var(--radius-md)] ${SEVERITY_ICON_BOX[n.severity]}`}>
+                  <Icon name={TYPE_ICON[n.type]} />
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate text-[14px] font-semibold text-[var(--text)]">{n.title}</span>
+                  <span className="truncate text-[13px] text-[var(--text-muted)]">{n.description}</span>
+                </span>
+                <span className="hidden sm:block"><Badge variant={SEVERITY_VARIANT[n.severity]}>{attentionWhen(n)}</Badge></span>
+                <span className="flex-none text-[var(--text-muted)]"><Icon name="chevron" size={16} /></span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+      {filtered.length > VISIBLE_ATTENTION && (
+        <button
+          type="button"
+          onClick={() => setExpanded(e => !e)}
+          className="w-full min-h-[44px] border-t border-[var(--border)] text-[13px] font-medium text-[var(--nav-text-active)] hover:bg-[var(--bg-hover)]"
+        >
+          {expanded ? 'Zobrazit méně' : `Zobrazit vše (${filtered.length})`}
+        </button>
+      )}
+    </Panel>
+  );
+}
+
+/* ═══ Tento týden ═══ */
+
+const DOW_SHORT = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
+
+interface WeekItem { key: string; date: Date; days: number; z: Zakazka }
+
+function WeekPanel({ zakazky }: { zakazky: Zakazka[] }) {
+  const items = useMemo<WeekItem[]>(() => {
+    const out: WeekItem[] = [];
+    for (const z of zakazky) {
+      if (z.stav !== 'plánováno' && z.stav !== 'v realizaci') continue;
+      const dates = Array.from(new Set([z.datumPlanovany, ...(z.datumyRealizace ?? [])].filter(Boolean)));
+      for (const ds of dates) {
+        const days = daysFromToday(ds);
+        if (days < 0 || days > 6) continue;
+        const date = new Date(ds);
+        date.setHours(0, 0, 0, 0);
+        out.push({ key: `${z.id}-${ds}`, date, days, z });
+      }
+    }
+    return out.sort((a, b) => a.days - b.days || (a.z.casPlanovany ?? '').localeCompare(b.z.casPlanovany ?? '')).slice(0, 6);
+  }, [zakazky]);
+
+  return (
+    <Panel title="Tento týden" action={<PanelLink to="/planovani">Kalendář</PanelLink>}>
+      {items.length === 0 ? (
+        <EmptyNote>
+          Na příštích 7 dní není nic naplánováno.<br />
+          <Link to="/planovani" className="mt-1 inline-block font-medium text-[var(--nav-text-active)] hover:underline">Naplánovat zakázku</Link>
+        </EmptyNote>
+      ) : (
+        <ul className="px-4">
+          {items.map(({ key, date, days, z }) => {
+            const isToday = days === 0;
+            return (
+              <li key={key} className="border-b border-[var(--border)] last:border-b-0">
+                <Link to={`/planovani?datum=${z.datumPlanovany}`} className="flex gap-3 py-2.5 group">
+                  <span className={`flex w-11 flex-none flex-col items-center justify-center rounded-[var(--radius-md)] py-1 ${
+                    isToday ? 'bg-[var(--primary)] text-white' : 'bg-[var(--bg-hover)] text-[var(--text)]'
+                  }`}>
+                    <span className="text-[10px] font-semibold uppercase">{isToday ? 'Dnes' : DOW_SHORT[date.getDay()]}</span>
+                    <span className="text-[17px] font-semibold tabular-nums leading-tight">{date.getDate()}</span>
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-[14px] font-semibold text-[var(--text)] group-hover:underline">{z.nazev}</span>
+                    <span className="truncate text-[13px] text-[var(--text-muted)]">{[z.klient, z.adresa].filter(Boolean).join(' · ')}</span>
+                    <span className="text-[12px] text-[var(--text-secondary)]">
+                      {z.casPlanovany && <span className="tabular-nums">{z.casPlanovany} · </span>}
+                      {z.stav === 'v realizaci' ? 'v realizaci' : `priorita ${z.priorita === 'nizká' ? 'nízká' : z.priorita}`}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </Panel>
+  );
+}
+
+/* ═══ Rozpracované revize ═══ */
+
+const TYP_LABEL: Record<Revize['typRevize'], string> = {
+  'pravidelná': 'Pravidelná',
+  'výchozí': 'Výchozí',
+  'mimořádná': 'Mimořádná',
+};
+
+function WipPanel({ revize, total, staleDays }: { revize: Revize[]; total: number; staleDays: number }) {
+  return (
+    <Panel title="Rozpracované revize" className="lg:col-span-2" action={<PanelLink to="/revize">Všechny revize{total > revize.length ? ` (${total})` : ''}</PanelLink>}>
+      {revize.length === 0 ? (
+        <EmptyNote>
+          Žádná rozpracovaná revize.<br />
+          <Link to="/revize" className="mt-1 inline-block font-medium text-[var(--nav-text-active)] hover:underline">Založit revizi</Link>
+        </EmptyNote>
+      ) : (
+        <ul>
+          {revize.map(r => {
+            const age = Math.max(0, -daysFromToday(r.datum));
+            const variant: BadgeVariant = age >= staleDays * 2 ? 'danger' : age >= staleDays ? 'warning' : 'info';
+            const kategorie = KATEGORIE_LABELS[r.kategorieRevize]?.kratky ?? r.kategorieRevize;
+            return (
+              <li key={r.id} className="border-b border-[var(--border)] last:border-b-0">
+                <Link to={`/revize/${r.id}`} className="grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,1fr)_160px_auto] items-center gap-x-4 gap-y-1 px-4 py-3 hover:bg-[var(--bg-hover)] transition-colors">
+                  <span className="min-w-0">
+                    <span className="block text-[12px] text-[var(--text-muted)] tabular-nums">{r.cisloRevize || `#${r.id}`}</span>
+                    <span className="block truncate text-[14px] font-semibold text-[var(--text)]">{r.nazev || r.adresa || 'Bez názvu'}</span>
+                  </span>
+                  <span className="hidden sm:block text-[13px] text-[var(--text-secondary)]">
+                    {kategorie} · {TYP_LABEL[r.typRevize] ?? r.typRevize}
+                  </span>
+                  <Badge variant={variant}>{age === 0 ? 'založeno dnes' : `${age} ${pluralDni(age)}`}</Badge>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </Panel>
+  );
+}
+
+/* ═══ Graf revizí ═══ */
+
+const CZ_MONTHS = ['led', 'úno', 'bře', 'dub', 'kvě', 'čvn', 'čvc', 'srp', 'zář', 'říj', 'lis', 'pro'];
 
 function RevizeBarChart({ revize }: { revize: Revize[] }) {
   const bars = useMemo(() => {
@@ -134,44 +352,38 @@ function RevizeBarChart({ revize }: { revize: Revize[] }) {
 
   const max = Math.max(...bars.map(b => b.count), 1);
   const total = bars.reduce((s, b) => s + b.count, 0);
+  const current = bars[bars.length - 1];
 
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)]">
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border-subtle)]">
-        <h2 className="text-[13px] font-semibold text-[var(--text)]">Revize za posledních 12 měsíců</h2>
-        <span className="text-[11px] font-medium text-[var(--text-muted)]">{total} celkem</span>
+    <Panel title="Revize za 12 měsíců" action={<span className="text-[13px] text-[var(--text-secondary)] tabular-nums">{total} celkem</span>} bodyClassName="px-4 pt-4 pb-3">
+      <div
+        role="img"
+        aria-label={`Sloupcový graf počtu revizí za posledních 12 měsíců, celkem ${total}, tento měsíc ${current.count}`}
+        className="flex h-32 items-end gap-1.5"
+      >
+        {bars.map(b => (
+          <div key={`${b.year}-${b.month}`} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5" title={`${b.label} ${b.year}: ${b.count}`}>
+            {b.count > 0 && <span className={`text-[10px] tabular-nums ${b.isCurrent ? 'text-[var(--text)] font-semibold' : 'text-[var(--text-muted)]'}`}>{b.count}</span>}
+            <div
+              className={`w-full rounded-t-[3px] ${b.isCurrent ? 'bg-[var(--primary)]' : 'bg-[var(--bg-hover-strong)]'}`}
+              style={{ height: `${Math.max((b.count / max) * 88, b.count > 0 ? 4 : 2)}px` }}
+            />
+            <span className={`text-[11px] ${b.isCurrent ? 'text-[var(--text)] font-semibold' : 'text-[var(--text-muted)]'}`}>{b.label}</span>
+          </div>
+        ))}
       </div>
-      <div className="px-4 py-4">
-        <div className="flex items-end gap-1.5 h-28">
-          {bars.map((b, i) => {
-            const heightPct = max > 0 ? (b.count / max) * 100 : 0;
-            return (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1 group" title={`${CZ_MONTHS[b.month]} ${b.year}: ${b.count} revizí`}>
-                <span className={`text-[9px] font-medium transition-opacity ${b.count > 0 ? 'opacity-70 group-hover:opacity-100' : 'opacity-0'} text-[var(--text-secondary)]`}>
-                  {b.count > 0 ? b.count : ''}
-                </span>
-                <div className="w-full flex items-end" style={{ height: 72 }}>
-                  <div
-                    className="w-full rounded-sm transition-all duration-300"
-                    style={{
-                      height: b.count === 0 ? 2 : `${Math.round(heightPct)}%`,
-                      background: b.isCurrent
-                        ? 'var(--primary)'
-                        : b.count === 0
-                        ? 'var(--border)'
-                        : 'rgba(43,136,255,0.45)',
-                      minHeight: b.count === 0 ? 2 : 4,
-                    }}
-                  />
-                </div>
-                <span className={`text-[8px] font-medium ${b.isCurrent ? 'text-[var(--primary)]' : 'text-[var(--text-muted)]'}`}>
-                  {b.label}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+    </Panel>
+  );
+}
+
+/* ═══ Fakturace ═══ */
+
+function InvoiceRow({ label, value, tone }: { label: string; value: string; tone?: 'danger' | 'success' }) {
+  const color = tone === 'danger' ? 'text-[var(--danger-text)]' : tone === 'success' ? 'text-[var(--success-text)]' : 'text-[var(--text)]';
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <span className="text-[13px] text-[var(--text-secondary)]">{label}</span>
+      <span className={`text-[14px] font-semibold tabular-nums whitespace-nowrap ${color}`}>{value}</span>
     </div>
   );
 }
@@ -240,257 +452,83 @@ function WeatherInline() {
   );
 }
 
-const DAY_HEADERS = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'] as const;
-
-function isSameDay(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-}
-
-function getISOWeek(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const day = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - day);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-}
-
-function getMonthGrid(year: number, month: number): (Date | null)[] {
-  const first = new Date(year, month, 1);
-  const startDow = (first.getDay() + 6) % 7; // 0=Po
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cells: (Date | null)[] = [];
-  for (let i = 0; i < startDow; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d));
-  while (cells.length % 7 !== 0) cells.push(null);
-  return cells;
-}
-
-const LEGEND_ITEMS = [
-  { color: 'bg-[var(--danger)]', label: 'Vysoká priorita' },
-  { color: 'bg-amber-400', label: 'Střední' },
-  { color: 'bg-blue-400', label: 'Nízká' },
-  { color: 'bg-slate-400', label: 'Dokončeno' },
-] as const;
-
-function MonthCalendar({ zakazky }: { zakazky: Zakazka[] }) {
-  const today = new Date();
-  const [offset, setOffset] = useState(0);
-  const [selectedDate, setSelectedDate] = useState<Date>(today);
-  const navigate = useNavigate();
-
-  // Klávesová navigace: ← → pro měsíce, T pro dnešek
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).tagName === 'INPUT') return;
-      if (e.key === 'ArrowLeft') setOffset(o => o - 1);
-      else if (e.key === 'ArrowRight') setOffset(o => o + 1);
-      else if (e.key === 't' || e.key === 'T') setOffset(0);
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, []);
-
-  const viewDate = useMemo(() => {
-    const d = new Date(today.getFullYear(), today.getMonth() + offset, 1);
-    return d;
-  }, [offset, today.getFullYear(), today.getMonth()]);
-
-  const cells = useMemo(() => getMonthGrid(viewDate.getFullYear(), viewDate.getMonth()), [viewDate]);
-  const startDow = useMemo(() => (new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).getDay() + 6) % 7, [viewDate]);
-
-  const zakazkyByDay = useMemo(() => {
-    const map = new Map<string, Zakazka[]>();
-    for (const z of zakazky) {
-      if (!z.datumPlanovany) continue;
-      const key = new Date(z.datumPlanovany).toDateString();
-      const arr = map.get(key) ?? [];
-      arr.push(z);
-      map.set(key, arr);
-    }
-    return map;
-  }, [zakazky]);
-
-  // Počet zakázek v zobrazovaném měsíci
-  const monthCount = useMemo(() => {
-    return zakazky.filter(z => {
-      if (!z.datumPlanovany) return false;
-      const d = new Date(z.datumPlanovany);
-      return d.getMonth() === viewDate.getMonth() && d.getFullYear() === viewDate.getFullYear();
-    }).length;
-  }, [zakazky, viewDate]);
-
-  const monthLabel = viewDate.toLocaleDateString('cs-CZ', { month: 'long', year: 'numeric' });
-
-  const selectedDayZakazky = zakazkyByDay.get(selectedDate.toDateString()) ?? [];
-  const selectedDateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
-  const selectedDayLabel = selectedDate.toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' });
-
-  return (
-    <>
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] shadow-[var(--shadow-elevated)]">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-subtle)]">
-        <h2 className="text-[13px] font-semibold text-[var(--text)] capitalize flex items-center gap-2">
-          {monthLabel}
-          {monthCount > 0 && (
-            <span className="text-[10px] font-normal text-[var(--text-muted)]">{monthCount} zakázek</span>
-          )}
-        </h2>
-        <div className="flex items-center gap-1">
-          <button title="Předchozí měsíc (←)" onClick={() => setOffset(o => o - 1)} className="h-6 w-6 flex items-center justify-center rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors text-xs">‹</button>
-          <button onClick={() => { setOffset(0); setSelectedDate(today); }} className="px-2 py-0.5 rounded text-[10px] font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors">Dnes</button>
-          <button title="Další měsíc (→)" onClick={() => setOffset(o => o + 1)} className="h-6 w-6 flex items-center justify-center rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors text-xs">›</button>
-        </div>
-      </div>
-      {/* Day headers */}
-      <div className="grid grid-cols-[20px_repeat(7,1fr)] border-b border-[var(--border-subtle)]">
-        <div className="py-1 text-center text-[8px] font-semibold uppercase tracking-wider text-[var(--text-muted)] opacity-50">Tý</div>
-        {DAY_HEADERS.map((d, i) => (
-          <div key={d} className={`py-1 text-center text-[9px] font-semibold uppercase tracking-wider ${i >= 5 ? 'text-[var(--text-muted)]' : 'text-[var(--text-secondary)]'}`}>{d}</div>
-        ))}
-      </div>
-      {/* Cells */}
-      <div className="grid grid-cols-[20px_repeat(7,1fr)]">
-        {Array.from({ length: cells.length / 7 }, (_, r) => {
-          const rowMonday = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1 - startDow + r * 7);
-          const weekNum = getISOWeek(rowMonday);
-          return [
-            <div key={`wn-${r}`} className="min-h-[36px] border-t border-[var(--border-subtle)] flex items-start justify-center pt-1">
-              <span className="text-[8px] font-medium text-[var(--text-muted)] opacity-50 tabular-nums leading-none">{weekNum}</span>
-            </div>,
-            ...cells.slice(r * 7, r * 7 + 7).map((day, col) => {
-              const i = r * 7 + col;
-              if (!day) return <div key={`e${i}`} className="min-h-[36px] bg-[var(--bg-faint)]" />;
-              const isToday = isSameDay(day, today);
-              const isPast = day < today && !isToday;
-              const isWeekend = col >= 5;
-              const dayZ = zakazkyByDay.get(day.toDateString()) ?? [];
-              const hasEvents = dayZ.length > 0;
-              const isSelected = isSameDay(day, selectedDate);
-              return (
-                <div
-                  key={i}
-                  onClick={() => setSelectedDate(day)}
-                  className={`relative min-h-[36px] border-t border-r border-[var(--border-subtle)] px-0.5 py-1 flex flex-col items-center cursor-pointer transition-colors ${
-                    isToday ? 'bg-[var(--bg-surface)]' : isWeekend ? 'bg-[var(--bg-faint)]' : ''
-                  } ${isPast && !hasEvents ? 'opacity-30' : isPast ? 'opacity-60' : ''} ${
-                    hasEvents ? 'hover:bg-[var(--bg-accent)]' : 'hover:bg-[var(--bg-hover)]'
-                  } ${isSelected && !isToday ? 'ring-2 ring-inset ring-[var(--primary)]/50' : ''}`}
-                >
-                  <p className={`text-center text-[11px] font-medium leading-none ${
-                    isToday
-                      ? 'flex h-5 w-5 items-center justify-center rounded-full bg-[var(--primary)] text-white text-[10px]'
-                      : isWeekend ? 'text-[var(--text-muted)]' : 'text-[var(--text-secondary)]'
-                  }`}>{day.getDate()}</p>
-                  {hasEvents && (
-                    <div className="mt-1 flex items-center justify-center gap-0.5 flex-wrap">
-                      {dayZ.slice(0, 3).map((z) => {
-                        const color = z.stav === 'dokončeno' ? 'bg-[var(--text-muted)]' : z.priorita === 'vysoká' ? 'bg-[var(--danger)]' : z.priorita === 'střední' ? 'bg-amber-400' : 'bg-[var(--primary)]';
-                        return (
-                          <span
-                            key={z.id}
-                            className={`h-1.5 w-1.5 rounded-full ${color}`}
-                            title={`${z.nazev} — ${z.klient}`}
-                          />
-                        );
-                      })}
-                      {dayZ.length > 3 && (
-                        <span className="text-[7px] font-bold text-[var(--text-secondary)]">+{dayZ.length - 3}</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            }),
-          ];
-        })}
-      </div>
-      {/* Legenda */}
-      <div className="flex items-center gap-3 px-3 py-2 border-t border-[var(--border-subtle)] flex-wrap">
-        {LEGEND_ITEMS.map(l => (
-          <span key={l.label} className="flex items-center gap-1 text-[9px] text-[var(--text-muted)]">
-            <span className={`h-1.5 w-1.5 rounded-full ${l.color}`} />
-            {l.label}
-          </span>
-        ))}
-        <span className="ml-auto text-[9px] text-[var(--text-muted)] opacity-50">← T →</span>
-      </div>
-    </div>
-    {/* Panel zakázek pro vybraný den */}
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] mt-2">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-subtle)]">
-        <p className="text-[12px] font-semibold text-[var(--text)] capitalize">{selectedDayLabel}</p>
-        <button
-          onClick={() => navigate(`/planovani?datum=${selectedDateStr}`)}
-          className="text-[10px] font-medium text-[var(--primary)] hover:underline transition-colors whitespace-nowrap"
-        >
-          + Naplánovat
-        </button>
-      </div>
-      {selectedDayZakazky.length > 0 ? (
-        <div className="p-2 space-y-1 max-h-48 overflow-y-auto">
-          {selectedDayZakazky.map((z) => {
-            const priorityBorder = z.priorita === 'vysoká' ? 'border-l-red-500' : z.priorita === 'střední' ? 'border-l-amber-400' : 'border-l-blue-400';
-            const stavColor = z.stav === 'dokončeno' ? 'text-[var(--text-muted)]' : z.stav === 'v realizaci' ? 'text-[var(--warning-text)]' : 'text-[var(--primary)]';
-            return (
-              <Link
-                key={z.id}
-                to="/planovani"
-                className={`block rounded border border-[var(--border)] border-l-[3px] ${priorityBorder} bg-[var(--bg-faint)] px-2.5 py-1.5 hover:bg-[var(--bg-hover)] transition-colors`}
-              >
-                <p className="text-[12px] font-medium text-[var(--text)] truncate">{z.nazev}</p>
-                <div className="flex items-center justify-between mt-0.5">
-                  <p className="text-[10px] text-[var(--text-secondary)] truncate">{z.klient}</p>
-                  <span className={`text-[10px] font-medium capitalize ${stavColor}`}>{z.stav}</span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      ) : (
-        <p className="text-[11px] text-[var(--text-muted)] text-center py-4">Žádné zakázky pro tento den</p>
-      )}
-    </div>
-    </>
-  );
-}
-
 /* ═══ Dashboard ═══ */
+
+/** Okno pro „nevyfakturované“ dokončené revize – starší se už nepočítají. */
+const FAKTURACE_OKNO_DNI = 90;
+const PLATNOST_HORIZONT_DNI = 60;
 
 export function Dashboard() {
   const { data: revize = [], isLoading: loadingRevize } = useRevize();
-  const { data: pristroje = [], isLoading: loadingPristroje } = usePristroje();
   const { data: zakazky = [], isLoading: loadingZakazky } = useZakazky();
+  const { data: zavady = [] } = useZavady();
+  const { data: faktury = [] } = useFaktury();
+  const { notifications } = useNotifications();
 
-  const isLoading = loadingRevize || loadingPristroje || loadingZakazky;
+  const isLoading = loadingRevize || loadingZakazky;
+  const staleDays = 14;
 
-  const { stats, recentRevize, upcomingZakazky } = useMemo(() => {
-    const dokonceno = revize.filter(r => r.stav === 'dokončeno' || r.stav === 'schváleno').length;
-    const in30Days = new Date();
-    in30Days.setDate(in30Days.getDate() + 30);
-    const pristrojeKRekalibraci = pristroje.filter((p: MericiPristroj) => {
-      if (!p.platnostKalibrace) return false;
-      return new Date(p.platnostKalibrace) <= in30Days;
-    }).length;
+  const data = useMemo(() => {
+    // Platnost revize: pro každý objekt (kategorie + adresa) jen nejnovější dokončená revize,
+    // aby se starší revize už nahrazené novou nepočítaly jako „po termínu“.
+    const latestByObject = new Map<string, Revize>();
+    for (const r of revize) {
+      if (r.stav !== 'dokončeno' && r.stav !== 'schváleno') continue;
+      const addr = (r.adresa ?? '').trim().toLowerCase();
+      const key = addr ? `${r.kategorieRevize}|${addr}` : `id|${r.id}`;
+      const prev = latestByObject.get(key);
+      if (!prev || new Date(r.datum) > new Date(prev.datum)) latestByObject.set(key, r);
+    }
+    let poTerminu = 0;
+    let brzy = 0;
+    for (const r of latestByObject.values()) {
+      if (!r.datumPlatnosti) continue;
+      const d = daysFromToday(r.datumPlatnosti);
+      if (d < 0) poTerminu++;
+      else if (d <= PLATNOST_HORIZONT_DNI) brzy++;
+    }
+
+    const rozpracovane = revize
+      .filter(r => r.stav === 'rozpracováno')
+      .sort((a, b) => new Date(a.datum).getTime() - new Date(b.datum).getTime());
+    const zastarale = rozpracovane.filter(r => -daysFromToday(r.datum) >= staleDays).length;
+
+    const otevreneZavady = zavady.filter(z => z.stav !== 'vyřešená');
+    const zavadyC1 = otevreneZavady.filter(z => z.zavaznost === 'C1').length;
+
+    // Fakturace
+    const platne = faktury.filter(f => f.stav !== 'storno');
+    const fakturovaneRevize = new Set(platne.map(f => f.revizeId).filter((id): id is number => id != null));
+    const nevyfakturovano = revize.filter(r =>
+      (r.stav === 'dokončeno' || r.stav === 'schváleno') &&
+      r.id != null && !fakturovaneRevize.has(r.id) &&
+      -daysFromToday(r.datumDokonceni || r.datum) <= FAKTURACE_OKNO_DNI,
+    ).length;
+    const poSplatnosti = platne.filter(f => f.stav === 'vystavena' && f.datumSplatnosti && daysFromToday(f.datumSplatnosti) < 0);
+    const now = new Date();
+    const uhrazenoMesic = platne
+      .filter(f => {
+        if (f.stav !== 'zaplacena' || !f.datumUhrady) return false;
+        const d = new Date(f.datumUhrady);
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+      })
+      .reduce((s, f) => s + (Number(f.celkem) || 0), 0);
 
     return {
-      stats: {
-        celkemRevizi: revize.length,
-        dokonceno,
-        rozpracovano: revize.filter(r => r.stav === 'rozpracováno').length,
-        pristrojeKRekalibraci,
-        planovaneZakazky: zakazky.filter(z => z.stav === 'plánováno').length,
+      poTerminu, brzy,
+      rozpracovaneCount: rozpracovane.length,
+      rozpracovaneTop: rozpracovane.slice(0, 5),
+      zastarale,
+      otevreneZavady: otevreneZavady.length,
+      zavadyC1,
+      faktury: {
+        nevyfakturovano,
+        poSplatnostiCount: poSplatnosti.length,
+        poSplatnostiSum: poSplatnosti.reduce((s, f) => s + (Number(f.celkem) || 0), 0),
+        uhrazenoMesic,
       },
-      recentRevize: revize
-        .filter(r => r.stav === 'rozpracováno')
-        .sort((a, b) => new Date(b.datum).getTime() - new Date(a.datum).getTime())
-        .slice(0, 5),
-      upcomingZakazky: zakazky
-        .filter(z => z.stav === 'plánováno')
-        .sort((a, b) => new Date(a.datumPlanovany).getTime() - new Date(b.datumPlanovany).getTime())
-        .slice(0, 5),
     };
-  }, [revize, pristroje, zakazky]);
+  }, [revize, zavady, faktury]);
 
   if (isLoading) {
     return (
@@ -514,94 +552,90 @@ export function Dashboard() {
   const todayLabel = new Date().toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
-    <div className="space-y-6">
-      {/* ═══ Header + Počasí inline ═══ */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1.5">
-          <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">{greeting}</h1>
-          <p className="text-xs text-[var(--text-secondary)] capitalize">{todayLabel}</p>
-          <WeatherInline />
+    <div className="space-y-5">
+      {/* ═══ Hlavička ═══ */}
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-[var(--text-muted)]">
+            <span className="first-letter:uppercase">{todayLabel}</span>
+            <WeatherInline />
+          </div>
+          <h1 className="text-[26px] font-bold tracking-tight text-[var(--text)]">{greeting}</h1>
         </div>
-        <div className="flex gap-1.5 shrink-0 mt-1">
-          <Link to="/revize" className="inline-flex items-center rounded border border-[var(--border-strong)] bg-[var(--bg-surface)] px-2.5 py-1 text-[11px] font-medium text-[var(--text)] hover:bg-[var(--bg-hover-strong)] transition-colors">
-            + Revize
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+          <Link
+            to="/planovani"
+            className="inline-flex min-h-[44px] flex-1 sm:flex-none items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-strong)] px-4 text-[14px] font-semibold text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
+          >
+            Nová zakázka
           </Link>
-          <Link to="/planovani" className="inline-flex items-center rounded border border-[var(--primary)] bg-[var(--primary)] px-2.5 py-1 text-[11px] font-medium text-white hover:opacity-90 transition-opacity">
-            + Zakázka
+          <Link
+            to="/revize"
+            className="inline-flex min-h-[44px] flex-1 sm:flex-none items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--primary)] px-5 text-[14px] font-semibold text-white hover:bg-[var(--primary-hover)] transition-colors"
+          >
+            <Icon name="plus" size={16} strokeWidth={2.4} /> Nová revize
           </Link>
         </div>
-      </div>
+      </header>
 
-      {/* ═══ Hlavní grid ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
-        <SectionCard
+      {/* ═══ Klíčové ukazatele ═══ */}
+      <section aria-label="Klíčové ukazatele" className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <KpiCard
           title="Rozpracované revize"
-          icon=""
-          count={stats.rozpracovano}
-          viewAllLink="/revize"
-          empty="Zatím nemáte žádné revize."
-          emptyLink="/revize"
-          emptyLabel="Vytvořit první revizi →"
-        >
-          {recentRevize.map(r => <RevizeRow key={r.id} r={r} />)}
-        </SectionCard>
+          value={data.rozpracovaneCount}
+          sub={data.zastarale > 0 ? `${data.zastarale} déle než ${staleDays} dní` : 'žádná nestojí'}
+          tag="aktivní"
+          tone="info"
+          to="/revize"
+        />
+        <KpiCard
+          title="Platnost revize vypršela"
+          value={data.poTerminu}
+          sub="objekty k nové revizi"
+          tag="urgentní"
+          tone="danger"
+          to="/revize"
+        />
+        <KpiCard
+          title={`Platnost do ${PLATNOST_HORIZONT_DNI} dnů`}
+          value={data.brzy}
+          sub="připravit nabídky a zakázky"
+          tag="plánovat"
+          tone="warning"
+          to="/planovani"
+        />
+        <KpiCard
+          title="Otevřené závady"
+          value={data.otevreneZavady}
+          sub={data.zavadyC1 > 0 ? `${data.zavadyC1} se závažností C1` : 'žádná se závažností C1'}
+          tag={data.zavadyC1 > 0 ? 'C1' : undefined}
+          tone="danger"
+          to="/zavady"
+        />
+      </section>
 
-        <SectionCard
-          title="Nadcházející zakázky"
-          icon=""
-          count={stats.planovaneZakazky}
-          viewAllLink="/planovani"
-          empty="Žádné plánované zakázky."
-          emptyLink="/planovani"
-          emptyLabel="Naplánovat zakázku →"
-        >
-          {upcomingZakazky.map(z => <ZakazkaRow key={z.id} z={z} />)}
-        </SectionCard>
-
-        {/* Kalendář — pravý sloupec přes oba řádky */}
-        <div className="lg:row-span-2">
-          <MonthCalendar zakazky={zakazky} />
-        </div>
-
-        {/* Stat karty — levý blok col-span-2 */}
-        <div className="lg:col-span-2 grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-          <StatCard
-            title="Celkem revizí"
-            value={stats.celkemRevizi}
-            subtitle={`${stats.dokonceno} dokončených`}
-            icon={<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
-            tint="blue"
-            link="/revize"
-          />
-          <StatCard
-            title="Rozpracováno"
-            value={stats.rozpracovano}
-            subtitle="čeká na dokončení"
-            icon={<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-            tint="amber"
-            link="/revize"
-          />
-          <StatCard
-            title="K rekalibraci"
-            value={stats.pristrojeKRekalibraci}
-            subtitle="do 30 dnů"
-            icon={<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.999L13.732 4.001c-.77-1.333-2.694-1.333-3.464 0L3.34 16.001C2.57 17.334 3.532 19 5.072 19z" /></svg>}
-            tint="danger"
-            link="/pristroje"
-          />
-          <StatCard
-            title="Plánované zakázky"
-            value={stats.planovaneZakazky}
-            subtitle="naplánováno"
-            icon={<svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
-            tint="success"
-            link="/planovani"
-          />
-        </div>
+      {/* ═══ Pozornost + týden ═══ */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start">
+        <AttentionPanel notifications={notifications} />
+        <WeekPanel zakazky={zakazky} />
       </div>
 
-      {/* ═══ Graf revizí ═══ */}
-      <RevizeBarChart revize={revize} />
+      {/* ═══ Rozpracované + graf + fakturace ═══ */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start">
+        <WipPanel revize={data.rozpracovaneTop} total={data.rozpracovaneCount} staleDays={staleDays} />
+        <div className="flex min-w-0 flex-col gap-3">
+          <RevizeBarChart revize={revize} />
+          <Panel title="Fakturace" action={<PanelLink to="/faktury">Faktury</PanelLink>} bodyClassName="flex flex-col gap-3 px-4 py-3.5">
+            <InvoiceRow label={`Dokončeno, nevyfakturováno (${FAKTURACE_OKNO_DNI} dní)`} value={String(data.faktury.nevyfakturovano)} />
+            <InvoiceRow
+              label="Po splatnosti"
+              value={data.faktury.poSplatnostiCount > 0 ? `${data.faktury.poSplatnostiCount} · ${formatKcCele(data.faktury.poSplatnostiSum)}` : '0'}
+              tone={data.faktury.poSplatnostiCount > 0 ? 'danger' : undefined}
+            />
+            <InvoiceRow label="Uhrazeno tento měsíc" value={formatKcCele(data.faktury.uhrazenoMesic)} tone="success" />
+          </Panel>
+        </div>
+      </div>
     </div>
   );
 }
