@@ -21,6 +21,7 @@ export const queryKeys = {
     byRozvadec: (rozvadecId: number) => ['chranic', 'byRozvadec', rozvadecId] as const,
   },
   zavady: {
+    all: ['zavady', 'all'] as const,
     byRevize: (revizeId: number) => ['zavady', 'byRevize', revizeId] as const,
   },
   mistnosti: {

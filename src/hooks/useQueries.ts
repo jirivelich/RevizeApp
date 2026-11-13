@@ -237,6 +237,13 @@ export function useDeleteChranic() {
    ZÁVADY
    ═══════════════════════════════════════════ */
 
+export function useZavady() {
+  return useQuery({
+    queryKey: queryKeys.zavady.all,
+    queryFn: () => zavadaService.getAll(),
+  });
+}
+
 export function useZavadyByRevize(revizeId: number | undefined) {
   return useQuery({
     queryKey: queryKeys.zavady.byRevize(revizeId!),
@@ -253,6 +260,7 @@ export function useCreateZavada() {
       if (vars.revizeId) {
         qc.invalidateQueries({ queryKey: queryKeys.zavady.byRevize(vars.revizeId) });
       }
+      qc.invalidateQueries({ queryKey: queryKeys.zavady.all });
     },
   });
 }
@@ -266,6 +274,7 @@ export function useUpdateZavada() {
       if (vars.data.revizeId) {
         qc.invalidateQueries({ queryKey: queryKeys.zavady.byRevize(vars.data.revizeId) });
       }
+      qc.invalidateQueries({ queryKey: queryKeys.zavady.all });
     },
   });
 }
@@ -277,6 +286,7 @@ export function useDeleteZavada() {
       zavadaService.delete(id),
     onSuccess: (_res, vars) => {
       qc.invalidateQueries({ queryKey: queryKeys.zavady.byRevize(vars.revizeId) });
+      qc.invalidateQueries({ queryKey: queryKeys.zavady.all });
     },
   });
 }
