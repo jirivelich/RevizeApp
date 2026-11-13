@@ -37,18 +37,18 @@ describe('FakturyPage', () => {
 
   it('vykreslí seznam faktur se stavy', () => {
     render(<MemoryRouter><FakturyPage /></MemoryRouter>);
-    expect(screen.getByText('Novák s.r.o.')).toBeTruthy();
-    expect(screen.getByText('20260001')).toBeTruthy();
+    expect(screen.getAllByText('Novák s.r.o.').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('20260001').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Vystavená').length).toBeGreaterThan(1);
     expect(screen.getAllByText('Koncept').length).toBeGreaterThan(1);
-    expect(screen.getByText(/1\s?500,00\s*Kč/)).toBeTruthy();
+    expect(screen.getAllByText(/1\s?500,00\s*Kč/).length).toBeGreaterThan(0);
   });
 
   it('zobrazí srozumitelnou chybu při selhání změny stavu', async () => {
     mutateAsync.mockImplementation(async () => { throw new Error('x'); });
     Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });
     render(<MemoryRouter><FakturyPage /></MemoryRouter>);
-    fireEvent.click(screen.getByRole('button', { name: 'Zaplacena' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Zaplacena' })[0]);
     expect((await screen.findByRole('alert')).textContent).toContain('připojení k internetu');
     Object.defineProperty(navigator, 'onLine', { value: true, configurable: true });
   });

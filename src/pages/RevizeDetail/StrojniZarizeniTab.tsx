@@ -2,13 +2,13 @@
  * StrojniZarizeniTab – Formulář protokolu ověření strojního zařízení
  * Integrovaný přímo v RevizeDetailPage jako tab pro kategorii 'stroje'.
  * 
- * Design: Tailwind CSS, sjednoceno s ostatními taby (slate paleta, bg-slate-800 sekční hlavičky)
+ * Design: Tailwind CSS, sjednoceno s ostatními taby (slate paleta, bg-[var(--bg-surface)] sekční hlavičky)
  * Data se ukládají do DB přes rodičovský formData + export do PDF / Excel
  */
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import type { Revize, Nastaveni, Zakaznik, MericiPristroj } from '../../types';
-import { Modal } from '../../components/ui';
+import { Modal, Button, Input, Select } from '../../components/ui';
 import { useAddPristrojToRevize, useRemovePristrojFromRevize } from '../../hooks/useQueries';
 import { TW } from './tw';
 
@@ -126,7 +126,7 @@ interface StrojniZarizeniTabProps {
 
 // ── Check button ──
 function CB({ val, active, label, onClick }: { val: string; active: boolean; label: string; onClick: () => void }) {
-  const base = 'flex-1 py-1 px-1 text-xs font-semibold border cursor-pointer text-center transition-all select-none rounded';
+  const base = 'flex-1 py-1.5 px-1 min-h-[32px] text-xs font-semibold border cursor-pointer text-center transition-colors select-none rounded-[var(--radius-md)]';
   const cls = active
     ? val === 'V' ? `${base} bg-[var(--success-bg)] border-[var(--success)] text-[var(--success-text)]`
     : val === 'N' ? `${base} bg-[var(--danger-bg)] border-[var(--danger)] text-[var(--danger-text)]`
@@ -256,62 +256,38 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
 
       {/* Export bar */}
       <div className="flex gap-2 justify-end py-2">
-        <button className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold uppercase tracking-wide rounded-lg text-white cursor-pointer transition-all hover:-translate-y-0.5 bg-emerald-600 hover:bg-emerald-700" onClick={handleExcel} type="button">
+        <Button variant="success" className="gap-1.5" onClick={handleExcel}>
           <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l6-6M9 9l6 6"/></svg>
           Excel
-        </button>
+        </Button>
       </div>
 
       {/* ═══ 01 – IDENTIFIKACE STROJE ═══ */}
-      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
+        <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
           <span className="text-[var(--primary)]">01</span> Identifikace strojního zařízení – štítek
         </div>
         <div className="p-4">
           <div className="grid grid-cols-3 max-sm:grid-cols-1 gap-2.5">
-            <div className="flex flex-col gap-1 col-span-2 max-sm:col-span-1"><label className={TW.label}>Název / typ stroje</label>
-              <input type="text" className={TW.input} value={fd.strojNazev} onChange={e => upd('strojNazev', e.target.value)} /></div>
-            <div className="flex flex-col gap-1"><label className={TW.label}>Výrobní číslo (SN)</label>
-              <input type="text" className={TW.input} value={fd.strojSn} onChange={e => upd('strojSn', e.target.value)} /></div>
-            <div className="flex flex-col gap-1"><label className={TW.label}>Výrobce</label>
-              <input type="text" className={TW.input} value={fd.strojVyrobce} onChange={e => upd('strojVyrobce', e.target.value)} /></div>
-            <div className="flex flex-col gap-1"><label className={TW.label}>Rok výroby</label>
-              <input type="text" className={TW.input} value={fd.strojRok} onChange={e => upd('strojRok', e.target.value)} /></div>
-            <div className="flex flex-col gap-1"><label className={TW.label}>Napájení (V / Hz)</label>
-              <input type="text" className={TW.input} value={fd.strojNapajeni} onChange={e => upd('strojNapajeni', e.target.value)} placeholder="3×400V / 50Hz" /></div>
-            <div className="flex flex-col gap-1"><label className={TW.label}>Příkon (kW)</label>
-              <input type="text" className={TW.input} value={fd.strojPrikon} onChange={e => upd('strojPrikon', e.target.value)} /></div>
-            <div className="flex flex-col gap-1"><label className={TW.label}>Jmenovitý proud (A)</label>
-              <input type="text" className={TW.input} value={fd.strojProud} onChange={e => upd('strojProud', e.target.value)} /></div>
-            <div className="flex flex-col gap-1"><label className={TW.label}>Stupeň ochrany IP</label>
-              <input type="text" className={TW.input} value={fd.strojIp} onChange={e => upd('strojIp', e.target.value)} placeholder="IP54" /></div>
-            <div className="flex flex-col gap-1"><label className={TW.label}>Třída ochrany</label>
-              <select className={TW.input} value={fd.strojTrida} onChange={e => upd('strojTrida', e.target.value)}>
-                <option value="">— vyberte —</option>
-                <option>I (ochranné uzemnění)</option>
-                <option>II (dvojitá izolace)</option>
-                <option>III (SELV)</option>
-              </select></div>
-            <div className="flex flex-col gap-1"><label className={TW.label}>CE / Prohlášení o shodě</label>
-              <select className={TW.input} value={fd.strojCe} onChange={e => upd('strojCe', e.target.value)}>
-                <option value="">— vyberte —</option>
-                <option>Ano</option><option>Ne</option><option>Nelze ověřit</option>
-              </select></div>
-            <div className="flex flex-col gap-1"><label className={TW.label}>Hala / pracoviště</label>
-              <input type="text" className={TW.input} value={fd.mistoHala} onChange={e => upd('mistoHala', e.target.value)} /></div>
-            <div className="flex flex-col gap-1"><label className={TW.label}>Připojení stroje</label>
-              <select className={TW.input} value={fd.strojPrivod} onChange={e => upd('strojPrivod', e.target.value as '' | 'pevny' | 'pohyblivy')}>
-                <option value="">— vyberte —</option>
-                <option value="pevny">Pevný přívod</option>
-                <option value="pohyblivy">Pohyblivý přívod</option>
-              </select></div>
+            <div className="col-span-2 max-sm:col-span-1"><Input label="Název / typ stroje" value={fd.strojNazev} onChange={e => upd('strojNazev', e.target.value)} /></div>
+            <Input label="Výrobní číslo (SN)" value={fd.strojSn} onChange={e => upd('strojSn', e.target.value)} />
+            <Input label="Výrobce" value={fd.strojVyrobce} onChange={e => upd('strojVyrobce', e.target.value)} />
+            <Input label="Rok výroby" value={fd.strojRok} onChange={e => upd('strojRok', e.target.value)} />
+            <Input label="Napájení (V / Hz)" value={fd.strojNapajeni} onChange={e => upd('strojNapajeni', e.target.value)} placeholder="3×400V / 50Hz" />
+            <Input label="Příkon (kW)" value={fd.strojPrikon} onChange={e => upd('strojPrikon', e.target.value)} />
+            <Input label="Jmenovitý proud (A)" value={fd.strojProud} onChange={e => upd('strojProud', e.target.value)} />
+            <Input label="Stupeň ochrany IP" value={fd.strojIp} onChange={e => upd('strojIp', e.target.value)} placeholder="IP54" />
+            <Select label="Třída ochrany" value={fd.strojTrida} onChange={e => upd('strojTrida', e.target.value)} options={[{ value: "", label: "— vyberte —" }, { value: "I (ochranné uzemnění)", label: "I (ochranné uzemnění)" }, { value: "II (dvojitá izolace)", label: "II (dvojitá izolace)" }, { value: "III (SELV)", label: "III (SELV)" }]} />
+            <Select label="CE / Prohlášení o shodě" value={fd.strojCe} onChange={e => upd('strojCe', e.target.value)} options={[{ value: "", label: "— vyberte —" }, { value: "Ano", label: "Ano" }, { value: "Ne", label: "Ne" }, { value: "Nelze ověřit", label: "Nelze ověřit" }]} />
+            <Input label="Hala / pracoviště" value={fd.mistoHala} onChange={e => upd('mistoHala', e.target.value)} />
+            <Select label="Připojení stroje" value={fd.strojPrivod} onChange={e => upd('strojPrivod', e.target.value as '' | 'pevny' | 'pohyblivy')} options={[{ value: "", label: "— vyberte —" }, { value: "pevny", label: "Pevný přívod" }, { value: "pohyblivy", label: "Pohyblivý přívod" }]} />
           </div>
         </div>
       </div>
 
       {/* ═══ 02 – JIŠTĚNÍ ═══ */}
-      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
+        <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
           <span className="text-[var(--primary)]">02</span> Jištění strojního zařízení
         </div>
         <div className="p-4">
@@ -345,8 +321,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       </div>
 
       {/* ═══ 03 – IZOLAČNÍ ODPOR ═══ */}
-      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
+        <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
           <span className="text-[var(--primary)]">03</span> Měření izolačního odporu (ČSN EN 60204-1)
         </div>
         <div className="p-4">
@@ -381,8 +357,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       </div>
 
       {/* ═══ 04 – SPOJITOST PE ═══ */}
-      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
+        <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
           <span className="text-[var(--primary)]">04</span> Měření spojitosti ochranných vodičů (PE)
         </div>
         <div className="p-4">
@@ -417,8 +393,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       </div>
 
       {/* ═══ 05 – IMPEDANCE PORUCHOVÉ SMYČKY ═══ */}
-      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
+        <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
           <span className="text-[var(--primary)]">05</span> Měření impedance poruchové smyčky
         </div>
         <div className="p-4">
@@ -451,8 +427,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       </div>
 
       {/* ═══ 06 – RCD ═══ */}
-      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
+        <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
           <span className="text-[var(--primary)]">06</span> Měření proudových chráničů (RCD)
         </div>
         <div className="p-4">
@@ -484,8 +460,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       </div>
 
       {/* ═══ OSTATNÍ MĚŘENÍ (nepovinné – bez řádků se v protokolu nevypisuje) ═══ */}
-      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
+        <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
           <span className="text-[var(--primary)]">06a</span> Ostatní měření
           <button
             type="button"
@@ -537,8 +513,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       </div>
 
       {/* ═══ 07 – FUNKČNÍ KONTROLY ═══ */}
-      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
+        <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
           <span className="text-[var(--primary)]">07</span> Funkční kontroly
         </div>
         <div className="p-4">
@@ -569,16 +545,12 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       </div>
 
       {/* ═══ 08 – MĚŘICÍ PŘÍSTROJE ═══ */}
-      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
+        <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
           <span className="text-[var(--primary)]">08</span> Použité měřicí přístroje
-          <button
-            type="button"
-            onClick={() => setIsPristrojModalOpen(true)}
-            className="ml-auto px-3 py-1 text-xs font-semibold uppercase tracking-wide bg-emerald-600 text-white rounded cursor-pointer hover:bg-emerald-700 transition-colors"
-          >
+          <Button variant="success" size="sm" className="ml-auto" onClick={() => setIsPristrojModalOpen(true)}>
             + Přidat z databáze
-          </button>
+          </Button>
         </div>
         <div className="p-4">
           {/* Přiřazené přístroje z DB */}
@@ -601,9 +573,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
                       <td className={TW.td}>{p.vyrobniCislo}</td>
                       <td className={TW.td}>{p.platnostKalibrace ? new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ') : '—'}</td>
                       <td className={`${TW.td} text-center`}>
-                        <button type="button" onClick={() => { if (p.id) removePristroj.mutate({ revizeId, pristrojId: p.id }); }}
-                          className="bg-[var(--danger)] text-white border-none px-2 py-0.5 cursor-pointer font-semibold text-xs rounded hover:bg-[var(--danger)] transition-colors"
-                        >✕</button>
+                        <Button variant="danger" size="sm" aria-label="Odebrat přístroj" onClick={() => { if (p.id) removePristroj.mutate({ revizeId, pristrojId: p.id }); }}
+                        >✕</Button>
                       </td>
                     </tr>
                   ))}
@@ -693,8 +664,8 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       </Modal>
 
       {/* ═══ 09 – POSUDEK ═══ */}
-      <div className="bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-sm overflow-hidden">
-        <div className="bg-[var(--section-header-bg)] text-[var(--text)] px-4 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
+        <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
           <span className="text-[var(--primary)]">09</span> Posudek
         </div>
         <div className="p-4">
@@ -704,14 +675,14 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
             </div>
             <div className="flex gap-3 mb-3.5">
               <button
-                className={`flex-1 py-3 px-4 border-2 rounded-lg cursor-pointer text-xs font-bold text-center transition-all tracking-wide ${
+                className={`flex-1 py-3 px-4 border-2 rounded-[var(--radius-lg)] cursor-pointer text-sm font-bold text-center transition-all tracking-wide ${
                   fd.verdikt === 'pass' ? 'bg-[var(--success-bg)] border-[var(--success)] text-[var(--success-text)]' : 'border-[var(--border-medium)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-strong)]'
                 }`}
                 onClick={() => upd('verdikt', fd.verdikt === 'pass' ? '' : 'pass')} type="button">
                 ✓ &nbsp; VYHOVUJE
               </button>
               <button
-                className={`flex-1 py-3 px-4 border-2 rounded-lg cursor-pointer text-xs font-bold text-center transition-all tracking-wide ${
+                className={`flex-1 py-3 px-4 border-2 rounded-[var(--radius-lg)] cursor-pointer text-sm font-bold text-center transition-all tracking-wide ${
                   fd.verdikt === 'fail' ? 'bg-[var(--danger-bg)] border-[var(--danger)] text-[var(--danger-text)]' : 'border-[var(--border-medium)] bg-[var(--bg-input)] text-[var(--text-muted)] hover:border-[var(--border-strong)]'
                 }`}
                 onClick={() => upd('verdikt', fd.verdikt === 'fail' ? '' : 'fail')} type="button">
@@ -722,14 +693,14 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
           <hr className="border-t border-dashed border-[var(--border-medium)] my-2.5" />
           <div className="grid gap-2.5 mt-2.5">
             <div className="flex flex-col gap-1"><label className={TW.label}>Zjištěné závady / nedostatky</label>
-              <textarea rows={3} className={`${TW.input} resize-y min-h-[70px]`} value={fd.posudekZavady} onChange={e => upd('posudekZavady', e.target.value)} /></div>
+              <textarea rows={3} className={`${TW.textarea} min-h-[70px]`} value={fd.posudekZavady} onChange={e => upd('posudekZavady', e.target.value)} /></div>
             <div className="flex flex-col gap-1"><label className={TW.label}>Doporučení / termín odstranění závad</label>
-              <textarea rows={2} className={`${TW.input} resize-y min-h-[70px]`} value={fd.posudekDoporuceni} onChange={e => upd('posudekDoporuceni', e.target.value)} /></div>
+              <textarea rows={2} className={`${TW.textarea} min-h-[70px]`} value={fd.posudekDoporuceni} onChange={e => upd('posudekDoporuceni', e.target.value)} /></div>
             <div className="flex flex-col gap-1"><label className={TW.label}>Použité normy a předpisy</label>
-              <textarea rows={2} className={`${TW.input} resize-y min-h-[70px]`} value={fd.posudekNormy} onChange={e => upd('posudekNormy', e.target.value)} placeholder="ČSN EN 60204-1, zákon č. 250/2021 Sb., …" /></div>
+              <textarea rows={2} className={`${TW.textarea} min-h-[70px]`} value={fd.posudekNormy} onChange={e => upd('posudekNormy', e.target.value)} placeholder="ČSN EN 60204-1, zákon č. 250/2021 Sb., …" /></div>
 
           </div>
-          <div className="grid grid-cols-2 gap-8 pt-5 pb-1">
+          <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-8 pt-5 pb-1">
             <div className="flex flex-col gap-1"><div className="border-b-2 border-[var(--border-strong)] h-10" /><div className="text-xs uppercase tracking-wide text-[var(--text-muted)] text-center mt-1">Revizní technik – jméno, podpis, razítko</div></div>
             <div className="flex flex-col gap-1"><div className="border-b-2 border-[var(--border-strong)] h-10" /><div className="text-xs uppercase tracking-wide text-[var(--text-muted)] text-center mt-1">Zástupce objednatele – jméno, podpis</div></div>
           </div>

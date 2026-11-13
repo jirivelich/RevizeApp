@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { TW } from './tw';
 
 export const TYPY_KABELU = ['CYKY', 'CY', 'NYM', 'CYKFY', 'YDY', 'AYKY', 'AY'];
 export const PRUREZY = ['1', '1,5', '2,5', '4', '6', '10', '16', '25', '35', '50', '70', '95', '120'];
@@ -29,21 +30,21 @@ export function EditableSelect({ label, value, onChange, options, allowEmpty }: 
       {showCustom ? (
         <div className="relative">
           <input
-            className="w-full px-3 py-2 pr-8 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]/50 text-xs"
+            className={`${TW.input} pr-8`}
             value={value}
             onChange={(e) => onChange(e.target.value)}
             autoFocus
           />
           <button
             type="button"
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] text-xs"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] text-sm min-w-[24px] min-h-[24px]"
             onClick={() => { setShowCustom(false); }}
             title="Zpět na seznam"
           >↩</button>
         </div>
       ) : (
         <select
-          className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]/50 text-xs"
+          className={TW.selectFull}
           value={options.includes(value) || (allowEmpty && value === '') ? value : '__custom__'}
           onChange={(e) => {
             if (e.target.value === '__custom__') {

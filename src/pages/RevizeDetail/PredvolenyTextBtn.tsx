@@ -94,11 +94,11 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
         Předvolby
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-xl min-w-[340px] max-w-[440px] py-1 max-h-96 overflow-y-auto">
+        <div className="absolute right-0 top-full mt-1 z-50 bg-[var(--surface)] border border-[var(--border-medium)] rounded-lg shadow-[var(--shadow-lg)] w-[min(440px,calc(100vw-2rem))] py-1 max-h-96 overflow-y-auto">
           {/* Výchozí předvolby */}
           {builtIn.length > 0 && (
             <>
-              <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-[var(--text-secondary)] font-semibold border-b border-[var(--border-subtle)]">Výchozí předvolby</div>
+              <div className="px-3 py-1.5 text-xs uppercase tracking-wider text-[var(--text-secondary)] font-semibold border-b border-[var(--border-subtle)]">Výchozí předvolby</div>
               {builtIn.map((t, i) => (
                 <button
                   key={`b-${i}`}
@@ -115,7 +115,7 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
           {/* Vlastní předvolby */}
           {custom.length > 0 && (
             <>
-              <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-[var(--success-text)] font-semibold border-b border-[var(--border-subtle)] mt-1">Vlastní předvolby</div>
+              <div className="px-3 py-1.5 text-xs uppercase tracking-wider text-[var(--success-text)] font-semibold border-b border-[var(--border-subtle)] mt-1">Vlastní předvolby</div>
               {custom.map((t) => (
                 <div key={`c-${t.id}`} className="flex items-start group">
                   <button
@@ -128,7 +128,7 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
                   </button>
                   <button
                     type="button"
-                    className="px-2 py-2 text-xs text-[var(--danger-text)] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    className="px-2 py-2 text-xs text-[var(--danger-text)] lg:opacity-0 lg:group-hover:opacity-100 focus-within:opacity-100 transition-opacity cursor-pointer"
                     onClick={() => t.id && handleDelete(t.id)}
                     title="Smazat"
                   >✕</button>
@@ -165,7 +165,7 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
                 />
                 <div className="flex gap-1 justify-end">
                   <button type="button" onClick={() => setAdding(false)} className="px-2 py-0.5 text-xs text-[var(--text-muted)] hover:bg-[var(--bg-hover)] rounded cursor-pointer">Zrušit</button>
-                  <button type="button" onClick={handleAdd} className="px-2 py-0.5 text-xs bg-[var(--primary)] text-white rounded hover:bg-[var(--primary-hover)] cursor-pointer" disabled={!newNazev.trim() || !newText.trim()}>Uložit</button>
+                  <button type="button" onClick={handleAdd} className="px-2 py-0.5 text-xs bg-[var(--primary)] text-[var(--primary-fg)] rounded hover:bg-[var(--primary-hover)] cursor-pointer" disabled={!newNazev.trim() || !newText.trim()}>Uložit</button>
                 </div>
               </div>
             )}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Card, Input, Modal, ConfirmDialog, PageHeader, EmptyState, DataTable } from '../components/ui';
+import { Button, Card, Input, Modal, ConfirmDialog, PageHeader, EmptyState, DataTable, Textarea } from '../components/ui';
 import type { DataTableColumn } from '../components/ui';
 import { useFirmy, useCreateFirma, useUpdateFirma, useDeleteFirma } from '../hooks/useQueries';
 import type { Firma } from '../types';
@@ -200,18 +200,12 @@ export function FirmyPage() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-              Poznámka
-            </label>
-            <textarea
+          <Textarea label="Poznámka"
               value={formData.poznamka}
               onChange={(e) => setFormData({ ...formData, poznamka: e.target.value })}
               placeholder="Interní poznámky k firmě..."
-              className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]/50 text-sm"
               rows={3}
             />
-          </div>
 
           {formError && (
             <p className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-lg px-3 py-2">

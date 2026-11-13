@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { Button, Card, Input, Modal, ConfirmDialog, Badge } from '../components/ui';
+import { Button, Card, Input, Modal, ConfirmDialog, Badge, PageHeader, EmptyState, DataTable, Textarea, Checkbox } from '../components/ui';
+import type { DataTableColumn } from '../components/ui';
 import { useCenik, useCreateCenik, useUpdateCenik, useDeleteCenik } from '../hooks/useQueries';
 import type { CenikPolozka } from '../types';
 import { formatKc } from './fakturaUi';
-
-const TH = 'py-2 px-3 text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider';
 
 const emptyForm = { nazev: '', jednotka: 'ks', cena: '0', aktivni: true, poznamka: '' };
 
@@ -81,6 +80,25 @@ const CenikPage: React.FC = () => {
     }
   };
 
+  const columns: DataTableColumn<CenikPolozka>[] = [
+    { key: 'nazev', header: 'Název', render: (c) => <span className="font-medium">{c.nazev}</span> },
+    { key: 'jednotka', header: 'Jednotka', render: (c) => <span className="text-[var(--text-secondary)]">{c.jednotka || '-'}</span> },
+    { key: 'cena', header: 'Cena', align: 'right', render: (c) => <span className="whitespace-nowrap tabular-nums">{formatKc(c.cena)}</span> },
+    { key: 'stav', header: 'Stav', render: (c) => <Badge variant={c.aktivni ? 'success' : 'neutral'}>{c.aktivni ? 'Aktivní' : 'Neaktivní'}</Badge> },
+    {
+      key: 'akce',
+      header: 'Akce',
+      align: 'right',
+      actions: true,
+      render: (c) => (
+        <>
+          <Button variant="secondary" size="sm" onClick={() => handleEdit(c)}>Upravit</Button>
+          <Button variant="danger" size="sm" onClick={() => { setFormError(null); setDeleteTarget(c); }}>Smazat</Button>
+        </>
+      ),
+    },
+  ];
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -91,16 +109,16 @@ const CenikPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">Ceník</h1>
-          <p className="text-xs text-[var(--text-secondary)]">Položky pro rychlé vystavení faktur</p>
-        </div>
-        <Button onClick={handleNew}>
-          <span className="sm:hidden text-lg leading-none">+</span>
-          <span className="hidden sm:inline">Nová položka</span>
-        </Button>
-      </div>
+      <PageHeader
+        title="Ceník"
+        subtitle="Položky pro rychlé vystavení faktur"
+        actions={
+          <Button onClick={handleNew}>
+            <span className="sm:hidden text-lg leading-none">+</span>
+            <span className="hidden sm:inline">Nová položka</span>
+          </Button>
+        }
+      />
 
       {formError && !isModalOpen && (
         <p className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-lg px-3 py-2">
@@ -109,41 +127,13 @@ const CenikPage: React.FC = () => {
       )}
 
       {cenik.length === 0 ? (
-        <Card className="p-8 text-center">
-          <p className="text-xs text-[var(--text-secondary)]">Ceník je zatím prázdný</p>
-          <Button onClick={handleNew} className="mt-4">Přidat první položku</Button>
-        </Card>
+        <EmptyState
+          message="Ceník je zatím prázdný"
+          action={<Button onClick={handleNew}>Přidat první položku</Button>}
+        />
       ) : (
         <Card title="Položky ceníku">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[var(--border)]">
-                  <th className={`text-left ${TH}`}>Název</th>
-                  <th className={`text-left ${TH}`}>Jednotka</th>
-                  <th className={`text-right ${TH}`}>Cena</th>
-                  <th className={`text-left ${TH}`}>Stav</th>
-                  <th className={`text-right ${TH}`}>Akce</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cenik.map((c) => (
-                  <tr key={c.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[var(--primary)] hover:bg-[var(--bg-hover)]">
-                    <td className="py-2 px-3 text-xs font-medium text-[var(--text)]">{c.nazev}</td>
-                    <td className="py-2 px-3 text-xs text-[var(--text-secondary)]">{c.jednotka || '-'}</td>
-                    <td className="py-2 px-3 text-xs text-right text-[var(--text)] whitespace-nowrap">{formatKc(c.cena)}</td>
-                    <td className="py-2 px-3"><Badge variant={c.aktivni ? 'success' : 'neutral'}>{c.aktivni ? 'Aktivní' : 'Neaktivní'}</Badge></td>
-                    <td className="py-2 px-3">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="secondary" size="sm" onClick={() => handleEdit(c)}>Upravit</Button>
-                        <Button variant="danger" size="sm" onClick={() => { setFormError(null); setDeleteTarget(c); }}>Smazat</Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable columns={columns} rows={cenik} rowKey={(c) => c.id} />
         </Card>
       )}
 
@@ -154,19 +144,16 @@ const CenikPage: React.FC = () => {
             <Input label="Jednotka" value={formData.jednotka} onChange={(e) => setFormData({ ...formData, jednotka: e.target.value })} />
             <Input label="Cena (Kč)" inputMode="decimal" value={formData.cena} onChange={(e) => setFormData({ ...formData, cena: e.target.value })} />
           </div>
-          <label className="flex items-center gap-2 text-xs text-[var(--text)]">
-            <input type="checkbox" checked={formData.aktivni} onChange={(e) => setFormData({ ...formData, aktivni: e.target.checked })} />
-            Aktivní (nabízet při vystavování faktur)
-          </label>
-          <div>
-            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Poznámka</label>
-            <textarea
+          <Checkbox
+            checked={formData.aktivni}
+            onChange={(e) => setFormData({ ...formData, aktivni: e.target.checked })}
+            label="Aktivní (nabízet při vystavování faktur)"
+          />
+          <Textarea label="Poznámka"
               value={formData.poznamka}
               onChange={(e) => setFormData({ ...formData, poznamka: e.target.value })}
-              className="w-full px-3 py-2 border rounded-md bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]"
               rows={2}
             />
-          </div>
           {formError && isModalOpen && (
             <p className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-lg px-3 py-2">
               {formError}

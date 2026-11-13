@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { aiApi } from '../services/api';
+import { Icon } from './icons';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -70,33 +71,29 @@ export function AIChatAssistant() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-20 lg:bottom-6 right-4 lg:right-6 z-50 w-12 h-12 rounded-full bg-violet-600 hover:bg-violet-700 text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center"
+          className="fixed bottom-20 lg:bottom-6 right-4 lg:right-6 z-50 w-12 h-12 rounded-full bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-[var(--primary-fg)] shadow-[var(--shadow-lg)] transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring-color)]"
           title="AI Asistent"
+          aria-label="Otevřít AI asistenta"
         >
-          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7z" />
-          </svg>
+          <Icon name="sparkle" size={24} />
         </button>
       )}
 
       {/* Chat panel */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 w-96 h-[520px] bg-[var(--surface)] rounded-xl shadow-2xl border border-[var(--border-medium)] flex flex-col overflow-hidden">
+        <div className="fixed bottom-20 lg:bottom-6 right-2 lg:right-6 z-50 w-[calc(100vw-16px)] max-w-96 h-[min(520px,calc(100dvh-96px))] bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] border border-[var(--border-input)] flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-violet-600 text-white">
+          <div className="flex items-center justify-between px-4 py-3 bg-[var(--primary)] text-[var(--primary-fg)]">
             <div className="flex items-center gap-2">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7z" />
-              </svg>
+              <Icon name="sparkle" size={20} />
               <span className="font-medium text-sm">AI Asistent — Revize</span>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="p-1 hover:bg-violet-500 rounded transition-colors"
+              className="p-1 hover:bg-[var(--primary-hover)] rounded-[var(--radius-md)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-fg)]"
+              aria-label="Zavřít"
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
+              <Icon name="close" size={16} />
             </button>
           </div>
 
@@ -104,10 +101,8 @@ export function AIChatAssistant() {
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
             {messages.length === 0 && (
               <div className="text-center py-8">
-                <div className="w-12 h-12 rounded-full bg-violet-100 flex items-center justify-center mx-auto mb-3">
-                  <svg className="w-6 h-6 text-violet-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7z" />
-                  </svg>
+                <div className="w-12 h-12 rounded-full bg-[var(--bg-accent)] text-[var(--primary)] flex items-center justify-center mx-auto mb-3">
+                  <Icon name="sparkle" size={24} />
                 </div>
                 <p className="text-sm text-[var(--text-secondary)] font-medium mb-1">AI Asistent pro revize</p>
                 <p className="text-xs text-[var(--text-secondary)]">Zeptejte se na normy ČSN, postupy měření, klasifikaci závad...</p>
@@ -120,7 +115,7 @@ export function AIChatAssistant() {
                     <button
                       key={q}
                       onClick={() => { setInput(q); inputRef.current?.focus(); }}
-                      className="block w-full text-left px-3 py-2 text-xs bg-[var(--bg-surface)] hover:bg-[var(--bg-input)] rounded-lg border border-[var(--border)] hover:border-violet-200 text-[var(--text-secondary)] transition-colors"
+                      className="block w-full text-left px-3 py-2 text-xs bg-[var(--bg-surface)] hover:bg-[var(--bg-input)] rounded-[var(--radius-md)] border border-[var(--border)] hover:border-[var(--border-strong)] text-[var(--text-secondary)] transition-colors"
                     >
                       {q}
                     </button>
@@ -134,9 +129,9 @@ export function AIChatAssistant() {
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[80%] px-3 py-2 rounded-lg text-sm whitespace-pre-wrap ${
+                  className={`max-w-[80%] px-3 py-2 rounded-[var(--radius-md)] text-sm whitespace-pre-wrap ${
                     msg.role === 'user'
-                      ? 'bg-violet-600 text-white'
+                      ? 'bg-[var(--primary)] text-[var(--primary-fg)]'
                       : 'bg-[var(--bg-input)] text-[var(--text)]'
                   }`}
                 >
@@ -146,7 +141,7 @@ export function AIChatAssistant() {
             ))}
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-[var(--bg-input)] px-3 py-2 rounded-lg">
+                <div className="bg-[var(--bg-input)] px-3 py-2 rounded-[var(--radius-md)]">
                   <div className="flex gap-1">
                     <span className="w-2 h-2 bg-[var(--text-secondary)] rounded-full animate-bounce [animation-delay:-0.3s]" />
                     <span className="w-2 h-2 bg-[var(--text-secondary)] rounded-full animate-bounce [animation-delay:-0.15s]" />
@@ -169,16 +164,15 @@ export function AIChatAssistant() {
                 onKeyDown={handleKeyDown}
                 placeholder="Napsat zprávu..."
                 disabled={loading}
-                className="flex-1 px-3 py-2 text-sm border border-[var(--border-input)] rounded-lg focus:outline-none focus:ring-1 focus:ring-violet-400 bg-[var(--bg-input)] text-[var(--text)] disabled:bg-[var(--bg-surface)]"
+                className="flex-1 px-3 py-2 text-sm border border-[var(--border-input)] rounded-[var(--radius-md)] focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--focus-ring-color)] bg-[var(--bg-input)] text-[var(--text)] disabled:bg-[var(--bg-surface)]"
               />
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || loading}
-                className="px-3 py-2 bg-violet-600 hover:bg-violet-700 disabled:bg-[var(--bg-hover)] text-white rounded-lg transition-colors"
+                className="px-3 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] disabled:bg-[var(--bg-hover)] disabled:text-[var(--text-muted)] text-[var(--primary-fg)] rounded-[var(--radius-md)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring-color)]"
+                aria-label="Odeslat"
               >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 2L11 13M22 2l-7 20-4-9-9-4z" />
-                </svg>
+                <Icon name="send" size={16} />
               </button>
             </div>
             <p className="text-[10px] text-[var(--text-secondary)] mt-1 text-center">AI může dělat chyby. Ověřte důležité informace.</p>

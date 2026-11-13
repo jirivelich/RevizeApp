@@ -84,7 +84,7 @@ export function DokumentaceTab({
       {/* ═══ DŮVOD MIMOŘÁDNÉ ═══ */}
       {(formData.typRevize === 'mimořádná' || revize?.typRevize === 'mimořádná') && (
         <div className={TW.card}>
-          <SectionHeader className="bg-amber-600">📋 Důvod mimořádné revize</SectionHeader>
+          <SectionHeader className="bg-[var(--warning-bg)]">📋 Důvod mimořádné revize</SectionHeader>
           <div className="p-4">
             <input
               className={TW.input}
@@ -246,7 +246,7 @@ export function DokumentaceTab({
                         setFormData({ ...formData, ochranaOpatreni: JSON.stringify(updated) });
                         saveNow?.();
                       }}
-                      className="w-4 h-4 text-[var(--primary)] rounded border-[var(--checkbox-border)]"
+                      className="w-4 h-4 accent-[var(--primary)]"
                     />
                     <span className="text-sm text-[var(--text)]">{opatreni.label}</span>
                   </label>
@@ -264,10 +264,10 @@ export function DokumentaceTab({
           num="05"
           right={
             <div className="flex items-center gap-2">
-              <Button size="sm" onClick={() => setIsPristrojModalOpen(true)} className="!py-0.5 !px-2 !text-xs bg-white/20 hover:bg-white/30 text-white border-0">+ Přidat</Button>
+              <Button size="sm" onClick={() => setIsPristrojModalOpen(true)} className="!py-0.5 !px-2 !text-xs !bg-[var(--bg-hover)] hover:!bg-[var(--bg-hover-strong)] !text-[var(--text)] !border-0 !shadow-none">+ Přidat</Button>
               <button
                 onClick={() => toggleSekce('pristroje')}
-                className="flex items-center gap-1 text-[10px] font-normal normal-case tracking-normal opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
+                className="flex items-center gap-1 text-xs font-normal normal-case tracking-normal text-[var(--text-secondary)] hover:text-[var(--text)] transition-colors cursor-pointer"
                 title={isSekceVisible('pristroje') ? 'Skrýt v tisku' : 'Zobrazit v tisku'}
               >
                 {isSekceVisible('pristroje') ? '🖨️' : '🚫'} <span className="hidden sm:inline">{isSekceVisible('pristroje') ? 'Tisk ✓' : 'Skryto'}</span>
@@ -334,6 +334,33 @@ export function DokumentaceTab({
             onChange={(e) => setFormData({ ...formData, podklady: e.target.value })}
             placeholder="Projekty, předchozí revize, protokoly o měření..."
           />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+            <div>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Zařízení uvedeno do provozu</label>
+              <input
+                className={TW.input}
+                value={formData.datumUvedeniDoProvozu || ''}
+                onChange={(e) => setFormData({ ...formData, datumUvedeniDoProvozu: e.target.value })}
+                placeholder="Datum nebo rok, např. 1987"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Zjištěno na základě</label>
+              <input
+                className={TW.input}
+                value={formData.zdrojUvedeniDoProvozu || ''}
+                onChange={(e) => setFormData({ ...formData, zdrojUvedeniDoProvozu: e.target.value })}
+                placeholder="Kolaudace, předchozí revize, projekt..."
+                list="zdroj-uvedeni-do-provozu"
+              />
+              <datalist id="zdroj-uvedeni-do-provozu">
+                <option value="kolaudační rozhodnutí" />
+                <option value="předchozí revizní zpráva" />
+                <option value="projektová dokumentace" />
+                <option value="sdělení provozovatele" />
+              </datalist>
+            </div>
+          </div>
         </div>
         )}
       </div>
@@ -444,7 +471,7 @@ export function DokumentaceTab({
             <button
               onClick={handleAIGenerateReport}
               disabled={aiGenerating}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-[var(--bg-secondary-accent)] text-[var(--secondary)] border border-[var(--secondary)]/30 hover:brightness-110 disabled:opacity-50 transition-colors"
             >
               {aiGenerating ? (
                 <><svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg> Generuji...</>

@@ -66,7 +66,7 @@ export function BlockInspector({ block, onChange, onDelete, onMove }: BlockInspe
       {block.kind === 'image'     && <ImageInspector    b={block} upd={updImage} />}
       {block.kind === 'signature' && <SignatureInspector b={block} upd={updSignature} />}
       {block.kind === 'autodate'  && <AutoDateInspector b={block} upd={updAutoDate} />}
-      {block.kind === 'pagebreak' && <div style={{ fontSize: 11, color: C.muted }}>Zalomení stránky — nemá nastavení.</div>}
+      {block.kind === 'pagebreak' && <div style={{ fontSize: 12, color: C.muted }}>Zalomení stránky — nemá nastavení.</div>}
     </div>
   );
 }
@@ -139,7 +139,7 @@ function SectionInspector({ b, upd }: SectionInspectorProps) {
         ))}
       </div>
 
-      <div style={{ fontSize: 11, color: C.muted, marginBottom: 6 }}>Položky oddílu:</div>
+      <div style={{ fontSize: 12, color: C.muted, marginBottom: 6 }}>Položky oddílu:</div>
       {b.items.map((item, ii) => (
         <div key={item.id} style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 7, padding: 8, marginBottom: 6 }}>
           {item.itemKind === 'table'
@@ -189,7 +189,7 @@ function FieldItemInspector({ item, ii, updItem, onDel, onMove }: FieldItemInspe
         >
           {FIELD_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
         </select>
-        <label style={{ fontSize: 11, color: C.muted, display: 'flex', gap: 4, alignItems: 'center' }}>
+        <label style={{ fontSize: 12, color: C.muted, display: 'flex', gap: 4, alignItems: 'center' }}>
           <input type="checkbox" checked={item.required} onChange={e => updItem(ii, 'required', e.target.checked)} /> *
         </label>
       </div>
@@ -222,7 +222,7 @@ function TableItemInspector({ item, ii, upd, onDel, onMove }: TableItemInspector
   return (
     <>
       <div style={{ display: 'flex', gap: 5, marginBottom: 6, alignItems: 'center' }}>
-        <span style={{ flex: 1, fontSize: 11, color: C.muted }}>▦ Vložená tabulka</span>
+        <span style={{ flex: 1, fontSize: 12, color: C.muted }}>▦ Vložená tabulka</span>
         <button style={T.sIconBtn} onClick={() => onMove(-1)}>↑</button>
         <button style={T.sIconBtn} onClick={() => onMove(1)}>↓</button>
         <button style={{ ...T.sIconBtn, color: C.danger }} onClick={onDel}>×</button>
@@ -236,7 +236,7 @@ function TableItemInspector({ item, ii, upd, onDel, onMove }: TableItemInspector
         <input type="checkbox" checked={item.hasHeader} onChange={e => tbl(t => { t.hasHeader = e.target.checked; })} />
         Záhlaví sloupců
       </label>
-      <div style={{ fontSize: 11, color: C.muted, marginBottom: 3, marginTop: 6 }}>Sloupce:</div>
+      <div style={{ fontSize: 12, color: C.muted, marginBottom: 3, marginTop: 6 }}>Sloupce:</div>
       {item.cols.map((c, ci) => (
         <div key={c.id} style={{ display: 'flex', gap: 4, marginBottom: 3, alignItems: 'center' }}>
           <input style={{ ...T.sInp, flex: 1, margin: 0 }} value={c.label} onChange={e => tbl(t => { t.cols[ci].label = e.target.value; })} />
@@ -248,7 +248,7 @@ function TableItemInspector({ item, ii, upd, onDel, onMove }: TableItemInspector
         <button style={T.sBtnAdd} onClick={addRow}>+ Řádek</button>
         <button style={{ ...T.sBtnAdd, color: C.danger, borderColor: C.danger }} onClick={delRow}>– Řádek</button>
       </div>
-      <div style={{ fontSize: 10, color: C.muted, marginTop: 4 }}>{item.rows.length} řádků · {item.cols.length} sloupců</div>
+      <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>{item.rows.length} řádků · {item.cols.length} sloupců</div>
     </>
   );
 }
@@ -281,7 +281,7 @@ function TableInspector({ b, upd }: TableInspectorProps) {
         Záhlaví (první řádek = popis)
       </label>
 
-      <div style={{ fontSize: 11, color: C.muted, marginBottom: 4, marginTop: 8 }}>Sloupce:</div>
+      <div style={{ fontSize: 12, color: C.muted, marginBottom: 4, marginTop: 8 }}>Sloupce:</div>
       {b.cols.map((c, ci) => (
         <div key={c.id} style={{ display: 'flex', gap: 5, marginBottom: 4, alignItems: 'center' }}>
           <input
@@ -295,7 +295,7 @@ function TableInspector({ b, upd }: TableInspectorProps) {
       ))}
       <button style={{ ...T.sBtnAdd, marginBottom: 8 }} onClick={addCol}>+ Přidat sloupec</button>
 
-      <div style={{ fontSize: 11, color: C.muted, marginBottom: 4, marginTop: 4 }}>Řádky: {b.rows.length}</div>
+      <div style={{ fontSize: 12, color: C.muted, marginBottom: 4, marginTop: 4 }}>Řádky: {b.rows.length}</div>
       <div style={{ display: 'flex', gap: 6 }}>
         <button style={T.sBtnAdd} onClick={addRow}>+ Řádek</button>
         <button style={{ ...T.sBtnAdd, color: C.danger, borderColor: C.danger }} onClick={() => delRow(b.rows.length - 1)}>– Řádek</button>
@@ -332,7 +332,7 @@ function ImageInspector({ b, upd }: { b: ImageBlock; upd: (fn: (b: ImageBlock) =
         onChange={e => upd(x => { x.widthPct = parseInt(e.target.value, 10); })}
         style={{ width: '100%' }}
       />
-      <div style={{ fontSize: 10, color: C.muted, textAlign: 'right' }}>{b.widthPct}%</div>
+      <div style={{ fontSize: 12, color: C.muted, textAlign: 'right' }}>{b.widthPct}%</div>
     </>
   );
 }
@@ -365,7 +365,7 @@ function AutoDateInspector({ b, upd }: { b: AutoDateBlock; upd: (fn: (b: AutoDat
         <option value="short">Krátký (01.05.2026)</option>
         <option value="iso">ISO (2026-05-01)</option>
       </select>
-      <div style={{ fontSize: 10, color: C.muted, marginTop: 4 }}>Datum se vyplní automaticky při tisku.</div>
+      <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>Datum se vyplní automaticky při tisku.</div>
     </>
   );
 }

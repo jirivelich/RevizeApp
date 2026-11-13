@@ -39,13 +39,23 @@ describe('Button', () => {
   it('should apply size sm classes', () => {
     render(<Button size="sm">Small</Button>);
     const btn = screen.getByRole('button');
-    expect(btn.className).toContain('text-sm');
+    expect(btn.className).toContain('min-h-[32px]');
   });
 
   it('should apply size lg classes', () => {
     render(<Button size="lg">Large</Button>);
     const btn = screen.getByRole('button');
-    expect(btn.className).toContain('text-lg');
+    expect(btn.className).toContain('min-h-[48px]');
+  });
+
+  it('should use primary-fg text on primary', () => {
+    render(<Button>P</Button>);
+    expect(screen.getByRole('button').className).toContain('text-[var(--primary-fg)]');
+  });
+
+  it('should apply ghost variant', () => {
+    render(<Button variant="ghost">G</Button>);
+    expect(screen.getByRole('button').className).toContain('bg-transparent');
   });
 
   it('should be disabled when disabled prop is set', () => {

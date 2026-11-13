@@ -1,8 +1,10 @@
 ﻿import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Previewer } from 'pagedjs';
-import { revizeService, rozvadecService, okruhService, cranicService, zavadaService, mistnostService, zarizeniService, revizePristrojService, nastaveniService, zakazniciService } from '../../services/database';
-import type { Revize, Rozvadec, Okruh, Chranic, Zavada, Mistnost, Zarizeni, MericiPristroj, Nastaveni, Zakaznik } from '../../types';
+import { restoreSplitTableColumns } from '../ReportPrint/pagedTables';
+import { revizeService, rozvadecService, okruhService, cranicService, zavadaService, mistnostService, zarizeniService, revizePristrojService, nastaveniService, zakazniciService, rozsahService, dokumentService } from '../../services/database';
+import { DRUH_ROZSAHU_LABELS, DOKUMENT_STAV_LABELS } from '../../services/rozsahKontrola';
+import type { Revize, Rozvadec, Okruh, Chranic, Zavada, Mistnost, Zarizeni, MericiPristroj, Nastaveni, Zakaznik, RozsahPolozka, RevizeDokument } from '../../types';
 import { ReportHeader } from './ReportHeader';
 import { ReportSection } from './ReportSection';
 import { ReportTable } from './ReportTable';
@@ -88,6 +90,9 @@ export interface ReportData {
   mistnosti: MistnostWithZarizeni[];
   pristroje: MericiPristroj[];
   prilohy: PrilohaPrintItem[];
+  /** Rozsah a podklady (volitelné, starší revize je nemají). */
+  rozsahPolozky?: RozsahPolozka[];
+  dokumenty?: RevizeDokument[];
 }
 
 export interface RozvadecWithOkruhy extends Rozvadec {
@@ -155,7 +160,13 @@ export function ReportPrintPage() {
       }
 
       const prilohy = await loadPrilohyForPrint(revizeId);
-      setData({ revize, nastaveni: nastaveniData || null, zakaznik, rozvadece, zavady, mistnosti, pristroje, prilohy });
+      // Rozsah a podklady: chyba jejich načtení nesmí znemožnit tisk zprávy
+      const nacistVolitelne = async <T,>(fn: () => Promise<T[]>): Promise<T[]> => { try { return await fn(); } catch { return []; } };
+      const [rozsahPolozky, dokumenty] = await Promise.all([
+        nacistVolitelne(() => rozsahService.getByRevize(revizeId)),
+        nacistVolitelne(() => dokumentService.getByRevize(revizeId)),
+      ]);
+      setData({ revize, nastaveni: nastaveniData || null, zakaznik, rozvadece, zavady, mistnosti, pristroje, prilohy, rozsahPolozky, dokumenty });
 
       // Nastavit document.title pro výchozí název PDF souboru
       const titleParts = [
@@ -221,6 +232,7 @@ export function ReportPrintPage() {
         previewRef.current
       );
       URL.revokeObjectURL(cssUrl);
+      restoreSplitTableColumns(previewRef.current);
 
       const total = flow?.total || 1;
       setPageCount(total);
@@ -329,6 +341,10 @@ export function ReportPrintPage() {
   }
 
   const { revize, nastaveni, zakaznik, rozvadece, zavady, mistnosti, pristroje, prilohy } = data;
+  const rozsahPolozky = data.rozsahPolozky ?? [];
+  const dokumenty = data.dokumenty ?? [];
+  const vyloucene = rozsahPolozky.filter(p => p.typ === 'vyloucenoRozsah');
+  const neovereno = rozsahPolozky.filter(p => p.typ === 'neovereno');
 
   // Parsovat tiskSekce – které sekce jsou viditelné v tisku
   let tiskSekce: Record<string, boolean> = {};
@@ -338,7 +354,9 @@ export function ReportPrintPage() {
   const isSekceVisible = (key: string) => tiskSekce[key] !== false; // default true
 
   // Závady s fotkami (zachováme původní pořadové číslo ze sekce 13)
-  const zavadySFotkami = zavady
+  const zavadyPouze = zavady.filter(z => z.typ !== 'doporuceni');
+  const doporuceni = zavady.filter(z => z.typ === 'doporuceni');
+  const zavadySFotkami = zavadyPouze
     .map((z, i) => ({ ...z, cisloZavady: i + 1 }))
     .filter(z => Array.isArray(z.fotky) && z.fotky.length > 0);
 
@@ -392,6 +410,7 @@ export function ReportPrintPage() {
       rozvadece:              num(true),
       prostory:               num(mistnosti.length > 0),
       zavady:                 num(true),
+      doporuceni:             num(doporuceni.length > 0),
       vyhodnoceniPredchozich: num(isSekceVisible('vyhodnoceniPredchozich')),
       lhuta:                  num(true),
       oduvodneni:             num(isSekceVisible('vysledekOduvodneni') && !!revize.vysledekOduvodneni),
@@ -530,6 +549,14 @@ export function ReportPrintPage() {
       {/* ROZSAH REVIZE */}
       {isSekceVisible('rozsahRevize') && (
       <ReportSection title={`${sectionNums.rozsahRevize}. Vymezení rozsahu revize`}>
+        {revize.druhRozsahu && (
+          <p className="report-text">
+            <strong>Druh revize z hlediska rozsahu:</strong> {DRUH_ROZSAHU_LABELS[revize.druhRozsahu]}
+          </p>
+        )}
+        {revize.ucelRevize && (
+          <p className="report-text"><strong>Účel revize:</strong> {revize.ucelRevize}</p>
+        )}
         {revize.rozsahRevize && (
           <div className="report-text">
             <strong>Předmět revize je:</strong>
@@ -542,7 +569,27 @@ export function ReportPrintPage() {
             <p>{revize.predmetNeni}</p>
           </div>
         )}
-        {!revize.rozsahRevize && !revize.predmetNeni && <p className="report-empty">Nebylo vyplněno</p>}
+        {vyloucene.length > 0 && (
+          <div className="report-text" style={{ marginTop: '6px' }}>
+            <strong>Části vyloučené z rozsahu revize:</strong>
+            <ReportTable
+              columns={['Část', 'Důvod omezení rozsahu']}
+              widths={['50%', '50%']}
+              rows={vyloucene.map(p => [p.nazev, p.duvod || '—'])}
+            />
+          </div>
+        )}
+        {neovereno.length > 0 && (
+          <div className="report-text" style={{ marginTop: '6px' }}>
+            <strong>Části, které nebylo možné ověřit:</strong>
+            <ReportTable
+              columns={['Část', 'Důvod']}
+              widths={['50%', '50%']}
+              rows={neovereno.map(p => [p.nazev, p.duvod || '—'])}
+            />
+          </div>
+        )}
+        {!revize.rozsahRevize && !revize.predmetNeni && !revize.druhRozsahu && vyloucene.length === 0 && neovereno.length === 0 && <p className="report-empty">Nebylo vyplněno</p>}
       </ReportSection>
       )}
 
@@ -600,8 +647,21 @@ export function ReportPrintPage() {
       <ReportSection title={`${sectionNums.podklady}. Seznam podkladů použitých k provedení revize`}>
         {revize.podklady ? (
           <p className="report-text">{revize.podklady}</p>
-        ) : (
+        ) : dokumenty.length === 0 ? (
           <p className="report-empty">Nebylo vyplněno</p>
+        ) : null}
+        {dokumenty.length > 0 && (
+          <ReportTable
+            columns={['Dokument', 'Druh', 'Datum / revize', 'Stav', 'Poznámka']}
+            widths={['27%', '16%', '14%', '16%', '27%']}
+            rows={dokumenty.map(d => [d.nazev, d.druh || '—', d.datumDokumentu || '—', DOKUMENT_STAV_LABELS[d.stav], d.poznamka || '—'])}
+          />
+        )}
+        {revize.datumUvedeniDoProvozu && (
+          <p className="report-text">
+            Zařízení bylo uvedeno do provozu: <strong>{revize.datumUvedeniDoProvozu}</strong>
+            {revize.zdrojUvedeniDoProvozu && <> (zjištěno na základě: {revize.zdrojUvedeniDoProvozu})</>}.
+          </p>
         )}
       </ReportSection>
       )}
@@ -652,7 +712,7 @@ export function ReportPrintPage() {
             {roz.chranice.length > 0 && (
               <>
                 <div className="report-subsection-subtitle">Proudové chraniče</div>
-                <table className="report-data-table">
+                <table className="report-data-table report-data-table--fixed">
                   <thead>
                     <tr>
                       <th style={{ width: '5%' }}>Č.</th>
@@ -745,8 +805,8 @@ export function ReportPrintPage() {
 
       {/* ZÁVADY */}
       <ReportSection title={`${sectionNums.zavady}. Přehled zjištěných závad`}>
-        {zavady.length > 0 ? (
-          <table className="report-data-table">
+        {zavadyPouze.length > 0 ? (
+          <table className="report-data-table report-data-table--fixed">
             <thead>
               <tr>
                 <th style={{ width: '5%' }}>#</th>
@@ -757,7 +817,7 @@ export function ReportPrintPage() {
               </tr>
             </thead>
             <tbody>
-              {zavady.map((z, i) => (
+              {zavadyPouze.map((z, i) => (
                 <tr key={z.id ?? i}>
                   <td>{i + 1}</td>
                   <td>
@@ -776,7 +836,7 @@ export function ReportPrintPage() {
         ) : (
           <p className="report-text"><strong>Při revizi nebyly zjištěny žádné závady.</strong></p>
         )}
-        {zavady.length > 0 && (
+        {zavadyPouze.length > 0 && (
           <div className="report-zavada-legenda">
             <strong>Kategorie závad:</strong>{' '}
             <span><strong>C1</strong> – Kritická závada (bezprostřední nebezpečí, je nutné ihned odpojit zařízení od napájení);</span>{' '}
@@ -790,6 +850,37 @@ export function ReportPrintPage() {
           </p>
         )}
       </ReportSection>
+
+      {/* DOPORUČENÍ */}
+      {doporuceni.length > 0 && (
+      <ReportSection title={`${sectionNums.doporuceni}. Doporučení (nesoulad se současnými normami)`}>
+        <p className="report-text">
+          Doporučení nejsou závadami. Nezakládají provozovateli povinnost nápravy a nemají vliv na posouzení
+          schopnosti zařízení provozu; jde o odbornou radu ke zvýšení bezpečnosti.
+        </p>
+        <table className="report-data-table report-data-table--fixed">
+          <thead>
+            <tr>
+              <th style={{ width: '5%' }}>#</th>
+              <th style={{ width: '50%' }}>Doporučení</th>
+              <th style={{ width: '45%' }}>Zdůvodnění (snížené riziko)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {doporuceni.map((z, i) => (
+              <tr key={z.id ?? i}>
+                <td>{i + 1}</td>
+                <td>
+                  <div>{z.popis}</div>
+                  {z.poznamka && <div className="report-zavada-poznamka">{z.poznamka}</div>}
+                </td>
+                <td>{z.zduvodneni || '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </ReportSection>
+      )}
 
       {/* VYHODNOCENÍ PŘEDCHOZÍCH REVIZÍ */}
       {isSekceVisible('vyhodnoceniPredchozich') && (

@@ -55,6 +55,10 @@ export interface Revize {
   
   // Popis revidovaného zařízení
   popisZarizeni?: string;
+
+  // Rozsah: druh (celková / dílčí / zařízení / nedokončená) a účel revize
+  druhRozsahu?: DruhRozsahu;
+  ucelRevize?: string;
   
   // 2. Charakteristika zařízení
   napetovaSoustava?: string;    // 2.1 Napěťová soustava (např. "3+N+PE AC 50Hz 400/230V TN-C-S")
@@ -62,6 +66,10 @@ export interface Revize {
   
   // h) Seznam podkladů
   podklady?: string; // Projekty, předchozí revize, atd.
+
+  // Uvedení zařízení do provozu
+  datumUvedeniDoProvozu?: string;   // datum nebo rok (volný text, např. "1987" či "2004-05-12")
+  zdrojUvedeniDoProvozu?: string;   // na základě čeho zjištěno (kolaudace, předchozí revize, projekt)
   
   // m) Vyhodnocení předchozích revizí
   vyhodnoceniPredchozich?: string;
@@ -146,6 +154,32 @@ export interface Revize {
 
   createdAt: Date;
   updatedAt: Date;
+}
+
+/** Druh revize z hlediska rozsahu. */
+export type DruhRozsahu = 'celkova' | 'dilci' | 'zarizeni' | 'nedokoncena';
+
+/** Položka rozsahu: co bylo revidováno, co je vyloučeno z rozsahu a co nebylo možné ověřit. */
+export interface RozsahPolozka {
+  id?: number;
+  revizeId: number;
+  typ: 'revidovano' | 'vyloucenoRozsah' | 'neovereno';
+  nazev: string;
+  duvod?: string;
+}
+
+/** Evidovaný podklad (technická dokumentace) předložený k revizi. */
+export interface RevizeDokument {
+  id?: number;
+  revizeId: number;
+  nazev: string;
+  druh?: string;
+  datumDokumentu?: string;
+  stav: 'predlozeno' | 'nepredlozeno' | 'neaktualni' | 'neodpovida' | 'nerelevantni';
+  /** Chybějící nebo nevyhovující dokument znemožňuje potřebné ověření. */
+  znemoznujeOvereni?: boolean;
+  poznamka?: string;
+  prilohaId?: number | null;
 }
 
 export interface Rozvadec {
@@ -234,7 +268,12 @@ export interface Zavada {
   rozvadecId?: number;
   mistnostId?: number;
   popis: string;
-  zavaznost: 'C1' | 'C2' | 'C3';
+  /** 'zavada' (výchozí) = nesoulad s předpisy platnými v době zřízení / zhoršený stav;
+   *  'doporuceni' = nesoulad se současnými normami, nezakládá povinnost provozovatele */
+  typ?: 'zavada' | 'doporuceni';
+  zavaznost: 'C1' | 'C2' | 'C3'; // u doporučení se nevyhodnocuje (ukládá se C3)
+  /** Zdůvodnění doporučení – jaké riziko by jeho realizace snížila */
+  zduvodneni?: string;
   stav: 'otevřená' | 'v řešení' | 'vyřešená';
   fotky: string[]; // Base64 encoded images
   datumZjisteni: Date;

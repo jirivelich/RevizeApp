@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Button, Card, Select, Modal, ConfirmDialog } from '../../components/ui';
-import { zavadaService, revizeService } from '../../services/database';
+import { revizeService } from '../../services/database';
 import { useCreateZavada, useUpdateZavada, useDeleteZavada } from '../../hooks/useQueries';
 import type { Zavada, Rozvadec, Mistnost, ZavadaKatalog } from '../../types';
 
@@ -35,6 +35,8 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
   const inlinePoznamkaRef = useRef<HTMLInputElement>(null);
   const [zavadaFormData, setZavadaFormData] = useState({
     popis: '',
+    typ: 'zavada' as NonNullable<Zavada['typ']>,
+    zduvodneni: '',
     zavaznost: 'C2' as Zavada['zavaznost'],
     stav: 'otevřená' as Zavada['stav'],
     rozvadecId: undefined as number | undefined,
@@ -44,7 +46,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
   });
 
   const resetZavadaForm = () => {
-    setZavadaFormData({ popis: '', zavaznost: 'C2', stav: 'otevřená', rozvadecId: undefined, mistnostId: undefined, poznamka: '', fotky: [] });
+    setZavadaFormData({ popis: '', typ: 'zavada', zduvodneni: '', zavaznost: 'C2', stav: 'otevřená', rozvadecId: undefined, mistnostId: undefined, poznamka: '', fotky: [] });
     setEditingZavada(null);
     setSelectedKatalogZavada('');
   };
@@ -66,31 +68,32 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
     }
   };
 
-  const updateRevizeVysledek = async (rId: number) => {
-    const zavadyRevize = await zavadaService.getByRevize(rId);
-    const hasC1orC2 = zavadyRevize.some(z => (z.zavaznost === 'C1' || z.zavaznost === 'C2') && z.stav !== 'vyřešená');
-    if (hasC1orC2) {
-      await revizeService.update(rId, { vysledek: 'neschopno' });
-    } else {
-      await revizeService.update(rId, { vysledek: 'schopno' });
-    }
+  // Závěr revize se NIKDY nenastavuje automaticky. Aplikace pouze navrhne, rozhodnutí potvrzuje technik.
+  const blokujiciZavady = zavady.filter(z => z.typ !== 'doporuceni' && (z.zavaznost === 'C1' || z.zavaznost === 'C2') && z.stav !== 'vyřešená');
+
+  const potvrditNeschopno = async () => {
+    await revizeService.update(revizeId, { vysledek: 'neschopno' });
+    _onReload();
   };
 
   const handleAddZavada = async (e: React.FormEvent) => {
     e.preventDefault();
+    const jeDoporuceni = zavadaFormData.typ === 'doporuceni';
+    const formData = jeDoporuceni
+      ? { ...zavadaFormData, zavaznost: 'C3' as const }
+      : { ...zavadaFormData, zduvodneni: '' };
     const onDone = async () => {
-      await updateRevizeVysledek(revizeId);
       setIsZavadaModalOpen(false);
       resetZavadaForm();
     };
     if (editingZavada?.id) {
       updateZavada.mutate(
-        { id: editingZavada.id, data: { ...zavadaFormData, revizeId, datumVyreseni: zavadaFormData.stav === 'vyřešená' ? new Date() : undefined } },
+        { id: editingZavada.id, data: { ...formData, revizeId, datumVyreseni: zavadaFormData.stav === 'vyřešená' ? new Date() : undefined } },
         { onSuccess: onDone }
       );
     } else {
       createZavada.mutate(
-        { ...zavadaFormData, revizeId, datumZjisteni: new Date() } as any,
+        { ...formData, revizeId, datumZjisteni: new Date() } as any,
         { onSuccess: onDone }
       );
     }
@@ -99,7 +102,8 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
   const handleEditZavada = (zavada: Zavada) => {
     setEditingZavada(zavada);
     setZavadaFormData({
-      popis: zavada.popis, zavaznost: zavada.zavaznost, stav: zavada.stav,
+      popis: zavada.popis, typ: zavada.typ ?? 'zavada', zduvodneni: zavada.zduvodneni || '',
+      zavaznost: zavada.zavaznost, stav: zavada.stav,
       rozvadecId: zavada.rozvadecId, mistnostId: zavada.mistnostId,
       poznamka: zavada.poznamka || '', fotky: zavada.fotky || [],
     });
@@ -113,8 +117,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
     const zavadaId = deleteZavadaId;
     setDeleteZavadaId(null);
     deleteZavada.mutate(
-      { id: zavadaId, revizeId },
-      { onSuccess: () => updateRevizeVysledek(revizeId) }
+      { id: zavadaId, revizeId }
     );
   };
 
@@ -124,7 +127,6 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
       { ...inlineDraft, revizeId, datumZjisteni: new Date(), fotky: [] } as any,
       {
         onSuccess: async () => {
-          await updateRevizeVysledek(revizeId);
           setInlineDraft({ popis: '', zavaznost: 'C2', stav: 'otevřená', poznamka: '' });
           setTimeout(() => inlinePopisRef.current?.focus(), 50);
         },
@@ -170,6 +172,15 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
         </div>
       }
     >
+      {blokujiciZavady.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--warning-text)] bg-[var(--warning-bg)] p-3 text-sm text-[var(--warning-text)]">
+          <span>
+            Návrh závěru: nevyřešené závady C1/C2 ({blokujiciZavady.length}) – revidované zařízení by nemělo být označeno jako schopné provozu.
+            Závěr se nenastavuje automaticky, rozhodnutí potvrzuje revizní technik.
+          </span>
+          <Button size="sm" variant="secondary" onClick={potvrditNeschopno}>Potvrdit „neschopno provozu“</Button>
+        </div>
+      )}
       {inlineMode ? (
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm border-collapse">
@@ -191,7 +202,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                       z.zavaznost === 'C1' ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]' :
                       z.zavaznost === 'C2' ? 'bg-[var(--warning-bg)] text-[var(--warning-text)]' :
                       'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
-                    }`}>{z.zavaznost}</span>
+                    }`}>{z.typ === 'doporuceni' ? 'Dop.' : z.zavaznost}</span>
                   </td>
                   <td className="py-2 pr-3">
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${
@@ -202,18 +213,18 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                   </td>
                   <td className="py-2 pr-3 text-xs text-[var(--text-muted)] italic truncate max-w-[200px]">{z.poznamka || '—'}</td>
                   <td className="py-2">
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-1 lg:opacity-0 lg:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                       <button
                         type="button"
                         title="Upravit (vč. fotek)"
                         onClick={() => handleEditZavada(z)}
-                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)]"
+                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)]"
                       >✎</button>
                       <button
                         type="button"
                         title="Smazat"
                         onClick={() => handleDeleteZavada(z.id!)}
-                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-[var(--danger-bg)] text-[var(--text-secondary)] hover:text-[var(--danger-text)]"
+                        className="w-8 h-8 flex items-center justify-center rounded hover:bg-[var(--danger-bg)] text-[var(--text-secondary)] hover:text-[var(--danger-text)]"
                       >✕</button>
                     </div>
                   </td>
@@ -275,15 +286,15 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                     title="Uložit (Enter)"
                     disabled={!inlineDraft.popis.trim() || createZavada.isPending}
                     onClick={handleInlineSave}
-                    className="w-7 h-7 flex items-center justify-center rounded bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] disabled:opacity-40 disabled:cursor-not-allowed text-base"
+                    className="w-8 h-8 flex items-center justify-center rounded bg-[var(--primary)] text-[var(--primary-fg)] hover:bg-[var(--primary-hover)] disabled:opacity-40 disabled:cursor-not-allowed text-base"
                   >↵</button>
                 </td>
               </tr>
             </tbody>
           </table>
           <p className="text-xs text-[var(--text-secondary)] mt-2 select-none">
-            <kbd className="px-1 bg-[var(--bg-hover)] rounded border border-[var(--border-medium)] text-[10px]">Tab</kbd> přechod &nbsp;·&nbsp;
-            <kbd className="px-1 bg-[var(--bg-hover)] rounded border border-[var(--border-medium)] text-[10px]">Enter</kbd> uložit řádek &nbsp;·&nbsp;
+            <kbd className="px-1 bg-[var(--bg-hover)] rounded border border-[var(--border-medium)] text-xs">Tab</kbd> přechod &nbsp;·&nbsp;
+            <kbd className="px-1 bg-[var(--bg-hover)] rounded border border-[var(--border-medium)] text-xs">Enter</kbd> uložit řádek &nbsp;·&nbsp;
             ✎ upravit vč. fotek
           </p>
         </div>
@@ -305,8 +316,9 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                   {z.datumVyreseni && ` • Vyřešeno: ${new Date(z.datumVyreseni).toLocaleDateString('cs-CZ')}`}
                 </p>
                 {z.rozvadecId && (
-                  <p className="text-[10px] text-[var(--text-secondary)]">Rozvaděč: {rozvadece.find(r => r.id === z.rozvadecId)?.nazev || 'Neznámý'}</p>
+                  <p className="text-xs text-[var(--text-secondary)]">Rozvaděč: {rozvadece.find(r => r.id === z.rozvadecId)?.nazev || 'Neznámý'}</p>
                 )}
+                {z.typ === 'doporuceni' && z.zduvodneni && <p className="text-xs text-[var(--text-secondary)] mt-1">Zdůvodnění: {z.zduvodneni}</p>}
                 {z.poznamka && <p className="text-xs text-[var(--text-muted)] mt-1 italic">{z.poznamka}</p>}
                 {Array.isArray(z.fotky) && z.fotky.length > 0 && (
                   <div className="flex gap-2 mt-2">
@@ -326,7 +338,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                   z.zavaznost === 'C1' ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]' :
                   z.zavaznost === 'C2' ? 'bg-[var(--warning-bg)] text-[var(--warning-text)]' :
                   'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
-                }`}>{z.zavaznost}</span>
+                }`}>{z.typ === 'doporuceni' ? 'Doporučení' : z.zavaznost}</span>
                 <div className="flex gap-1">
                   <Button size="sm" variant="secondary" onClick={() => handleEditZavada(z)}>Upravit</Button>
                   <Button size="sm" variant="danger" onClick={() => handleDeleteZavada(z.id!)}>Smazat</Button>
@@ -336,7 +348,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
           ))}
         </div>
       ) : (
-        <p className="text-center text-[var(--text-muted)] py-8 text-sm">Žádné závady nebyly zaznamenány. Přidejte první kliknutím na tlačítko výše.</p>
+        <p className="text-center text-[var(--text-muted)] py-8 text-sm">Žádné závady ani doporučení nebyly zaznamenány. Přidejte první kliknutím na tlačítko výše.</p>
       )}
     </Card>
 
@@ -344,7 +356,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
     <Modal
       isOpen={isZavadaModalOpen}
       onClose={() => { setIsZavadaModalOpen(false); resetZavadaForm(); }}
-      title={editingZavada ? 'Upravit závadu' : 'Přidat závadu'}
+      title={editingZavada ? 'Upravit položku' : 'Přidat závadu / doporučení'}
       size="lg"
       footer={
         <>
@@ -369,17 +381,37 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
           </div>
         )}
         <div>
-          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Popis závady *</label>
+          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">{zavadaFormData.typ === 'doporuceni' ? 'Popis doporučení *' : 'Popis závady *'}</label>
           <textarea value={zavadaFormData.popis} onChange={(e) => setZavadaFormData({ ...zavadaFormData, popis: e.target.value })}
             className="w-full px-2 py-1.5 border rounded-lg border-[var(--border-input)] bg-[var(--bg-input)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] text-sm" rows={2} placeholder="Popešte zjištěnou závadu..." required />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Select label="Typ položky" value={zavadaFormData.typ} onChange={(e) => setZavadaFormData({ ...zavadaFormData, typ: e.target.value as any })}
+            options={[
+              { value: 'zavada', label: 'Závada – nesoulad s předpisy platnými v době zřízení, zhoršený stav, neodborný zásah' },
+              { value: 'doporuceni', label: 'Doporučení – nesoulad se současnými normami (bez povinnosti nápravy)' },
+            ]} />
+          {zavadaFormData.typ === 'doporuceni' && (
+            <p className="text-xs text-[var(--text-muted)] mt-1">Doporučení se ve zprávě uvádí odděleně, nezakládá povinnost provozovatele a neovlivňuje výsledek revize.</p>
+          )}
+        </div>
+        {zavadaFormData.typ === 'doporuceni' && (
+          <div>
+            <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Zdůvodnění – jaké riziko by realizace snížila *</label>
+            <textarea value={zavadaFormData.zduvodneni} onChange={(e) => setZavadaFormData({ ...zavadaFormData, zduvodneni: e.target.value })}
+              className="w-full px-2 py-1.5 border rounded-lg border-[var(--border-input)] bg-[var(--bg-input)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] text-sm" rows={2}
+              placeholder="Např. doplňková ochrana proudovým chráničem snižuje riziko úrazu při poruše izolace spotřebiče..." required />
+          </div>
+        )}
+        <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-3">
+          {zavadaFormData.typ !== 'doporuceni' && (
           <Select label="Závažnost" value={zavadaFormData.zavaznost} onChange={(e) => setZavadaFormData({ ...zavadaFormData, zavaznost: e.target.value as any })}
             options={[{ value: 'C1', label: 'C1 - Kritická' }, { value: 'C2', label: 'C2 - Vážná' }, { value: 'C3', label: 'C3 - Drobná' }]} />
+          )}
           <Select label="Stav" value={zavadaFormData.stav} onChange={(e) => setZavadaFormData({ ...zavadaFormData, stav: e.target.value as any })}
             options={[{ value: 'otevřená', label: 'Otevřená' }, { value: 'v řešení', label: 'V řešení' }, { value: 'vyřešená', label: 'Vyřešená' }]} />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-3">
           <Select label="Rozvaděč (volitelné)" value={zavadaFormData.rozvadecId?.toString() || ''}
             onChange={(e) => setZavadaFormData({ ...zavadaFormData, rozvadecId: e.target.value ? parseInt(e.target.value) : undefined })}
             options={[{ value: '', label: '-- Nevybráno --' }, ...rozvadece.map(r => ({ value: r.id!.toString(), label: r.nazev }))]} />
@@ -416,7 +448,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                     onClick={() => setLightboxImage(foto)} />
                   <button type="button"
                     onClick={(e) => { e.stopPropagation(); setZavadaFormData(prev => ({ ...prev, fotky: prev.fotky.filter((_, idx) => idx !== i) })); }}
-                    className="absolute -top-1 -right-1 w-5 h-5 bg-[var(--danger)] text-white rounded-full text-xs flex items-center justify-center hover:bg-[var(--danger)]">×</button>
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-[var(--danger)] text-[var(--background)] rounded-full text-xs flex items-center justify-center hover:brightness-110">×</button>
                 </div>
               ))}
             </div>
@@ -427,10 +459,10 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
 
     {/* Lightbox pro zvětšení fotek */}
     {lightboxImage && (
-      <div role="dialog" aria-modal="true" aria-label="Zvětšená fotka" className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setLightboxImage(null)}>
+      <div role="dialog" aria-modal="true" aria-label="Zvětšená fotka" className="fixed inset-0 bg-[var(--overlay)] z-50 flex items-center justify-center p-4" onClick={() => setLightboxImage(null)}>
         <div className="relative max-w-4xl max-h-[90vh]">
           <img src={lightboxImage} alt="Zvětšená fotka" className="max-w-full max-h-[90vh] object-contain rounded-lg" onClick={(e) => e.stopPropagation()} />
-          <button onClick={() => setLightboxImage(null)} aria-label="Zavřít" autoFocus className="absolute -top-3 -right-3 w-8 h-8 bg-[var(--surface)] rounded-full shadow-lg flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)]">✕</button>
+          <button onClick={() => setLightboxImage(null)} aria-label="Zavřít" autoFocus className="absolute -top-3 -right-3 w-8 h-8 bg-[var(--surface)] rounded-full shadow-[var(--shadow-lg)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)]">✕</button>
         </div>
       </div>
     )}

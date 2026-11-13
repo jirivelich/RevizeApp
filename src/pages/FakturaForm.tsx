@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button, Card, Input, Select, Badge, Modal } from '../components/ui';
+import { Button, Card, Input, Select, Badge, Modal, PageHeader, Textarea } from '../components/ui';
 import {
   useFaktura, useCreateFaktura, useUpdateFaktura, useZmenStavFaktury,
   useZakaznici, useCenik, useNastaveni,
@@ -249,30 +249,26 @@ const FakturaForm: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center gap-2 flex-wrap">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">
-            {isNew ? 'Nová faktura' : faktura?.cisloFaktury ? `Faktura ${faktura.cisloFaktury}` : 'Koncept faktury'}
-          </h1>
-          <div className="mt-1">
+      <PageHeader
+        title={isNew ? 'Nová faktura' : faktura?.cisloFaktury ? `Faktura ${faktura.cisloFaktury}` : 'Koncept faktury'}
+        actions={
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             <Badge variant={stav === 'zaplacena' ? 'success' : stav === 'storno' ? 'danger' : stav === 'vystavena' ? 'info' : 'neutral'}>
               {STAV_LABEL[stav]}
             </Badge>
+            <Button variant="secondary" onClick={() => navigate('/faktury')}>← Zpět</Button>
+            {!isNew && stav !== 'storno' && (
+              <Button variant="secondary" onClick={() => window.open(`/faktura/${fakturaId}/nahled`, '_blank')}>Tisk</Button>
+            )}
+            {readOnly && stav === 'vystavena' && (
+              <>
+                <Button variant="success" onClick={() => handleStav('zaplacena')}>Označit zaplacenou</Button>
+                <Button variant="warning" onClick={() => handleStav('storno')}>Storno</Button>
+              </>
+            )}
           </div>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button variant="secondary" onClick={() => navigate('/faktury')}>← Zpět</Button>
-          {!isNew && stav !== 'storno' && (
-            <Button variant="secondary" onClick={() => window.open(`/faktura/${fakturaId}/nahled`, '_blank')}>Tisk</Button>
-          )}
-          {readOnly && stav === 'vystavena' && (
-            <>
-              <Button variant="success" onClick={() => handleStav('zaplacena')}>Označit zaplacenou</Button>
-              <Button variant="warning" onClick={() => handleStav('storno')}>Storno</Button>
-            </>
-          )}
-        </div>
-      </div>
+        }
+      />
 
       {readOnly && (
         <p className="text-xs text-[var(--text-secondary)] bg-[var(--bg-hover)] rounded-lg px-3 py-2">
@@ -325,7 +321,7 @@ const FakturaForm: React.FC = () => {
                 <Input aria-label={`Množství ${idx + 1}`} inputMode="decimal" value={r.mnozstvi} onChange={(e) => updateRadek(r.key, { mnozstvi: e.target.value })} />
                 <Input aria-label={`Jednotka ${idx + 1}`} value={r.jednotka} onChange={(e) => updateRadek(r.key, { jednotka: e.target.value })} />
                 <Input aria-label={`Cena za jednotku ${idx + 1}`} inputMode="decimal" value={r.cena} onChange={(e) => updateRadek(r.key, { cena: e.target.value })} />
-                <span className="text-xs text-right text-[var(--text)] whitespace-nowrap" data-testid="radek-celkem">
+                <span className="text-sm text-right text-[var(--text)] whitespace-nowrap tabular-nums" data-testid="radek-celkem">
                   {formatKc(spoctiPolozku(toNum(r.mnozstvi), toNum(r.cena)))}
                 </span>
                 {!readOnly && (
@@ -348,17 +344,17 @@ const FakturaForm: React.FC = () => {
               </div>
             )}
             <div className="flex justify-end pt-2 border-t border-[var(--border)]">
-              <span className="text-sm font-bold text-[var(--text)]" data-testid="celkem">Celkem: {formatKc(celkem)}</span>
+              <span className="text-lg font-bold text-[var(--text)] tabular-nums" data-testid="celkem">Celkem: {formatKc(celkem)}</span>
             </div>
             <p className="text-xs text-[var(--text-muted)] text-right">Nejsem plátce DPH.</p>
           </div>
         </Card>
 
         <Card title="Poznámka">
-          <textarea
+          <Textarea
+            aria-label="Poznámka"
             value={form.poznamka}
             onChange={(e) => setField('poznamka', e.target.value)}
-            className="w-full px-3 py-2 border rounded-md bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)]"
             rows={3}
           />
         </Card>

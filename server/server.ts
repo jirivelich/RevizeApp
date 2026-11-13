@@ -7,6 +7,8 @@ import { authMiddleware, loginUser, registerUser, logoutSession, changePassword,
 import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion, analyzeRozvadecPhotos } from './ai';
 import { getAuthUrl, exchangeCodeAndSave, deleteTokens, getTokens, saveTokens, listCalendars, syncZakazkyToCalendar } from './googleCalendar';
 import { PolozkaInput, toNum, vypocitejPolozku, vypocitejCelkem, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj } from './faktura-utils';
+import { diffZmen, zapisAudit } from './audit';
+import { hlidejZamek, jeZamceny } from './zamek';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -26,6 +28,9 @@ app.use(cors({
 }));
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+
+// Dokončené (zamčené) revize nelze měnit, dokud se neodemknou
+app.use('/api', hlidejZamek);
 
 // Servírovat statické soubory frontendu (dist/)
 const possibleDistPaths = [
@@ -187,7 +192,7 @@ async function startServer() {
         'ochranaOpatreni', 'podklady', 'vyhodnoceniPredchozich',
         'pouzitePristroje', 'provedeneUkony', 'firmaJmeno', 'firmaAdresa',
         'firmaIco', 'firmaDic', 'zaver', 'kategorieRevize', 'updatedAt',
-        'tiskSekce', 'popisZarizeni',
+        'tiskSekce', 'popisZarizeni', 'druhRozsahu', 'ucelRevize',
         // Hromosvod (LPS) sloupce
         'hromosvodTridaLps', 'hromosvodTypOchrany', 'hromosvodRokInstalace',
         'hromosvodNorma', 'hromosvodPopisLps',
@@ -205,7 +210,7 @@ async function startServer() {
         // Odběrné místo (JSON)
         'odberneMistoData',
         // Normy soulad + vlastní text lhůty
-        'normySoulad', 'lhutaText',
+        'normySoulad', 'lhutaText', 'datumUvedeniDoProvozu', 'zdrojUvedeniDoProvozu',
         // Historie / návaznost revizí
         'predchoziRevizeId', 'skupinaRevizi',
         // Snapshot revizního technika
@@ -231,9 +236,15 @@ async function startServer() {
       const keys = Object.keys(updates);
       const values = Object.values(updates);
       
+      const puvodniRes = await pool.query('SELECT * FROM revize WHERE id = $1', [req.params.id]);
       const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
       await pool.query(`UPDATE revize SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
-      
+
+      const zmeny = diffZmen(puvodniRes.rows[0] ?? {}, updates);
+      if (zmeny.length > 0) {
+        await zapisAudit({ entita: 'revize', entitaId: req.params.id, revizeId: req.params.id, akce: 'zmeneno', uzivatel: (req as AuthRequest).user?.username, zmeny });
+      }
+
       res.json({ success: true });
     } catch (error: any) {
       console.error('Error updating revize:', error);
@@ -254,6 +265,26 @@ async function startServer() {
           return res.status(500).json({ error: (retryError as Error).message });
         }
       }
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Odemknutí dokončené revize: uživatel musí opsat její číslo
+  app.post('/api/revize/:id/odemknout', authMiddleware, async (req, res) => {
+    try {
+      const r = await pool.query('SELECT "cisloRevize", stav FROM revize WHERE id = $1', [req.params.id]);
+      const revize = r.rows[0];
+      if (!revize) return res.status(404).json({ error: 'Revize nebyla nalezena' });
+      const zadane = typeof req.body?.cisloRevize === 'string' ? req.body.cisloRevize.trim() : '';
+      if (zadane !== String(revize.cisloRevize).trim()) {
+        return res.status(400).json({ error: 'Opsané číslo revize nesouhlasí.' });
+      }
+      if (!jeZamceny(revize.stav)) return res.json({ success: true, stav: revize.stav });
+      await pool.query('UPDATE revize SET stav = $1, "updatedAt" = $2 WHERE id = $3', ['rozpracováno', new Date().toISOString(), req.params.id]);
+      await zapisAudit({ entita: 'revize', entitaId: req.params.id, revizeId: req.params.id, akce: 'zmeneno', uzivatel: (req as AuthRequest).user?.username,
+        zmeny: [{ pole: 'stav', puvodni: revize.stav, nova: 'rozpracováno (odemčeno opsáním čísla revize)' }] });
+      res.json({ success: true, stav: 'rozpracováno' });
+    } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
   });
@@ -515,6 +546,133 @@ async function startServer() {
   app.delete('/api/rozvadece/:id', authMiddleware, async (req, res) => {
     try {
       await pool.query('DELETE FROM rozvadec WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== ROZSAH REVIZE A PODKLADY ====================
+  const ROZSAH_TYPY = ['revidovano', 'vyloucenoRozsah', 'neovereno'];
+  const DOKUMENT_STAVY = ['predlozeno', 'nepredlozeno', 'neaktualni', 'neodpovida', 'nerelevantni'];
+  const text = (v: unknown) => (typeof v === 'string' && v.trim() !== '' ? v.trim() : null);
+
+  app.get('/api/revize/:revizeId/rozsah-polozky', authMiddleware, async (req, res) => {
+    try {
+      const r = await pool.query('SELECT * FROM "revizeRozsahPolozka" WHERE "revizeId" = $1 ORDER BY id', [req.params.revizeId]);
+      res.json(r.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/revize/:revizeId/rozsah-polozky', authMiddleware, async (req, res) => {
+    try {
+      const { typ, nazev, duvod } = req.body;
+      if (!ROZSAH_TYPY.includes(typ)) return res.status(400).json({ error: 'Neplatný typ položky rozsahu' });
+      if (!text(nazev)) return res.status(400).json({ error: 'Název je povinný' });
+      const r = await pool.query(
+        `INSERT INTO "revizeRozsahPolozka" ("revizeId", typ, nazev, duvod, "createdAt") VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+        [req.params.revizeId, typ, text(nazev), text(duvod), new Date().toISOString()]
+      );
+      await zapisAudit({ entita: 'rozsahPolozka', entitaId: r.rows[0].id, revizeId: req.params.revizeId, akce: 'vytvoreno', uzivatel: (req as AuthRequest).user?.username, zmeny: { typ, nazev, duvod } });
+      res.json({ id: r.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/rozsah-polozky/:id', authMiddleware, async (req, res) => {
+    try {
+      const puvodni = (await pool.query('SELECT * FROM "revizeRozsahPolozka" WHERE id = $1', [req.params.id])).rows[0];
+      if (!puvodni) return res.status(404).json({ error: 'Položka nenalezena' });
+      const nova = {
+        typ: req.body.typ ?? puvodni.typ,
+        nazev: req.body.nazev ?? puvodni.nazev,
+        duvod: 'duvod' in req.body ? text(req.body.duvod) : puvodni.duvod,
+      };
+      if (!ROZSAH_TYPY.includes(nova.typ)) return res.status(400).json({ error: 'Neplatný typ položky rozsahu' });
+      if (!text(nova.nazev)) return res.status(400).json({ error: 'Název je povinný' });
+      await pool.query('UPDATE "revizeRozsahPolozka" SET typ = $1, nazev = $2, duvod = $3 WHERE id = $4', [nova.typ, text(nova.nazev), nova.duvod, req.params.id]);
+      const zmeny = diffZmen(puvodni, nova);
+      if (zmeny.length > 0) await zapisAudit({ entita: 'rozsahPolozka', entitaId: req.params.id, revizeId: puvodni.revizeId, akce: 'zmeneno', uzivatel: (req as AuthRequest).user?.username, zmeny });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/rozsah-polozky/:id', authMiddleware, async (req, res) => {
+    try {
+      const puvodni = (await pool.query('SELECT * FROM "revizeRozsahPolozka" WHERE id = $1', [req.params.id])).rows[0];
+      await pool.query('DELETE FROM "revizeRozsahPolozka" WHERE id = $1', [req.params.id]);
+      if (puvodni) await zapisAudit({ entita: 'rozsahPolozka', entitaId: puvodni.id, revizeId: puvodni.revizeId, akce: 'smazano', uzivatel: (req as AuthRequest).user?.username, zmeny: { typ: puvodni.typ, nazev: puvodni.nazev, duvod: puvodni.duvod } });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.get('/api/revize/:revizeId/dokumenty', authMiddleware, async (req, res) => {
+    try {
+      const r = await pool.query('SELECT * FROM "revizeDokument" WHERE "revizeId" = $1 ORDER BY id', [req.params.revizeId]);
+      res.json(r.rows);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/revize/:revizeId/dokumenty', authMiddleware, async (req, res) => {
+    try {
+      const { nazev, druh, datumDokumentu, stav, znemoznujeOvereni, poznamka, prilohaId } = req.body;
+      if (!text(nazev)) return res.status(400).json({ error: 'Název dokumentu je povinný' });
+      const s = stav ?? 'predlozeno';
+      if (!DOKUMENT_STAVY.includes(s)) return res.status(400).json({ error: 'Neplatný stav dokumentu' });
+      const r = await pool.query(
+        `INSERT INTO "revizeDokument" ("revizeId", nazev, druh, "datumDokumentu", stav, "znemoznujeOvereni", poznamka, "prilohaId", "createdAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+        [req.params.revizeId, text(nazev), text(druh), text(datumDokumentu), s, !!znemoznujeOvereni, text(poznamka), prilohaId ?? null, new Date().toISOString()]
+      );
+      await zapisAudit({ entita: 'dokument', entitaId: r.rows[0].id, revizeId: req.params.revizeId, akce: 'vytvoreno', uzivatel: (req as AuthRequest).user?.username, zmeny: { nazev, druh, stav: s } });
+      res.json({ id: r.rows[0].id });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.put('/api/dokumenty/:id', authMiddleware, async (req, res) => {
+    try {
+      const puvodni = (await pool.query('SELECT * FROM "revizeDokument" WHERE id = $1', [req.params.id])).rows[0];
+      if (!puvodni) return res.status(404).json({ error: 'Dokument nenalezen' });
+      const b = req.body;
+      const nova = {
+        nazev: b.nazev ?? puvodni.nazev,
+        druh: 'druh' in b ? text(b.druh) : puvodni.druh,
+        datumDokumentu: 'datumDokumentu' in b ? text(b.datumDokumentu) : puvodni.datumDokumentu,
+        stav: b.stav ?? puvodni.stav,
+        znemoznujeOvereni: 'znemoznujeOvereni' in b ? !!b.znemoznujeOvereni : puvodni.znemoznujeOvereni,
+        poznamka: 'poznamka' in b ? text(b.poznamka) : puvodni.poznamka,
+        prilohaId: 'prilohaId' in b ? (b.prilohaId ?? null) : puvodni.prilohaId,
+      };
+      if (!text(nova.nazev)) return res.status(400).json({ error: 'Název dokumentu je povinný' });
+      if (!DOKUMENT_STAVY.includes(nova.stav)) return res.status(400).json({ error: 'Neplatný stav dokumentu' });
+      await pool.query(
+        `UPDATE "revizeDokument" SET nazev = $1, druh = $2, "datumDokumentu" = $3, stav = $4, "znemoznujeOvereni" = $5, poznamka = $6, "prilohaId" = $7 WHERE id = $8`,
+        [text(nova.nazev), nova.druh, nova.datumDokumentu, nova.stav, nova.znemoznujeOvereni, nova.poznamka, nova.prilohaId, req.params.id]
+      );
+      const zmeny = diffZmen(puvodni, nova);
+      if (zmeny.length > 0) await zapisAudit({ entita: 'dokument', entitaId: req.params.id, revizeId: puvodni.revizeId, akce: 'zmeneno', uzivatel: (req as AuthRequest).user?.username, zmeny });
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/dokumenty/:id', authMiddleware, async (req, res) => {
+    try {
+      const puvodni = (await pool.query('SELECT * FROM "revizeDokument" WHERE id = $1', [req.params.id])).rows[0];
+      await pool.query('DELETE FROM "revizeDokument" WHERE id = $1', [req.params.id]);
+      if (puvodni) await zapisAudit({ entita: 'dokument', entitaId: puvodni.id, revizeId: puvodni.revizeId, akce: 'smazano', uzivatel: (req as AuthRequest).user?.username, zmeny: { nazev: puvodni.nazev, druh: puvodni.druh, stav: puvodni.stav } });
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -854,15 +1012,16 @@ async function startServer() {
 
   app.post('/api/zavady', authMiddleware, async (req, res) => {
     try {
-      const { revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, fotky, poznamka } = req.body;
+      const { revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, fotky, poznamka, typ, zduvodneni } = req.body;
       const datumZjisteni = new Date().toISOString().split('T')[0];
-      
+
       const result = await pool.query(`
-        INSERT INTO zavada ("revizeId", "rozvadecId", "mistnostId", popis, zavaznost, stav, fotky, "datumZjisteni", poznamka)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        INSERT INTO zavada ("revizeId", "rozvadecId", "mistnostId", popis, zavaznost, stav, fotky, "datumZjisteni", poznamka, typ, zduvodneni)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id
-      `, [revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, JSON.stringify(fotky || []), datumZjisteni, poznamka]);
-      
+      `, [revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, JSON.stringify(fotky || []), datumZjisteni, poznamka, typ || 'zavada', zduvodneni]);
+
+      await zapisAudit({ entita: 'zavada', entitaId: result.rows[0].id, revizeId, akce: 'vytvoreno', uzivatel: (req as AuthRequest).user?.username, zmeny: { popis, zavaznost, stav, typ: typ || 'zavada' } });
       res.json({ id: result.rows[0].id });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -877,9 +1036,16 @@ async function startServer() {
       const keys = Object.keys(updates);
       const values = Object.values(updates);
       
+      const puvodniRes = await pool.query('SELECT * FROM zavada WHERE id = $1', [req.params.id]);
       const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
       await pool.query(`UPDATE zavada SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
-      
+
+      const puvodni = puvodniRes.rows[0] ?? {};
+      const zmeny = diffZmen(puvodni, updates);
+      if (zmeny.length > 0) {
+        await zapisAudit({ entita: 'zavada', entitaId: req.params.id, revizeId: puvodni.revizeId, akce: 'zmeneno', uzivatel: (req as AuthRequest).user?.username, zmeny });
+      }
+
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -888,7 +1054,12 @@ async function startServer() {
 
   app.delete('/api/zavady/:id', authMiddleware, async (req, res) => {
     try {
+      const puvodniRes = await pool.query('SELECT * FROM zavada WHERE id = $1', [req.params.id]);
       await pool.query('DELETE FROM zavada WHERE id = $1', [req.params.id]);
+      const z = puvodniRes.rows[0];
+      if (z) {
+        await zapisAudit({ entita: 'zavada', entitaId: z.id, revizeId: z.revizeId, akce: 'smazano', uzivatel: (req as AuthRequest).user?.username, zmeny: { popis: z.popis, zavaznost: z.zavaznost, stav: z.stav, typ: z.typ } });
+      }
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -1838,7 +2009,9 @@ async function startServer() {
   const ALL_BACKUP_TABLES = [
     'revize', 'rozvadec', 'okruh', 'zavada', 'mistnost', 'zarizeni',
     'zakazka', 'mericiPristroj', 'revizePristroj', 'kalibrace', 'firma', 'nastaveni',
-    'zavadaKatalog', 'zakaznik', 'predvolenyText'
+    'zavadaKatalog', 'zakaznik', 'predvolenyText',
+    // Přílohy, rozsah revize, podklady a auditní stopa (bez nich by se při obnově ztratily)
+    'revizePriloha', 'revizeRozsahPolozka', 'revizeDokument', 'audit_log'
   ];
 
   // Statistiky databáze (lehký endpoint - pouze počty)
@@ -1907,7 +2080,8 @@ async function startServer() {
         'nastaveni', 'firma', 'zakaznik', 'mericiPristroj', 'sablona',
         'pdfSablona', 'zavadaKatalog',
         'revize', 'mistnost', 'rozvadec', 'zakazka',
-        'okruh', 'zavada', 'zarizeni', 'revizePristroj', 'kalibrace'
+        'okruh', 'zavada', 'zarizeni', 'revizePristroj', 'kalibrace',
+        'revizePriloha', 'revizeRozsahPolozka', 'revizeDokument', 'audit_log'
       ];
       
       const skipKeys = ['version', 'timestamp', 'appName'];

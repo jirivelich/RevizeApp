@@ -35,7 +35,7 @@ export function AIAutofillButton({ field, formData, entityType, onApply }: AIAut
       onClick={handleAutofill}
       disabled={loading}
       title="AI návrh"
-      className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded bg-violet-50 text-violet-600 border border-violet-200 hover:bg-violet-100 disabled:opacity-50 transition-colors"
+      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-[var(--bg-accent)] text-[var(--primary)] border border-[var(--primary)]/25 hover:brightness-110 disabled:opacity-50 transition-colors"
     >
       {loading ? (
         <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">

@@ -65,7 +65,7 @@ function Panel({ title, action, children, className = '', bodyClassName = '' }: 
   title: string; action?: ReactNode; children: ReactNode; className?: string; bodyClassName?: string;
 }) {
   return (
-    <section className={`min-w-0 flex flex-col rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] ${className}`}>
+    <section className={`min-w-0 flex flex-col rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--bg-surface)] ${className}`}>
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-[var(--border)]">
         <h2 className="text-[15px] font-semibold text-[var(--text)]">{title}</h2>
         {action}
@@ -105,7 +105,7 @@ function KpiCard({ title, value, sub, tag, tone, to }: {
   return (
     <Link
       to={to}
-      className="flex flex-col gap-1 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--bg-surface)] shadow-[var(--shadow-elevated)] px-4 py-3.5 transition-colors hover:border-[var(--border-strong)] active:scale-[0.99]"
+      className="flex flex-col gap-1 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--bg-surface)] px-4 py-3.5 transition-colors hover:border-[var(--border-strong)] active:scale-[0.99]"
     >
       <div className="flex items-start justify-between gap-2">
         <span className="text-[13px] font-medium text-[var(--text-secondary)]">{title}</span>
@@ -113,8 +113,8 @@ function KpiCard({ title, value, sub, tag, tone, to }: {
           <span className="hidden sm:block"><Badge variant={effectiveTone === 'neutral' ? 'neutral' : effectiveTone}>{tag}</Badge></span>
         )}
       </div>
-      <span className={`text-[30px] leading-tight font-semibold tracking-tight tabular-nums ${KPI_VALUE_COLOR[effectiveTone]}`}>{value}</span>
-      <span className="text-[12px] text-[var(--text-muted)]">{sub}</span>
+      <span className={`text-[26px] leading-tight font-bold tracking-tight tabular-nums ${KPI_VALUE_COLOR[effectiveTone]}`}>{value}</span>
+      <span className="text-xs text-[var(--text-muted)]">{sub}</span>
     </Link>
   );
 }
@@ -139,7 +139,7 @@ const SEVERITY_VARIANT: Record<NotificationSeverity, BadgeVariant> = {
 const SEVERITY_ICON_BOX: Record<NotificationSeverity, string> = {
   critical: 'bg-[var(--danger-bg)] text-[var(--danger-text)]',
   warning: 'bg-[var(--warning-bg)] text-[var(--warning-text)]',
-  info: 'bg-[var(--bg-accent-badge)] text-[var(--primary)]',
+  info: 'bg-[var(--bg-secondary-accent)] text-[var(--secondary)]',
 };
 
 const TYPE_ICON: Record<NotificationType, keyof typeof ICON_PATHS> = {
@@ -267,15 +267,15 @@ function WeekPanel({ zakazky }: { zakazky: Zakazka[] }) {
               <li key={key} className="border-b border-[var(--border)] last:border-b-0">
                 <Link to={`/planovani?datum=${z.datumPlanovany}`} className="flex gap-3 py-2.5 group">
                   <span className={`flex w-11 flex-none flex-col items-center justify-center rounded-[var(--radius-md)] py-1 ${
-                    isToday ? 'bg-[var(--primary)] text-white' : 'bg-[var(--bg-hover)] text-[var(--text)]'
+                    isToday ? 'bg-[var(--primary)] text-[var(--primary-fg)]' : 'bg-[var(--bg-hover)] text-[var(--text)]'
                   }`}>
-                    <span className="text-[10px] font-semibold uppercase">{isToday ? 'Dnes' : DOW_SHORT[date.getDay()]}</span>
+                    <span className="text-xs font-semibold uppercase">{isToday ? 'Dnes' : DOW_SHORT[date.getDay()]}</span>
                     <span className="text-[17px] font-semibold tabular-nums leading-tight">{date.getDate()}</span>
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-[14px] font-semibold text-[var(--text)] group-hover:underline">{z.nazev}</span>
                     <span className="truncate text-[13px] text-[var(--text-muted)]">{[z.klient, z.adresa].filter(Boolean).join(' · ')}</span>
-                    <span className="text-[12px] text-[var(--text-secondary)]">
+                    <span className="text-xs text-[var(--text-secondary)]">
                       {z.casPlanovany && <span className="tabular-nums">{z.casPlanovany} · </span>}
                       {z.stav === 'v realizaci' ? 'v realizaci' : `priorita ${z.priorita === 'nizká' ? 'nízká' : z.priorita}`}
                     </span>
@@ -316,7 +316,7 @@ function WipPanel({ revize, total, staleDays }: { revize: Revize[]; total: numbe
               <li key={r.id} className="border-b border-[var(--border)] last:border-b-0">
                 <Link to={`/revize/${r.id}`} className="grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,1fr)_160px_auto] items-center gap-x-4 gap-y-1 px-4 py-3 hover:bg-[var(--bg-hover)] transition-colors">
                   <span className="min-w-0">
-                    <span className="block text-[12px] text-[var(--text-muted)] tabular-nums">{r.cisloRevize || `#${r.id}`}</span>
+                    <span className="block text-xs text-[var(--text-muted)] tabular-nums">{r.cisloRevize || `#${r.id}`}</span>
                     <span className="block truncate text-[14px] font-semibold text-[var(--text)]">{r.nazev || r.adresa || 'Bez názvu'}</span>
                   </span>
                   <span className="hidden sm:block text-[13px] text-[var(--text-secondary)]">
@@ -363,12 +363,12 @@ function RevizeBarChart({ revize }: { revize: Revize[] }) {
       >
         {bars.map(b => (
           <div key={`${b.year}-${b.month}`} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5" title={`${b.label} ${b.year}: ${b.count}`}>
-            {b.count > 0 && <span className={`text-[10px] tabular-nums ${b.isCurrent ? 'text-[var(--text)] font-semibold' : 'text-[var(--text-muted)]'}`}>{b.count}</span>}
+            {b.count > 0 && <span className={`text-xs tabular-nums ${b.isCurrent ? 'text-[var(--text)] font-semibold' : 'text-[var(--text-muted)]'}`}>{b.count}</span>}
             <div
               className={`w-full rounded-t-[3px] ${b.isCurrent ? 'bg-[var(--primary)]' : 'bg-[var(--bg-hover-strong)]'}`}
               style={{ height: `${Math.max((b.count / max) * 88, b.count > 0 ? 4 : 2)}px` }}
             />
-            <span className={`text-[11px] ${b.isCurrent ? 'text-[var(--text)] font-semibold' : 'text-[var(--text-muted)]'}`}>{b.label}</span>
+            <span className={`text-xs ${b.isCurrent ? 'text-[var(--text)] font-semibold' : 'text-[var(--text-muted)]'}`}>{b.label}</span>
           </div>
         ))}
       </div>
@@ -439,15 +439,15 @@ function WeatherInline() {
   const { data, isLoading } = useWeather();
   const today = new Date().toISOString().slice(0, 10);
   const day = data?.find(d => d.date === today);
-  if (isLoading) return <span className="text-[12px] text-[var(--text-muted)] animate-pulse">načítám…</span>;
+  if (isLoading) return <span className="text-xs text-[var(--text-muted)] animate-pulse">načítám…</span>;
   if (!day) return null;
   return (
     <div className="flex items-center gap-2">
       <span className="text-xl leading-none">{wmoToEmoji(day.code)}</span>
       <span className="text-[14px] font-semibold text-[var(--text)]">{day.max}°</span>
       <span className="text-[13px] text-[var(--text-muted)]">{day.min}°</span>
-      {day.precip > 0 && <span className="text-[11px] text-[var(--primary)]">💧{day.precip}%</span>}
-      <span className="text-[11px] text-[var(--text-muted)]">Tachov</span>
+      {day.precip > 0 && <span className="text-xs text-[var(--primary)]">💧{day.precip}%</span>}
+      <span className="text-xs text-[var(--text-muted)]">Tachov</span>
     </div>
   );
 }
@@ -560,7 +560,7 @@ export function Dashboard() {
             <span className="first-letter:uppercase">{todayLabel}</span>
             <WeatherInline />
           </div>
-          <h1 className="text-[26px] font-bold tracking-tight text-[var(--text)]">{greeting}</h1>
+          <h1 className="text-xl font-bold leading-tight text-[var(--text)]">{greeting}</h1>
         </div>
         <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <Link
@@ -571,7 +571,7 @@ export function Dashboard() {
           </Link>
           <Link
             to="/revize"
-            className="inline-flex min-h-[44px] flex-1 sm:flex-none items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--primary)] px-5 text-[14px] font-semibold text-white hover:bg-[var(--primary-hover)] transition-colors"
+            className="inline-flex min-h-[44px] flex-1 sm:flex-none items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--primary)] px-5 text-[14px] font-semibold text-[var(--primary-fg)] hover:bg-[var(--primary-hover)] transition-colors"
           >
             <Icon name="plus" size={16} strokeWidth={2.4} /> Nová revize
           </Link>

@@ -33,7 +33,7 @@ describe('Modal', () => {
         Obsah
       </Modal>
     );
-    expect(screen.getByText('✕')).toBeInTheDocument();
+    expect(screen.getByLabelText('Zavřít')).toBeInTheDocument();
   });
 
   it('should call onClose when close button is clicked', () => {
@@ -43,7 +43,7 @@ describe('Modal', () => {
         Obsah
       </Modal>
     );
-    fireEvent.click(screen.getByText('✕'));
+    fireEvent.click(screen.getByLabelText('Zavřít'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -66,7 +66,7 @@ describe('Modal', () => {
       </Modal>
     );
     // Backdrop is the div with bg-black/50
-    const backdrop = container.querySelector('.bg-black\\/50');
+    const backdrop = container.querySelector('[class*="--overlay"]');
     expect(backdrop).toBeTruthy();
     fireEvent.click(backdrop!);
     expect(onClose).toHaveBeenCalledTimes(1);

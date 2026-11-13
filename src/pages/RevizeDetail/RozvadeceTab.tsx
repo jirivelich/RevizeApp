@@ -571,7 +571,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="5" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="19" r="1" fill="currentColor"/></svg>
                       </Button>
                       {isMoreMenuOpen && (
-                        <div className="absolute right-0 top-full mt-1 z-50 min-w-[168px] rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-xl py-1">
+                        <div className="absolute right-0 top-full mt-1 z-50 min-w-[168px] rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)] py-1">
                           <button
                             className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
                             onClick={() => { setIsMoreMenuOpen(false); setIsImportFotoOpen(true); }}>
@@ -614,10 +614,10 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
             }
           >
             <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-[10px] text-[var(--text-secondary)]">Označení</p><p className="font-medium text-xs text-[var(--text)]">{selectedRozvadec.oznaceni}</p></div>
-              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-[10px] text-[var(--text-secondary)]">Umístění</p><p className="font-medium text-xs text-[var(--text)]">{selectedRozvadec.umisteni}</p></div>
-              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-[10px] text-[var(--text-secondary)]">Typ</p><p className="font-medium text-xs text-[var(--text)]">{selectedRozvadec.typRozvadece || '—'}</p></div>
-              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-[10px] text-[var(--text-secondary)]">Krytí</p><p className="font-medium text-xs text-[var(--text)]">{selectedRozvadec.stupenKryti}</p></div>
+              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-xs text-[var(--text-secondary)]">Označení</p><p className="font-medium text-xs text-[var(--text)]">{selectedRozvadec.oznaceni}</p></div>
+              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-xs text-[var(--text-secondary)]">Umístění</p><p className="font-medium text-xs text-[var(--text)]">{selectedRozvadec.umisteni}</p></div>
+              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-xs text-[var(--text-secondary)]">Typ</p><p className="font-medium text-xs text-[var(--text)]">{selectedRozvadec.typRozvadece || '—'}</p></div>
+              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-xs text-[var(--text-secondary)]">Krytí</p><p className="font-medium text-xs text-[var(--text)]">{selectedRozvadec.stupenKryti}</p></div>
             </div>
 
             <h4 className="font-medium text-sm text-[var(--text)] mb-2">Okruhy ({okruhy.length})</h4>

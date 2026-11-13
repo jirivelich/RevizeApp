@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, Card, Input, Modal, ConfirmDialog, Badge, PageHeader, EmptyState, DataTable } from '../components/ui';
+import { Button, Card, Input, Modal, ConfirmDialog, Badge, PageHeader, EmptyState, DataTable, Textarea } from '../components/ui';
 import type { DataTableColumn } from '../components/ui';
 import type { BadgeVariant } from '../components/ui';
 import { zakazniciService } from '../services/database';
@@ -258,15 +258,11 @@ const ZakazniciPage: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Poznámka</label>
-            <textarea
+          <Textarea label="Poznámka"
               value={formData.poznamka}
               onChange={(e) => setFormData({ ...formData, poznamka: e.target.value })}
-              className="w-full px-3 py-2 border rounded-md bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]/50"
               rows={3}
             />
-          </div>
 
           {formError && isModalOpen && (
             <p className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-lg px-3 py-2">

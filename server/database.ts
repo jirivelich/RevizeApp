@@ -460,6 +460,10 @@ export async function initializeDatabase() {
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "normySoulad" TEXT',
       // Lhůta – vlastní text místo počtu měsíců
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "lhutaText" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "datumUvedeniDoProvozu" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "zdrojUvedeniDoProvozu" TEXT',
+      "ALTER TABLE zavada ADD COLUMN IF NOT EXISTS typ TEXT DEFAULT 'zavada'",
+      'ALTER TABLE zavada ADD COLUMN IF NOT EXISTS zduvodneni TEXT',
       // Snapshot kalibrací v revizePristroj – při změně kalibrace na přístroji zůstane v revizi původní
       'ALTER TABLE "revizePristroj" ADD COLUMN IF NOT EXISTS "datumKalibrace" TEXT',
       'ALTER TABLE "revizePristroj" ADD COLUMN IF NOT EXISTS "platnostKalibrace" TEXT',
@@ -609,6 +613,55 @@ export async function initializeDatabase() {
       'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "fakturaPrefix" TEXT',
       'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "fakturaPoznamkaPata" TEXT',
       'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS razitko TEXT',
+      // ===== Verzování schématu a auditní stopa (aditivní, bez dopadu na stávající data) =====
+      `CREATE TABLE IF NOT EXISTS schema_migrations (
+        version INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        "appliedAt" TEXT NOT NULL
+      )`,
+      `CREATE TABLE IF NOT EXISTS audit_log (
+        id SERIAL PRIMARY KEY,
+        cas TEXT NOT NULL,
+        entita TEXT NOT NULL,
+        "entitaId" INTEGER,
+        "revizeId" INTEGER,
+        akce TEXT NOT NULL,
+        uzivatel TEXT,
+        zmeny TEXT
+      )`,
+      // ===== Rozsah revize a evidence podkladů =====
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "druhRozsahu" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "ucelRevize" TEXT',
+      `CREATE TABLE IF NOT EXISTS "revizeRozsahPolozka" (
+        id SERIAL PRIMARY KEY,
+        "revizeId" INTEGER NOT NULL REFERENCES revize(id) ON DELETE CASCADE,
+        typ TEXT NOT NULL,
+        nazev TEXT NOT NULL,
+        duvod TEXT,
+        "createdAt" TEXT NOT NULL
+      )`,
+      `CREATE TABLE IF NOT EXISTS "revizeDokument" (
+        id SERIAL PRIMARY KEY,
+        "revizeId" INTEGER NOT NULL REFERENCES revize(id) ON DELETE CASCADE,
+        nazev TEXT NOT NULL,
+        druh TEXT,
+        "datumDokumentu" TEXT,
+        stav TEXT NOT NULL DEFAULT 'predlozeno',
+        "znemoznujeOvereni" BOOLEAN NOT NULL DEFAULT FALSE,
+        poznamka TEXT,
+        "prilohaId" INTEGER REFERENCES "revizePriloha"(id) ON DELETE SET NULL,
+        "createdAt" TEXT NOT NULL
+      )`,
+      'CREATE INDEX IF NOT EXISTS idx_rozsah_revize ON "revizeRozsahPolozka"("revizeId")',
+      'CREATE INDEX IF NOT EXISTS idx_dokument_revize ON "revizeDokument"("revizeId")',
+      'CREATE INDEX IF NOT EXISTS idx_audit_revize ON audit_log("revizeId")',
+      'CREATE INDEX IF NOT EXISTS idx_audit_entita ON audit_log(entita, "entitaId")',
+      `INSERT INTO schema_migrations (version, name, "appliedAt")
+        VALUES (1, 'audit_log a schema_migrations', '${new Date().toISOString()}')
+        ON CONFLICT (version) DO NOTHING`,
+      `INSERT INTO schema_migrations (version, name, "appliedAt")
+        VALUES (2, 'rozsah revize a evidence podkladu', '${new Date().toISOString()}')
+        ON CONFLICT (version) DO NOTHING`,
     ];
     
     for (const migration of migrations) {

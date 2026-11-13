@@ -14,6 +14,13 @@ const STAV_VARIANT: Record<FakturaStav, BadgeVariant> = {
   storno: 'danger',
 };
 
+const chipClass = (on: boolean) =>
+  `inline-flex items-center h-8 px-3 rounded-full border text-xs font-semibold cursor-pointer transition-colors ${
+    on
+      ? 'bg-[var(--bg-accent)] border-[var(--primary)] text-[var(--primary)]'
+      : 'bg-[var(--bg-hover)] border-[var(--border-input)] text-[var(--text-secondary)] hover:text-[var(--text)] hover:border-[var(--border-strong)]'
+  }`;
+
 const formatDatum = (d?: string): string => (d ? new Date(d).toLocaleDateString('cs-CZ') : '-');
 
 const FakturyPage: React.FC = () => {
@@ -79,7 +86,7 @@ const FakturyPage: React.FC = () => {
     { key: 'odberatel', header: 'Odběratel', render: (f) => <span className="font-medium">{f.odberatelNazev}</span> },
     { key: 'vystaveno', header: 'Vystaveno', render: (f) => formatDatum(f.datumVystaveni) },
     { key: 'splatnost', header: 'Splatnost', render: (f) => formatDatum(f.datumSplatnosti) },
-    { key: 'celkem', header: 'Celkem', align: 'right', render: (f) => <span className="whitespace-nowrap">{formatKc(f.celkem)}</span> },
+    { key: 'celkem', header: 'Celkem', align: 'right', render: (f) => <span className="whitespace-nowrap tabular-nums">{formatKc(f.celkem)}</span> },
     { key: 'stav', header: 'Stav', render: (f) => <Badge variant={STAV_VARIANT[f.stav]}>{STAV_LABEL[f.stav]}</Badge> },
     {
       key: 'akce',
@@ -141,12 +148,24 @@ const FakturyPage: React.FC = () => {
         </p>
       )}
 
-      <Card className="p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Select label="Stav" options={stavOptions} value={stavFilter} onChange={(e) => setStavFilter(e.target.value)} />
-          <Select label="Rok" options={rokOptions} value={rokFilter} onChange={(e) => setRokFilter(e.target.value)} />
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-wrap gap-2 items-center" role="group" aria-label="Filtr stavu">
+          {stavOptions.map((o) => (
+            <button
+              key={o.value}
+              type="button"
+              aria-pressed={stavFilter === o.value}
+              className={chipClass(stavFilter === o.value)}
+              onClick={() => setStavFilter(o.value)}
+            >
+              {o.label}
+            </button>
+          ))}
         </div>
-      </Card>
+        <div className="w-40">
+          <Select aria-label="Rok" options={rokOptions} value={rokFilter} onChange={(e) => setRokFilter(e.target.value)} />
+        </div>
+      </div>
 
       {faktury.length === 0 ? (
         <EmptyState

@@ -51,7 +51,7 @@ export function OkruhyTable({ okruhy, draggedOkruh, onDragStart, onDragOver, onD
                 </span>
               </td>
               <td className="py-1 px-2 text-xs">
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
+                <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
                   {[
                     o.jisticTyp,
                     o.jisticProud ? `/${o.jisticProud}` : '',
@@ -59,7 +59,7 @@ export function OkruhyTable({ okruhy, draggedOkruh, onDragStart, onDragOver, onD
                   ].join('').replace(/\/\//g, '/').replace(/\/$/, '')}
                 </span>
                 {o.jeJisticochranac && (
-                  <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-[var(--primary)] dark:bg-blue-900/30 dark:text-blue-300" title="Jississochranič (RCBO)">
+                  <span className="ml-1 px-1.5 py-0.5 rounded text-xs font-medium bg-[var(--bg-secondary-accent)] text-[var(--secondary)]" title="Jississochranič (RCBO)">
                     +{o.chrTyp || 'A'}/{o.chrCitlivostMa ?? 30}mA
                   </span>
                 )}

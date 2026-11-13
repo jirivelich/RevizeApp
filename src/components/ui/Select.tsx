@@ -1,4 +1,5 @@
 import { type SelectHTMLAttributes, forwardRef, useId } from 'react';
+import { fieldBase, fieldHeight, labelClass } from './Input';
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
@@ -12,9 +13,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     const fieldId = id ?? autoId;
     const errorId = `${fieldId}-error`;
     return (
-      <div className="flex flex-col gap-0.5">
+      <div className="flex flex-col gap-1.5">
         {label && (
-          <label htmlFor={fieldId} className="text-xs font-medium text-[var(--text-secondary)]">
+          <label htmlFor={fieldId} className={labelClass}>
             {label}
           </label>
         )}
@@ -24,9 +25,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
           className={`
-            px-2 py-1.5 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] min-h-[44px] text-base sm:min-h-[36px] sm:text-sm
-            transition-colors duration-150
-            focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--focus-ring-color)]
+            ${fieldBase} ${fieldHeight}
             ${error ? 'border-[var(--danger)]' : 'border-[var(--border-input)]'}
             ${className}
           `}

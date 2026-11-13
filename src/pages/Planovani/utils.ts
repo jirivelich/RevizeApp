@@ -34,7 +34,7 @@ export const emptyFormData: ZakazkaFormData = {
 
 export function getStatusColor(stav: Zakazka['stav']): string {
   switch (stav) {
-    case 'plánováno': return 'bg-[var(--bg-accent-badge)] text-[var(--primary)]';
+    case 'plánováno': return 'bg-[var(--bg-secondary-accent)] text-[var(--secondary)]';
     case 'v realizaci': return 'bg-[var(--warning-bg)] text-[var(--warning-text)]';
     case 'dokončeno': return 'bg-[var(--success-bg)] text-[var(--success-text)]';
     case 'zrušeno': return 'bg-[var(--bg-hover)] text-[var(--text-secondary)]';
@@ -46,7 +46,7 @@ export function getPriorityColor(priorita: Zakazka['priorita']): string {
   switch (priorita) {
     case 'vysoká': return 'bg-[var(--danger-bg)] text-[var(--danger-text)]';
     case 'střední': return 'bg-[var(--warning-bg)] text-[var(--warning-text)]';
-    case 'nizká': return 'bg-[var(--bg-accent-badge)] text-[var(--primary)]';
+    case 'nizká': return 'bg-[var(--bg-secondary-accent)] text-[var(--secondary)]';
     default: return 'bg-[var(--bg-hover)] text-[var(--text-secondary)]';
   }
 }

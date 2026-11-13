@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Previewer } from 'pagedjs';
+import { restoreSplitTableColumns } from '../ReportPrint/pagedTables';
 import { revizeService, zavadaService, revizePristrojService, nastaveniService, zakazniciService } from '../../services/database';
+import { ReportDoporuceni } from '../ReportPrint/ReportDoporuceni';
 import type { Revize, Zavada, MericiPristroj, Nastaveni, Zakaznik } from '../../types';
 import { parseOdberneMisto, porovnejJistic, validujParametry, PPNN_ZDROJ, STAV_LABEL, type OdberneMistoData, type KontrolaPolozka } from '../../types/odberneMisto';
 import { ReportHeader } from '../ReportPrint/ReportHeader';
@@ -113,6 +115,7 @@ export function OdberneMistoPrintPage() {
       const previewer = new Previewer();
       const flow = await previewer.preview(content, [cssUrl], previewRef.current);
       URL.revokeObjectURL(cssUrl);
+      restoreSplitTableColumns(previewRef.current);
       try { flow?.pages?.forEach((p: any) => p.removeListeners?.()); } catch { /* ok */ }
     } catch (err) {
       console.error('Pagedjs error:', err);
@@ -316,6 +319,12 @@ export function OdberneMistoPrintPage() {
       {nums.podklady > 0 && (
         <ReportSection title={t(nums.podklady, 'Předložené podklady')}>
           <p className="report-text">{revize.podklady}</p>
+          {revize.datumUvedeniDoProvozu && (
+            <p className="report-text">
+            Zařízení bylo uvedeno do provozu: <strong>{revize.datumUvedeniDoProvozu}</strong>
+            {revize.zdrojUvedeniDoProvozu && <> (zjištěno na základě: {revize.zdrojUvedeniDoProvozu})</>}.
+          </p>
+        )}
         </ReportSection>
       )}
 
@@ -384,11 +393,11 @@ export function OdberneMistoPrintPage() {
       )}
 
       <ReportSection title={t(nums.zavady, 'Přehled zjištěných závad')}>
-        {zavady.length > 0 ? (
+        {zavady.filter(z => z.typ !== 'doporuceni').length > 0 ? (
           <ReportTable
             columns={['#', 'Popis závady', 'Závažnost', 'Stav', 'Zjištěna']}
             widths={['5%', '45%', '15%', '15%', '20%']}
-            rows={zavady.map((z, i) => [
+            rows={zavady.filter(z => z.typ !== 'doporuceni').map((z, i) => [
               String(i + 1), z.popis,
               z.zavaznost === 'C1' ? 'C1 – Kritická' : z.zavaznost === 'C2' ? 'C2 – Vážná' : 'C3 – Méně závažná',
               z.stav === 'otevřená' ? 'Otevřená' : z.stav === 'v řešení' ? 'V řešení' : 'Vyřešená',
@@ -396,6 +405,7 @@ export function OdberneMistoPrintPage() {
             ])}
           />
         ) : <p className="report-text"><strong>Při revizi nebyly zjištěny žádné závady.</strong></p>}
+        <ReportDoporuceni doporuceni={zavady.filter(z => z.typ === 'doporuceni')} />
       </ReportSection>
 
       <ReportSection title={t(nums.vyhodnoceni, 'Vyhodnocení provedené revize')}>

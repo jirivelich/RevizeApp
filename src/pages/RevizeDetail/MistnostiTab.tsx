@@ -235,7 +235,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
               {mistnosti.map((m) => (
                 <div key={m.id}
                   className={`rounded-lg border transition-colors cursor-pointer ${
-                    selectedMistnost?.id === m.id ? 'border-[var(--primary)] bg-[var(--bg-accent)]' : 'border-[var(--border)] bg-[var(--bg-surface)] hover:border-white/[0.14]'
+                    selectedMistnost?.id === m.id ? 'border-[var(--primary)] bg-[var(--bg-accent)]' : 'border-[var(--border)] bg-[var(--bg-surface)] hover:border-[var(--border-strong)]'
                   }`}
                   onClick={() => handleSelectMistnost(m)}
                 >
@@ -279,7 +279,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
             }
           >
             <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-[10px] text-[var(--text-secondary)]">Patro</p><p className="font-medium text-xs text-[var(--text)]">{selectedMistnost.patro || '—'}</p></div>
+              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-xs text-[var(--text-secondary)]">Patro</p><p className="font-medium text-xs text-[var(--text)]">{selectedMistnost.patro || '—'}</p></div>
             </div>
 
             <h4 className="font-medium text-sm text-[var(--text)] mb-2">Zařízení ({zarizeni.length})</h4>
@@ -302,14 +302,14 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
                       <tr key={z.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[var(--primary)] hover:bg-[var(--bg-hover)] group">
                         <td className="py-1 px-2 text-xs">
                           <p className="font-medium">{z.nazev}</p>
-                          {z.oznaceni && <p className="text-[10px] text-[var(--text-secondary)]">{z.oznaceni}</p>}
+                          {z.oznaceni && <p className="text-xs text-[var(--text-secondary)]">{z.oznaceni}</p>}
                         </td>
                         <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{z.pocetKs || 1}</td>
-                        <td className="py-1 px-2 text-xs"><span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">{z.trida || 'I'}</span></td>
+                        <td className="py-1 px-2 text-xs"><span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">{z.trida || 'I'}</span></td>
                         <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{z.prikonW ? `${z.prikonW} W` : '—'}</td>
                         <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{z.ochranaPredDotykem || '—'}</td>
                         <td className="py-1 px-2 text-xs">
-                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                          <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
                             z.stav === 'OK' ? 'bg-[var(--success-bg)] text-[var(--success-text)]' :
                             z.stav === 'závada' ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]' :
                             'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
@@ -391,7 +391,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
     >
       <form onSubmit={handleAddZarizeni} className="space-y-3">
         <Input label="Název zařízení" value={zarizeniFormData.nazev} onChange={(e) => setZarizeniFormData({ ...zarizeniFormData, nazev: e.target.value })} placeholder="např. Zásuvka u okna, Hlavní svítidlo..." required />
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 max-sm:grid-cols-1 gap-3">
           <Input label="Označení" value={zarizeniFormData.oznaceni} onChange={(e) => setZarizeniFormData({ ...zarizeniFormData, oznaceni: e.target.value })} placeholder="např. Z1, L2..." />
           <Input label="Počet kusů" type="number" min="1" value={zarizeniFormData.pocetKs.toString()}
             onChange={(e) => {
@@ -414,7 +414,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
             }}
             options={[{ value: 'I', label: 'I' }, { value: 'II', label: 'II' }, { value: 'III', label: 'III' }]} />
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 max-sm:grid-cols-1 gap-3">
           <Input label="Příkon (W)" type="number" value={zarizeniFormData.prikonW?.toString() || ''}
             onChange={(e) => setZarizeniFormData({ ...zarizeniFormData, prikonW: e.target.value ? parseFloat(e.target.value) : undefined })} placeholder="např. 60" />
           <Input label="Ochrana před dotykem" value={zarizeniFormData.ochranaPredDotykem}
@@ -445,7 +445,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
     >
       <form onSubmit={(e) => { e.preventDefault(); saveZarizeni(); }} className="space-y-3">
         <Input label="Název zařízení" value={zarizeniFormData.nazev} onChange={(e) => setZarizeniFormData({ ...zarizeniFormData, nazev: e.target.value })} placeholder="např. Zásuvka u okna..." required />
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 max-sm:grid-cols-1 gap-3">
           <Input label="Označení" value={zarizeniFormData.oznaceni} onChange={(e) => setZarizeniFormData({ ...zarizeniFormData, oznaceni: e.target.value })} placeholder="např. Z1, L2..." />
           <Input label="Počet kusů" type="number" min="1" value={zarizeniFormData.pocetKs.toString()}
             onChange={(e) => {
@@ -468,7 +468,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
             }}
             options={[{ value: 'I', label: 'I' }, { value: 'II', label: 'II' }, { value: 'III', label: 'III' }]} />
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 max-sm:grid-cols-1 gap-3">
           <Input label="Příkon (W)" type="number" value={zarizeniFormData.prikonW?.toString() || ''}
             onChange={(e) => setZarizeniFormData({ ...zarizeniFormData, prikonW: e.target.value ? parseFloat(e.target.value) : undefined })} placeholder="např. 60" />
           <Input label="Ochrana před dotykem" value={zarizeniFormData.ochranaPredDotykem}

@@ -1,5 +1,5 @@
 ﻿import type { Zakazka } from '../../types';
-import { Card, Select } from '../../components/ui';
+import { Card, EmptyState } from '../../components/ui';
 import { ZakazkaCard } from './ZakazkaCard';
 import { STAV_OPTIONS } from './utils';
 
@@ -31,15 +31,22 @@ export function ListView({
 
   return (
     <Card>
-      <div className="flex gap-4 mb-4">
-        <Select
-          value={filterStav}
-          onChange={(e) => onFilterChange(e.target.value)}
-          options={[
-            { value: '', label: 'Všechny stavy' },
-            ...STAV_OPTIONS,
-          ]}
-        />
+      <div className="flex gap-2 mb-4 flex-wrap" role="group" aria-label="Filtr stavu">
+        {[{ value: '', label: 'Všechny' }, ...STAV_OPTIONS].map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => onFilterChange(o.value)}
+            aria-pressed={filterStav === o.value}
+            className={`inline-flex items-center h-8 px-3 rounded-full border text-xs font-semibold transition-colors ${
+              filterStav === o.value
+                ? 'bg-[var(--bg-accent)] border-[var(--primary)] text-[var(--primary)]'
+                : 'bg-[var(--bg-hover)] border-[var(--border-input)] text-[var(--text-secondary)] hover:text-[var(--text)]'
+            }`}
+          >
+            {o.label}
+          </button>
+        ))}
       </div>
 
       {filteredZakazky.length > 0 ? (
@@ -56,11 +63,11 @@ export function ListView({
           ))}
         </div>
       ) : (
-        <p className="text-center text-[var(--text-muted)] py-8">
-          {filterStav
+        <EmptyState
+          message={filterStav
             ? 'Žádné zakázky neodpovídají filtru.'
             : 'Zatím žádné zakázky. Přidejte první kliknutím na tlačítko výše.'}
-        </p>
+        />
       )}
     </Card>
   );
