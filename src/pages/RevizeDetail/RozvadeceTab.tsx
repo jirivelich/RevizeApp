@@ -10,6 +10,8 @@ import { CranicFormFields, type CranicFormData } from './CranicFormFields';
 import { OkruhyInlineTable } from './OkruhyInlineTable';
 import { OkruhyTable } from './OkruhyTable';
 import { ChraniceTable } from './ChraniceTable';
+import { vyhodnotOkruh } from './mereniLimity';
+import { StatTile } from './MereniUi';
 
 // Re-export pro zpětnou kompatibilitu (testy importují přímo z RozvadeceTab)
 export { EditableSelect, computeVodic, TYPY_KABELU, PRUREZY };
@@ -114,21 +116,33 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const sortedRozvadece = [...rozvadece].sort((a, b) => (a.poradi ?? a.id ?? 0) - (b.poradi ?? b.id ?? 0));
+
   const handleSelectRozvadec = async (rozvadec: Rozvadec) => {
-    if (selectedRozvadec?.id === rozvadec.id) {
-      setSelectedRozvadec(null);
-      setOkruhy([]);
-      setChranice([]);
-    } else {
-      setSelectedRozvadec(rozvadec);
-      if (rozvadec.id) {
-        const okruhyData = await okruhService.getByRozvadec(rozvadec.id);
-        setOkruhy(okruhyData);
-        const cranicData = await cranicService.getByRozvadec(rozvadec.id);
-        setChranice(cranicData);
-      }
+    if (selectedRozvadec?.id === rozvadec.id) return;
+    setSelectedRozvadec(rozvadec);
+    setOkruhy([]);
+    setChranice([]);
+    if (rozvadec.id) {
+      const okruhyData = await okruhService.getByRozvadec(rozvadec.id);
+      setOkruhy(okruhyData);
+      const cranicData = await cranicService.getByRozvadec(rozvadec.id);
+      setChranice(cranicData);
     }
   };
+
+  // Automaticky otevřít první rozvaděč (a po smazání vybraného další v pořadí)
+  useEffect(() => {
+    if (!selectedRozvadec && sortedRozvadece.length > 0) {
+      handleSelectRozvadec(sortedRozvadece[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rozvadece, selectedRozvadec]);
+
+  const vyhodnoceni = okruhy.map(vyhodnotOkruh);
+  const pocetZmereno = vyhodnoceni.filter(v => v.stav !== 'nezmereno').length;
+  const pocetVyhovuje = vyhodnoceni.filter(v => v.stav === 'ok' || v.stav === 'limit').length;
+  const pocetNevyhovuje = vyhodnoceni.filter(v => v.stav === 'fail').length;
 
   const handleAddRozvadec = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -442,56 +456,62 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
 
   return (
     <>
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      {/* Seznam rozvaděčů - levá strana (skrytá v inline módu) */}
-      <div className={inlineModeRozvadecId !== null ? 'hidden' : 'lg:col-span-1'}>
-        <Card
-          title="Rozvaděče"
-          actions={<Button size="sm" onClick={() => setIsRozvadecModalOpen(true)}>+ Přidat</Button>}
+    <div className="flex flex-col gap-4">
+      {/* Přepínač rozvaděčů v revizi (přetažením lze měnit pořadí) */}
+      <div role="tablist" aria-label="Rozvaděče v revizi" className="flex gap-2 overflow-x-auto pb-1 -mb-1">
+        {sortedRozvadece.map((r) => {
+          const active = selectedRozvadec?.id === r.id;
+          return (
+            <button
+              key={r.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              draggable
+              onDragStart={() => handleRozvadecDragStart(r)}
+              onDragOver={handleDragOver}
+              onDrop={() => handleRozvadecDrop(r)}
+              onDragEnd={handleRozvadecDragEnd}
+              onClick={() => handleSelectRozvadec(r)}
+              title={[r.nazev, r.umisteni].filter(Boolean).join(' · ')}
+              className={`flex items-center gap-2 min-h-[40px] px-3 rounded-[var(--radius-lg)] border text-[13px] whitespace-nowrap transition-colors ${
+                active
+                  ? 'border-[var(--active-border)] bg-[var(--active-bg)] text-[var(--text)]'
+                  : draggedRozvadec?.id === r.id
+                    ? 'opacity-50 border-[var(--border)] bg-[var(--bg-accent)]'
+                    : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:border-[var(--border-strong)]'
+              }`}
+            >
+              <span className={`font-semibold ${active ? 'text-[var(--nav-text-active)]' : ''}`}>{r.oznaceni || r.nazev}</span>
+              {r.oznaceni && <span className="text-[var(--text-secondary)] max-w-[160px] truncate">{r.nazev}</span>}
+              <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-[var(--bg-hover)] text-[var(--text-secondary)] tabular-nums" title="Počet okruhů">
+                {okruhyCounts[r.id!] || 0}
+              </span>
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          onClick={() => setIsRozvadecModalOpen(true)}
+          className="min-h-[40px] px-3 rounded-[var(--radius-lg)] border border-dashed border-[var(--border-strong)] text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] whitespace-nowrap"
         >
-          {rozvadece.length > 0 ? (
-            <div className="space-y-2">
-              {[...rozvadece].sort((a, b) => (a.poradi ?? a.id ?? 0) - (b.poradi ?? b.id ?? 0)).map((r) => (
-                <div
-                  key={r.id}
-                  draggable
-                  onDragStart={() => handleRozvadecDragStart(r)}
-                  onDragOver={handleDragOver}
-                  onDrop={() => handleRozvadecDrop(r)}
-                  onDragEnd={handleRozvadecDragEnd}
-                  className={`rounded-lg border transition-colors cursor-grab active:cursor-grabbing ${
-                    selectedRozvadec?.id === r.id
-                      ? 'border-[var(--primary)] bg-[var(--bg-accent)]'
-                      : draggedRozvadec?.id === r.id
-                        ? 'opacity-50 bg-[var(--bg-accent)] border-[var(--border)]'
-                        : 'border-[var(--border)] bg-[var(--bg-surface)] hover:border-[var(--border-strong)]'
-                  }`}
-                  onClick={() => handleSelectRozvadec(r)}
-                >
-                  <div className="p-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="font-medium text-xs">{r.nazev}</p>
-                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
-                        {okruhyCounts[r.id!] || 0}
-                      </span>
-                    </div>
-                    <p className="text-xs text-[var(--text-secondary)]">{r.oznaceni} • {r.stupenKryti}</p>
-                    <p className="text-xs text-[var(--text-muted)]">{r.umisteni}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-[var(--text-muted)] py-6 text-xs">Zatím žádné rozvaděče.</p>
-          )}
-        </Card>
+          + Rozvaděč
+        </button>
       </div>
 
-      {/* Detail rozvaděče - pravá strana (rozšíří se v inline módu) */}
-      <div className={inlineModeRozvadecId !== null ? 'col-span-full' : 'lg:col-span-2'}>
+      <div>
+
         {selectedRozvadec ? (
+          <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            <StatTile label="Okruhy" value={okruhy.length} />
+            <StatTile label="Změřeno" value={pocetZmereno} sub={`/ ${okruhy.length}`} progress={okruhy.length ? pocetZmereno / okruhy.length : 0} />
+            <StatTile label="Vyhovuje" value={pocetVyhovuje} tone="success" />
+            <StatTile label="Nevyhovuje" value={pocetNevyhovuje} tone={pocetNevyhovuje > 0 ? 'danger' : 'default'} />
+            <StatTile label="Proudové chrániče" value={chranice.length} />
+          </div>
           <Card
-            title={`${selectedRozvadec.nazev}`}
+            title={[selectedRozvadec.oznaceni, selectedRozvadec.nazev].filter(Boolean).join(' – ')}
             actions={
               <div className="flex items-center gap-1">
                 {/* === DESKTOP (md+): všechna tlačítka === */}
@@ -613,14 +633,14 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
               </div>
             }
           >
-            <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-xs text-[var(--text-secondary)]">Označení</p><p className="font-medium text-xs text-[var(--text)]">{selectedRozvadec.oznaceni}</p></div>
-              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-xs text-[var(--text-secondary)]">Umístění</p><p className="font-medium text-xs text-[var(--text)]">{selectedRozvadec.umisteni}</p></div>
-              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-xs text-[var(--text-secondary)]">Typ</p><p className="font-medium text-xs text-[var(--text)]">{selectedRozvadec.typRozvadece || '—'}</p></div>
-              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-xs text-[var(--text-secondary)]">Krytí</p><p className="font-medium text-xs text-[var(--text)]">{selectedRozvadec.stupenKryti}</p></div>
-            </div>
+            <p className="mb-3 text-xs text-[var(--text-secondary)]">
+              {[selectedRozvadec.umisteni, selectedRozvadec.typRozvadece, selectedRozvadec.stupenKryti].filter(Boolean).join(' · ') || '—'}
+            </p>
 
-            <h4 className="font-medium text-sm text-[var(--text)] mb-2">Okruhy ({okruhy.length})</h4>
+            <div className="flex items-baseline justify-between gap-2 mb-2">
+              <h4 className="font-semibold text-sm text-[var(--text)]">Okruhy a měření</h4>
+              <p className="hidden md:block text-xs text-[var(--text-muted)]">Limity: R<sub>iso</sub> ≥ 1 MΩ, Z<sub>s</sub> ≤ U₀ / I<sub>a</sub> (B 5×, C 10×, D 20× I<sub>n</sub>)</p>
+            </div>
             {inlineModeRozvadecId === selectedRozvadec.id ? (
               <OkruhyInlineTable
                 rozvadecId={selectedRozvadec.id!}
@@ -650,21 +670,21 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
               </p>
             )}
 
-            <h4 className="font-medium text-sm text-[var(--text)] mt-4 mb-2">Proudové chraniče ({chranice.length})</h4>
+            <h4 className="font-semibold text-sm text-[var(--text)] mt-5 mb-2">Proudové chrániče ({chranice.length})</h4>
             {chranice.length > 0 ? (
               <ChraniceTable chranice={chranice} onEdit={handleEditChranic} onDelete={handleDeleteChranic} />
             ) : (
               <p className="text-center text-[var(--text-secondary)] py-4 bg-[var(--bg-input)] rounded-lg text-xs">
-                Zatím žádné chraniče.
+                Zatím žádné chrániče.
               </p>
             )}
           </Card>
+          </div>
         ) : (
           <Card>
-            <div className="text-center py-12 text-[var(--text-muted)]">
-              <p className="text-xs text-[var(--text-secondary)] mb-4">Zatím žádné rozvaděče</p>
-              <p className="text-sm">Vyberte rozvaděč ze seznamu vlevo</p>
-              <p className="text-xs mt-1">pro zobrazení detailu a okruhů</p>
+            <div className="text-center py-12">
+              <p className="text-sm text-[var(--text-secondary)] mb-4">V revizi zatím nejsou žádné rozvaděče.</p>
+              <Button size="sm" onClick={() => setIsRozvadecModalOpen(true)}>+ Přidat rozvaděč</Button>
             </div>
           </Card>
         )}
