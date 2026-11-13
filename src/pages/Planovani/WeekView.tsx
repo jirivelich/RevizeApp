@@ -1,393 +1,252 @@
-import { useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragStartEvent,
-  type DragEndEvent,
+  DndContext, DragOverlay, PointerSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors,
+  type DragEndEvent, type DragStartEvent,
 } from '@dnd-kit/core';
-import { useDraggable, useDroppable } from '@dnd-kit/core';
 import type { Zakazka } from '../../types';
-import { Card } from '../../components/ui';
-import { getPriorityColor, getStatusColor, getRealizaceDays } from './utils';
+import {
+  addDaysLocal, allDayBars, timedBlocks, hourRange, mondayOf, fromDateStr, formatTime, kategorieOf, isClosed, MESICE_GEN, KAT_META,
+  type TimedBlock,
+} from './model';
+import { KatLegend, NavBar, type PlanProps } from './shared';
+import { useCalendarKeys, useIsMobile } from './hooks';
 
-// ========== Helpers ==========
+const DNY = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
 
-const DAY_NAMES = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota', 'Neděle'];
-const DAY_NAMES_SHORT = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
-const HOURS = Array.from({ length: 13 }, (_, i) => i + 6); // 6:00 - 18:00
-
-function getMonday(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
+function rangeTitle(days: string[]): string {
+  const a = fromDateStr(days[0]), b = fromDateStr(days[days.length - 1]);
+  if (a.getMonth() === b.getMonth()) return `${a.getDate()}.–${b.getDate()}. ${MESICE_GEN[b.getMonth()]} ${b.getFullYear()}`;
+  return `${a.getDate()}. ${a.getMonth() + 1}. – ${b.getDate()}. ${b.getMonth() + 1}. ${b.getFullYear()}`;
 }
 
-function formatDateStr(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+function nowHours(): number {
+  const d = new Date();
+  return d.getHours() + d.getMinutes() / 60;
 }
 
-function isSameDay(d1: Date, d2: Date): boolean {
-  return d1.getFullYear() === d2.getFullYear() &&
-    d1.getMonth() === d2.getMonth() &&
-    d1.getDate() === d2.getDate();
-}
+export function WeekView(p: PlanProps) {
+  const isMobile = useIsMobile();
+  const span = isMobile ? 3 : 7;
+  const [anchor, setAnchor] = useState(() => (isMobile ? p.today : mondayOf(p.today)));
+  // Při přechodu mobil ↔ počítač zarovnat začátek
+  const start = isMobile ? anchor : mondayOf(anchor);
+  const days = useMemo(() => Array.from({ length: span }, (_, i) => addDaysLocal(start, i)), [start, span]);
 
-// ========== DraggableTask ==========
+  const prev = useCallback(() => setAnchor(a => addDaysLocal(isMobile ? a : mondayOf(a), -span)), [isMobile, span]);
+  const next = useCallback(() => setAnchor(a => addDaysLocal(isMobile ? a : mondayOf(a), span)), [isMobile, span]);
+  const today = useCallback(() => setAnchor(isMobile ? p.today : mondayOf(p.today)), [isMobile, p.today]);
+  useCalendarKeys(prev, next, today);
 
-interface DraggableTaskProps {
-  zakazka: Zakazka;
-  onClick: (z: Zakazka) => void;
-  overlay?: boolean;
-}
+  const visible = useMemo(() => p.zakazky.filter(z => z.stav !== 'zrušeno'), [p.zakazky]);
+  const bars = useMemo(() => allDayBars(visible, days), [visible, days]);
+  const blocksByDay = useMemo(() => new Map(days.map(d => [d, timedBlocks(visible, d)])), [visible, days]);
+  const range = useMemo(() => hourRange([...blocksByDay.values()].flat()), [blocksByDay]);
+  const HOUR = isMobile ? 44 : 48;
+  const hours = Array.from({ length: range.end - range.start }, (_, i) => range.start + i);
+  const rows = Math.max(1, ...bars.map(b => b.row + 1));
 
-function DraggableTask({ zakazka, onClick, overlay }: DraggableTaskProps) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `task-${zakazka.id}`,
-    data: { zakazka },
-  });
+  // Hodiny „teď“ – překreslit každou minutu
+  const [now, setNow] = useState(nowHours);
+  useEffect(() => { const t = setInterval(() => setNow(nowHours()), 60000); return () => clearInterval(t); }, []);
 
-  const content = (
-    <div
-      ref={overlay ? undefined : setNodeRef}
-      {...(overlay ? {} : listeners)}
-      {...(overlay ? {} : attributes)}
-      className={`text-xs p-2 rounded-[var(--radius-md)] border border-[var(--border-medium)] cursor-grab select-none transition-colors
-        ${getPriorityColor(zakazka.priorita)}
-        ${isDragging ? 'opacity-40' : 'hover:border-[var(--border-strong)]'}
-        ${overlay ? 'shadow-[var(--shadow-lg)] ring-2 ring-[var(--primary)]' : ''}
-      `}
-      onClick={(e) => {
-        if (!overlay) {
-          e.stopPropagation();
-          onClick(zakazka);
-        }
-      }}
-    >
-      <div className="font-medium truncate">{zakazka.nazev}</div>
-      <div className="text-xs opacity-80 truncate mt-0.5">
-        {zakazka.casPlanovany || '—'} • {zakazka.klient}
-      </div>
-      <span className={`inline-block mt-1 px-1.5 py-0.5 rounded-[var(--radius-sm)] text-xs ${getStatusColor(zakazka.stav)}`}>
-        {zakazka.stav}
-      </span>
-    </div>
+  // Drag & drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 300, tolerance: 8 } }),
   );
+  const [dragging, setDragging] = useState<Zakazka | null>(null);
+  const onDragStart = (e: DragStartEvent) => setDragging((e.active.data.current?.z as Zakazka) ?? null);
+  const onDragEnd = (e: DragEndEvent) => {
+    setDragging(null);
+    const z = e.active.data.current?.z as Zakazka | undefined;
+    const over = e.over?.id as string | undefined;
+    if (!z || !over) return;
+    const [kind, date, hour] = over.split('|');
+    if (kind === 'allday') p.onMove(z, date, 'allday');
+    else if (kind === 'slot') p.onMove(z, date, `${hour.padStart(2, '0')}:00`);
+  };
 
-  return content;
-}
+  // Posun prstem (mobil) mimo přetahování
+  const swipe = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => { swipe.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const s = swipe.current; swipe.current = null;
+    if (!s || dragging) return;
+    const dx = e.changedTouches[0].clientX - s.x, dy = e.changedTouches[0].clientY - s.y;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) (dx < 0 ? next : prev)();
+  };
 
-// ========== DroppableSlot ==========
-
-interface DroppableSlotProps {
-  id: string;
-  children: React.ReactNode;
-  onClick: () => void;
-  isToday: boolean;
-  isCurrentHour: boolean;
-}
-
-function DroppableSlot({ id, children, onClick, isToday, isCurrentHour }: DroppableSlotProps) {
-  const { isOver, setNodeRef } = useDroppable({ id });
+  const cols = isMobile ? '44px repeat(3, minmax(0, 1fr))' : '56px repeat(5, minmax(0, 1fr)) repeat(2, minmax(0, 0.6fr))';
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDaysLocal(mondayOf(anchor), i));
 
   return (
-    <div
-      ref={setNodeRef}
-      className={`min-h-[60px] p-1 border-b border-r border-[var(--border)] transition-colors relative
-        ${isOver ? 'bg-[var(--bg-accent)] ring-2 ring-[var(--primary)] ring-inset' : ''}
-        ${isToday ? 'bg-[var(--bg-accent)]' : ''}
-        ${isCurrentHour ? 'border-l-2 border-l-[var(--primary)]' : ''}
-      `}
-      onClick={onClick}
-    >
+    <div className="flex flex-col gap-3">
+      <NavBar
+        title={rangeTitle(days)}
+        onPrev={prev} onNext={next} onToday={today}
+        prevLabel={isMobile ? 'Předchozí dny' : 'Předchozí týden'}
+        nextLabel={isMobile ? 'Další dny' : 'Další týden'}
+        right={!isMobile ? <KatLegend /> : undefined}
+      />
+
+      {isMobile && (
+        <div className="grid grid-cols-7 gap-0.5 p-1 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)]" role="group" aria-label="Dny týdne">
+          {weekDays.map((d, i) => {
+            const inRange = days.includes(d);
+            const isToday = d === p.today;
+            const has = visible.some(z => (z.datumPlanovany === d) || z.datumyRealizace?.includes(d));
+            return (
+              <button key={d} type="button" onClick={() => setAnchor(d)} aria-pressed={inRange}
+                className={`h-14 rounded-[var(--radius-md)] flex flex-col items-center justify-center gap-0.5 ${inRange ? 'bg-[var(--bg-accent)]' : ''}`}>
+                <span className="text-[10px] font-semibold text-[var(--text-secondary)]">{DNY[i]}</span>
+                <span className={isToday
+                  ? 'w-6 h-6 rounded-full bg-[var(--primary)] text-[var(--primary-fg)] text-xs font-bold flex items-center justify-center'
+                  : `text-sm font-semibold ${d < p.today ? 'text-[var(--text-secondary)]' : 'text-[var(--text)]'}`}>
+                  {fromDateStr(d).getDate()}
+                </span>
+                <span className="w-[5px] h-[5px] rounded-full" style={{ background: has ? 'var(--primary)' : 'transparent' }} />
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setDragging(null)}>
+        <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] overflow-hidden"
+          onTouchStart={isMobile ? onTouchStart : undefined} onTouchEnd={isMobile ? onTouchEnd : undefined}>
+          {/* Záhlaví dnů */}
+          <div className="grid border-b border-[var(--border)]" style={{ gridTemplateColumns: cols }}>
+            <div />
+            {days.map(d => {
+              const isToday = d === p.today;
+              const dt = fromDateStr(d);
+              const weekend = dt.getDay() === 0 || dt.getDay() === 6;
+              return (
+                <div key={d} className={`flex items-center gap-2 px-2.5 py-2 border-l border-[var(--border-subtle)] ${isToday ? 'bg-[color-mix(in_srgb,var(--bg-accent)_60%,transparent)]' : ''} ${weekend ? 'opacity-75' : ''}`}>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-secondary)]">{DNY[(dt.getDay() + 6) % 7]}</span>
+                  <span className={isToday
+                    ? 'w-[26px] h-[26px] rounded-full bg-[var(--primary)] text-[var(--primary-fg)] text-[13px] font-bold flex items-center justify-center'
+                    : `text-[15px] font-bold ${d < p.today ? 'text-[var(--text-secondary)]' : 'text-[var(--text)]'}`}>
+                    {dt.getDate()}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Celý den */}
+          <div className="grid border-b border-[var(--border)] bg-[var(--bg-faint)] py-1.5 gap-y-1"
+            style={{ gridTemplateColumns: cols, gridTemplateRows: `repeat(${rows}, ${isMobile ? 28 : 30}px)` }}>
+            <div className={`${isMobile ? 'text-[10px] leading-[1.15] pt-0.5' : 'text-[11px] pt-1.5'} text-[var(--text-secondary)] pl-2`} style={{ gridColumn: '1 / 2', gridRow: `1 / ${rows + 1}` }}>Celý den</div>
+            {days.map((d, i) => (
+              <AllDayDrop key={d} id={`allday|${d}`} style={{ gridColumn: `${i + 2} / ${i + 3}`, gridRow: `1 / ${rows + 1}` }} />
+            ))}
+            {bars.map(b => {
+              const kat = kategorieOf(b.z, p.revizeById);
+              const n = b.end - b.start + 1;
+              return (
+                <Drag key={`${b.z.id}-${b.start}`} z={b.z} id={`bar|${b.z.id}|${b.start}`}
+                  style={{ gridColumn: `${b.start + 2} / ${b.end + 3}`, gridRow: `${b.row + 1} / ${b.row + 2}`, zIndex: 1 }}>
+                  <button type="button" onClick={() => p.onEdit(b.z)}
+                    className={`w-full h-full mx-[3px] rounded-[var(--radius-sm)] px-2.5 flex items-center gap-2 text-xs font-semibold text-left whitespace-nowrap overflow-hidden ${isClosed(b.z) ? 'opacity-55' : ''}`}
+                    style={{ color: KAT_META[kat].color, background: KAT_META[kat].bg, width: 'calc(100% - 6px)' }}>
+                    <span className="truncate">{b.z.nazev}</span>
+                    {n > 1 && !isMobile && <span className="shrink-0 font-medium text-[var(--text-secondary)]">{n} dny</span>}
+                  </button>
+                </Drag>
+              );
+            })}
+          </div>
+
+          {/* Časová osa */}
+          <div className="grid" style={{ gridTemplateColumns: cols }}>
+            <div className="relative" style={{ height: hours.length * HOUR }}>
+              {hours.map((h, i) => (
+                <span key={h} className="absolute right-2 text-[11px] text-[var(--text-secondary)]" style={{ top: i === 0 ? 2 : i * HOUR - 7 }}>{h}:00</span>
+              ))}
+            </div>
+            {days.map(d => {
+              const isToday = d === p.today;
+              const dt = fromDateStr(d);
+              const weekend = dt.getDay() === 0 || dt.getDay() === 6;
+              return (
+                <div key={d} className="relative border-l border-[var(--border-subtle)]"
+                  style={{
+                    height: hours.length * HOUR,
+                    backgroundImage: `repeating-linear-gradient(to bottom, var(--border-subtle) 0, var(--border-subtle) 1px, transparent 1px, transparent ${HOUR}px)`,
+                    backgroundColor: isToday ? 'color-mix(in srgb, var(--bg-accent) 45%, transparent)' : weekend ? 'var(--bg-faint)' : undefined,
+                  }}>
+                  {hours.map((h, i) => (
+                    <Slot key={h} id={`slot|${d}|${h}`} top={i * HOUR} height={HOUR}
+                      label={`Nová zakázka ${dt.getDate()}. ${dt.getMonth() + 1}. v ${h}:00`}
+                      onClick={() => p.onCreateAt(d, `${String(h).padStart(2, '0')}:00`)} />
+                  ))}
+                  {(blocksByDay.get(d) ?? []).map(b => (
+                    <Block key={b.z.id} b={b} p={p} top={(b.from - range.start) * HOUR} hour={HOUR} />
+                  ))}
+                  {isToday && now >= range.start && now <= range.end && (
+                    <div aria-hidden="true" className="absolute left-0 right-0 h-[2px] bg-[var(--danger)] pointer-events-none z-[2]" style={{ top: (now - range.start) * HOUR }}>
+                      <span className="absolute -left-[5px] -top-[4px] w-[10px] h-[10px] rounded-full bg-[var(--danger)]" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <DragOverlay>
+          {dragging && (
+            <div className="px-3 py-2 rounded-[var(--radius-md)] text-xs font-semibold shadow-[var(--shadow-lg)] text-[var(--text)]"
+              style={{ background: 'var(--surface)', border: `1px solid ${KAT_META[kategorieOf(dragging, p.revizeById)].color}` }}>
+              {dragging.nazev}
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
+      {isMobile && <p className="text-[11px] text-[var(--text-muted)] text-center m-0">Posun prstem do stran = další dny · podržením zakázku přesunete</p>}
+    </div>
+  );
+}
+
+function AllDayDrop({ id, style }: { id: string; style: CSSProperties }) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  return <div ref={setNodeRef} className={`border-l border-[var(--border-subtle)] ${isOver ? 'bg-[var(--bg-accent)]' : ''}`} style={style} />;
+}
+
+function Slot({ id, top, height, onClick, label }: { id: string; top: number; height: number; onClick: () => void; label: string }) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  return (
+    <button ref={setNodeRef} type="button" aria-label={label} onClick={onClick}
+      className={`absolute left-0 right-0 hover:bg-[var(--bg-hover)] ${isOver ? 'bg-[var(--bg-accent)]' : ''}`}
+      style={{ top, height }} />
+  );
+}
+
+function Drag({ z, id, style, children }: { z: Zakazka; id: string; style: CSSProperties; children: ReactNode }) {
+  const { setNodeRef, attributes, listeners, isDragging } = useDraggable({ id, data: { z } });
+  return (
+    <div ref={setNodeRef} {...attributes} {...listeners} role={undefined} tabIndex={undefined}
+      style={{ ...style, opacity: isDragging ? 0.35 : undefined, touchAction: 'pan-y' }}>
       {children}
     </div>
   );
 }
 
-// ========== WeekDropZone ==========
-
-interface WeekDropZoneProps {
-  id: string;
-  label: string;
-  direction: 'left' | 'right';
-  visible: boolean;
-}
-
-function WeekDropZone({ id, label, direction, visible }: WeekDropZoneProps) {
-  const { isOver, setNodeRef } = useDroppable({ id });
-
-  if (!visible) return null;
-
+function Block({ b, p, top, hour }: { b: TimedBlock; p: PlanProps; top: number; hour: number }) {
+  const kat = kategorieOf(b.z, p.revizeById);
+  const h = (b.to - b.from) * hour;
+  const width = `calc((100% - 6px) / ${b.cols})`;
   return (
-    <div
-      ref={setNodeRef}
-      className={`fixed ${direction === 'left' ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 z-50
-        w-16 h-48 flex items-center justify-center
-        ${direction === 'left' ? 'rounded-r-[var(--radius-xl)]' : 'rounded-l-[var(--radius-xl)]'}
-        transition-all duration-200 cursor-default
-        ${isOver
-          ? 'bg-[var(--primary)] text-[var(--primary-fg)] shadow-[var(--shadow-lg)] w-24'
-          : 'bg-[var(--bg-hover)] text-[var(--text)] shadow-[var(--shadow-lg)] border border-[var(--border-strong)]'
-        }
-      `}
-    >
-      <span className="text-xs font-bold writing-mode-vertical [writing-mode:vertical-lr] rotate-180 whitespace-nowrap">
-        {label}
-      </span>
-    </div>
-  );
-}
-
-// ========== WeekView ==========
-
-interface WeekViewProps {
-  zakazky: Zakazka[];
-  onZakazkaClick: (zakazka: Zakazka) => void;
-  onSlotClick: (dateStr: string, cas: string) => void;
-  onMove: (zakazkaId: number, newDate: string, newCas: string) => void;
-}
-
-export function WeekView({ zakazky: allZakazky, onZakazkaClick, onSlotClick, onMove }: WeekViewProps) {
-  // Zrušené zakázky se v týdenním pohledu nezobrazují — termín už neplatí.
-  const zakazky = useMemo(() => allZakazky.filter((z) => z.stav !== 'zrušeno'), [allZakazky]);
-  const today = new Date();
-  const [weekStart, setWeekStart] = useState(() => getMonday(today));
-  const [activeDrag, setActiveDrag] = useState<Zakazka | null>(null);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
-  );
-
-  // Generate days of the week
-  const weekDays = useMemo(() => {
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(weekStart);
-      d.setDate(d.getDate() + i);
-      return d;
-    });
-  }, [weekStart]);
-
-  const weekLabel = useMemo(() => {
-    const start = weekDays[0];
-    const end = weekDays[6];
-    const startStr = start.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' });
-    const endStr = end.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short', year: 'numeric' });
-    return `${startStr} – ${endStr}`;
-  }, [weekDays]);
-
-  // Group zakazky by date+hour — každá zakázka se zobrazí na každý den realizace
-  const zakazkyMap = useMemo(() => {
-    const map = new Map<string, Zakazka[]>();
-    for (const z of zakazky) {
-      const days = getRealizaceDays(z);
-      const hour = z.casPlanovany ? parseInt(z.casPlanovany.split(':')[0]) : 8;
-      for (const day of days) {
-        // Pouze 1. den má čas, ostatní dny jdou do slotu 8:00
-        const slotHour = day === days[0] ? hour : 8;
-        const key = `${day}|${slotHour}`;
-        if (!map.has(key)) map.set(key, []);
-        // Nevkládat duplikáty (zakázka může mít 1. den = datumPlanovany a datumyRealizace může být prázdné)
-        if (!map.get(key)!.find((x) => x.id === z.id)) {
-          map.get(key)!.push(z);
-        }
-      }
-    }
-    return map;
-  }, [zakazky]);
-
-  const goToPreviousWeek = () => {
-    setWeekStart((prev) => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() - 7);
-      return d;
-    });
-  };
-
-  const goToNextWeek = () => {
-    setWeekStart((prev) => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() + 7);
-      return d;
-    });
-  };
-
-  const goToToday = () => {
-    setWeekStart(getMonday(today));
-  };
-
-  // DnD handlers
-  const handleDragStart = (event: DragStartEvent) => {
-    const z = event.active.data.current?.zakazka as Zakazka;
-    if (z) setActiveDrag(z);
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    setActiveDrag(null);
-    const { active, over } = event;
-    if (!over) return;
-
-    const zakazka = active.data.current?.zakazka as Zakazka;
-    if (!zakazka) return;
-
-    const overId = over.id as string;
-
-    // Handle week-shift drop zones
-    if (overId === 'drop-prev-week' || overId === 'drop-next-week') {
-      const shift = overId === 'drop-prev-week' ? -7 : 7;
-      const oldDate = new Date(zakazka.datumPlanovany);
-      oldDate.setDate(oldDate.getDate() + shift);
-      const newDate = formatDateStr(oldDate);
-      const cas = zakazka.casPlanovany || '08:00';
-      onMove(zakazka.id!, newDate, cas);
-      // Also navigate to that week
-      setWeekStart(getMonday(oldDate));
-      return;
-    }
-
-    // slot id format: "slot|2026-03-02|8"
-    const parts = overId.split('|');
-    if (parts.length !== 3 || parts[0] !== 'slot') return;
-
-    const newDate = parts[1];
-    const newHour = parts[2];
-    const newCas = `${newHour.padStart(2, '0')}:00`;
-
-    // Only update if something changed
-    const oldHour = zakazka.casPlanovany ? zakazka.casPlanovany.split(':')[0] : '08';
-    if (zakazka.datumPlanovany === newDate && oldHour === newHour.padStart(2, '0')) return;
-
-    onMove(zakazka.id!, newDate, newCas);
-  };
-
-  const currentHour = today.getHours();
-
-  return (
-    <Card>
-      {/* Navigation */}
-      <div className="flex items-center justify-between mb-4">
-        <button
-          onClick={goToPreviousWeek}
-          className="p-2 min-w-[40px] min-h-[40px] rounded-[var(--radius-md)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
-          title="Předchozí týden"
-        >
-          ◀
-        </button>
-        <div className="flex items-center gap-3">
-          <h2 className="text-base font-semibold text-[var(--text)]">{weekLabel}</h2>
-          <button
-            onClick={goToToday}
-            className="text-xs font-semibold px-3 h-8 rounded-[var(--radius-md)] bg-[var(--bg-accent-badge)] text-[var(--primary)] hover:brightness-110 transition-colors"
-          >
-            Tento týden
-          </button>
-        </div>
-        <button
-          onClick={goToNextWeek}
-          className="p-2 min-w-[40px] min-h-[40px] rounded-[var(--radius-md)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] transition-colors"
-          title="Další týden"
-        >
-          ▶
-        </button>
-      </div>
-
-      {/* Grid */}
-      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="overflow-auto max-h-[calc(100vh-220px)]">
-          <div className="grid" style={{ gridTemplateColumns: '60px repeat(7, 1fr)' }}>
-            {/* Header row */}
-            <div className="sticky top-0 z-10 bg-[var(--background)] border-b border-r border-[var(--border)] p-2" />
-            {weekDays.map((day, i) => {
-              const isToday_ = isSameDay(day, today);
-              return (
-                <div
-                  key={i}
-                  className={`sticky top-0 z-10 p-2 text-center border-b border-r border-[var(--border)] ${
-                    isToday_ ? 'bg-[var(--bg-accent)]' : 'bg-[var(--background)]'
-                  }`}
-                >
-                  <div className="text-xs text-[var(--text-muted)]">{DAY_NAMES_SHORT[i]}</div>
-                  <div className={`text-sm font-semibold ${
-                    isToday_ ? 'text-[var(--primary)] font-bold' : 'text-[var(--text)]'
-                  }`}>
-                    {day.getDate()}
-                  </div>
-                  <div className="text-xs text-[var(--text-secondary)] hidden sm:block">{DAY_NAMES[i]}</div>
-                </div>
-              );
-            })}
-
-            {/* Time rows */}
-            {HOURS.map((hour) => (
-              <>
-                {/* Time label */}
-                <div
-                  key={`label-${hour}`}
-                  className="p-1 text-right text-xs text-[var(--text-muted)] border-b border-r border-[var(--border)] bg-[var(--bg-surface)] sticky left-0"
-                >
-                  {String(hour).padStart(2, '0')}:00
-                </div>
-                {/* Day slots */}
-                {weekDays.map((day, dayIdx) => {
-                  const dateStr = formatDateStr(day);
-                  const slotId = `slot|${dateStr}|${hour}`;
-                  const slotZakazky = zakazkyMap.get(`${dateStr}|${hour}`) || [];
-                  const isToday_ = isSameDay(day, today);
-
-                  return (
-                    <DroppableSlot
-                      key={`${dayIdx}-${hour}`}
-                      id={slotId}
-                      isToday={isToday_}
-                      isCurrentHour={isToday_ && hour === currentHour}
-                      onClick={() => onSlotClick(dateStr, `${String(hour).padStart(2, '0')}:00`)}
-                    >
-                      <div className="space-y-1">
-                        {slotZakazky.map((z) => (
-                          <DraggableTask
-                            key={z.id}
-                            zakazka={z}
-                            onClick={onZakazkaClick}
-                          />
-                        ))}
-                      </div>
-                    </DroppableSlot>
-                  );
-                })}
-              </>
-            ))}
-          </div>
-        </div>
-
-        {/* Week-shift drop zones (visible only during drag) */}
-        <WeekDropZone
-          id="drop-prev-week"
-          label="◀ Předchozí týden"
-          direction="left"
-          visible={activeDrag !== null}
-        />
-        <WeekDropZone
-          id="drop-next-week"
-          label="Další týden ▶"
-          direction="right"
-          visible={activeDrag !== null}
-        />
-
-        {/* Drag overlay */}
-        <DragOverlay>
-          {activeDrag && (
-            <DraggableTask zakazka={activeDrag} onClick={() => {}} overlay />
-          )}
-        </DragOverlay>
-      </DndContext>
-    </Card>
+    <Drag z={b.z} id={`block|${b.z.id}`}
+      style={{ position: 'absolute', top: top + 2, height: h - 4, left: `calc(3px + (100% - 6px) * ${b.col} / ${b.cols})`, width, zIndex: 1 }}>
+      <button type="button" onClick={() => p.onEdit(b.z)}
+        className={`w-full h-full box-border rounded-[var(--radius-sm)] px-2 py-1.5 flex flex-col gap-0.5 overflow-hidden text-left ${isClosed(b.z) ? 'opacity-55' : ''}`}
+        style={{ background: KAT_META[kat].bg, border: `1px solid color-mix(in srgb, ${KAT_META[kat].color} 45%, transparent)` }}>
+        <span className="text-xs font-semibold text-[var(--text)] leading-tight line-clamp-2">{b.z.nazev}</span>
+        <span className="text-[11px] font-medium" style={{ color: KAT_META[kat].color }}>{formatTime(b.from)}–{formatTime(b.to)}</span>
+        {h >= 72 && <span className="text-[11px] text-[var(--text-secondary)] truncate">{b.z.klient}</span>}
+      </button>
+    </Drag>
   );
 }

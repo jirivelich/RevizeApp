@@ -671,8 +671,15 @@ export async function initializeDatabase() {
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodFunkcniStav" TEXT',
       'ALTER TABLE zavada ADD COLUMN IF NOT EXISTS norma TEXT',
       'ALTER TABLE zavada ADD COLUMN IF NOT EXISTS riziko TEXT',
+      // ===== Plánování: délka, celodenní zakázky a kategorie revize =====
+      'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS "casKonec" TEXT',
+      'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS "celyDen" BOOLEAN NOT NULL DEFAULT FALSE',
+      'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS kategorie TEXT',
       `INSERT INTO schema_migrations (version, name, "appliedAt")
         VALUES (3, 'nalezitosti zpravy dle CSN 33 1500', '${new Date().toISOString()}')
+        ON CONFLICT (version) DO NOTHING`,
+      `INSERT INTO schema_migrations (version, name, "appliedAt")
+        VALUES (4, 'zakazka: casKonec, celyDen, kategorie', '${new Date().toISOString()}')
         ON CONFLICT (version) DO NOTHING`,
     ];
     

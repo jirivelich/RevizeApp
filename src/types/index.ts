@@ -328,6 +328,9 @@ export interface Zakazka {
   zakaznikId?: number;
   datumPlanovany: string;
   casPlanovany?: string; // HH:mm format
+  casKonec?: string;     // HH:mm – plánovaný konec (bloky v týdenním pohledu podle délky)
+  celyDen?: boolean;     // celodenní zakázka bez konkrétního času
+  kategorie?: KategorieRevize | null; // kategorie revize (barva v kalendáři, předvolba při založení revize)
   datumDokonceni?: string;
   datumyRealizace?: string[]; // konkrétní dny realizace ["YYYY-MM-DD", ...]
   lhutaZpravyDni?: number;   // počet dní po posledním dni pro odevzdání zprávy

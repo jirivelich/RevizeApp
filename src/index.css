@@ -63,9 +63,38 @@
   --fs-24: 24px;
   --shadow-lg: 0 12px 32px rgba(0,0,0,0.55);
   --overlay: rgba(0,0,0,0.6);
+  /* Kategorie revize v Plánování (tečky, bloky, pruhy) */
+  --kat-elektro: #5AA0FF;
+  --kat-elektro-bg: rgba(90,160,255,0.16);
+  --kat-hromosvod: #FFB74D;
+  --kat-hromosvod-bg: rgba(255,183,77,0.16);
+  --kat-stroje: #C084FC;
+  --kat-stroje-bg: rgba(192,132,252,0.16);
+  --kat-odberne: #4ADE80;
+  --kat-odberne-bg: rgba(74,222,128,0.14);
+  --kat-neurceno: #94A0B0;
+  --kat-neurceno-bg: rgba(148,160,176,0.14);
+  --load-1: rgba(255,183,77,0.035);
+  --load-2: rgba(255,183,77,0.07);
+  --load-3: rgba(255,183,77,0.11);
+  --load-4: rgba(255,183,77,0.15);
 }
 
 :root[data-theme="light"] {
+  --kat-elektro: #1D6FE0;
+  --kat-elektro-bg: rgba(29,111,224,0.12);
+  --kat-hromosvod: #B45F06;
+  --kat-hromosvod-bg: rgba(217,119,6,0.14);
+  --kat-stroje: #8B3FD9;
+  --kat-stroje-bg: rgba(139,63,217,0.12);
+  --kat-odberne: #15803D;
+  --kat-odberne-bg: rgba(21,128,61,0.12);
+  --kat-neurceno: #667085;
+  --kat-neurceno-bg: rgba(102,112,133,0.12);
+  --load-1: rgba(0,82,204,0.035);
+  --load-2: rgba(0,82,204,0.065);
+  --load-3: rgba(0,82,204,0.10);
+  --load-4: rgba(0,82,204,0.14);
   --primary-fg: #FFFFFF;
   --background: #F5F7FA;
   --surface: #FFFFFF;

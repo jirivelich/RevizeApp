@@ -1,4 +1,4 @@
-import type { Zakazka } from '../../types';
+import type { Zakazka, KategorieRevize } from '../../types';
 
 export type ZakazkaFormData = {
   nazev: string;
@@ -7,6 +7,9 @@ export type ZakazkaFormData = {
   zakaznikId: number | undefined;
   datumPlanovany: string;
   casPlanovany: string;
+  casKonec: string;                // '' = bez konce (blok 1 h)
+  celyDen: boolean;
+  kategorie: KategorieRevize | '';
   datumyRealizace: string[];       // pole konkrétních dní realizace
   lhutaZpravyDni: number;          // počet dní po posledním dni pro zprávu
   datumOdevzdaniZpravy: string;    // plánované odevzdání, '' = nenastaveno
@@ -23,6 +26,9 @@ export const emptyFormData: ZakazkaFormData = {
   zakaznikId: undefined,
   datumPlanovany: new Date().toISOString().split('T')[0],
   casPlanovany: '08:00',
+  casKonec: '10:00',
+  celyDen: false,
+  kategorie: '',
   datumyRealizace: [],
   lhutaZpravyDni: 4,
   datumOdevzdaniZpravy: '',
@@ -51,6 +57,15 @@ export function getPriorityColor(priorita: Zakazka['priorita']): string {
   }
 }
 
+/** Data formuláře → zakázka pro uložení (prázdná kategorie = null, celý den = bez konce). */
+export function formDataToZakazka(data: ZakazkaFormData): Partial<Zakazka> {
+  return {
+    ...data,
+    kategorie: data.kategorie || null,
+    casKonec: data.celyDen ? '' : data.casKonec,
+  };
+}
+
 export function zakazkaToFormData(z: Zakazka): ZakazkaFormData {
   return {
     nazev: z.nazev,
@@ -59,6 +74,9 @@ export function zakazkaToFormData(z: Zakazka): ZakazkaFormData {
     zakaznikId: z.zakaznikId,
     datumPlanovany: z.datumPlanovany,
     casPlanovany: z.casPlanovany || '08:00',
+    casKonec: z.casKonec || '',
+    celyDen: !!z.celyDen,
+    kategorie: z.kategorie || '',
     datumyRealizace: z.datumyRealizace || [],
     lhutaZpravyDni: z.lhutaZpravyDni ?? 4,
     datumOdevzdaniZpravy: z.datumOdevzdaniZpravy || '',
