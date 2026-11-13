@@ -1,9 +1,24 @@
-﻿import { useState, useEffect } from 'react';
-import { Button, Card, Input, Select, Modal, BottomSheet, ConfirmDialog } from '../../components/ui';
+﻿import { useState, useEffect, useMemo } from 'react';
+import { Button, Card, Input, Select, Modal, BottomSheet, ConfirmDialog, Badge } from '../../components/ui';
+import type { BadgeVariant } from '../../components/ui';
+import { StatTile, FilterChip } from './MereniUi';
 import { TW } from './tw';
 import { zarizeniService } from '../../services/database';
 import { useCreateMistnost, useUpdateMistnost, useDeleteMistnost } from '../../hooks/useQueries';
 import type { Mistnost, Zarizeni } from '../../types';
+
+const PROSTREDI = ['Normální', 'Nebezpečné', 'Zvlášť nebezpečné'];
+const BEZ_PATRA = 'Bez patra';
+
+const prostrediVariant = (p?: string): BadgeVariant =>
+  p === 'Zvlášť nebezpečné' ? 'danger' : p === 'Nebezpečné' ? 'warning' : 'neutral';
+
+const stavVariant = (s: Zarizeni['stav']): BadgeVariant =>
+  s === 'OK' ? 'success' : s === 'závada' ? 'danger' : 'neutral';
+
+const IconEdit = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>;
+const IconTrash = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>;
+const IconCopy = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>;
 
 interface MistnostiTabProps {
   mistnosti: Mistnost[];
@@ -33,8 +48,22 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
   const [isCopying, setIsCopying] = useState(false);
 
   const [mistnostFormData, setMistnostFormData] = useState({
-    nazev: '', patro: '', poznamka: ''
+    nazev: '', patro: '', plocha: '', prostredi: '', poznamka: ''
   });
+  const [hledat, setHledat] = useState('');
+  const [filtrProstredi, setFiltrProstredi] = useState<string>('');
+
+  /** Data místnosti pro uložení (plocha jako číslo). */
+  const mistnostPayload = () => {
+    const plocha = parseFloat(mistnostFormData.plocha.replace(',', '.'));
+    return {
+      nazev: mistnostFormData.nazev,
+      patro: mistnostFormData.patro,
+      poznamka: mistnostFormData.poznamka,
+      prostredi: mistnostFormData.prostredi || undefined,
+      plocha: Number.isFinite(plocha) ? plocha : undefined,
+    };
+  };
 
   const [zarizeniFormData, setZarizeniFormData] = useState({
     nazev: '', oznaceni: '', pocetKs: 1,
@@ -45,22 +74,49 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
   // Sync counts from parent
   useEffect(() => { setZarizeniCounts(propCounts); }, [propCounts]);
 
+  // Aktuální data vybrané místnosti (po úpravě se načtou znovu z rodiče)
+  const selected = selectedMistnost ? (mistnosti.find(m => m.id === selectedMistnost.id) ?? selectedMistnost) : null;
+
   const handleSelectMistnost = async (mistnost: Mistnost) => {
-    if (selectedMistnost?.id === mistnost.id) {
-      setSelectedMistnost(null);
-      setZarizeni([]);
-    } else {
-      setSelectedMistnost(mistnost);
-      if (mistnost.id) {
-        const zarizeniData = await zarizeniService.getByMistnost(mistnost.id);
-        setZarizeni(zarizeniData);
-      }
+    if (selectedMistnost?.id === mistnost.id) return;
+    setSelectedMistnost(mistnost);
+    setZarizeni([]);
+    if (mistnost.id) {
+      const zarizeniData = await zarizeniService.getByMistnost(mistnost.id);
+      setZarizeni(zarizeniData);
     }
   };
 
+  /** Místnosti seskupené podle patra, po filtru a hledání. */
+  const skupiny = useMemo(() => {
+    const q = hledat.trim().toLowerCase();
+    const filtered = mistnosti.filter(m =>
+      (!q || m.nazev.toLowerCase().includes(q) || (m.patro || '').toLowerCase().includes(q)) &&
+      (!filtrProstredi || (m.prostredi || 'Normální') === filtrProstredi),
+    );
+    const map = new Map<string, Mistnost[]>();
+    for (const m of filtered) {
+      const key = m.patro?.trim() || BEZ_PATRA;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(m);
+    }
+    return [...map.entries()]
+      .sort(([a], [b]) => (a === BEZ_PATRA ? 1 : b === BEZ_PATRA ? -1 : a.localeCompare(b, 'cs', { numeric: true })))
+      .map(([patro, items]) => ({ patro, items }));
+  }, [mistnosti, hledat, filtrProstredi]);
+
+  // Automaticky otevřít první místnost
+  useEffect(() => {
+    if (!selectedMistnost && skupiny.length > 0) handleSelectMistnost(skupiny[0].items[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [skupiny, selectedMistnost]);
+
+  const pocetOk = zarizeni.filter(z => z.stav === 'OK').length;
+  const pocetZavad = zarizeni.filter(z => z.stav === 'závada').length;
+
   // Místnosti CRUD
   const resetMistnostForm = () => {
-    setMistnostFormData({ nazev: '', patro: '', poznamka: '' });
+    setMistnostFormData({ nazev: '', patro: '', plocha: '', prostredi: '', poznamka: '' });
     setEditingMistnost(null);
   };
 
@@ -72,23 +128,18 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
     };
     if (editingMistnost?.id) {
       updateMistnost.mutate(
-        { id: editingMistnost.id, data: { ...mistnostFormData, revizeId } },
+        { id: editingMistnost.id, data: { ...mistnostPayload(), revizeId } },
         { onSuccess: onDone }
       );
     } else {
       createMistnost.mutate(
-        { ...mistnostFormData, revizeId } as any,
+        { ...mistnostPayload(), revizeId } as any,
         {
           onSuccess: (newId) => {
+            const payload = mistnostPayload();
             onDone();
             // Auto-select the newly created místnost
-            setSelectedMistnost({
-              id: newId as unknown as number,
-              nazev: mistnostFormData.nazev,
-              patro: mistnostFormData.patro,
-              poznamka: mistnostFormData.poznamka,
-              revizeId,
-            });
+            setSelectedMistnost({ id: newId as unknown as number, ...payload, revizeId });
             setZarizeni([]);
           },
         }
@@ -100,6 +151,8 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
     setEditingMistnost(mistnost);
     setMistnostFormData({
       nazev: mistnost.nazev, patro: mistnost.patro || '',
+      plocha: mistnost.plocha != null ? String(mistnost.plocha).replace('.', ',') : '',
+      prostredi: mistnost.prostredi || '',
       poznamka: mistnost.poznamka || ''
     });
     setIsMistnostModalOpen(true);
@@ -121,7 +174,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
     const source = copySource;
     setIsCopying(true);
     createMistnost.mutate(
-      { nazev: copyNazev.trim(), patro: source.patro, poznamka: source.poznamka, revizeId } as any,
+      { nazev: copyNazev.trim(), patro: source.patro, plocha: source.plocha, prostredi: source.prostredi, typ: source.typ, poznamka: source.poznamka, revizeId } as any,
       {
         onSuccess: async (newId) => {
           try {
@@ -138,8 +191,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
             setZarizeni(copied);
             setZarizeniCounts(prev => ({ ...prev, [newMistnostId]: copied.length }));
             setSelectedMistnost({
-              id: newMistnostId, nazev: copyNazev.trim(), patro: source.patro,
-              poznamka: source.poznamka, revizeId,
+              ...source, id: newMistnostId, nazev: copyNazev.trim(), revizeId,
             });
             closeCopy();
           } finally {
@@ -226,65 +278,104 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
 
   return (
     <>
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      {/* Seznam místností - levá strana */}
-      <div className="lg:col-span-1">
-        <Card title="Místnosti" actions={<Button size="sm" onClick={() => setIsMistnostModalOpen(true)}>+ Přidat</Button>}>
-          {mistnosti.length > 0 ? (
-            <div className="space-y-2">
-              {mistnosti.map((m) => (
-                <div key={m.id}
-                  className={`rounded-lg border transition-colors cursor-pointer ${
-                    selectedMistnost?.id === m.id ? 'border-[var(--primary)] bg-[var(--bg-accent)]' : 'border-[var(--border)] bg-[var(--bg-surface)] hover:border-[var(--border-strong)]'
-                  }`}
-                  onClick={() => handleSelectMistnost(m)}
-                >
-                  <div className="p-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="font-medium text-xs">{m.nazev}</p>
-                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">
-                        {zarizeniCounts[m.id!] || 0}
-                      </span>
-                    </div>
-                    <p className="text-xs text-[var(--text-secondary)]">{m.patro && `${m.patro}`}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-[var(--text-secondary)] py-6 text-xs">Zatím žádné místnosti.</p>
-          )}
-        </Card>
-      </div>
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
+      {/* Seznam místností seskupený podle patra */}
+      <section aria-label="Seznam místností" className="lg:col-span-2 flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <label className="flex-1 min-w-0">
+            <span className="sr-only">Hledat místnost</span>
+            <input
+              type="search"
+              value={hledat}
+              onChange={(e) => setHledat(e.target.value)}
+              placeholder="Hledat místnost nebo patro…"
+              className={TW.input}
+            />
+          </label>
+          <Button size="sm" className="min-h-[40px] shrink-0" onClick={() => { resetMistnostForm(); setIsMistnostModalOpen(true); }}>+ Místnost</Button>
+        </div>
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Prostředí">
+          <FilterChip active={filtrProstredi === ''} onClick={() => setFiltrProstredi('')}>Vše {mistnosti.length}</FilterChip>
+          {PROSTREDI.map(p => {
+            const n = mistnosti.filter(m => (m.prostredi || 'Normální') === p).length;
+            return n > 0 || filtrProstredi === p
+              ? <FilterChip key={p} active={filtrProstredi === p} onClick={() => setFiltrProstredi(filtrProstredi === p ? '' : p)}>{p} {n}</FilterChip>
+              : null;
+          })}
+        </div>
 
-      {/* Detail místnosti - pravá strana */}
-      <div className="lg:col-span-2">
-        {selectedMistnost ? (
+        {mistnosti.length === 0 ? (
+          <Card><p className="text-center text-[var(--text-secondary)] py-6 text-sm">Zatím žádné místnosti.</p></Card>
+        ) : skupiny.length === 0 ? (
+          <Card><p className="text-center text-[var(--text-secondary)] py-6 text-sm">Nic neodpovídá hledání.</p></Card>
+        ) : skupiny.map(({ patro, items }) => (
+          <div key={patro} className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
+            <div className="flex justify-between items-center px-3 py-2 bg-[var(--bg-faint)] border-b border-[var(--border)]">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">{patro}</h3>
+              <span className="text-xs text-[var(--text-muted)]">{items.length} {items.length === 1 ? 'místnost' : items.length < 5 ? 'místnosti' : 'místností'}</span>
+            </div>
+            {items.map((m) => {
+              const active = selected?.id === m.id;
+              const pocet = zarizeniCounts[m.id!] || 0;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => handleSelectMistnost(m)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-left border-t border-[var(--border-subtle)] first-of-type:border-t-0 border-l-2 transition-colors ${
+                    active ? 'bg-[var(--active-bg)] border-l-[var(--primary)]' : 'border-l-transparent hover:bg-[var(--bg-hover)]'
+                  }`}
+                >
+                  <span className="flex-1 min-w-0">
+                    <span className={`block text-sm font-semibold truncate ${active ? 'text-[var(--nav-text-active)]' : 'text-[var(--text)]'}`}>{m.nazev}</span>
+                    <span className="block text-xs text-[var(--text-secondary)]">
+                      {[m.plocha != null ? `${String(m.plocha).replace('.', ',')} m²` : null, `${pocet} ${pocet === 1 ? 'zařízení' : 'zařízení'}`].filter(Boolean).join(' · ')}
+                    </span>
+                  </span>
+                  {m.prostredi && m.prostredi !== 'Normální' && <Badge variant={prostrediVariant(m.prostredi)}>{m.prostredi}</Badge>}
+                  <svg aria-hidden="true" className="w-4 h-4 shrink-0 text-[var(--text-muted)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </section>
+
+      {/* Detail místnosti */}
+      <div className="lg:col-span-3">
+        {selected ? (
           <Card
-            title={`${selectedMistnost.nazev}`}
+            title={selected.nazev}
             actions={
-              <div className="flex gap-2">
-                <Button size="sm" onClick={() => {
-                  resetZarizeniForm();
-                  if (window.innerWidth < 640) { setIsZarizeniSheetOpen(true); }
-                  else { setIsZarizeniModalOpen(true); }
-                }}>
-                  <span className="sm:hidden text-base leading-none">+</span>
-                  <span className="hidden sm:inline">+ Přidat zařízení</span>
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => handleEditMistnost(selectedMistnost)}>Upravit</Button>
-                <Button variant="secondary" size="sm" onClick={() => handleOpenCopy(selectedMistnost)}>Kopírovat</Button>
-                <Button variant="danger" size="sm" onClick={() => handleDeleteMistnost(selectedMistnost.id!)}>🗑️ Smazat</Button>
+              <div className="flex gap-1">
+                <Button variant="secondary" size="sm" onClick={() => handleEditMistnost(selected)} title="Upravit místnost" aria-label="Upravit místnost"><IconEdit /><span className="hidden sm:inline ml-1">Upravit</span></Button>
+                <Button variant="secondary" size="sm" onClick={() => handleOpenCopy(selected)} title="Kopírovat místnost" aria-label="Kopírovat místnost"><IconCopy /><span className="hidden sm:inline ml-1">Kopírovat</span></Button>
+                <Button variant="danger" size="sm" onClick={() => handleDeleteMistnost(selected.id!)} title="Smazat místnost" aria-label="Smazat místnost"><IconTrash /></Button>
               </div>
             }
           >
-            <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="p-2 bg-[var(--bg-input)] rounded-lg"><p className="text-xs text-[var(--text-secondary)]">Patro</p><p className="font-medium text-xs text-[var(--text)]">{selectedMistnost.patro || '—'}</p></div>
+            <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-2">
+              <StatTile label="Patro" value={<span className="text-base">{selected.patro || '—'}</span>} />
+              <StatTile label="Plocha" value={<span className="text-base">{selected.plocha != null ? `${String(selected.plocha).replace('.', ',')} m²` : '—'}</span>} />
+              <StatTile label="Prostředí" value={<span className={`text-base ${selected.prostredi && selected.prostredi !== 'Normální' ? 'text-[var(--warning-text)]' : ''}`}>{selected.prostredi || 'Normální'}</span>} />
+              <StatTile label="Zařízení OK" value={pocetOk} sub={`/ ${zarizeni.length}`} tone={pocetZavad > 0 ? 'danger' : 'default'} />
             </div>
+            {selected.poznamka && <p className="-mt-2 mb-4 text-xs text-[var(--text-secondary)]">{selected.poznamka}</p>}
 
-            <h4 className="font-medium text-sm text-[var(--text)] mb-2">Zařízení ({zarizeni.length})</h4>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <h4 className="font-semibold text-sm text-[var(--text)]">
+                Zařízení ({zarizeni.length}){pocetZavad > 0 && <span className="ml-2"><Badge variant="danger">{pocetZavad} {pocetZavad === 1 ? 'závada' : 'závady'}</Badge></span>}
+              </h4>
+              <Button size="sm" onClick={() => {
+                resetZarizeniForm();
+                if (window.innerWidth < 640) { setIsZarizeniSheetOpen(true); }
+                else { setIsZarizeniModalOpen(true); }
+              }}>+ Zařízení</Button>
+            </div>
             {zarizeni.length > 0 ? (
-              <div className="overflow-x-auto">
+              <>
+              <div className="hidden sm:block overflow-x-auto rounded-[var(--radius-lg)] border border-[var(--border)]">
                 <table className="w-full">
                   <thead>
                     <tr>
@@ -299,26 +390,20 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
                   </thead>
                   <tbody>
                     {zarizeni.map((z) => (
-                      <tr key={z.id} className="border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[var(--primary)] hover:bg-[var(--bg-hover)] group">
-                        <td className="py-1 px-2 text-xs">
-                          <p className="font-medium">{z.nazev}</p>
+                      <tr key={z.id} className={`border-b border-[var(--border-subtle)] border-l-2 hover:bg-[var(--bg-hover)] ${z.stav === 'závada' ? 'bg-[var(--danger-bg)] border-l-[var(--danger)]' : 'border-l-transparent'}`}>
+                        <td className="py-1.5 px-2 text-xs">
+                          <p className="font-medium text-[var(--text)]">{z.nazev}</p>
                           {z.oznaceni && <p className="text-xs text-[var(--text-secondary)]">{z.oznaceni}</p>}
                         </td>
-                        <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{z.pocetKs || 1}</td>
-                        <td className="py-1 px-2 text-xs"><span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">{z.trida || 'I'}</span></td>
-                        <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{z.prikonW ? `${z.prikonW} W` : '—'}</td>
-                        <td className="py-1 px-2 text-xs text-[var(--text-secondary)]">{z.ochranaPredDotykem || '—'}</td>
-                        <td className="py-1 px-2 text-xs">
-                          <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                            z.stav === 'OK' ? 'bg-[var(--success-bg)] text-[var(--success-text)]' :
-                            z.stav === 'závada' ? 'bg-[var(--danger-bg)] text-[var(--danger-text)]' :
-                            'bg-[var(--bg-hover)] text-[var(--text-secondary)]'
-                          }`}>{z.stav}</span>
-                        </td>
-                        <td className="py-1 px-2 text-xs text-right">
+                        <td className="py-1.5 px-2 text-xs text-[var(--text-secondary)] tabular-nums">{z.pocetKs || 1}</td>
+                        <td className="py-1.5 px-2 text-xs"><span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">{z.trida || 'I'}</span></td>
+                        <td className="py-1.5 px-2 text-xs text-[var(--text-secondary)] tabular-nums">{z.prikonW ? `${z.prikonW} W` : '—'}</td>
+                        <td className="py-1.5 px-2 text-xs text-[var(--text-secondary)]">{z.ochranaPredDotykem || '—'}</td>
+                        <td className="py-1.5 px-2 text-xs"><Badge variant={stavVariant(z.stav)}>{z.stav}</Badge></td>
+                        <td className="py-1.5 px-2 text-xs text-right">
                           <div className="flex justify-end gap-1">
-                            <Button variant="secondary" size="sm" onClick={() => handleEditZarizeni(z)}>✏️</Button>
-                            <Button variant="danger" size="sm" onClick={() => handleDeleteZarizeni(z.id!)}>🗑️</Button>
+                            <Button variant="secondary" size="sm" onClick={() => handleEditZarizeni(z)} title="Upravit" aria-label={`Upravit ${z.nazev}`}><IconEdit /></Button>
+                            <Button variant="danger" size="sm" onClick={() => handleDeleteZarizeni(z.id!)} title="Smazat" aria-label={`Smazat ${z.nazev}`}><IconTrash /></Button>
                           </div>
                         </td>
                       </tr>
@@ -326,13 +411,33 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
                   </tbody>
                 </table>
               </div>
+              <div className="sm:hidden flex flex-col gap-2">
+                {zarizeni.map((z) => (
+                  <div key={z.id} className={`rounded-[var(--radius-lg)] border p-3 bg-[var(--bg-surface)] ${z.stav === 'závada' ? 'border-[var(--danger)]/50' : 'border-[var(--border)]'}`}>
+                    <button type="button" className="w-full flex items-start gap-2 text-left" onClick={() => handleEditZarizeni(z)}>
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-sm font-semibold text-[var(--text)] truncate">{z.nazev}{(z.pocetKs || 1) > 1 && <span className="font-normal text-[var(--text-secondary)]"> · {z.pocetKs}×</span>}</span>
+                        <span className="block text-xs text-[var(--text-secondary)] mt-0.5">tř. {z.trida || 'I'} · {z.ochranaPredDotykem || '—'}{z.prikonW ? ` · ${z.prikonW} W` : ''}</span>
+                      </span>
+                      <Badge variant={stavVariant(z.stav)}>{z.stav}</Badge>
+                    </button>
+                    <div className="mt-2 flex justify-end">
+                      <Button variant="danger" size="sm" onClick={() => handleDeleteZarizeni(z.id!)} aria-label={`Smazat ${z.nazev}`}><IconTrash /></Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              </>
             ) : (
-              <p className="text-center text-[var(--text-secondary)] py-6 text-xs">Zatím žádná zařízení. Přidejte první kliknutím na tlačítko výše.</p>
+              <p className="text-center text-[var(--text-secondary)] py-6 text-xs bg-[var(--bg-input)] rounded-[var(--radius-lg)]">Zatím žádná zařízení.</p>
             )}
           </Card>
         ) : (
-          <Card title="Detail místnosti">
-            <p className="text-center text-[var(--text-secondary)] py-12 text-sm">Vyberte místnost ze seznamu vlevo pro zobrazení detailu a správu zařízení.</p>
+          <Card>
+            <div className="text-center py-12">
+              <p className="text-sm text-[var(--text-secondary)] mb-4">V revizi zatím nejsou žádné místnosti.</p>
+              <Button size="sm" onClick={() => { resetMistnostForm(); setIsMistnostModalOpen(true); }}>+ Přidat místnost</Button>
+            </div>
           </Card>
         )}
       </div>
@@ -352,7 +457,15 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
     >
       <form onSubmit={handleAddMistnost} className="space-y-3">
         <Input label="Název místnosti" value={mistnostFormData.nazev} onChange={(e) => setMistnostFormData({ ...mistnostFormData, nazev: e.target.value })} placeholder="např. Obývací pokoj, Kuchyň..." required />
-        <Input label="Patro" value={mistnostFormData.patro} onChange={(e) => setMistnostFormData({ ...mistnostFormData, patro: e.target.value })} placeholder="např. 1.NP, přízemí..." />
+        <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-3">
+          <Input label="Patro" value={mistnostFormData.patro} onChange={(e) => setMistnostFormData({ ...mistnostFormData, patro: e.target.value })} placeholder="např. 1.NP, přízemí..." list="mistnost-patra" />
+          <Input label="Plocha (m²)" inputMode="decimal" value={mistnostFormData.plocha} onChange={(e) => setMistnostFormData({ ...mistnostFormData, plocha: e.target.value })} placeholder="např. 12,5" />
+        </div>
+        <datalist id="mistnost-patra">
+          {[...new Set(mistnosti.map(m => m.patro).filter(Boolean))].map(p => <option key={p} value={p} />)}
+        </datalist>
+        <Select label="Prostředí" value={mistnostFormData.prostredi} onChange={(e) => setMistnostFormData({ ...mistnostFormData, prostredi: e.target.value })}
+          options={[{ value: '', label: '— neuvedeno —' }, ...PROSTREDI.map(p => ({ value: p, label: p }))]} />
         <Input label="Poznámka" value={mistnostFormData.poznamka} onChange={(e) => setMistnostFormData({ ...mistnostFormData, poznamka: e.target.value })} placeholder="Volitelná poznámka..." />
       </form>
     </Modal>
@@ -372,7 +485,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
       <form onSubmit={handleCopyMistnost} className="space-y-3">
         <Input label="Název nové místnosti" value={copyNazev} onChange={(e) => setCopyNazev(e.target.value)} required />
         <p className="text-xs text-[var(--text-secondary)]">
-          Zkopíruje se {copySource?.id === selectedMistnost?.id ? zarizeni.length : (zarizeniCounts[copySource?.id ?? -1] || 0)} zařízení (stav bude nastaven na „nekontrolováno").
+          Zkopíruje se {copySource?.id === selected?.id ? zarizeni.length : (zarizeniCounts[copySource?.id ?? -1] || 0)} zařízení (stav bude nastaven na „nekontrolováno").
         </p>
       </form>
     </Modal>
