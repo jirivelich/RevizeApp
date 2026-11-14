@@ -304,6 +304,8 @@ export interface Mistnost {
   typ?: string;
   prostredi?: string;
   poznamka?: string;
+  /** Okruhy (ID) téže revize, ze kterých je místnost napájena. */
+  okruhIds?: number[] | null;
 }
 
 // Zařízení v místnosti

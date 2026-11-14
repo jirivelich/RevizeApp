@@ -3,9 +3,11 @@ import { Button, Card, Input, Select, Modal, BottomSheet, ConfirmDialog, Badge }
 import type { BadgeVariant } from '../../components/ui';
 import { StatTile, FilterChip } from './MereniUi';
 import { TW } from './tw';
-import { zarizeniService } from '../../services/database';
+import { zarizeniService, okruhService } from '../../services/database';
 import { useCreateMistnost, useUpdateMistnost, useDeleteMistnost } from '../../hooks/useQueries';
-import type { Mistnost, Zarizeni } from '../../types';
+import type { Mistnost, Zarizeni, Okruh, Rozvadec } from '../../types';
+import { vyhodnotOkruh } from './mereniLimity';
+import { StavBadge } from './MereniUi';
 
 const PROSTREDI = ['Normální', 'Nebezpečné', 'Zvlášť nebezpečné'];
 const BEZ_PATRA = 'Bez patra';
@@ -20,14 +22,18 @@ const IconEdit = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 
 const IconTrash = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>;
 const IconCopy = () => <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>;
 
+type OkruhRevize = Okruh & { rozvadec: Rozvadec };
+
 interface MistnostiTabProps {
   mistnosti: Mistnost[];
+  /** Rozvaděče revize – pro přiřazení napájecích okruhů místnostem. */
+  rozvadece?: Rozvadec[];
   zarizeniCounts: Record<number, number>;
   revizeId: number;
   onReload: () => void;
 }
 
-export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, onReload: _onReload }: MistnostiTabProps) {
+export function MistnostiTab({ mistnosti, rozvadece = [], zarizeniCounts: propCounts, revizeId, onReload: _onReload }: MistnostiTabProps) {
   const createMistnost = useCreateMistnost();
   const updateMistnost = useUpdateMistnost();
   const deleteMistnost = useDeleteMistnost();
@@ -51,6 +57,31 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
     nazev: '', patro: '', plocha: '', prostredi: '', poznamka: ''
   });
   const [hledat, setHledat] = useState('');
+  const [okruhyRevize, setOkruhyRevize] = useState<OkruhRevize[]>([]);
+  const [isPrirazeniOpen, setIsPrirazeniOpen] = useState(false);
+  const [prirazeniIds, setPrirazeniIds] = useState<number[]>([]);
+
+  // Okruhy všech rozvaděčů revize
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const sorted = [...rozvadece].sort((a, b) => (a.poradi ?? a.id ?? 0) - (b.poradi ?? b.id ?? 0));
+      const all: OkruhRevize[] = [];
+      for (const r of sorted) {
+        if (!r.id) continue;
+        const ok = await okruhService.getByRozvadec(r.id);
+        all.push(...[...ok].sort((a, b) => a.cislo - b.cislo).map(o => ({ ...o, rozvadec: r })));
+      }
+      if (!cancelled) setOkruhyRevize(all);
+    })();
+    return () => { cancelled = true; };
+  }, [rozvadece]);
+
+  const okruhById = useMemo(() => new Map(okruhyRevize.map(o => [o.id!, o])), [okruhyRevize]);
+  const napajeciOkruhy = (m: Mistnost) =>
+    (m.okruhIds || []).map(id => okruhById.get(id)).filter((o): o is OkruhRevize => !!o);
+  const maVadnyOkruh = (m: Mistnost) => napajeciOkruhy(m).some(o => vyhodnotOkruh(o).stav === 'fail');
+  const okruhLabel = (o: OkruhRevize) => `${o.rozvadec.oznaceni || o.rozvadec.nazev} / ${o.cislo}`;
   const [filtrProstredi, setFiltrProstredi] = useState<string>('');
 
   /** Data místnosti pro uložení (plocha jako číslo). */
@@ -174,7 +205,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
     const source = copySource;
     setIsCopying(true);
     createMistnost.mutate(
-      { nazev: copyNazev.trim(), patro: source.patro, plocha: source.plocha, prostredi: source.prostredi, typ: source.typ, poznamka: source.poznamka, revizeId } as any,
+      { nazev: copyNazev.trim(), patro: source.patro, plocha: source.plocha, prostredi: source.prostredi, typ: source.typ, okruhIds: source.okruhIds, poznamka: source.poznamka, revizeId } as any,
       {
         onSuccess: async (newId) => {
           try {
@@ -334,6 +365,7 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
                     </span>
                   </span>
                   {m.prostredi && m.prostredi !== 'Normální' && <Badge variant={prostrediVariant(m.prostredi)}>{m.prostredi}</Badge>}
+                  {maVadnyOkruh(m) && <Badge variant="danger">Okruh nevyhovuje</Badge>}
                   <svg aria-hidden="true" className="w-4 h-4 shrink-0 text-[var(--text-muted)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
                 </button>
               );
@@ -362,6 +394,35 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
               <StatTile label="Zařízení OK" value={pocetOk} sub={`/ ${zarizeni.length}`} tone={pocetZavad > 0 ? 'danger' : 'default'} />
             </div>
             {selected.poznamka && <p className="-mt-2 mb-4 text-xs text-[var(--text-secondary)]">{selected.poznamka}</p>}
+
+            <div className="mb-5">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <h4 className="font-semibold text-sm text-[var(--text)]">Napájeno z okruhů</h4>
+                <Button variant="secondary" size="sm" disabled={okruhyRevize.length === 0}
+                  title={okruhyRevize.length === 0 ? 'V revizi zatím nejsou žádné okruhy' : undefined}
+                  onClick={() => { setPrirazeniIds(selected.okruhIds || []); setIsPrirazeniOpen(true); }}>
+                  {napajeciOkruhy(selected).length > 0 ? 'Upravit' : '+ Přiřadit'}
+                </Button>
+              </div>
+              {napajeciOkruhy(selected).length > 0 ? (
+                <ul className="flex flex-col gap-1.5">
+                  {napajeciOkruhy(selected).map(o => {
+                    const v = vyhodnotOkruh(o);
+                    return (
+                      <li key={o.id} className={`flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] border text-xs ${v.stav === 'fail' ? 'bg-[var(--danger-bg)] border-[var(--danger)]/40' : 'bg-[var(--bg-input)] border-transparent'}`}>
+                        <span className="px-1.5 py-0.5 rounded font-semibold bg-[var(--bg-hover)] text-[var(--text-secondary)] whitespace-nowrap">{okruhLabel(o)}</span>
+                        <span className="flex-1 min-w-0 truncate text-[var(--text)]">{o.nazev} <span className="text-[var(--text-muted)]">· {o.jisticTyp}{o.jisticProud}</span></span>
+                        <StavBadge stav={v.stav} />
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="text-xs text-[var(--text-secondary)] px-3 py-2.5 bg-[var(--bg-input)] rounded-[var(--radius-md)]">
+                  {okruhyRevize.length === 0 ? 'V revizi zatím nejsou žádné okruhy.' : 'Místnost zatím nemá přiřazené okruhy.'}
+                </p>
+              )}
+            </div>
 
             <div className="flex items-center justify-between gap-2 mb-2">
               <h4 className="font-semibold text-sm text-[var(--text)]">
@@ -593,6 +654,51 @@ export function MistnostiTab({ mistnosti, zarizeniCounts: propCounts, revizeId, 
         <Input label="Poznámka" value={zarizeniFormData.poznamka} onChange={(e) => setZarizeniFormData({ ...zarizeniFormData, poznamka: e.target.value })} placeholder="Volitelná poznámka..." />
       </form>
     </BottomSheet>
+
+    {/* Přiřazení napájecích okruhů */}
+    <Modal
+      isOpen={isPrirazeniOpen}
+      onClose={() => setIsPrirazeniOpen(false)}
+      title={`Okruhy pro: ${selected?.nazev ?? ''}`}
+      footer={
+        <>
+          <Button variant="secondary" onClick={() => setIsPrirazeniOpen(false)}>Zrušit</Button>
+          <Button onClick={() => {
+            if (!selected?.id) return;
+            // Uložit jen ID, která v revizi stále existují (smazané okruhy vypadnou)
+            const ids = prirazeniIds.filter(id => okruhById.has(id));
+            updateMistnost.mutate(
+              { id: selected.id, data: { okruhIds: ids, revizeId } },
+              { onSuccess: () => { setSelectedMistnost({ ...selected, okruhIds: ids }); setIsPrirazeniOpen(false); } },
+            );
+          }} disabled={updateMistnost.isPending}>Uložit ({prirazeniIds.filter(id => okruhById.has(id)).length})</Button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-4 max-h-[60vh] overflow-y-auto">
+        {[...new Map(okruhyRevize.map(o => [o.rozvadec.id, o.rozvadec])).values()].map(r => (
+          <fieldset key={r.id} className="flex flex-col gap-1">
+            <legend className={TW.label + ' mb-1'}>{[r.oznaceni, r.nazev].filter(Boolean).join(' – ')}</legend>
+            {okruhyRevize.filter(o => o.rozvadec.id === r.id).map(o => {
+              const checked = prirazeniIds.includes(o.id!);
+              return (
+                <label key={o.id} className={`flex items-center gap-3 px-3 min-h-[44px] rounded-[var(--radius-md)] border cursor-pointer ${checked ? 'border-[var(--active-border)] bg-[var(--active-bg)]' : 'border-[var(--border)] hover:bg-[var(--bg-hover)]'}`}>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) => setPrirazeniIds(prev => e.target.checked ? [...prev, o.id!] : prev.filter(id => id !== o.id))}
+                    className="w-4 h-4 rounded border-[var(--checkbox-border)]"
+                  />
+                  <span className="w-7 text-xs font-semibold tabular-nums text-[var(--text-secondary)]">{o.cislo}</span>
+                  <span className="flex-1 min-w-0 truncate text-sm text-[var(--text)]">{o.nazev}</span>
+                  <span className="text-xs text-[var(--text-muted)] whitespace-nowrap">{o.jisticTyp}{o.jisticProud}</span>
+                </label>
+              );
+            })}
+          </fieldset>
+        ))}
+      </div>
+    </Modal>
 
     <ConfirmDialog
       isOpen={deleteMistnostId !== null}

@@ -404,7 +404,8 @@ async function startServer() {
       const newKategorie = newRevize.rows[0].kategorieRevize;
       console.log(`✅ Nová revize ID=${newRevizeId}, kategorie=${newKategorie}`);
 
-      // 4. Zkopírovat rozvaděče + okruhy
+      // 4. Zkopírovat rozvaděče + okruhy (mapa starých ID okruhů na nová kvůli vazbám místností)
+      const okruhIdMap = new Map<number, number>();
       const rozvadece = await client.query('SELECT * FROM rozvadec WHERE "revizeId" = $1', [sourceId]);
       for (const rozv of rozvadece.rows) {
         const newRozv = await client.query(`
@@ -416,17 +417,19 @@ async function startServer() {
         // Okruhy
         const okruhy = await client.query('SELECT * FROM okruh WHERE "rozvadecId" = $1', [rozv.id]);
         for (const okr of okruhy.rows) {
-          await client.query(`
+          const newOkr = await client.query(`
             INSERT INTO okruh ("rozvadecId", cislo, nazev, "jisticTyp", "jisticProud", "pocetFazi", vodic, "typKabelu", "pocetZil", prurez, "izolacniOdpor", "impedanceSmycky", poznamka,
               "jeJisticochranac", "chrTyp", "chrCitlivostMa", "chrPocetPolu", "chrTestovacitlacitko", "chrNevybavovaci",
               "chrDotykoveNapeti", "chrVybavovacProud", "chrCasOdpojeni1x", "chrCasOdpojeni5x",
               "chrCasOdpojeni1_4x", "chrCasOdpojeni2x", "chrZkouskaVypnuti2x", "chrSelektivita")
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
               $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
+            RETURNING id
           `, [newRozvId, okr.cislo, okr.nazev, okr.jisticTyp, okr.jisticProud, okr.pocetFazi, okr.vodic, okr.typKabelu, okr.pocetZil, okr.prurez, okr.izolacniOdpor, okr.impedanceSmycky, okr.poznamka,
             okr.jeJisticochranac, okr.chrTyp, okr.chrCitlivostMa, okr.chrPocetPolu, okr.chrTestovacitlacitko, okr.chrNevybavovaci,
             okr.chrDotykoveNapeti, okr.chrVybavovacProud, okr.chrCasOdpojeni1x, okr.chrCasOdpojeni5x,
             okr.chrCasOdpojeni1_4x, okr.chrCasOdpojeni2x, okr.chrZkouskaVypnuti2x, okr.chrSelektivita]);
+          okruhIdMap.set(okr.id, newOkr.rows[0].id);
         }
       }
       console.log(`  ✅ Zkopírováno ${rozvadece.rows.length} rozvaděčů`);
@@ -435,9 +438,10 @@ async function startServer() {
       const mistnosti = await client.query('SELECT * FROM mistnost WHERE "revizeId" = $1', [sourceId]);
       for (const mist of mistnosti.rows) {
         const newMist = await client.query(`
-          INSERT INTO mistnost ("revizeId", nazev, patro, plocha, typ, prostredi, poznamka)
-          VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id
-        `, [newRevizeId, mist.nazev, mist.patro, mist.plocha, mist.typ, mist.prostredi, mist.poznamka]);
+          INSERT INTO mistnost ("revizeId", nazev, patro, plocha, typ, prostredi, poznamka, "okruhIds")
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id
+        `, [newRevizeId, mist.nazev, mist.patro, mist.plocha, mist.typ, mist.prostredi, mist.poznamka,
+          Array.isArray(mist.okruhIds) ? mist.okruhIds.map((id: number) => okruhIdMap.get(id)).filter((id: number | undefined) => id !== undefined) : null]);
         const newMistId = newMist.rows[0].id;
 
         // Zařízení v místnosti
@@ -899,13 +903,13 @@ async function startServer() {
 
   app.post('/api/mistnosti', authMiddleware, async (req, res) => {
     try {
-      const { revizeId, nazev, patro, plocha, typ, prostredi, poznamka } = req.body;
+      const { revizeId, nazev, patro, plocha, typ, prostredi, poznamka, okruhIds } = req.body;
       
       const result = await pool.query(`
-        INSERT INTO mistnost ("revizeId", nazev, patro, plocha, typ, prostredi, poznamka)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO mistnost ("revizeId", nazev, patro, plocha, typ, prostredi, poznamka, "okruhIds")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id
-      `, [revizeId, nazev, patro, plocha, typ, prostredi, poznamka]);
+      `, [revizeId, nazev, patro, plocha, typ, prostredi, poznamka, Array.isArray(okruhIds) ? okruhIds : null]);
       
       res.json({ id: result.rows[0].id });
     } catch (error) {

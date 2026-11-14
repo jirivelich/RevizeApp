@@ -400,6 +400,8 @@ export async function initializeDatabase() {
       // Přílohy: FALSE = interní dokument (faktura, smlouva…), netiskne se
       'ALTER TABLE "revizePriloha" ADD COLUMN IF NOT EXISTS "vTisku" BOOLEAN NOT NULL DEFAULT TRUE',
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "zakaznikId" INTEGER REFERENCES zakaznik(id)',
+      // Místnost: okruhy, ze kterých je napájena (ID okruhů téže revize)
+      'ALTER TABLE mistnost ADD COLUMN IF NOT EXISTS "okruhIds" INTEGER[]',
       // Odstranit UNIQUE constraint z vyrobniCislo (může být prázdné nebo duplicitní)
       'ALTER TABLE "mericiPristroj" DROP CONSTRAINT IF EXISTS "mericiPristroj_vyrobniCislo_key"',
       // Přidat kategorii revize (elektro, hromosvod, stroje)
