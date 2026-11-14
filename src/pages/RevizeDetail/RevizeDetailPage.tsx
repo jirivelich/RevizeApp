@@ -392,7 +392,7 @@ export function RevizeDetailPage() {
 
       {activeTab === 'mistnosti' && (
         <MistnostiTab
-          mistnosti={mistnosti} zarizeniCounts={zarizeniCounts}
+          mistnosti={mistnosti} rozvadece={rozvadece} zarizeniCounts={zarizeniCounts}
           revizeId={revize.id!} onReload={handleReload}
         />
       )}

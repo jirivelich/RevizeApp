@@ -18,8 +18,8 @@ export function ChraniceTable({ chranice, onEdit, onDelete }: ChraniceTableProps
       {[...chranice].sort((a, b) => a.cislo - b.cislo).map((c) => {
         const v = vyhodnotChranic(c);
         const kontroly = [
-          c.testovacitlacitko !== undefined && `${c.testovacitlacitko ? '✓' : '✕'} Testovací tlačítko`,
-          c.nevybavovaci !== undefined && `${c.nevybavovaci ? '✓' : '✕'} Nevybavení při 0,5×IΔn`,
+          c.testovacitlacitko != null && `${c.testovacitlacitko ? '✓' : '✕'} Testovací tlačítko`,
+          c.nevybavovaci != null && `${c.nevybavovaci ? '✓' : '✕'} Nevybavení při 0,5×IΔn`,
           c.selektivita && '✓ Selektivita',
           c.zkouskaVypnuti2x && '✓ Zkouška vypnutí 2×IΔn',
         ].filter(Boolean) as string[];
