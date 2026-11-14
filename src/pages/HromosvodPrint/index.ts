@@ -1,1 +1,0 @@
-export { HromosvodPrintPage } from './HromosvodPrintPage';

@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Button, Card, Select, Modal, ConfirmDialog } from '../../components/ui';
+import { Button, Card, Input, Select, Modal, ConfirmDialog } from '../../components/ui';
 import { revizeService } from '../../services/database';
 import { useCreateZavada, useUpdateZavada, useDeleteZavada } from '../../hooks/useQueries';
 import type { Zavada, Rozvadec, Mistnost, ZavadaKatalog } from '../../types';
@@ -37,6 +37,8 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
     popis: '',
     typ: 'zavada' as NonNullable<Zavada['typ']>,
     zduvodneni: '',
+    norma: '',
+    riziko: '',
     zavaznost: 'C2' as Zavada['zavaznost'],
     stav: 'otevřená' as Zavada['stav'],
     rozvadecId: undefined as number | undefined,
@@ -46,7 +48,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
   });
 
   const resetZavadaForm = () => {
-    setZavadaFormData({ popis: '', typ: 'zavada', zduvodneni: '', zavaznost: 'C2', stav: 'otevřená', rozvadecId: undefined, mistnostId: undefined, poznamka: '', fotky: [] });
+    setZavadaFormData({ popis: '', typ: 'zavada', zduvodneni: '', norma: '', riziko: '', zavaznost: 'C2', stav: 'otevřená', rozvadecId: undefined, mistnostId: undefined, poznamka: '', fotky: [] });
     setEditingZavada(null);
     setSelectedKatalogZavada('');
   };
@@ -60,9 +62,9 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
           ...prev,
           popis: zavada.popis,
           zavaznost: zavada.zavaznost,
-          poznamka: zavada.norma
-            ? `${zavada.norma}${zavada.clanek ? ` ${zavada.clanek}` : ''}${zavada.zneniClanku ? `\n${zavada.zneniClanku}` : ''}`
-            : '',
+          // Ustanovení, se kterým je závada v rozporu; znění článku jde do poznámky
+          norma: zavada.norma ? `${zavada.norma}${zavada.clanek ? ` ${zavada.clanek}` : ''}` : '',
+          poznamka: zavada.zneniClanku || '',
         }));
       }
     }
@@ -82,6 +84,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
     const formData = jeDoporuceni
       ? { ...zavadaFormData, zavaznost: 'C3' as const }
       : { ...zavadaFormData, zduvodneni: '' };
+    if (jeDoporuceni) formData.riziko = '';
     const onDone = async () => {
       setIsZavadaModalOpen(false);
       resetZavadaForm();
@@ -103,6 +106,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
     setEditingZavada(zavada);
     setZavadaFormData({
       popis: zavada.popis, typ: zavada.typ ?? 'zavada', zduvodneni: zavada.zduvodneni || '',
+      norma: zavada.norma || '', riziko: zavada.riziko || '',
       zavaznost: zavada.zavaznost, stav: zavada.stav,
       rozvadecId: zavada.rozvadecId, mistnostId: zavada.mistnostId,
       poznamka: zavada.poznamka || '', fotky: zavada.fotky || [],
@@ -319,6 +323,8 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                   <p className="text-xs text-[var(--text-secondary)]">Rozvaděč: {rozvadece.find(r => r.id === z.rozvadecId)?.nazev || 'Neznámý'}</p>
                 )}
                 {z.typ === 'doporuceni' && z.zduvodneni && <p className="text-xs text-[var(--text-secondary)] mt-1">Zdůvodnění: {z.zduvodneni}</p>}
+                {z.typ !== 'doporuceni' && z.norma && <p className="text-xs text-[var(--text-secondary)] mt-1">V rozporu s: {z.norma}</p>}
+                {z.typ !== 'doporuceni' && z.riziko && <p className="text-xs text-[var(--text-secondary)] mt-1">Riziko: {z.riziko}</p>}
                 {z.poznamka && <p className="text-xs text-[var(--text-muted)] mt-1 italic">{z.poznamka}</p>}
                 {Array.isArray(z.fotky) && z.fotky.length > 0 && (
                   <div className="flex gap-2 mt-2">
@@ -403,6 +409,14 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
               placeholder="Např. doplňková ochrana proudovým chráničem snižuje riziko úrazu při poruše izolace spotřebiče..." required />
           </div>
         )}
+        {zavadaFormData.typ !== 'doporuceni' && (
+          <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-3">
+            <Input label="V rozporu s ustanovením (norma, článek)" placeholder="např. ČSN 33 2000-4-41 čl. 411.3.2"
+              value={zavadaFormData.norma} onChange={(e) => setZavadaFormData({ ...zavadaFormData, norma: e.target.value })} />
+            <Input label="Riziko ohrožení bezpečnosti" placeholder="např. nebezpečí úrazu el. proudem při dotyku"
+              value={zavadaFormData.riziko} onChange={(e) => setZavadaFormData({ ...zavadaFormData, riziko: e.target.value })} />
+          </div>
+        )}
         <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-3">
           {zavadaFormData.typ !== 'doporuceni' && (
           <Select label="Závažnost" value={zavadaFormData.zavaznost} onChange={(e) => setZavadaFormData({ ...zavadaFormData, zavaznost: e.target.value as any })}
@@ -420,9 +434,9 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
             options={[{ value: '', label: '-- Nevybráno --' }, ...mistnosti.map(m => ({ value: m.id!.toString(), label: m.nazev }))]} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Poznámka / Odkaz na normu</label>
+          <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Poznámka</label>
           <textarea value={zavadaFormData.poznamka} onChange={(e) => setZavadaFormData({ ...zavadaFormData, poznamka: e.target.value })}
-            className="w-full px-2 py-1.5 border rounded-lg border-[var(--border-input)] bg-[var(--bg-input)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] text-xs" rows={3} placeholder="Volitelná poznámka nebo odkaz na normu/zákon..." />
+            className="w-full px-2 py-1.5 border rounded-lg border-[var(--border-input)] bg-[var(--bg-input)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] text-xs" rows={3} placeholder="Volitelná poznámka (např. znění článku normy)..." />
         </div>
         <div>
           <label className="block text-xs font-medium text-[var(--text)] mb-1">Fotky</label>

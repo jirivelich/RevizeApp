@@ -274,6 +274,25 @@ export function RozsahTab({ revizeId, formData, setFormData, saveNow }: RozsahTa
           )}
         </div>
       </div>
+
+      <div className={TW.card} id="rozsah-ulozeni">
+        <SectionHeader>Uložení podkladů a nápravné úkony</SectionHeader>
+        <div className="p-4 flex flex-col gap-3">
+          <div>
+            <label className={TW.label} htmlFor="misto-ulozeni-podkladu">Místo uložení podkladů</label>
+            <input id="misto-ulozeni-podkladu" className={TW.input} value={formData.mistoUlozeniPodkladu || ''}
+              onChange={(e) => setFormData({ ...formData, mistoUlozeniPodkladu: e.target.value })} onBlur={() => saveNow?.()}
+              placeholder="např. u provozovatele – kancelář správy budovy; přílohou této zprávy" />
+            <p className="text-xs text-[var(--text-muted)] mt-1">Využívá-li zpráva písemné doklady, musí obsahovat jejich seznam a místo uložení. Při revizi dodavatelským způsobem jsou doklady součástí zprávy.</p>
+          </div>
+          <div>
+            <label className={TW.label} htmlFor="napravne-ukony">Drobné nápravné úkony provedené revizním technikem</label>
+            <textarea id="napravne-ukony" className={TW.textarea} rows={3} value={formData.napravneUkony || ''}
+              onChange={(e) => setFormData({ ...formData, napravneUkony: e.target.value })} onBlur={() => saveNow?.()}
+              placeholder="např. dotažení svorek v rozvaděči RH, odstranění prachové vrstvy" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

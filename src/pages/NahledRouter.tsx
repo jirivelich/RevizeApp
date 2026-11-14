@@ -1,79 +1,58 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { revizeService } from '../services/database';
-import { ReportPrintPage } from './ReportPrint';
-import { HromosvodPrintPage } from './HromosvodPrint';
-import { StrojniZarizeniPrintPage } from './StrojniZarizeniPrint';
-import { OdberneMistoPrintPage } from './OdberneMistoPrint';
-import './ReportPrint/nahled.css';
+import { buildContext, type DocContext } from '../documents/context';
+import { TPL } from '../documents/templates';
+import { H } from '../documents/helpers';
+import { DocumentViewer } from '../documents/DocumentViewer';
+
+const TITLE_SUFFIX: Record<string, string> = {
+  elektro: 'instalace',
+  hromosvod: 'LPS',
+  stroje: 'stroj',
+  odberne_misto: 'odberne misto',
+};
 
 /**
- * Router-wrapper pro tiskový náhled.
- * Toolbar je v normálním document flow – PagedJS ho nemůže ovlivnit.
- * Layout: toolbar (flex-shrink:0) + scroll oblast (flex:1) = 100vh.
+ * Náhled dokumentů revize („list A4 na stole“) s exportem do PDF, Wordu a ZIP.
+ * Dokumenty se skládají ze šablon v src/documents/templates podle kategorie revize.
  */
 export function NahledRouter() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [kategorie, setKategorie] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Výsledek načtení pro konkrétní id; dokud nesedí s aktuálním id, načítá se
+  const [state, setState] = useState<{ id: string; ctx: DocContext | null; error: string | null } | null>(null);
+  const loading = !!id && state?.id !== id;
+  const ctx = loading ? null : state?.ctx ?? null;
+  const error = loading ? null : state?.error ?? null;
 
   useEffect(() => {
     if (!id) return;
-    revizeService.getById(parseInt(id))
-      .then(revize => {
-        const raw = revize?.kategorieRevize;
-        setKategorie(raw ? String(raw).trim().toLowerCase() : 'elektro');
+    let cancelled = false;
+    buildContext(parseInt(id, 10))
+      .then(c => {
+        if (cancelled) return;
+        setState({ id, ctx: c, error: null });
+        // Výchozí název souboru při „Tisk → Uložit jako PDF“
+        document.title = [c.revize.cisloRevize, c.provozovatel.nazev, c.revize.adresa, TITLE_SUFFIX[c.revize.kategorieRevize] ?? '']
+          .filter(Boolean)
+          .join(' - ');
       })
-      .catch(() => setKategorie('elektro'))
-      .finally(() => setLoading(false));
+      .catch(err => {
+        if (!cancelled) setState({ id, ctx: null, error: err instanceof Error ? err.message : 'Chyba při načítání dat' });
+      });
+    return () => { cancelled = true; };
   }, [id]);
 
-  const renderContent = () => {
-    if (loading) {
-      return (
-        <div className="nahled-waiting">
-          <span>Načítání...</span>
-        </div>
-      );
-    }
-    if (kategorie === 'hromosvod') return <HromosvodPrintPage />;
-    if (kategorie === 'stroje') return <StrojniZarizeniPrintPage />;
-    if (kategorie === 'odberne_misto') return <OdberneMistoPrintPage />;
-    return <ReportPrintPage />;
-  };
+  const docs = useMemo(() => (ctx ? TPL.instances(ctx) : []), [ctx]);
 
   return (
-    <div className="nahled-shell">
-      <div className="nahled-toolbar">
-        <button
-          className="nahled-btn nahled-btn--back"
-          onClick={() => navigate(-1)}
-          aria-label="Zpět"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-          Zpět
-        </button>
-        <div style={{ flex: 1 }} />
-        <button
-          className="nahled-btn nahled-btn--print"
-          onClick={() => window.print()}
-          disabled={loading}
-          aria-label="Tisk"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="6 9 6 2 18 2 18 9" />
-            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-            <rect x="6" y="14" width="12" height="8" />
-          </svg>
-          Tisk
-        </button>
-      </div>
-      <div className="nahled-scroll">
-        {renderContent()}
-      </div>
-    </div>
+    <DocumentViewer
+      docs={docs}
+      loading={loading}
+      error={error}
+      onBack={() => navigate(-1)}
+      zipName={H.fileName(`${ctx?.revize.cisloRevize || 'revize'} dokumenty`)}
+      devCheck={import.meta.env.DEV}
+    />
   );
 }

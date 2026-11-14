@@ -1,0 +1,162 @@
+/* Styly dokumentů (zpráv). Vše pod .doc-root, aby nekolidovalo s UI aplikace.
+   Layout obsahu pouze tabulkami (kvůli exportu do Wordu). */
+@import '@fontsource/carlito/400.css';
+@import '@fontsource/carlito/700.css';
+@import '@fontsource/carlito/400-italic.css';
+
+.doc-root {
+  --doc-zoom: 1;
+  font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif;
+  font-size: 10pt;
+  line-height: 1.4;
+  color: #000;
+}
+
+.doc-root .page {
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  padding: 16mm 20mm 20mm;
+  box-sizing: border-box;
+  background: #fff;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.45);
+  margin: 0 auto 10mm;
+  overflow: hidden;
+}
+
+.doc-root .page-body { display: flow-root; }
+
+/* ── Hlavička a patička listu ── */
+.doc-root .page-head {
+  width: 100%;
+  border-collapse: collapse;
+  border-bottom: 1px solid #b0b0b0;
+  font-size: 8pt;
+  color: #374151;
+  margin-bottom: 5mm;
+}
+.doc-root .page-head td { padding: 0 0 1mm; vertical-align: bottom; }
+.doc-root .page-head .r { text-align: right; white-space: nowrap; }
+.doc-root .page-foot {
+  position: absolute;
+  left: 20mm;
+  right: 20mm;
+  bottom: 9mm;
+  width: calc(100% - 40mm);
+  border-collapse: collapse;
+  border-top: 1px solid #b0b0b0;
+  font-size: 8pt;
+  color: #374151;
+}
+.doc-root .page-foot td { padding-top: 1mm; }
+.doc-root .page-foot .r { text-align: right; white-space: nowrap; }
+
+/* ── Titulní část ── */
+.doc-root .firma {
+  width: 100%;
+  border-collapse: collapse;
+  border-bottom: 2px solid #b0b0b0;
+  margin-bottom: 3mm;
+}
+.doc-root .firma td { vertical-align: top; padding: 0 0 6px; }
+.doc-root .firma .logo { width: 32mm; padding-right: 4mm; }
+.doc-root .firma .logo img { max-width: 30mm; max-height: 18mm; display: block; }
+.doc-root .firma .nazev { font-size: 13pt; font-weight: bold; }
+.doc-root .firma .small { font-size: 8.5pt; color: #374151; }
+.doc-root .firma .r { text-align: right; white-space: nowrap; }
+
+.doc-root .normy { text-align: center; font-size: 8pt; color: #374151; margin: 1mm 0 3mm; }
+.doc-root .title {
+  text-align: center;
+  font-size: 22pt;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  line-height: 1.15;
+  margin: 3mm 0 1mm;
+}
+.doc-root .subtitle { text-align: center; font-size: 10.5pt; font-weight: 600; margin: 0 0 5mm; }
+
+/* ── Sekce ── */
+.doc-root .sec { margin-top: 4mm; }
+.doc-root .sec-title {
+  font-size: 10.5pt;
+  font-weight: bold;
+  border-bottom: 1px solid #b0b0b0;
+  padding-bottom: 3px;
+  margin-bottom: 2mm;
+}
+.doc-root .sub-title {
+  font-size: 9.5pt;
+  font-weight: 600;
+  background: #f1f5f9;
+  border-left: 3px solid #b0b0b0;
+  border-radius: 3px;
+  padding: 4px 8px;
+  margin: 3mm 0 1.5mm;
+}
+.doc-root p, .doc-root .para { margin: 0 0 1.5mm; }
+.doc-root ol, .doc-root ul { margin: 0 0 1.5mm; padding-left: 6mm; }
+
+/* ── Popisek / hodnota ── */
+.doc-root table.kv { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+.doc-root table.kv td { padding: 1.5px 4px 1.5px 0; vertical-align: top; }
+.doc-root table.kv td.l { width: 52mm; font-weight: 600; color: #374151; }
+.doc-root table.kv.kv4 td.l { width: 38mm; }
+
+/* ── Mřížka (měření, závady) ── */
+/* display: table – Tailwind má vlastní utilitu .grid (display: grid) */
+.doc-root table.grid { display: table; width: 100%; border-collapse: collapse; font-size: 8.5pt; margin: 1mm 0 2mm; }
+.doc-root table.grid th,
+.doc-root table.grid td { padding: 3px 6px; vertical-align: top; text-align: left; }
+.doc-root table.grid th { font-size: 8pt; font-weight: 600; color: #fff; background: #3e4a5b; border: 1px solid #2d3748; }
+.doc-root table.grid td { border: 1px solid #cbd5e1; }
+.doc-root table.grid tbody tr:nth-child(even) td { background: #f8fafc; }
+.doc-root table.grid.fixcols { table-layout: fixed; }
+.doc-root table.grid.fixcols th,
+.doc-root table.grid.fixcols td { overflow-wrap: anywhere; }
+.doc-root table.grid td.c, .doc-root table.grid th.c { text-align: center; }
+.doc-root table.grid tr.detail td { font-size: 8.5pt; }
+
+/* ── Výsledek ── */
+.doc-root .result {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2mm 0;
+}
+.doc-root .result td { border: 1.5pt solid #1e293b; padding: 2.5mm; text-align: center; font-size: 11pt; }
+
+/* ── Podpisy ── */
+.doc-root table.sig { width: 100%; border-collapse: collapse; margin-top: 14mm; }
+.doc-root table.sig td { width: 50%; padding: 0 6mm; text-align: center; vertical-align: top; }
+.doc-root table.sig .line { border-top: 0.75pt dotted #000; padding-top: 1mm; }
+.doc-root table.sig .name { font-size: 10pt; }
+
+/* ── Drobnosti ── */
+.doc-root .dotline { letter-spacing: 1pt; color: #000; }
+.doc-root .small { font-size: 9pt; }
+.doc-root .muted { color: #475569; }
+.doc-root .b { font-weight: bold; }
+.doc-root .center { text-align: center; }
+
+/* ── Obrázky (fotky závad, náčrt, přílohy) ── */
+.doc-root .foto { width: 100%; border-collapse: collapse; margin-bottom: 3mm; }
+.doc-root .foto td { width: 50%; padding: 1mm; vertical-align: top; }
+.doc-root .foto img { max-width: 100%; max-height: 95mm; display: block; margin: 0 auto; }
+.doc-root .nacrt img { max-width: 100%; max-height: 200mm; display: block; margin: 0 auto; }
+.doc-root .priloha img { max-width: 100%; max-height: 225mm; display: block; margin: 0 auto; }
+
+@media print {
+  @page { size: A4; margin: 0; }
+  .doc-root { zoom: 1 !important; }
+  .doc-root .page {
+    box-shadow: none;
+    margin: 0;
+    break-after: page;
+    page-break-after: always;
+  }
+  .doc-root .page:last-child { break-after: auto; page-break-after: auto; }
+  .doc-root table.grid th,
+  .doc-root table.grid td,
+  .doc-root .sub-title { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

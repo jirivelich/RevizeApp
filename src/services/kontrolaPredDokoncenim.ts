@@ -71,6 +71,9 @@ export function zkontrolujPredDokoncenim(v: VstupKontroly): ZjisteniKontroly[] {
   } else if (datumRevize !== null && dokonceni < datumRevize) {
     add('kriticka', 'DATUM_POREADI', 'info', 'Datum dokončení je dřívější než datum zahájení revize.');
   }
+  if (datum(r.datumPredani) === null) {
+    add('upozorneni', 'DATUM_PREDANI', 'info', 'Chybí datum předání zprávy o revizi (ČSN 33 1500 vyžaduje datum zahájení, ukončení, vypracování a předání).');
+  }
   if (r.typRevize === 'mimořádná' && prazdne(r.duvodMimoradne)) {
     add('upozorneni', 'MIMORADNA_DUVOD', 'info', 'U mimořádné revize není uveden důvod.');
   }
@@ -90,6 +93,10 @@ export function zkontrolujPredDokoncenim(v: VstupKontroly): ZjisteniKontroly[] {
   const otevreneC3 = zavady.filter(zv => zv.typ !== 'doporuceni' && zv.zavaznost === 'C3' && zv.stav !== 'vyřešená');
   for (const zv of zavady) {
     if (prazdne(zv.popis)) add('upozorneni', 'ZAVADA_BEZ_POPISU', 'zavady', 'Je evidována závada bez popisu.');
+  }
+  for (const zv of zavady.filter(x => x.typ !== 'doporuceni' && prazdne(x.norma) && prazdne(x.riziko))) {
+    add('upozorneni', 'ZAVADA_BEZ_NORMY', 'zavady',
+      `U závady „${zv.popis || 'bez popisu'}“ není uvedeno, s jakým ustanovením normy či předpisu je v rozporu, ani jaké je riziko ohrožení bezpečnosti.`);
   }
   for (const zv of zavady.filter(x => x.typ === 'doporuceni' && prazdne(x.zduvodneni))) {
     add('doporuceni', 'DOPORUCENI_BEZ_ZDUVODNENI', 'zavady', `U doporučení „${zv.popis || 'bez popisu'}“ chybí zdůvodnění.`);
@@ -119,6 +126,21 @@ export function zkontrolujPredDokoncenim(v: VstupKontroly): ZjisteniKontroly[] {
     }
   }
   if (prazdne(r.zaver)) add('upozorneni', 'ZAVER_TEXT', 'info', 'Chybí slovní závěr revize.');
+
+  // Závěr ochrany před bleskem (ČSN 33 1500 Z4): soulad s normou platnou v době zřízení a funkční stav součástí
+  if (r.kategorieRevize === 'hromosvod') {
+    if (!r.hromosvodOdpovidaNorme || !r.hromosvodFunkcniStav) {
+      add('kriticka', 'ZAVER_LPS', 'info', 'U revize ochrany před bleskem není v závěru uvedeno, zda provedení odpovídá normě platné v době zřízení a zda jsou součásti v dobrém funkčním stavu.');
+    }
+    if (prazdne(r.hromosvodNormaZrizeni) && prazdne(r.hromosvodNorma)) {
+      add('upozorneni', 'ZAVER_LPS_NORMA', 'info', 'Není uvedena norma platná v době zřízení ochrany před bleskem.');
+    }
+  }
+
+  // Podklady: seznam a místo uložení
+  if ((!prazdne(r.podklady) || dokumenty.length > 0) && prazdne(r.mistoUlozeniPodkladu)) {
+    add('upozorneni', 'PODKLADY_ULOZENI', 'rozsah', 'Zpráva využívá písemné podklady, ale není uvedeno místo jejich uložení.');
+  }
 
   return z;
 }

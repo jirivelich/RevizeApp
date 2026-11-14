@@ -664,6 +664,25 @@ export async function initializeDatabase() {
       `INSERT INTO schema_migrations (version, name, "appliedAt")
         VALUES (2, 'rozsah revize a evidence podkladu', '${new Date().toISOString()}')
         ON CONFLICT (version) DO NOTHING`,
+      // ===== Náležitosti zprávy dle ČSN 33 1500 (datum předání, podklady, nápravné úkony, závěr LPS, norma u závad) =====
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "datumPredani" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "mistoUlozeniPodkladu" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "napravneUkony" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodNormaZrizeni" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodOdpovidaNorme" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "hromosvodFunkcniStav" TEXT',
+      'ALTER TABLE zavada ADD COLUMN IF NOT EXISTS norma TEXT',
+      'ALTER TABLE zavada ADD COLUMN IF NOT EXISTS riziko TEXT',
+      // ===== Plánování: délka, celodenní zakázky a kategorie revize =====
+      'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS "casKonec" TEXT',
+      'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS "celyDen" BOOLEAN NOT NULL DEFAULT FALSE',
+      'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS kategorie TEXT',
+      `INSERT INTO schema_migrations (version, name, "appliedAt")
+        VALUES (3, 'nalezitosti zpravy dle CSN 33 1500', '${new Date().toISOString()}')
+        ON CONFLICT (version) DO NOTHING`,
+      `INSERT INTO schema_migrations (version, name, "appliedAt")
+        VALUES (4, 'zakazka: casKonec, celyDen, kategorie', '${new Date().toISOString()}')
+        ON CONFLICT (version) DO NOTHING`,
     ];
     
     for (const migration of migrations) {

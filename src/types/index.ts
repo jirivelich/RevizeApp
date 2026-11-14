@@ -40,6 +40,7 @@ export interface Revize {
   termin: number; // počet měsíců platnosti
   lhutaText?: string; // vlastní text místo lhůty (např. "dle určení vnějších vlivů")
   datumVypracovani?: string;
+  datumPredani?: string;     // f) datum předání zprávy o revizi
   typRevize: 'pravidelná' | 'výchozí' | 'mimořádná';
   duvodMimoradne?: string; // e) Důvod mimořádné revize
   stav: 'rozpracováno' | 'dokončeno' | 'schváleno';
@@ -70,6 +71,11 @@ export interface Revize {
   // Uvedení zařízení do provozu
   datumUvedeniDoProvozu?: string;   // datum nebo rok (volný text, např. "1987" či "2004-05-12")
   zdrojUvedeniDoProvozu?: string;   // na základě čeho zjištěno (kolaudace, předchozí revize, projekt)
+
+  // Místo uložení písemných podkladů použitých pro sestavení zprávy
+  mistoUlozeniPodkladu?: string;
+  // Drobné nápravné úkony provedené revizním technikem během revize (ČSN 33 2000-6, nár. pozn. k čl. 62.3)
+  napravneUkony?: string;
   
   // m) Vyhodnocení předchozích revizí
   vyhodnoceniPredchozich?: string;
@@ -110,6 +116,10 @@ export interface Revize {
   hromosvodRokInstalace?: string;
   hromosvodNorma?: string; // např. ČSN EN 62305
   hromosvodPopisLps?: string;
+  // Závěr revize LPS (ČSN 33 1500 Z4): odpovídá normě platné v době zřízení a funkční stav součástí
+  hromosvodNormaZrizeni?: string;              // norma platná v době zřízení (např. ČSN 34 1390)
+  hromosvodOdpovidaNorme?: 'ano' | 'ne';
+  hromosvodFunkcniStav?: 'ano' | 'ne';          // součásti jsou v dobrém funkčním stavu
 
   // Jímací soustava
   hromosvodJimaciTyp?: string;        // tyčový / mřížový / kombinovaný / vodicový
@@ -274,6 +284,10 @@ export interface Zavada {
   zavaznost: 'C1' | 'C2' | 'C3'; // u doporučení se nevyhodnocuje (ukládá se C3)
   /** Zdůvodnění doporučení – jaké riziko by jeho realizace snížila */
   zduvodneni?: string;
+  /** U závady: s jakým ustanovením normy / předpisu je v rozporu (např. „ČSN 33 2000-4-41 čl. 411.3.2“) */
+  norma?: string;
+  /** U závady: jaké je v důsledku závady riziko ohrožení bezpečnosti */
+  riziko?: string;
   stav: 'otevřená' | 'v řešení' | 'vyřešená';
   fotky: string[]; // Base64 encoded images
   datumZjisteni: Date;
@@ -316,6 +330,9 @@ export interface Zakazka {
   zakaznikId?: number;
   datumPlanovany: string;
   casPlanovany?: string; // HH:mm format
+  casKonec?: string;     // HH:mm – plánovaný konec (bloky v týdenním pohledu podle délky)
+  celyDen?: boolean;     // celodenní zakázka bez konkrétního času
+  kategorie?: KategorieRevize | null; // kategorie revize (barva v kalendáři, předvolba při založení revize)
   datumDokonceni?: string;
   datumyRealizace?: string[]; // konkrétní dny realizace ["YYYY-MM-DD", ...]
   lhutaZpravyDni?: number;   // počet dní po posledním dni pro odevzdání zprávy

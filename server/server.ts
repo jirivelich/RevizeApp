@@ -186,7 +186,8 @@ async function startServer() {
       // Definovat povolené sloupce pro revize
       const allowedColumns = [
         'cisloRevize', 'nazev', 'adresa', 'objednatel', 'zakaznikId',
-        'datum', 'datumDokonceni', 'datumPlatnosti', 'termin', 'datumVypracovani',
+        'datum', 'datumDokonceni', 'datumPlatnosti', 'termin', 'datumVypracovani', 'datumPredani',
+        'mistoUlozeniPodkladu', 'napravneUkony',
         'typRevize', 'duvodMimoradne', 'stav', 'poznamka', 'vysledek',
         'vysledekOduvodneni', 'rozsahRevize', 'predmetNeni', 'napetovaSoustava',
         'ochranaOpatreni', 'podklady', 'vyhodnoceniPredchozich',
@@ -196,6 +197,7 @@ async function startServer() {
         // Hromosvod (LPS) sloupce
         'hromosvodTridaLps', 'hromosvodTypOchrany', 'hromosvodRokInstalace',
         'hromosvodNorma', 'hromosvodPopisLps',
+        'hromosvodNormaZrizeni', 'hromosvodOdpovidaNorme', 'hromosvodFunkcniStav',
         'hromosvodJimaciTyp', 'hromosvodJimaciMaterial', 'hromosvodJimaciStav',
         'hromosvodJimaciPoznamka',
         'hromosvodSvodyPocet', 'hromosvodSvodyMaterial', 'hromosvodSvodyPrurez',
@@ -1016,14 +1018,14 @@ async function startServer() {
 
   app.post('/api/zavady', authMiddleware, async (req, res) => {
     try {
-      const { revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, fotky, poznamka, typ, zduvodneni } = req.body;
+      const { revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, fotky, poznamka, typ, zduvodneni, norma, riziko } = req.body;
       const datumZjisteni = new Date().toISOString().split('T')[0];
 
       const result = await pool.query(`
-        INSERT INTO zavada ("revizeId", "rozvadecId", "mistnostId", popis, zavaznost, stav, fotky, "datumZjisteni", poznamka, typ, zduvodneni)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        INSERT INTO zavada ("revizeId", "rozvadecId", "mistnostId", popis, zavaznost, stav, fotky, "datumZjisteni", poznamka, typ, zduvodneni, norma, riziko)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING id
-      `, [revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, JSON.stringify(fotky || []), datumZjisteni, poznamka, typ || 'zavada', zduvodneni]);
+      `, [revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, JSON.stringify(fotky || []), datumZjisteni, poznamka, typ || 'zavada', zduvodneni, norma, riziko]);
 
       await zapisAudit({ entita: 'zavada', entitaId: result.rows[0].id, revizeId, akce: 'vytvoreno', uzivatel: (req as AuthRequest).user?.username, zmeny: { popis, zavaznost, stav, typ: typ || 'zavada' } });
       res.json({ id: result.rows[0].id });
@@ -1140,6 +1142,7 @@ async function startServer() {
     'nazev', 'klient', 'adresa', 'zakaznikId', 'datumPlanovany', 'casPlanovany',
     'datumDokonceni', 'stav', 'priorita', 'revizeId', 'poznamka',
     'datumyRealizace', 'lhutaZpravyDni', 'datumOdevzdaniZpravy',
+    'casKonec', 'celyDen', 'kategorie',
   ] as const;
 
   const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -1166,6 +1169,16 @@ async function startServer() {
     }
     if (body.casPlanovany !== undefined && body.casPlanovany !== null && !TIME_RE.test(body.casPlanovany)) {
       return 'Neplatný formát plánovaného času (HH:mm)';
+    }
+    if (body.casKonec !== undefined && body.casKonec !== null && body.casKonec !== '' && !TIME_RE.test(body.casKonec)) {
+      return 'Neplatný formát času konce (HH:mm)';
+    }
+    if (body.kategorie !== undefined && body.kategorie !== null && body.kategorie !== ''
+      && !['elektro', 'hromosvod', 'stroje', 'odberne_misto'].includes(body.kategorie)) {
+      return `Neplatná kategorie zakázky: ${body.kategorie}`;
+    }
+    if (body.celyDen !== undefined && body.celyDen !== null && typeof body.celyDen !== 'boolean') {
+      return 'Neplatná hodnota celyDen';
     }
     if (body.stav !== undefined && !ZAKAZKA_STAVY.includes(body.stav)) {
       return `Neplatný stav zakázky: ${body.stav}`;
@@ -1241,19 +1254,20 @@ async function startServer() {
       if (validationError) return res.status(400).json({ error: validationError });
 
       const { nazev, klient, adresa, zakaznikId, datumPlanovany, casPlanovany, stav, priorita, revizeId, poznamka,
-              datumyRealizace, lhutaZpravyDni, datumOdevzdaniZpravy } = req.body;
+              datumyRealizace, lhutaZpravyDni, datumOdevzdaniZpravy, casKonec, celyDen, kategorie } = req.body;
       const now = new Date().toISOString();
       const realizaceJson = Array.isArray(datumyRealizace) && datumyRealizace.length > 0
         ? JSON.stringify(datumyRealizace) : null;
 
       const result = await pool.query(`
         INSERT INTO zakazka (nazev, klient, adresa, "zakaznikId", "datumPlanovany", "casPlanovany", stav, priorita,
-          "revizeId", poznamka, "datumyRealizace", "lhutaZpravyDni", "datumOdevzdaniZpravy", "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+          "revizeId", poznamka, "datumyRealizace", "lhutaZpravyDni", "datumOdevzdaniZpravy",
+          "casKonec", "celyDen", kategorie, "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         RETURNING id
       `, [nazev, klient, adresa, zakaznikId || null, datumPlanovany, casPlanovany || null, stav, priorita,
           revizeId || null, poznamka || null, realizaceJson, lhutaZpravyDni ?? 4,
-          datumOdevzdaniZpravy || null, now, now]);
+          datumOdevzdaniZpravy || null, casKonec || null, !!celyDen, kategorie || null, now, now]);
 
       res.json({ id: result.rows[0].id });
       triggerAutoGoogleSync(req.user!.id);

@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Modal, ConfirmDialog, PageHeader } from '../../components/ui';
 import { useRevize, useZakazky, useCreateZakazka, useUpdateZakazka, useDeleteZakazka, useCreateRevize, useZakaznici } from '../../hooks/useQueries';
 import type { Zakazka, KategorieRevize } from '../../types';
-import { emptyFormData, zakazkaToFormData } from './utils';
+import { emptyFormData, zakazkaToFormData, formDataToZakazka } from './utils';
+import { moveZakazka, toDateStr, parseTime } from './model';
+import type { PlanProps } from './shared';
+import { useIsMobile } from './hooks';
 import type { ZakazkaFormData } from './utils';
 import { ListView } from './ListView';
 import { CalendarView } from './CalendarView';
@@ -67,10 +70,14 @@ export function PlanovaniPage() {
   const updateZakazka = useUpdateZakazka();
   const deleteZakazka = useDeleteZakazka();
   const createRevizeMutation = useCreateRevize();
+  const isMobile = useIsMobile();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [filterStav, setFilterStav] = useState('');
-  const [viewMode, setViewMode] = useState<'list' | 'calendar' | 'week'>('list');
+  const [viewMode, setViewModeState] = useState<ViewMode>(readView);
+  const setViewMode = (v: ViewMode) => {
+    setViewModeState(v);
+    try { localStorage.setItem(VIEW_KEY, v); } catch { /* ignore */ }
+  };
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState<ZakazkaFormData>({ ...emptyFormData });
 
@@ -86,10 +93,19 @@ export function PlanovaniPage() {
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
 
-  const onMutationError = (err: any) => {
-    setMutationError(err?.message || 'Operace se nezdařila. Zkuste to prosím znovu.');
+  // === „Vrátit“ po dokončení zakázky ===
+  const [undo, setUndo] = useState<{ z: Zakazka; text: string } | null>(null);
+  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (undoTimer.current) clearTimeout(undoTimer.current); }, []);
+
+  const today = toDateStr(new Date());
+  const revizeById = useMemo(() => new Map(revize.filter(r => r.id != null).map(r => [r.id!, r])), [revize]);
+  const zakazniciById = useMemo(() => new Map(zakaznici.filter(z => z.id != null).map(z => [z.id!, z])), [zakaznici]);
+
+  const onMutationError = useCallback((err: unknown) => {
+    setMutationError((err as Error)?.message || 'Operace se nezdařila. Zkuste to prosím znovu.');
     setTimeout(() => setMutationError(null), 5000);
-  };
+  }, []);
 
   const handleGcSync = async () => {
     setGcSyncing(true);
@@ -97,19 +113,24 @@ export function PlanovaniPage() {
     try {
       const result = await googleCalendarService.sync();
       setGcMessage(`✅ Synchronizováno: ${result.created} nových, ${result.updated} aktualizováno.`);
-    } catch (err: any) {
-      setGcMessage(`❌ ${err.message}`);
+    } catch (err) {
+      setGcMessage(`❌ ${(err as Error).message}`);
     }
     setGcSyncing(false);
     setTimeout(() => setGcMessage(null), 5000);
   };
 
   // === Create / Edit ===
-  const openCreate = (defaultDate?: string) => {
+  const openCreate = (defaultDate?: string, time?: string) => {
     setEditingId(null);
+    const from = parseTime(time);
     setFormData({
       ...emptyFormData,
-      datumPlanovany: defaultDate || new Date().toISOString().split('T')[0],
+      datumPlanovany: defaultDate || today,
+      ...(time && from !== null ? {
+        casPlanovany: time,
+        casKonec: `${String(Math.min(23, Math.floor(from) + 2)).padStart(2, '0')}:${time.slice(3)}`,
+      } : {}),
     });
     setIsModalOpen(true);
   };
@@ -130,12 +151,12 @@ export function PlanovaniPage() {
       updateZakazka.mutate({
         id: editingId,
         data: {
-          ...data,
-          datumDokonceni: data.stav === 'dokončeno' ? new Date().toISOString().split('T')[0] : undefined,
+          ...formDataToZakazka(data),
+          datumDokonceni: data.stav === 'dokončeno' ? today : undefined,
         },
       }, { onSuccess, onError: onMutationError });
     } else {
-      createZakazka.mutate(data, { onSuccess, onError: onMutationError });
+      createZakazka.mutate(formDataToZakazka(data) as Parameters<typeof createZakazka.mutate>[0], { onSuccess, onError: onMutationError });
     }
   };
 
@@ -149,29 +170,59 @@ export function PlanovaniPage() {
   const handleUpdateStav = (id: number, stav: Zakazka['stav']) => {
     updateZakazka.mutate({
       id,
-      data: {
-        stav,
-        datumDokonceni: stav === 'dokončeno' ? new Date().toISOString().split('T')[0] : undefined,
-      },
+      data: { stav, datumDokonceni: stav === 'dokončeno' ? today : undefined },
     }, { onError: onMutationError });
   };
 
+  const showUndo = (z: Zakazka, text: string) => {
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    setUndo({ z, text });
+    undoTimer.current = setTimeout(() => setUndo(null), 6000);
+  };
+
+  const handleComplete = (z: Zakazka) => {
+    updateZakazka.mutate({ id: z.id!, data: { stav: 'dokončeno', datumDokonceni: today } }, {
+      onSuccess: () => showUndo(z, 'Zakázka označena jako dokončená'),
+      onError: onMutationError,
+    });
+  };
+
+  const handleMarkReportDone = (z: Zakazka) => {
+    updateZakazka.mutate({ id: z.id!, data: { datumOdevzdaniZpravy: today } }, {
+      onSuccess: () => showUndo(z, 'Zpráva označena jako odevzdaná'),
+      onError: onMutationError,
+    });
+  };
+
+  const handleUndo = () => {
+    if (!undo) return;
+    const z = undo.z;
+    updateZakazka.mutate({
+      id: z.id!,
+      data: { stav: z.stav, datumDokonceni: z.datumDokonceni ?? null, datumOdevzdaniZpravy: z.datumOdevzdaniZpravy ?? null } as Partial<Zakazka>,
+    }, { onError: onMutationError });
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    setUndo(null);
+  };
+
   // === Create Revize from Zakazka ===
-  // Krok 1: Otevře picker kategorie
+  // Kategorie zakázky známá → revize se založí rovnou; jinak výběr kategorie
   const handleCreateRevize = (z: Zakazka) => {
+    if (z.kategorie) { void createRevizeFor(z, z.kategorie); return; }
     setPendingZakazka(z);
     setKategoriePickerOpen(true);
   };
 
-  // Krok 2: Po výběru kategorie vytvoří revizi
   const handleKategorieSelected = async (kategorie: KategorieRevize) => {
     if (!pendingZakazka) return;
     const z = pendingZakazka;
     setKategoriePickerOpen(false);
     setPendingZakazka(null);
+    await createRevizeFor(z, kategorie);
+  };
 
-    const today = new Date().toISOString().split('T')[0];
-    const cislo = `REV-${Date.now().toString().slice(-6)}`;
+  const createRevizeFor = async (z: Zakazka, kategorie: KategorieRevize) => {
+    const cislo = noveCisloRevize();
     setRevizeError(null);
     try {
       const revizeId = await createRevizeMutation.mutateAsync({
@@ -186,8 +237,8 @@ export function PlanovaniPage() {
         typRevize: 'pravidelná',
         stav: 'rozpracováno',
       });
-      // Propojit zakázku s revizí
-      await updateZakazka.mutateAsync({ id: z.id!, data: { revizeId } });
+      // Propojit zakázku s revizí (a uložit kategorii, pokud chyběla)
+      await updateZakazka.mutateAsync({ id: z.id!, data: { revizeId, kategorie } });
       navigate(`/revize/${revizeId}`);
     } catch (err) {
       console.error('Chyba při vytváření revize:', err);
@@ -196,82 +247,76 @@ export function PlanovaniPage() {
     }
   };
 
-  // === Move zakazka (drag-and-drop in week view) ===
-  const handleMoveZakazka = (zakazkaId: number, newDate: string, newCas: string) => {
-    updateZakazka.mutate({
-      id: zakazkaId,
-      data: {
-        datumPlanovany: newDate,
-        casPlanovany: newCas,
-      },
-    }, { onError: onMutationError });
+  // === Move (drag & drop v týdnu) ===
+  const handleMove = (z: Zakazka, date: string, time: string | 'allday') => {
+    const patch = moveZakazka(z, date, time);
+    updateZakazka.mutate({ id: z.id!, data: patch }, { onError: onMutationError });
   };
 
   // === Delete ===
-  const handleDelete = (id: number) => setDeleteTargetId(id);
-
   const handleConfirmDelete = () => {
     if (deleteTargetId === null) return;
     deleteZakazka.mutate(deleteTargetId, { onError: onMutationError });
     setDeleteTargetId(null);
   };
 
+  const planProps: PlanProps = {
+    zakazky,
+    revizeById,
+    zakazniciById,
+    today,
+    onEdit: openEdit,
+    onCreateAt: (d, t) => openCreate(d, t),
+    onCreateRevize: handleCreateRevize,
+    onOpenRevize: z => { if (z.revizeId) navigate(`/revize/${z.revizeId}`); },
+    onMarkReportDone: handleMarkReportDone,
+    onComplete: handleComplete,
+    onUpdateStav: handleUpdateStav,
+    onDelete: id => setDeleteTargetId(id),
+    onMove: handleMove,
+  };
+
+  const viewBtn = (v: ViewMode, label: string) => (
+    <button
+      type="button"
+      onClick={() => setViewMode(v)}
+      aria-pressed={viewMode === v}
+      className={`px-3 md:px-4 min-h-[40px] text-[13px] font-semibold transition-colors ${
+        viewMode === v
+          ? 'bg-[var(--bg-accent)] text-[var(--primary)]'
+          : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+      }`}
+    >
+      {label}
+    </button>
+  );
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-4 md:space-y-5 pb-24 md:pb-0">
       <PageHeader
         title="Plánování"
-        subtitle="Správa zakázek a plánování revizí"
+        subtitle="Zakázky a revize v kalendáři"
         actions={
           <div className="flex gap-2 flex-wrap justify-end">
-            <div className="flex rounded-[var(--radius-md)] overflow-hidden border border-[var(--border-input)]">
-            <button
-              onClick={() => setViewMode('list')}
-              aria-pressed={viewMode === 'list'}
-              className={`px-4 min-h-[40px] text-sm font-semibold transition-colors ${
-                viewMode === 'list'
-                  ? 'bg-[var(--bg-accent)] text-[var(--primary)]'
-                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
-              }`}
-            >
-              Seznam
-            </button>
-            <button
-              onClick={() => setViewMode('week')}
-              aria-pressed={viewMode === 'week'}
-              className={`px-4 min-h-[40px] text-sm font-semibold transition-colors ${
-                viewMode === 'week'
-                  ? 'bg-[var(--bg-accent)] text-[var(--primary)]'
-                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
-              }`}
-            >
-              Týden
-            </button>
-            <button
-              onClick={() => setViewMode('calendar')}
-              aria-pressed={viewMode === 'calendar'}
-              className={`px-4 min-h-[40px] text-sm font-semibold transition-colors ${
-                viewMode === 'calendar'
-                  ? 'bg-[var(--bg-accent)] text-[var(--primary)]'
-                  : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
-              }`}
-            >
-              Měsíc
-            </button>
+            <div role="group" aria-label="Pohled" className="flex rounded-[var(--radius-md)] overflow-hidden border border-[var(--border-input)]">
+              {viewBtn('list', 'Seznam')}
+              {viewBtn('week', 'Týden')}
+              {viewBtn('calendar', 'Měsíc')}
             </div>
-            <Button onClick={() => openCreate()}>+ Nová zakázka</Button>
             <Button
               variant="secondary"
               onClick={handleGcSync}
               disabled={gcSyncing}
               title="Synchronizovat zakázky do Google Kalendáře"
+              className="hidden md:inline-flex"
             >
-              <svg className="w-4 h-4 mr-1.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="w-4 h-4 mr-1.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M23 4v6h-6M1 20v-6h6"/>
                 <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
               </svg>
-              {gcSyncing ? 'Sync...' : 'Google Kal.'}
+              {gcSyncing ? 'Sync…' : 'Google Kalendář'}
             </Button>
+            <Button onClick={() => openCreate()} className="hidden md:inline-flex">+ Nová zakázka</Button>
           </div>
         }
       />
@@ -283,48 +328,38 @@ export function PlanovaniPage() {
         </div>
       )}
       {revizeError && (
-        <div className="text-sm px-4 py-2 rounded-[var(--radius-md)] bg-[var(--danger-bg)] text-[var(--danger-text)]">
-          {revizeError}
-        </div>
+        <div className="text-sm px-4 py-2 rounded-[var(--radius-md)] bg-[var(--danger-bg)] text-[var(--danger-text)]">{revizeError}</div>
       )}
       {mutationError && (
-        <div className="text-sm px-4 py-2 rounded-[var(--radius-md)] bg-[var(--danger-bg)] text-[var(--danger-text)]">
-          {mutationError}
-        </div>
+        <div className="text-sm px-4 py-2 rounded-[var(--radius-md)] bg-[var(--danger-bg)] text-[var(--danger-text)]">{mutationError}</div>
       )}
 
-      {/* Content */}
-      {viewMode === 'week' ? (
-        <WeekView
-          zakazky={zakazky}
-          onZakazkaClick={(z) => openEdit(z)}
-          onSlotClick={(dateStr, cas) => {
-            setEditingId(null);
-            setFormData({
-              ...emptyFormData,
-              datumPlanovany: dateStr,
-              casPlanovany: cas,
-            });
-            setIsModalOpen(true);
-          }}
-          onMove={handleMoveZakazka}
-        />
-      ) : viewMode === 'calendar' ? (
-        <CalendarView
-          zakazky={zakazky}
-          onDayClick={(dateStr) => openCreate(dateStr)}
-          onZakazkaClick={(z) => openEdit(z)}
-        />
-      ) : (
-        <ListView
-          zakazky={zakazky}
-          filterStav={filterStav}
-          onFilterChange={setFilterStav}
-          onEdit={openEdit}
-          onUpdateStav={handleUpdateStav}
-          onDelete={handleDelete}
-          onCreateRevize={handleCreateRevize}
-        />
+      {viewMode === 'week' ? <WeekView {...planProps} />
+        : viewMode === 'calendar' ? <CalendarView {...planProps} />
+        : <ListView {...planProps} />}
+
+      {/* Plovoucí „+“ na mobilu */}
+      {isMobile && (
+        <button
+          type="button"
+          aria-label="Nová zakázka"
+          onClick={() => openCreate()}
+          className="fixed right-4 z-40 w-14 h-14 rounded-2xl bg-[var(--primary)] text-[var(--primary-fg)] flex items-center justify-center shadow-[var(--shadow-lg)]"
+          style={{ bottom: 'calc(84px + env(safe-area-inset-bottom, 0px))' }}
+        >
+          <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+        </button>
+      )}
+
+      {/* Lišta „Vrátit“ */}
+      {undo && (
+        <div role="status" className="fixed left-1/2 -translate-x-1/2 z-50 w-[calc(100%-24px)] max-w-[420px] min-h-[48px] flex items-center justify-between gap-3 pl-4 pr-2 rounded-[var(--radius-md)] bg-[var(--text)] text-[var(--background)] text-[13px] font-medium shadow-[var(--shadow-lg)]"
+          style={{ bottom: isMobile ? 'calc(150px + env(safe-area-inset-bottom, 0px))' : 24 }}>
+          {undo.text}
+          <button type="button" onClick={handleUndo} className="min-h-[36px] px-3 rounded-[var(--radius-md)] font-bold underline underline-offset-2 bg-transparent text-[var(--background)] hover:opacity-80">
+            Vrátit
+          </button>
+        </div>
       )}
 
       {/* Modal pro vytvoření / editaci */}
@@ -370,7 +405,7 @@ export function PlanovaniPage() {
                   <p className="text-xs text-[var(--text-secondary)] mt-0.5">{kat.popis}</p>
                 </div>
                 <div className="flex-shrink-0 ml-auto text-[var(--text-muted)] group-hover:text-[var(--primary)]">
-                  <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                  <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                   </svg>
                 </div>
@@ -390,4 +425,19 @@ export function PlanovaniPage() {
       />
     </div>
   );
+}
+
+type ViewMode = 'list' | 'week' | 'calendar';
+const VIEW_KEY = 'planovani-pohled';
+function readView(): ViewMode {
+  try {
+    const v = localStorage.getItem(VIEW_KEY);
+    if (v === 'list' || v === 'week' || v === 'calendar') return v;
+  } catch { /* ignore */ }
+  return 'list';
+}
+
+/** Dočasné číslo nové revize (technik ho přepíše na své číslování). */
+function noveCisloRevize(): string {
+  return `REV-${Date.now().toString().slice(-6)}`;
 }
