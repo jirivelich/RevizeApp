@@ -169,7 +169,6 @@ function AttentionPanel({ notifications }: { notifications: AppNotification[] })
   return (
     <Panel
       title="Vyžaduje pozornost"
-      className="lg:col-span-2"
       action={
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtr upozornění">
           {FILTERS.map(f => {
@@ -235,7 +234,7 @@ const DOW_SHORT = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
 
 interface WeekItem { key: string; date: Date; days: number; z: Zakazka }
 
-function WeekPanel({ zakazky }: { zakazky: Zakazka[] }) {
+function WeekPanel({ zakazky, className = '' }: { zakazky: Zakazka[]; className?: string }) {
   const items = useMemo<WeekItem[]>(() => {
     const out: WeekItem[] = [];
     for (const z of zakazky) {
@@ -253,7 +252,7 @@ function WeekPanel({ zakazky }: { zakazky: Zakazka[] }) {
   }, [zakazky]);
 
   return (
-    <Panel title="Tento týden" action={<PanelLink to="/planovani">Kalendář</PanelLink>}>
+    <Panel title="Tento týden" className={className} bodyClassName={items.length === 0 ? 'flex items-center justify-center' : ''} action={<PanelLink to="/planovani">Kalendář</PanelLink>}>
       {items.length === 0 ? (
         <EmptyNote>
           Na příštích 7 dní není nic naplánováno.<br />
@@ -298,9 +297,9 @@ const TYP_LABEL: Record<Revize['typRevize'], string> = {
   'mimořádná': 'Mimořádná',
 };
 
-function WipPanel({ revize, total, staleDays }: { revize: Revize[]; total: number; staleDays: number }) {
+function WipPanel({ revize, total, staleDays, className = '' }: { revize: Revize[]; total: number; staleDays: number; className?: string }) {
   return (
-    <Panel title="Rozpracované revize" className="lg:col-span-2" action={<PanelLink to="/revize">Všechny revize{total > revize.length ? ` (${total})` : ''}</PanelLink>}>
+    <Panel title="Rozpracované revize" className={className} action={<PanelLink to="/revize">Všechny revize{total > revize.length ? ` (${total})` : ''}</PanelLink>}>
       {revize.length === 0 ? (
         <EmptyNote>
           Žádná rozpracovaná revize.<br />
@@ -614,16 +613,14 @@ export function Dashboard() {
         />
       </section>
 
-      {/* ═══ Pozornost + týden ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start">
-        <AttentionPanel notifications={notifications} />
-        <WeekPanel zakazky={zakazky} />
-      </div>
-
-      {/* ═══ Rozpracované + graf + fakturace ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start">
-        <WipPanel revize={data.rozpracovaneTop} total={data.rozpracovaneCount} staleDays={staleDays} />
+      {/* ═══ Dva sloupce: vlevo práce, vpravo přehledy (každý sloupec se skládá samostatně, bez mezer) ═══ */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start lg:items-stretch">
+        <div className="flex min-w-0 flex-col gap-3 self-start lg:col-span-2">
+          <AttentionPanel notifications={notifications} />
+          <WipPanel revize={data.rozpracovaneTop} total={data.rozpracovaneCount} staleDays={staleDays} />
+        </div>
         <div className="flex min-w-0 flex-col gap-3">
+          <WeekPanel zakazky={zakazky} className="lg:flex-1" />
           <RevizeBarChart revize={revize} />
           <Panel title="Fakturace" action={<PanelLink to="/faktury">Faktury</PanelLink>} bodyClassName="flex flex-col gap-3 px-4 py-3.5">
             <InvoiceRow label={`Dokončeno, nevyfakturováno (${FAKTURACE_OKNO_DNI} dní)`} value={String(data.faktury.nevyfakturovano)} />
