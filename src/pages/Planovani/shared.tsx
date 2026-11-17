@@ -233,7 +233,7 @@ export function RowMenu({ z, p }: { z: Zakazka; p: PlanProps }) {
             <div className="border-t border-[var(--border-subtle)] bg-[var(--bg-faint)]">
               {STAV_OPTIONS.map(s => (
                 <button key={s.value} type="button" role="menuitemradio" aria-checked={z.stav === s.value}
-                  className={`w-full text-left px-5 min-h-[36px] text-[13px] hover:bg-[var(--bg-hover)] ${z.stav === s.value ? 'text-[var(--primary)] font-semibold' : 'text-[var(--text-secondary)]'}`}
+                  className={`w-full text-left px-5 min-h-[36px] text-[13px] hover:bg-[var(--bg-hover)] ${z.stav === s.value ? 'text-[var(--primary-text)] font-semibold' : 'text-[var(--text-secondary)]'}`}
                   onClick={run(() => p.onUpdateStav(z.id!, s.value))}>
                   {s.label}
                 </button>

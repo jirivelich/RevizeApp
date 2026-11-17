@@ -7,6 +7,7 @@ import { useTheme } from '../context/ThemeContext';
 import ZmenaHeslaModal from './ZmenaHeslaModal';
 import { Icon } from './icons';
 import type { IconName } from './icons';
+import { LogoIcon, Wordmark } from './ReVeliLogo';
 
 type NavSection = 'Práce' | 'Vybavení' | 'Správa' | null;
 
@@ -78,10 +79,8 @@ export function Sidebar({ onClose }: SidebarProps) {
         {/* Logo */}
         <div className="flex items-center justify-between px-4 pt-4 pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-[30px] h-[30px] rounded-[var(--radius-lg)] bg-[var(--primary)] text-[var(--primary-fg)] grid place-items-center text-[13px] font-extrabold shrink-0">
-              RV
-            </div>
-            <div className="text-base font-extrabold text-[var(--text)] tracking-tight">Reveli App</div>
+            <LogoIcon size={30} />
+            <Wordmark className="text-lg" />
           </div>
           <button
             onClick={onClose}
@@ -133,7 +132,7 @@ export function Sidebar({ onClose }: SidebarProps) {
             <Icon name="logout" size={16} />
             Odhlásit se
           </button>
-          <p className="text-[10px] text-[var(--text-muted)] text-center mt-2">© 2026 Reveli App v1.0.0</p>
+          <p className="text-[10px] text-[var(--text-muted)] text-center mt-2">© 2026 ReVeli v1.0.0</p>
         </div>
       </aside>
       {showZmenaHesla && <ZmenaHeslaModal onClose={() => setShowZmenaHesla(false)} />}

@@ -143,7 +143,7 @@ export function InfoTab({
             <Input label="DIČ" value={formData.firmaDic || ''} onChange={(e) => setFormData({ ...formData, firmaDic: e.target.value })} />
           </div>
           {selectedFirmaId === '' && nastaveni && (nastaveni.firmaJmeno || nastaveni.firmaIco) && (
-            <div className="text-xs text-[var(--primary)] bg-[var(--bg-accent)] border border-[var(--primary)]/30 rounded-md p-2">📋 Z nastavení: <strong>{nastaveni.firmaJmeno}</strong> | IČO: {nastaveni.firmaIco || '—'} | {nastaveni.firmaAdresa || '—'}</div>
+            <div className="text-xs text-[var(--primary-text)] bg-[var(--bg-accent)] border border-[var(--primary)]/30 rounded-md p-2">📋 Z nastavení: <strong>{nastaveni.firmaJmeno}</strong> | IČO: {nastaveni.firmaIco || '—'} | {nastaveni.firmaAdresa || '—'}</div>
           )}
           {selectedFirmaId === '' && (!nastaveni || (!nastaveni.firmaJmeno && !nastaveni.firmaIco)) && (
             <p className="text-xs text-[var(--warning-text)]">⚠️ Nemáte výchozí firmu. <Link to="/nastaveni" className="underline font-medium">Nastavení</Link></p>

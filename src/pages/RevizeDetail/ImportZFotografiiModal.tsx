@@ -270,7 +270,7 @@ export function ImportZFotografiiModal({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-24 h-24 border-2 border-dashed border-[var(--border-medium)] rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors text-2xl"
+                    className="w-24 h-24 border-2 border-dashed border-[var(--border-medium)] rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary-text)] transition-colors text-2xl"
                   >
                     +
                   </button>
@@ -310,7 +310,7 @@ export function ImportZFotografiiModal({
               <button
                 type="button"
                 onClick={handleSelectAll}
-                className="text-xs px-2 py-0.5 rounded text-[var(--primary)] hover:bg-[var(--bg-hover)] transition-colors"
+                className="text-xs px-2 py-0.5 rounded text-[var(--primary-text)] hover:bg-[var(--bg-hover)] transition-colors"
               >
                 Vybrat vše
               </button>

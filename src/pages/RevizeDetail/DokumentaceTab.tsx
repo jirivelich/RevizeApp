@@ -573,7 +573,7 @@ export function DokumentaceTab({
                     Platnost kalibrace: {new Date(p.platnostKalibrace).toLocaleDateString('cs-CZ')}
                   </p>
                 </div>
-                <span className="text-[var(--primary)]">+ Přidat</span>
+                <span className="text-[var(--primary-text)]">+ Přidat</span>
               </div>
             ))
         ) : (
@@ -583,7 +583,7 @@ export function DokumentaceTab({
                 ? 'Nemáte žádné měřící přístroje.'
                 : 'Všechny přístroje jsou již přiřazeny.'}
             </p>
-            <Link to="/pristroje" className="text-[var(--primary)] hover:underline">
+            <Link to="/pristroje" className="text-[var(--primary-text)] hover:underline">
               Přejít na správu přístrojů
             </Link>
           </div>

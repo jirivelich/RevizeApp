@@ -32,7 +32,7 @@ export function BottomNav({ onMenu }: BottomNavProps) {
           to={item.to}
           end={item.to === '/'}
           className={({ isActive }) =>
-            `${base} ${isActive ? 'text-[var(--primary)]' : 'text-[var(--nav-text)]'}`
+            `${base} ${isActive ? 'text-[var(--primary-text)]' : 'text-[var(--nav-text)]'}`
           }
         >
           <Icon name={item.icon} size={24} />

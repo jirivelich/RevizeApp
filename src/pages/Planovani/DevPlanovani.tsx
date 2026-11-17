@@ -63,7 +63,7 @@ export default function DevPlanovani() {
       <div className="flex gap-2 mb-4" role="group" aria-label="Pohled">
         {(['list', 'week', 'calendar'] as const).map(k => (
           <button key={k} type="button" aria-pressed={v === k} onClick={() => setParams({ v: k })}
-            className={`min-h-[40px] px-4 rounded-[var(--radius-md)] border text-sm font-semibold ${v === k ? 'border-[var(--primary)] text-[var(--primary)] bg-[var(--bg-accent)]' : 'border-[var(--border-input)] text-[var(--text-secondary)]'}`}>
+            className={`min-h-[40px] px-4 rounded-[var(--radius-md)] border text-sm font-semibold ${v === k ? 'border-[var(--primary)] text-[var(--primary-text)] bg-[var(--bg-accent)]' : 'border-[var(--border-input)] text-[var(--text-secondary)]'}`}>
             {k === 'list' ? 'Seznam' : k === 'week' ? 'Týden' : 'Měsíc'}
           </button>
         ))}

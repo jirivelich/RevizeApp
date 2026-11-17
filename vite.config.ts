@@ -13,17 +13,18 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'logo192.png', 'logo512.png'],
       manifest: {
-        name: 'Reveli App',
-        short_name: 'Reveli',
+        name: 'ReVeli',
+        short_name: 'ReVeli',
         description: 'Aplikace pro správu elektrických revizí v terénu i offline.',
         start_url: '/',
         display: 'standalone',
         background_color: '#0A0E14',
-        theme_color: '#0052CC',
+        theme_color: '#B42318',
         orientation: 'portrait',
         icons: [
           { src: '/logo192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/logo512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+          { src: '/logo512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/logo512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {

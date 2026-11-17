@@ -5,7 +5,7 @@ export const fieldBase = `
   w-full px-3 border rounded-[var(--radius-md)]
   bg-[var(--bg-input)] text-[var(--text)] placeholder:text-[var(--text-muted)]
   transition-colors duration-150
-  focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--focus-ring-color)]
+  focus:outline-none focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--focus-ring-color)]
   disabled:opacity-50 disabled:cursor-not-allowed
 `;
 export const fieldHeight = 'min-h-[44px] text-base sm:min-h-[40px] sm:text-sm';

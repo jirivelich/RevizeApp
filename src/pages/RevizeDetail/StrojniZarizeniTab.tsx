@@ -265,7 +265,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ 01 – IDENTIFIKACE STROJE ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
         <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
-          <span className="text-[var(--primary)]">01</span> Identifikace strojního zařízení – štítek
+          <span className="text-[var(--primary-text)]">01</span> Identifikace strojního zařízení – štítek
         </div>
         <div className="p-4">
           <div className="grid grid-cols-3 max-sm:grid-cols-1 gap-2.5">
@@ -288,7 +288,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ 02 – JIŠTĚNÍ ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
         <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
-          <span className="text-[var(--primary)]">02</span> Jištění strojního zařízení
+          <span className="text-[var(--primary-text)]">02</span> Jištění strojního zařízení
         </div>
         <div className="p-4">
           <table className="w-full text-sm border-collapse mt-1">
@@ -323,7 +323,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ 03 – IZOLAČNÍ ODPOR ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
         <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
-          <span className="text-[var(--primary)]">03</span> Měření izolačního odporu (ČSN EN 60204-1)
+          <span className="text-[var(--primary-text)]">03</span> Měření izolačního odporu (ČSN EN 60204-1)
         </div>
         <div className="p-4">
           <table className="w-full text-sm border-collapse mt-1">
@@ -359,7 +359,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ 04 – SPOJITOST PE ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
         <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
-          <span className="text-[var(--primary)]">04</span> Měření spojitosti ochranných vodičů (PE)
+          <span className="text-[var(--primary-text)]">04</span> Měření spojitosti ochranných vodičů (PE)
         </div>
         <div className="p-4">
           <table className="w-full text-sm border-collapse mt-1">
@@ -395,7 +395,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ 05 – IMPEDANCE PORUCHOVÉ SMYČKY ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
         <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
-          <span className="text-[var(--primary)]">05</span> Měření impedance poruchové smyčky
+          <span className="text-[var(--primary-text)]">05</span> Měření impedance poruchové smyčky
         </div>
         <div className="p-4">
           <table className="w-full text-sm border-collapse mt-1">
@@ -429,7 +429,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ 06 – RCD ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
         <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
-          <span className="text-[var(--primary)]">06</span> Měření proudových chráničů (RCD)
+          <span className="text-[var(--primary-text)]">06</span> Měření proudových chráničů (RCD)
         </div>
         <div className="p-4">
           <table className="w-full text-sm border-collapse mt-1">
@@ -462,7 +462,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ OSTATNÍ MĚŘENÍ (nepovinné – bez řádků se v protokolu nevypisuje) ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
         <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
-          <span className="text-[var(--primary)]">06a</span> Ostatní měření
+          <span className="text-[var(--primary-text)]">06a</span> Ostatní měření
           <button
             type="button"
             className="ml-auto px-2 py-0.5 text-xs font-semibold rounded border border-[var(--border-strong)] hover:bg-[var(--bg-hover-strong)] cursor-pointer"
@@ -515,7 +515,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ 07 – FUNKČNÍ KONTROLY ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
         <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
-          <span className="text-[var(--primary)]">07</span> Funkční kontroly
+          <span className="text-[var(--primary-text)]">07</span> Funkční kontroly
         </div>
         <div className="p-4">
           <table className="w-full text-sm border-collapse mt-1">
@@ -547,7 +547,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ 08 – MĚŘICÍ PŘÍSTROJE ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
         <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
-          <span className="text-[var(--primary)]">08</span> Použité měřicí přístroje
+          <span className="text-[var(--primary-text)]">08</span> Použité měřicí přístroje
           <Button variant="success" size="sm" className="ml-auto" onClick={() => setIsPristrojModalOpen(true)}>
             + Přidat z databáze
           </Button>
@@ -657,7 +657,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
           ) : (
             <div className="p-5 text-center text-[var(--text-muted)]">
               <p className="mb-2 text-sm">{vsechnyPristroje.length === 0 ? 'Nemáte žádné měřicí přístroje v systému.' : 'Všechny přístroje jsou již přiřazeny k této revizi.'}</p>
-              <Link to="/pristroje" className="text-[var(--primary)] underline text-sm">Přejít na správu přístrojů</Link>
+              <Link to="/pristroje" className="text-[var(--primary-text)] underline text-sm">Přejít na správu přístrojů</Link>
             </div>
           )}
         </div>
@@ -666,7 +666,7 @@ export function StrojniZarizeniTab({ revize, nastaveni, zakaznici, pouzitePristr
       {/* ═══ 09 – POSUDEK ═══ */}
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] overflow-hidden">
         <div className="bg-[var(--bg-surface)] text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2">
-          <span className="text-[var(--primary)]">09</span> Posudek
+          <span className="text-[var(--primary-text)]">09</span> Posudek
         </div>
         <div className="p-4">
           <div className="mb-3.5">

@@ -4,6 +4,7 @@ import { buildApiUrl, setAuthState } from '../services/httpClient';
 import { Button, Input } from '../components/ui';
 import { Icon } from '../components/icons';
 import type { IconName } from '../components/icons';
+import { LogoIcon, Wordmark } from '../components/ReVeliLogo';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -48,17 +49,17 @@ export default function LoginPage() {
       {/* Levý panel */}
       <aside className="hidden md:flex w-[42%] min-w-[340px] flex-col justify-between px-11 py-12 bg-[var(--bg-sidebar)] border-r border-[var(--border)]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[var(--radius-lg)] bg-[var(--primary)] text-[var(--primary-fg)] grid place-items-center font-extrabold">RV</div>
+          <LogoIcon size={40} />
           <div>
-            <div className="text-xl font-extrabold text-[var(--text)] tracking-tight">Reveli App</div>
-            <div className="text-xs text-[var(--text-muted)]">Správa elektro revizí</div>
+            <Wordmark className="text-2xl leading-none" />
+            <div className="text-xs text-[var(--text-muted)] mt-1">Revize elektrických zařízení</div>
           </div>
         </div>
 
         <div>
           <h2 className="text-3xl font-bold text-[var(--text)] leading-tight mb-3.5">
             Digitální správa<br />
-            <span className="text-[var(--primary)]">revizních zpráv</span>
+            <span className="text-[var(--primary-text)]">revizních zpráv</span>
           </h2>
           <p className="text-sm leading-relaxed text-[var(--text-secondary)] mb-9">
             Komplexní systém pro revizní techniky. Plánujte, dokumentujte a archivujte revize na jednom místě.
@@ -66,7 +67,7 @@ export default function LoginPage() {
           <ul className="flex flex-col gap-3.5">
             {features.map((f) => (
               <li key={f.text} className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-[var(--radius-lg)] shrink-0 grid place-items-center bg-[var(--bg-accent)] text-[var(--primary)]">
+                <span className="w-8 h-8 rounded-[var(--radius-lg)] shrink-0 grid place-items-center bg-[var(--bg-accent)] text-[var(--primary-text)]">
                   <Icon name={f.icon} size={16} />
                 </span>
                 <span className="text-[13px] text-[var(--text-secondary)]">{f.text}</span>
@@ -86,10 +87,10 @@ export default function LoginPage() {
         <div className="w-full max-w-[420px] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] px-5 py-7 sm:px-9 sm:pt-10 sm:pb-9">
           {/* Mobilní logo */}
           <div className="md:hidden flex items-center gap-2.5 mb-7">
-            <div className="w-9 h-9 rounded-[var(--radius-lg)] bg-[var(--primary)] text-[var(--primary-fg)] grid place-items-center text-sm font-extrabold">RV</div>
+            <LogoIcon size={36} />
             <div>
-              <div className="text-[17px] font-bold text-[var(--text)]">Reveli App</div>
-              <div className="text-[11px] font-semibold text-[var(--text-muted)]">Správa elektro revizí</div>
+              <Wordmark className="text-xl leading-none" />
+              <div className="text-[11px] font-semibold text-[var(--text-muted)] mt-1">Revize elektrických zařízení</div>
             </div>
           </div>
 

@@ -1,11 +1,11 @@
 {
-  "name": "Reveli App",
-  "short_name": "Reveli",
+  "name": "ReVeli",
+  "short_name": "ReVeli",
   "description": "Aplikace pro správu elektrických revizí v terénu i offline.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "theme_color": "#B42318",
   "orientation": "portrait",
   "icons": [
     {

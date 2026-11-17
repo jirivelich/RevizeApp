@@ -861,12 +861,12 @@ export const HromosvodNacrtCanvas: React.FC<Props> = ({ value, onChange }) => {
       {/* Legend */}
       <div className="flex flex-wrap gap-4 p-2 bg-[var(--bg-faint)] rounded border border-[var(--border)] text-xs text-[var(--text-muted)]">
         <span>Legenda LPS (ČSN EN 62305):</span>
-        <span className="font-medium text-[var(--primary)]">J = Jímač</span>
+        <span className="font-medium text-[var(--primary-text)]">J = Jímač</span>
         <span className="font-medium text-[var(--success-text)]">S = Svod</span>
         <span className="font-medium text-[var(--warning-text)]">E = Uzemnění</span>
         <span>━ = Vedení</span>
-        {tool === 'select' && selectedSym && <span className="text-[var(--primary)] font-medium">Symbol vybrán – táhněte nebo otočte ↺↻, smažte ✕</span>}
-        {tool === 'select' && selectedShape && <span className="text-[var(--primary)] font-medium">Objekt vybrán – táhněte pro přesun{selectedShape.kind !== 'text' ? ', úchyty mění velikost' : ''}, barvu a tloušťku změníte v liště, smažte ✕ / Delete</span>}
+        {tool === 'select' && selectedSym && <span className="text-[var(--primary-text)] font-medium">Symbol vybrán – táhněte nebo otočte ↺↻, smažte ✕</span>}
+        {tool === 'select' && selectedShape && <span className="text-[var(--primary-text)] font-medium">Objekt vybrán – táhněte pro přesun{selectedShape.kind !== 'text' ? ', úchyty mění velikost' : ''}, barvu a tloušťku změníte v liště, smažte ✕ / Delete</span>}
       </div>
 
       <p className="text-xs text-[var(--text-secondary)]">

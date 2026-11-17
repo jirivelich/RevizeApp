@@ -26,7 +26,7 @@ function EditableSelect({ label, value, onChange, options }: {
       {showCustom ? (
         <div className="relative">
           <input
-            className="w-full px-3 pr-8 min-h-[40px] border rounded-[var(--radius-md)] bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)] text-sm"
+            className="w-full px-3 pr-8 min-h-[40px] border rounded-[var(--radius-md)] bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary-text)] text-sm"
             value={value}
             onChange={(e) => onChange(e.target.value)}
             autoFocus
@@ -40,7 +40,7 @@ function EditableSelect({ label, value, onChange, options }: {
         </div>
       ) : (
         <select
-          className="w-full px-3 min-h-[40px] border rounded-[var(--radius-md)] bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)] text-sm"
+          className="w-full px-3 min-h-[40px] border rounded-[var(--radius-md)] bg-[var(--bg-input)] text-[var(--text)] border-[var(--border-input)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary-text)] text-sm"
           value={options.includes(value) ? value : '__custom__'}
           onChange={(e) => {
             if (e.target.value === '__custom__') {

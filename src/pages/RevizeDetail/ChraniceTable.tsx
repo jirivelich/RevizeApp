@@ -36,7 +36,7 @@ export function ChraniceTable({ chranice, onEdit, onDelete }: ChraniceTableProps
                   {c.cislo}. {c.nazev || 'Chránič'}
                 </h5>
                 <div className="mt-1.5 flex flex-wrap gap-1">
-                  <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-[var(--bg-accent-badge)] text-[var(--primary)]">Typ {c.typ}</span>
+                  <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-[var(--bg-accent-badge)] text-[var(--primary-text)]">Typ {c.typ}</span>
                   <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">{c.proud}</span>
                   <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">IΔn {c.citlivostMa} mA</span>
                   <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-[var(--bg-hover)] text-[var(--text-secondary)]">{c.pocetPolu}P</span>

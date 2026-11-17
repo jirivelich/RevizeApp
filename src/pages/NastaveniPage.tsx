@@ -432,7 +432,7 @@ export function NastaveniPage() {
             onClick={() => setActiveTab(t.key)}
             className={`flex items-center gap-2 whitespace-nowrap px-4 py-2.5 -mb-px text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
               activeTab === t.key
-                ? 'text-[var(--primary)] border-[var(--primary)]'
+                ? 'text-[var(--primary-text)] border-[var(--primary)]'
                 : 'text-[var(--text-secondary)] border-transparent hover:text-[var(--text)]'
             }`}
           >
@@ -586,9 +586,9 @@ export function NastaveniPage() {
 
       <Card title="O aplikaci">
         <div className="space-y-2 text-[var(--text-secondary)]">
-          <p><strong>Reveli App</strong> - Aplikace pro správu elektrotechnických revizí</p>
+          <p><strong>ReVeli</strong> - Aplikace pro správu elektrotechnických revizí</p>
           <p>Verze: 1.0.0</p>
-          <p>© 2026 Reveli App</p>
+          <p>© 2026 ReVeli</p>
           <p className="text-sm text-[var(--text-muted)] mt-4">
             Data jsou ukládána na serveru v PostgreSQL databázi. 
             Pro zálohování dat použijte záložku Zálohy.
@@ -1000,7 +1000,7 @@ export function NastaveniPage() {
           </Card>
           <Card title="Jak fungují upozornění">
             <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
-              <li className="flex gap-2"><span className="text-[var(--primary)] mt-0.5">•</span><span><strong>Plánované zakázky</strong> — upozorní na zakázky se stavem „Plánováno“, které mají datum realizace během nastaveného počtu dní.</span></li>
+              <li className="flex gap-2"><span className="text-[var(--primary-text)] mt-0.5">•</span><span><strong>Plánované zakázky</strong> — upozorní na zakázky se stavem „Plánováno“, které mají datum realizace během nastaveného počtu dní.</span></li>
               <li className="flex gap-2"><span className="text-[var(--warning-text)] mt-0.5">•</span><span><strong>Rozpracované revize</strong> — upozorní na revize ve stavu „Rozpracováno“, které nebyly dokončeny delší dobu než nastavený počet dní.</span></li>
               <li className="flex gap-2"><span className="text-[var(--danger-text)] mt-0.5">•</span><span><strong>Deadline zprávy</strong> — upozorní na přiblížející se (nebo promekaný) deadline odevzdání revizní zprávy po dokončené zakázce.</span></li>
               <li className="flex gap-2"><span className="text-[var(--danger-text)] mt-0.5">•</span><span><strong>Kalibrace přístrojů</strong> — upozorní, když se blíží konec platnosti kalibrace měřicího přístroje.</span></li>
@@ -1099,10 +1099,10 @@ export function NastaveniPage() {
 
           <Card title="Jak synchronizace funguje">
             <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
-              <li className="flex gap-2"><span className="text-[var(--primary)] mt-0.5">•</span><span>Každá zakázka ve stavu <em>Plánováno</em> nebo <em>V realizaci</em> se přenese jako událost do zvoleného Google Kalendáře.</span></li>
-              <li className="flex gap-2"><span className="text-[var(--primary)] mt-0.5">•</span><span>Při opakované synchronizaci se existující události aktualizují, nové se vytvoří — nic se nesmaže.</span></li>
-              <li className="flex gap-2"><span className="text-[var(--primary)] mt-0.5">•</span><span>Barva události odpovídá prioritě: <span className="text-[var(--success-text)]">zelená</span> = nízká, <span className="text-[var(--warning-text)]">žlutá</span> = střední, <span className="text-[var(--danger-text)]">červená</span> = vysoká.</span></li>
-              <li className="flex gap-2"><span className="text-[var(--primary)] mt-0.5">•</span><span>Synchronizaci spusťte ručně kdykoli z tohoto nastavení nebo přes tlačítko na stránce Plánování.</span></li>
+              <li className="flex gap-2"><span className="text-[var(--primary-text)] mt-0.5">•</span><span>Každá zakázka ve stavu <em>Plánováno</em> nebo <em>V realizaci</em> se přenese jako událost do zvoleného Google Kalendáře.</span></li>
+              <li className="flex gap-2"><span className="text-[var(--primary-text)] mt-0.5">•</span><span>Při opakované synchronizaci se existující události aktualizují, nové se vytvoří — nic se nesmaže.</span></li>
+              <li className="flex gap-2"><span className="text-[var(--primary-text)] mt-0.5">•</span><span>Barva události odpovídá prioritě: <span className="text-[var(--success-text)]">zelená</span> = nízká, <span className="text-[var(--warning-text)]">žlutá</span> = střední, <span className="text-[var(--danger-text)]">červená</span> = vysoká.</span></li>
+              <li className="flex gap-2"><span className="text-[var(--primary-text)] mt-0.5">•</span><span>Synchronizaci spusťte ručně kdykoli z tohoto nastavení nebo přes tlačítko na stránce Plánování.</span></li>
             </ul>
           </Card>
         </div>

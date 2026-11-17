@@ -16,7 +16,7 @@ const typyPristroju = [
 const chipClass = (on: boolean) =>
   `inline-flex items-center h-8 px-3 rounded-full border text-xs font-semibold cursor-pointer transition-colors ${
     on
-      ? 'bg-[var(--bg-accent)] border-[var(--primary)] text-[var(--primary)]'
+      ? 'bg-[var(--bg-accent)] border-[var(--primary)] text-[var(--primary-text)]'
       : 'bg-[var(--bg-hover)] border-[var(--border-input)] text-[var(--text-secondary)] hover:text-[var(--text)] hover:border-[var(--border-strong)]'
   }`;
 
@@ -378,7 +378,7 @@ export function PristrojePage() {
           {/* Formulář nové kalibrace */}
           {isKalibraceModalOpen && (
             <div className="border border-[var(--primary)]/30 bg-[var(--bg-accent)] rounded-lg p-4 space-y-3">
-              <h4 className="text-sm font-semibold text-[var(--primary)]">Nový kalibraciční záznam</h4>
+              <h4 className="text-sm font-semibold text-[var(--primary-text)]">Nový kalibraciční záznam</h4>
               <div className="grid grid-cols-2 gap-3">
                 <Input
                   type="date"

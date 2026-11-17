@@ -359,7 +359,7 @@ export function RevizePage() {
             <button
               onClick={() => setView('table')}
               title="Tabulka"
-              className={`p-2 rounded-[var(--radius-sm)] transition-colors ${viewMode === 'table' ? 'bg-[var(--bg-accent)] text-[var(--primary)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'}`}
+              className={`p-2 rounded-[var(--radius-sm)] transition-colors ${viewMode === 'table' ? 'bg-[var(--bg-accent)] text-[var(--primary-text)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'}`}
             >
               <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M5 4a2 2 0 00-2 2v8a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2H5zm0 2h10v2H5V6zm0 4h4v4H5v-4zm6 0h4v4h-4v-4z" clipRule="evenodd" />
@@ -368,7 +368,7 @@ export function RevizePage() {
             <button
               onClick={() => setView('grid')}
               title="Karty"
-              className={`p-2 rounded-[var(--radius-sm)] transition-colors ${viewMode === 'grid' ? 'bg-[var(--bg-accent)] text-[var(--primary)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'}`}
+              className={`p-2 rounded-[var(--radius-sm)] transition-colors ${viewMode === 'grid' ? 'bg-[var(--bg-accent)] text-[var(--primary-text)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'}`}
             >
               <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -445,7 +445,7 @@ export function RevizePage() {
                           <Badge variant="warning">⏳ offline</Badge>
                         </span>
                       ) : (
-                        <Link to={`/revize/${r.id}`} className="text-[13px] text-[var(--text)] group-hover:text-[var(--primary)] font-medium hover:underline transition-colors">
+                        <Link to={`/revize/${r.id}`} className="text-[13px] text-[var(--text)] group-hover:text-[var(--primary-text)] font-medium hover:underline transition-colors">
                           {r.cisloRevize}
                         </Link>
                       )}
@@ -576,7 +576,7 @@ export function RevizePage() {
                 <select
                   value={pageSize}
                   onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(0); }}
-                  className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-[var(--radius-md)] px-2 h-8 text-xs text-[var(--text)] focus:outline-none focus:border-[var(--primary)]"
+                  className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-[var(--radius-md)] px-2 h-8 text-xs text-[var(--text)] focus:outline-none focus:border-[var(--primary-text)]"
                 >
                   <option value={10}>10</option>
                   <option value={25}>25</option>
@@ -654,7 +654,7 @@ export function RevizePage() {
                   onClick={() => selectKategorie(kat.value)}
                   className="flex items-center gap-4 p-4 rounded-[var(--radius-lg)] border border-[var(--border-medium)] hover:border-[var(--primary)] hover:bg-[var(--bg-accent)] transition-colors text-left group"
                 >
-                  <div className="flex-shrink-0 text-[var(--text-muted)] group-hover:text-[var(--primary)] transition-colors">
+                  <div className="flex-shrink-0 text-[var(--text-muted)] group-hover:text-[var(--primary-text)] transition-colors">
                     {kat.icon}
                   </div>
                   <div>
@@ -803,7 +803,7 @@ export function RevizePage() {
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-semibold text-[var(--text)]">
                           {h.cisloRevize}
-                          {isCurrent && <span className="ml-2 text-xs text-[var(--primary)]">(aktuální)</span>}
+                          {isCurrent && <span className="ml-2 text-xs text-[var(--primary-text)]">(aktuální)</span>}
                         </span>
                         <Badge variant={stavVariant(h.stav ?? '')}>{h.stav}</Badge>
                       </div>
@@ -813,7 +813,7 @@ export function RevizePage() {
                       {!isCurrent && h.id && (
                         <button
                           onClick={() => { setIsHistorieModalOpen(false); navigate(`/revize/${h.id}`); }}
-                          className="text-xs text-[var(--primary)] hover:underline mt-1"
+                          className="text-xs text-[var(--primary-text)] hover:underline mt-1"
                         >
                           Otevřít →
                         </button>

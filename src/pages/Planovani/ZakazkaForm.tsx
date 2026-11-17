@@ -129,7 +129,7 @@ export function ZakazkaForm({
                     type="date"
                     value={day}
                     onChange={(e) => updateExtraDay(day, e.target.value)}
-                    className="flex-1 px-3 min-h-[40px] text-sm bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary)]"
+                    className="flex-1 px-3 min-h-[40px] text-sm bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary-text)]"
                   />
                   <button
                     type="button"
@@ -146,7 +146,7 @@ export function ZakazkaForm({
           <button
             type="button"
             onClick={addExtraDay}
-            className="mt-2 text-sm font-medium text-[var(--primary)] hover:text-[var(--primary-hover)] transition-colors"
+            className="mt-2 text-sm font-medium text-[var(--primary-text)] hover:text-[var(--primary-hover)] transition-colors"
           >
             + Přidat další den realizace
           </button>

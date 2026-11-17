@@ -159,7 +159,7 @@ export function ZakaznikFormModal({ isOpen, onClose, zakaznik, vychozi, onSaved 
           </div>
           <p className="text-xs text-[var(--text-muted)]">
             Nebo vyplňte název níže a{' '}
-            <button type="button" className="underline text-[var(--primary)] disabled:opacity-50" onClick={hledejPodleNazvu} disabled={aresNacitam}>
+            <button type="button" className="underline text-[var(--primary-text)] disabled:opacity-50" onClick={hledejPodleNazvu} disabled={aresNacitam}>
               vyhledejte ho v ARES
             </button>.
           </p>

@@ -144,7 +144,7 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
           </tbody>
         </table>
         <div className="flex items-center justify-between">
-          <button type="button" className="text-xs text-[var(--primary)] hover:underline cursor-pointer" onClick={() => addItem(list)}>+ Přidat řádek</button>
+          <button type="button" className="text-xs text-[var(--primary-text)] hover:underline cursor-pointer" onClick={() => addItem(list)}>+ Přidat řádek</button>
           {list === 'checklist' && (
             <button type="button" className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] hover:underline cursor-pointer" onClick={obnovitChecklist}>↺ Obnovit výchozí seznam dle PPnn</button>
           )}
@@ -269,7 +269,7 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
               </tbody>
             </table>
           </div>
-          <button type="button" className="text-xs text-[var(--primary)] hover:underline cursor-pointer"
+          <button type="button" className="text-xs text-[var(--primary-text)] hover:underline cursor-pointer"
             onClick={() => setFd(prev => ({ ...prev, mereni: [...prev.mereni, { oznaceni: '', jisteni: '', typKabelu: '', zs: '', u: '', i: '', ta: '', idn: '', riz: '', vysledek: '' }] }))}>
             + Přidat obvod
           </button>

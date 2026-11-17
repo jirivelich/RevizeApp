@@ -283,7 +283,7 @@ export function PlanovaniPage() {
       aria-pressed={viewMode === v}
       className={`px-3 md:px-4 min-h-[40px] text-[13px] font-semibold transition-colors ${
         viewMode === v
-          ? 'bg-[var(--bg-accent)] text-[var(--primary)]'
+          ? 'bg-[var(--bg-accent)] text-[var(--primary-text)]'
           : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
       }`}
     >
@@ -397,14 +397,14 @@ export function PlanovaniPage() {
                 onClick={() => handleKategorieSelected(kat.value)}
                 className="flex items-center gap-4 p-4 rounded-[var(--radius-lg)] border border-[var(--border-medium)] hover:border-[var(--primary)] hover:bg-[var(--bg-accent)] transition-colors text-left group"
               >
-                <div className="flex-shrink-0 text-[var(--text-secondary)] group-hover:text-[var(--primary)] transition-colors">
+                <div className="flex-shrink-0 text-[var(--text-secondary)] group-hover:text-[var(--primary-text)] transition-colors">
                   {kat.icon}
                 </div>
                 <div>
                   <p className="font-semibold text-[var(--text)]">{kat.label}</p>
                   <p className="text-xs text-[var(--text-secondary)] mt-0.5">{kat.popis}</p>
                 </div>
-                <div className="flex-shrink-0 ml-auto text-[var(--text-muted)] group-hover:text-[var(--primary)]">
+                <div className="flex-shrink-0 ml-auto text-[var(--text-muted)] group-hover:text-[var(--primary-text)]">
                   <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                   </svg>

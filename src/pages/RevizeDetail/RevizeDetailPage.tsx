@@ -252,7 +252,7 @@ export function RevizeDetailPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm mb-1">
-              <Link to="/revize" className="hover:text-[var(--primary)]">Revize</Link>
+              <Link to="/revize" className="hover:text-[var(--primary-text)]">Revize</Link>
             <span>/</span>
             <span>{revize.cisloRevize}</span>
           </div>
@@ -283,7 +283,7 @@ export function RevizeDetailPage() {
             onClick={() => { flush(); setActiveTab(tab.id as any); }}
             className={`px-3.5 py-2.5 text-sm font-semibold transition-colors border-b-2 -mb-px whitespace-nowrap flex-shrink-0 cursor-pointer flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus-ring-color)] ${
               activeTab === tab.id
-                ? 'border-[var(--primary)] text-[var(--primary)]'
+                ? 'border-[var(--primary)] text-[var(--primary-text)]'
                 : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text)]'
             }`}
           >

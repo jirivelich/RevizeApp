@@ -10,7 +10,7 @@ import type { ZavadaKatalog } from '../types';
 const chipClass = (on: boolean) =>
   `inline-flex items-center h-8 px-3 rounded-full border text-xs font-semibold cursor-pointer transition-colors ${
     on
-      ? 'bg-[var(--bg-accent)] border-[var(--primary)] text-[var(--primary)]'
+      ? 'bg-[var(--bg-accent)] border-[var(--primary)] text-[var(--primary-text)]'
       : 'bg-[var(--bg-hover)] border-[var(--border-input)] text-[var(--text-secondary)] hover:text-[var(--text)] hover:border-[var(--border-strong)]'
   }`;
 
@@ -330,7 +330,7 @@ export function ZavadyPage() {
                 list="kategorie-list"
                 value={formData.kategorie}
                 onChange={(e) => setFormData({ ...formData, kategorie: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] placeholder:text-[var(--text-muted)] border-[var(--border-input)] text-sm focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--focus-ring-color)]"
+                className="w-full px-3 py-2 border rounded-lg bg-[var(--bg-input)] text-[var(--text)] placeholder:text-[var(--text-muted)] border-[var(--border-input)] text-sm focus:outline-none focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--focus-ring-color)]"
                 placeholder="Rozvaděče, Vedení, Uzemnění..."
               />
               <datalist id="kategorie-list">

@@ -17,7 +17,7 @@ const STAV_VARIANT: Record<FakturaStav, BadgeVariant> = {
 const chipClass = (on: boolean) =>
   `inline-flex items-center h-8 px-3 rounded-full border text-xs font-semibold cursor-pointer transition-colors ${
     on
-      ? 'bg-[var(--bg-accent)] border-[var(--primary)] text-[var(--primary)]'
+      ? 'bg-[var(--bg-accent)] border-[var(--primary)] text-[var(--primary-text)]'
       : 'bg-[var(--bg-hover)] border-[var(--border-input)] text-[var(--text-secondary)] hover:text-[var(--text)] hover:border-[var(--border-strong)]'
   }`;
 

@@ -445,7 +445,7 @@ function WeatherInline() {
       <span className="text-xl leading-none">{wmoToEmoji(day.code)}</span>
       <span className="text-[14px] font-semibold text-[var(--text)]">{day.max}°</span>
       <span className="text-[13px] text-[var(--text-muted)]">{day.min}°</span>
-      {day.precip > 0 && <span className="text-xs text-[var(--primary)]">💧{day.precip}%</span>}
+      {day.precip > 0 && <span className="text-xs text-[var(--primary-text)]">💧{day.precip}%</span>}
       <span className="text-xs text-[var(--text-muted)]">Tachov</span>
     </div>
   );

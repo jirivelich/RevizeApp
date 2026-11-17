@@ -7,6 +7,7 @@ import { useIdleTimeout } from '../hooks/useIdleTimeout';
 import { IdleWarningModal } from './IdleWarningModal';
 import { logoutApi } from '../services/api';
 import { Icon } from './icons';
+import { LogoIcon, Wordmark } from './ReVeliLogo';
 
 export function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -40,7 +41,7 @@ export function Layout() {
       <main className="lg:ml-56 h-dvh flex flex-col bg-[var(--background)]">
         {/* Mobilní header s menu tlačítkem */}
         <div className="lg:hidden px-4 py-3 flex items-center justify-between sticky top-0 z-30 flex-shrink-0 bg-[var(--surface)] border-b border-[var(--border)]">
-          <h1 className="text-lg font-semibold text-[var(--text)]">Reveli App</h1>
+          <h1 className="flex items-center gap-2 text-lg"><LogoIcon size={26} /><Wordmark /></h1>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="p-2 rounded-[var(--radius-md)] text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring-color)]"

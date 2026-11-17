@@ -64,7 +64,7 @@ export function ListView(p: PlanProps) {
             onChange={e => setQ(e.target.value)}
             aria-label="Hledat zakázky"
             placeholder="Hledat název, zákazníka, adresu…"
-            className="w-full min-h-[44px] pl-9 pr-3 rounded-[var(--radius-md)] border border-[var(--border-input)] bg-[var(--bg-input)] text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:border-[var(--primary)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
+            className="w-full min-h-[44px] pl-9 pr-3 rounded-[var(--radius-md)] border border-[var(--border-input)] bg-[var(--bg-input)] text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:border-[var(--primary-text)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)]"
           />
         </label>
         <div role="group" aria-label="Stav" className="flex gap-1.5 overflow-x-auto pb-1 md:pb-0 -mx-1 px-1">
@@ -76,7 +76,7 @@ export function ListView(p: PlanProps) {
               onClick={() => setStav(f.key)}
               className={`shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-full border text-xs font-semibold transition-colors ${
                 stav === f.key
-                  ? 'bg-[var(--bg-accent)] border-[var(--primary)] text-[var(--primary)]'
+                  ? 'bg-[var(--bg-accent)] border-[var(--primary)] text-[var(--primary-text)]'
                   : 'bg-[var(--bg-input)] border-[var(--border-input)] text-[var(--text-secondary)] hover:text-[var(--text)]'
               }`}
             >
@@ -108,7 +108,7 @@ export function ListView(p: PlanProps) {
             const open = !isDone || doneOpen;
             const limited = !expanded.has(g.key) && g.key === 'pozdeji' && g.items.length > VISIBLE_LIMIT;
             const items = limited ? g.items.slice(0, VISIBLE_LIMIT) : g.items;
-            const titleColor = meta.tone === 'danger' ? 'text-[var(--danger-text)]' : meta.tone === 'accent' ? 'text-[var(--primary)]' : meta.tone === 'muted' ? 'text-[var(--text-secondary)]' : 'text-[var(--text)]';
+            const titleColor = meta.tone === 'danger' ? 'text-[var(--danger-text)]' : meta.tone === 'accent' ? 'text-[var(--primary-text)]' : meta.tone === 'muted' ? 'text-[var(--text-secondary)]' : 'text-[var(--text)]';
             const title = g.key === 'dnes' ? `Dnes · ${longDay(p.today)}` : meta.title;
             return (
               <section key={g.key} aria-label={meta.title}>
@@ -134,7 +134,7 @@ export function ListView(p: PlanProps) {
                 )}
                 {limited && (
                   <button type="button" onClick={() => setExpanded(s => new Set(s).add(g.key))}
-                    className="block min-h-[40px] px-5 text-[13px] font-semibold text-[var(--primary)] hover:underline">
+                    className="block min-h-[40px] px-5 text-[13px] font-semibold text-[var(--primary-text)] hover:underline">
                     + {g.items.length - VISIBLE_LIMIT} dalších zakázek
                   </button>
                 )}
@@ -181,11 +181,11 @@ function DesktopRow({ z, p, group }: { z: Zakazka; p: PlanProps; group: ListGrou
       </div>
       <span className="text-[13px] text-[var(--text-secondary)] truncate">{z.klient}</span>
       <div className="flex items-center gap-1.5 min-w-0">
-        <MapLink adresa={z.adresa} className="flex items-center gap-1.5 min-w-0 text-[13px] text-[var(--text)] hover:text-[var(--primary)]">
+        <MapLink adresa={z.adresa} className="flex items-center gap-1.5 min-w-0 text-[13px] text-[var(--text)] hover:text-[var(--primary-text)]">
           <span className="text-[var(--text-muted)] shrink-0"><IconPin size={14} /></span>
           <span className="truncate">{z.adresa}</span>
         </MapLink>
-        {tel && <PhoneLink tel={tel} className="shrink-0 w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-md)] text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--bg-hover)]" />}
+        {tel && <PhoneLink tel={tel} className="shrink-0 w-8 h-8 inline-flex items-center justify-center rounded-[var(--radius-md)] text-[var(--text-muted)] hover:text-[var(--primary-text)] hover:bg-[var(--bg-hover)]" />}
       </div>
       <span className={`text-xs ${z.stav === 'v realizaci' ? 'text-[var(--warning-text)]' : 'text-[var(--text-secondary)]'}`}>{stavText(z)}</span>
       <span>

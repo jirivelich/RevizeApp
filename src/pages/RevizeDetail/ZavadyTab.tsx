@@ -383,7 +383,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                 ...katalogZavad.map(z => ({ value: z.id!.toString(), label: `[${z.zavaznost}] ${z.popis}${z.norma ? ` (${z.norma})` : ''}` }))
               ]}
             />
-            {selectedKatalogZavada && <p className="text-xs text-[var(--primary)] mt-1">Popis a závažnost budou předvyplněny z katalogu. Můžete je upravit.</p>}
+            {selectedKatalogZavada && <p className="text-xs text-[var(--primary-text)] mt-1">Popis a závažnost budou předvyplněny z katalogu. Můžete je upravit.</p>}
           </div>
         )}
         <div>
@@ -451,7 +451,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
                 });
               }
             }}
-            className="w-full text-sm text-[var(--text-muted)] file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-[var(--bg-accent)] file:text-[var(--primary)] hover:file:bg-[var(--bg-accent)]"
+            className="w-full text-sm text-[var(--text-muted)] file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-[var(--bg-accent)] file:text-[var(--primary-text)] hover:file:bg-[var(--bg-accent)]"
           />
           {zavadaFormData.fotky.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">

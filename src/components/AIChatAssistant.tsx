@@ -101,7 +101,7 @@ export function AIChatAssistant() {
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
             {messages.length === 0 && (
               <div className="text-center py-8">
-                <div className="w-12 h-12 rounded-full bg-[var(--bg-accent)] text-[var(--primary)] flex items-center justify-center mx-auto mb-3">
+                <div className="w-12 h-12 rounded-full bg-[var(--bg-accent)] text-[var(--primary-text)] flex items-center justify-center mx-auto mb-3">
                   <Icon name="sparkle" size={24} />
                 </div>
                 <p className="text-sm text-[var(--text-secondary)] font-medium mb-1">AI Asistent pro revize</p>
@@ -164,7 +164,7 @@ export function AIChatAssistant() {
                 onKeyDown={handleKeyDown}
                 placeholder="Napsat zprávu..."
                 disabled={loading}
-                className="flex-1 px-3 py-2 text-sm border border-[var(--border-input)] rounded-[var(--radius-md)] focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--focus-ring-color)] bg-[var(--bg-input)] text-[var(--text)] disabled:bg-[var(--bg-surface)]"
+                className="flex-1 px-3 py-2 text-sm border border-[var(--border-input)] rounded-[var(--radius-md)] focus:outline-none focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--focus-ring-color)] bg-[var(--bg-input)] text-[var(--text)] disabled:bg-[var(--bg-surface)]"
               />
               <button
                 onClick={handleSend}

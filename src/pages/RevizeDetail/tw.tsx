@@ -6,17 +6,17 @@
 // ── Tailwind class helpers ──
 export const TW = {
   /** Standardní input pole */
-  input: 'w-full px-2.5 py-1.5 min-h-[40px] rounded-[var(--radius-md)] text-sm bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] placeholder:text-[var(--text-muted)] transition-colors focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none',
+  input: 'w-full px-2.5 py-1.5 min-h-[40px] rounded-[var(--radius-md)] text-sm bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] placeholder:text-[var(--text-muted)] transition-colors focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none',
   /** Disabled input */
   inputDisabled: 'w-full px-2.5 py-1.5 min-h-[40px] rounded-[var(--radius-md)] text-sm bg-[var(--bg-surface)] text-[var(--text-muted)] border border-[var(--border)] cursor-not-allowed opacity-70',
   /** Input uvnitř tabulkové buňky (průhledné pozadí) */
-  tblInput: 'w-full border border-transparent hover:border-[var(--border-input)] bg-transparent text-sm text-[var(--text)] px-1.5 py-1 min-h-[32px] rounded-[var(--radius-sm)] focus:outline-none focus:border-[var(--primary)] focus:bg-[var(--bg-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)]',
+  tblInput: 'w-full border border-transparent hover:border-[var(--border-input)] bg-transparent text-sm text-[var(--text)] px-1.5 py-1 min-h-[32px] rounded-[var(--radius-sm)] focus:outline-none focus:border-[var(--primary-text)] focus:bg-[var(--bg-input)] focus:ring-2 focus:ring-[var(--focus-ring-color)]',
   /** Textarea rozšíření */
-  textarea: 'w-full px-2.5 py-2 rounded-[var(--radius-md)] text-sm bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] placeholder:text-[var(--text-muted)] transition-colors focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none resize-y',
+  textarea: 'w-full px-2.5 py-2 rounded-[var(--radius-md)] text-sm bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] placeholder:text-[var(--text-muted)] transition-colors focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none resize-y',
   /** Select pole */
-  select: 'px-2.5 py-1.5 min-h-[40px] rounded-[var(--radius-md)] text-sm bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] transition-colors focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none',
+  select: 'px-2.5 py-1.5 min-h-[40px] rounded-[var(--radius-md)] text-sm bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] transition-colors focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none',
   /** Select na celou šířku */
-  selectFull: 'w-full px-2.5 py-1.5 min-h-[40px] rounded-[var(--radius-md)] text-sm bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] transition-colors focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none',
+  selectFull: 'w-full px-2.5 py-1.5 min-h-[40px] rounded-[var(--radius-md)] text-sm bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] transition-colors focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:outline-none',
   /** Hlavička tabulky */
   th: 'bg-[var(--bg-faint)] border-b border-[var(--border)] px-3 py-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] text-left',
   /** Buňka tabulky */
@@ -51,7 +51,7 @@ export function SectionHeader({
 }) {
   return (
     <div className={`${className || 'bg-[var(--bg-surface)]'} text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2`}>
-      {num && <span className="text-[var(--primary)]">{num}</span>}
+      {num && <span className="text-[var(--primary-text)]">{num}</span>}
       <span className="flex-1">{children}</span>
       {right}
     </div>
@@ -78,7 +78,7 @@ export function ToggleSectionHeader({
 }) {
   return (
     <div className={`${className || 'bg-[var(--bg-surface)]'} text-[var(--text)] px-4 py-2.5 border-b border-[var(--border)] text-sm font-semibold flex items-center gap-2`}>
-      {num && <span className="text-[var(--primary)]">{num}</span>}
+      {num && <span className="text-[var(--primary-text)]">{num}</span>}
       <span className={`flex-1 ${!visible ? 'opacity-50 line-through' : ''}`}>{children}</span>
       {right}
       <button
