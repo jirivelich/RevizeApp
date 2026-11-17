@@ -5,7 +5,7 @@
 import type { DocContext } from '../context';
 import type { Zavada } from '../../types';
 
-type Row = [label: string, valueHtml: string];
+export type Row = [label: string, valueHtml: string];
 
 /** Otevře stránku s plynulým obsahem (data-flow) a opakovanou hlavičkou. */
 export function flowPage(ctx: DocContext, footText: string, content: string): string {
@@ -187,12 +187,16 @@ export function ulozeniPodkladu(ctx: DocContext): string {
   return `<p>Podklady jsou uloženy: ${revize.mistoUlozeniPodkladu?.trim() ? `<b>${H.esc(revize.mistoUlozeniPodkladu)}</b>` : H.dots(40)}</p>`;
 }
 
-/** Data revize dle ČSN 33 1500: zahájení, ukončení, vypracování a předání zprávy. */
-export function datumyRevize(ctx: DocContext): [[string, string], [string, string]][] {
+/**
+ * Data revize dle ČSN 33 1500: zahájení, ukončení a vypracování zprávy.
+ * Datum předání se neuvádí zde, ale u podpisů v potvrzení o předání (viz podpisy()).
+ * `doplnek` vyplní volnou buňku vedle data vypracování.
+ */
+export function datumyRevize(ctx: DocContext, doplnek: Row | null = null): [Row, Row | null][] {
   const { H, revize } = ctx;
   return [
     [['Zahájení revize:', H.v(H.d(revize.datum), 14)], ['Ukončení revize:', H.v(H.d(revize.datumDokonceni), 14)]],
-    [['Vypracování zprávy:', H.v(H.d(revize.datumVypracovani), 14)], ['Předání zprávy:', H.v(H.d(revize.datumPredani), 14)]],
+    [['Vypracování zprávy:', H.v(H.d(revize.datumVypracovani), 14)], doplnek],
   ];
 }
 
@@ -226,8 +230,8 @@ export function rozdelovnikTable(ctx: DocContext, text: string): string {
 export function podpisy(ctx: DocContext, certLabel = 'Oprávnění'): string {
   const { H, technik, provozovatel, revize } = ctx;
   const objednatel = provozovatel.kontakt || provozovatel.nazev;
-  const datum = H.d(revize.datumVypracovani) || H.d(new Date());
-  return `<div class="nosplit"><p>V ${H.dots(30)} dne ${H.esc(datum)}</p>
+  // Datum u podpisů = datum předání zprávy; nevyplněné → tečky k doplnění rukou
+  return `<div class="nosplit"><p>V ${H.dots(30)} dne ${H.v(H.d(revize.datumPredani), 14)}</p>
   <table class="sig"><tbody>
     <tr>
       <td><div class="line">revizní technik</div><div class="name">${H.v(technik.jmeno)}</div><div class="small">${certLabel}: ${H.v(technik.opravneni, 16)}</div></td>

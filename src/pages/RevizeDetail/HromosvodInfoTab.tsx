@@ -2,6 +2,7 @@
 import type { Revize, Firma, Nastaveni, Zakaznik } from '../../types';
 import { Input, Select } from '../../components/ui';
 import { TW, SectionHeader, Field } from './tw';
+import { ObjednatelSekce } from './ObjednatelSekce';
 
 interface HromosvodInfoTabProps {
   revize: Revize;
@@ -54,36 +55,11 @@ export function HromosvodInfoTab({
       </div>
 
       {/* ═══ 02 – OBJEDNATEL ═══ */}
-      <div className={TW.card}>
-        <SectionHeader num="02">Objednatel / Provozovatel</SectionHeader>
-        <div className="p-4 space-y-3">
-          <div className={TW.grid2}>
-            <Input label="Objednatel" placeholder="Nebo vyberte zákazníka níže" value={formData.objednatel || ''} onChange={(e) => setFormData({ ...formData, objednatel: e.target.value })} />
-            <Field label="Ze zákazníků">
-              <select className={TW.selectFull} value={selectedZakaznikId} onChange={(e) => {
-                const zakaznikId = e.target.value;
-                setSelectedZakaznikId(zakaznikId);
-                if (zakaznikId) { const zakaznik = zakaznici.find(z => z.id === parseInt(zakaznikId)); if (zakaznik) { setFormData({ ...formData, objednatel: zakaznik.nazev, zakaznikId: zakaznik.id }); saveNow?.(); } }
-                else { setFormData({ ...formData, zakaznikId: undefined }); saveNow?.(); }
-              }}>
-                <option value="">-- Vyberte zákazníka --</option>
-                {zakaznici.filter(z => z.id !== undefined).map(z => <option key={z.id} value={z.id!.toString()}>{z.nazev}{z.adresa ? ` (${z.adresa})` : ''}</option>)}
-              </select>
-            </Field>
-          </div>
-          {selectedZakaznikId && (() => {
-            const zakaznik = zakaznici.find(z => z.id === parseInt(selectedZakaznikId));
-            return zakaznik ? (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-[var(--text-muted)] bg-[var(--bg-accent)] rounded p-2">
-                {zakaznik.adresa && <span>Adresa: {zakaznik.adresa}</span>}
-                {zakaznik.ico && <span>IČO: {zakaznik.ico}</span>}
-                {zakaznik.kontaktOsoba && <span>Kontakt: {zakaznik.kontaktOsoba}</span>}
-                {zakaznik.telefon && <span>Tel: {zakaznik.telefon}</span>}
-              </div>
-            ) : null;
-          })()}
-        </div>
-      </div>
+      <ObjednatelSekce
+        formData={formData} setFormData={setFormData} zakaznici={zakaznici}
+        selectedZakaznikId={selectedZakaznikId} setSelectedZakaznikId={setSelectedZakaznikId}
+        saveNow={saveNow}
+      />
 
       {/* ═══ 03 – CHARAKTERISTIKA LPS ═══ */}
       <div className={TW.card}>

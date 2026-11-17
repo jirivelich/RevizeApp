@@ -9,6 +9,7 @@ import { getAuthUrl, exchangeCodeAndSave, deleteTokens, getTokens, saveTokens, l
 import { PolozkaInput, toNum, vypocitejPolozku, vypocitejCelkem, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj } from './faktura-utils';
 import { diffZmen, zapisAudit } from './audit';
 import { hlidejZamek, jeZamceny } from './zamek';
+import { najdiPodleIco, hledejPodleNazvu, AresChyba } from './ares';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -1480,6 +1481,29 @@ async function startServer() {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== ARES ====================
+  const aresOdpovedChyby = (res: express.Response, error: unknown) => {
+    if (error instanceof AresChyba) return res.status(error.status).json({ error: error.message });
+    console.error('ARES chyba:', error);
+    return res.status(502).json({ error: 'Chyba při komunikaci s ARES' });
+  };
+
+  app.get('/api/ares/ico/:ico', authMiddleware, async (req, res) => {
+    try {
+      res.json(await najdiPodleIco(req.params.ico));
+    } catch (error) {
+      aresOdpovedChyby(res, error);
+    }
+  });
+
+  app.get('/api/ares/hledat', authMiddleware, async (req, res) => {
+    try {
+      res.json(await hledejPodleNazvu(String(req.query.nazev ?? '')));
+    } catch (error) {
+      aresOdpovedChyby(res, error);
     }
   });
 

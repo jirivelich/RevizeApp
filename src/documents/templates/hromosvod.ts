@@ -87,8 +87,8 @@ function render(ctx: DocContext): string {
     sec('6. Druh revize', `<p><b>${H.esc(ctx.typRevizeLabel)}</b></p>`,
       revize.typRevize === 'mimořádná' && revize.duvodMimoradne ? H.paras(revize.duvodMimoradne) : ''),
     sec('7. Důležitá data', kv4([
-      ...datumyRevize(ctx),
-      [['Platnost do:', H.o(H.d(revize.datumPlatnosti), 14)], ['Lhůta příští revize:', revize.termin ? `${H.esc(revize.termin)} měsíců` : '—']],
+      ...datumyRevize(ctx, ['Platnost do:', H.o(H.d(revize.datumPlatnosti), 14)]),
+      [['Lhůta příští revize:', revize.termin ? `${H.esc(revize.termin)} měsíců` : '—'], null],
     ])),
   );
 

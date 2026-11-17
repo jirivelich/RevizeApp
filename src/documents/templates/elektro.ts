@@ -139,8 +139,8 @@ function renderZprava(ctx: DocContext): string {
   const t = (k: keyof typeof nums, text: string) => `${nums[k]}. ${text}`;
 
   const datumy = kv4([
-    ...datumyRevize(ctx),
-    [['Platnost do:', H.o(H.d(revize.datumPlatnosti), 14)], ['Lhůta příští revize:', revize.termin ? `${H.esc(revize.termin)} měsíců` : '—']],
+    ...datumyRevize(ctx, ['Platnost do:', H.o(H.d(revize.datumPlatnosti), 14)]),
+    [['Lhůta příští revize:', revize.termin ? `${H.esc(revize.termin)} měsíců` : '—'], null],
   ]);
 
   const parts: string[] = [

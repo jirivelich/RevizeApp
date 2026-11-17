@@ -80,7 +80,6 @@ function render(ctx: DocContext): string {
       ['Revize zahájena:', H.v(H.d(revize.datum), 14)],
       ['Revize ukončena:', H.v(H.d(revize.datumDokonceni), 14)],
       ['Zpráva vypracována:', H.v(H.d(revize.datumVypracovani), 14)],
-      ['Zpráva předána:', H.v(H.d(revize.datumPredani), 14)],
       ...(!revize.lhutaText?.trim() && revize.datumPlatnosti ? [['Platnost do:', H.esc(H.d(revize.datumPlatnosti))] as [string, string]] : []),
     ]), revize.typRevize === 'mimořádná' && revize.duvodMimoradne ? `<p><b>Důvod mimořádné revize:</b> ${H.esc(revize.duvodMimoradne)}</p>` : ''),
     sec('5. Celkové vyhodnocení', vysledek),

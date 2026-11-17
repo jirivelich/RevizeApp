@@ -1,20 +1,18 @@
 import React, { useState } from 'react';
-import { Button, Card, Input, Modal, ConfirmDialog, Badge, PageHeader, EmptyState, DataTable, Textarea } from '../components/ui';
+import { Button, Card, Input, Modal, ConfirmDialog, Badge, PageHeader, EmptyState, DataTable } from '../components/ui';
+import { ZakaznikFormModal } from '../components/ZakaznikFormModal';
 import type { DataTableColumn } from '../components/ui';
 import type { BadgeVariant } from '../components/ui';
 import { zakazniciService } from '../services/database';
-import { useZakaznici, useCreateZakaznik, useUpdateZakaznik, useDeleteZakaznik } from '../hooks/useQueries';
+import { useZakaznici, useDeleteZakaznik } from '../hooks/useQueries';
 import type { Zakaznik, Revize } from '../types';
 
 const ZakazniciPage: React.FC = () => {
   const { data: zakaznici = [], isLoading: loading } = useZakaznici();
-  const createZakaznik = useCreateZakaznik();
-  const updateZakaznik = useUpdateZakaznik();
   const deleteZakaznik = useDeleteZakaznik();
 
   const [editingZakaznik, setEditingZakaznik] = useState<Zakaznik | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isNewZakaznik, setIsNewZakaznik] = useState(false);
   const [revizeModalOpen, setRevizeModalOpen] = useState(false);
   const [selectedZakaznikRevize, setSelectedZakaznikRevize] = useState<Revize[]>([]);
   const [selectedZakaznikName, setSelectedZakaznikName] = useState('');
@@ -22,63 +20,16 @@ const ZakazniciPage: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<Zakaznik | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
-    nazev: '',
-    adresa: '',
-    ico: '',
-    dic: '',
-    kontaktOsoba: '',
-    telefon: '',
-    email: '',
-    poznamka: '',
-  });
-
   const handleNewZakaznik = () => {
-    setIsNewZakaznik(true);
     setEditingZakaznik(null);
     setFormError(null);
-    setFormData({
-      nazev: '',
-      adresa: '',
-      ico: '',
-      dic: '',
-      kontaktOsoba: '',
-      telefon: '',
-      email: '',
-      poznamka: '',
-    });
     setIsModalOpen(true);
   };
 
   const handleEditZakaznik = (zakaznik: Zakaznik) => {
-    setIsNewZakaznik(false);
     setEditingZakaznik(zakaznik);
     setFormError(null);
-    setFormData({
-      nazev: zakaznik.nazev || '',
-      adresa: zakaznik.adresa || '',
-      ico: zakaznik.ico || '',
-      dic: zakaznik.dic || '',
-      kontaktOsoba: zakaznik.kontaktOsoba || '',
-      telefon: zakaznik.telefon || '',
-      email: zakaznik.email || '',
-      poznamka: zakaznik.poznamka || '',
-    });
     setIsModalOpen(true);
-  };
-
-  const handleSave = async () => {
-    try {
-      if (isNewZakaznik) {
-        await createZakaznik.mutateAsync(formData);
-      } else if (editingZakaznik && editingZakaznik.id) {
-        await updateZakaznik.mutateAsync({ id: editingZakaznik.id, data: formData });
-      }
-      setIsModalOpen(false);
-    } catch (error) {
-      console.error('Chyba při ukládání zákazníka:', error);
-      setFormError('Nepodařilo se uložit zákazníka');
-    }
   };
 
   const handleDelete = (zakaznik: Zakaznik) => {
@@ -211,75 +162,11 @@ const ZakazniciPage: React.FC = () => {
       )}
 
       {/* Modal pro editaci zákazníka */}
-      <Modal
+      <ZakaznikFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={isNewZakaznik ? 'Nový zákazník' : 'Upravit zákazníka'}
-      >
-        <div className="space-y-4">
-          <Input
-            label="Název / Jméno *"
-            value={formData.nazev}
-            onChange={(e) => setFormData({ ...formData, nazev: e.target.value })}
-            required
-          />
-          <Input
-            label="Adresa"
-            value={formData.adresa}
-            onChange={(e) => setFormData({ ...formData, adresa: e.target.value })}
-          />
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="IČO"
-              value={formData.ico}
-              onChange={(e) => setFormData({ ...formData, ico: e.target.value })}
-            />
-            <Input
-              label="DIČ"
-              value={formData.dic}
-              onChange={(e) => setFormData({ ...formData, dic: e.target.value })}
-            />
-          </div>
-          <Input
-            label="Kontaktní osoba"
-            value={formData.kontaktOsoba}
-            onChange={(e) => setFormData({ ...formData, kontaktOsoba: e.target.value })}
-          />
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Telefon"
-              value={formData.telefon}
-              onChange={(e) => setFormData({ ...formData, telefon: e.target.value })}
-            />
-            <Input
-              label="Email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
-          </div>
-          <Textarea label="Poznámka"
-              value={formData.poznamka}
-              onChange={(e) => setFormData({ ...formData, poznamka: e.target.value })}
-              rows={3}
-            />
-
-          {formError && isModalOpen && (
-            <p className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-lg px-3 py-2">
-              {formError}
-            </p>
-          )}
-
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
-              Zrušit
-            </Button>
-            <Button onClick={handleSave} disabled={!formData.nazev}>
-              {isNewZakaznik ? 'Vytvořit' : 'Uložit'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        zakaznik={editingZakaznik}
+      />
 
       {/* Modal pro zobrazení revizí zákazníka */}
       <Modal

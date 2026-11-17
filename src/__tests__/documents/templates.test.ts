@@ -260,11 +260,12 @@ describe('Pevné šířky sloupců', () => {
 });
 
 describe('Náležitosti zprávy dle ČSN 33 1500', () => {
-  it('data zahájení, ukončení, vypracování a předání ve všech zprávách', () => {
+  it('data zahájení, ukončení, vypracování; datum předání jen u podpisů', () => {
     for (const k of KATEGORIE_VSECHNY) {
       const t = text(zprava(sampleContext(k)));
       expect(t, k).toMatch(/(Zahájení revize|Revize zahájena):21\. 07\. 2026/);
-      expect(t, k).toMatch(/(Předání zprávy|Zpráva předána):07\. 08\. 2026/);
+      expect(t, k).not.toMatch(/Předání zprávy:|Zpráva předána:/);
+      expect(t, k).toMatch(/dne 07\. 08\. 2026/);
     }
   });
 
@@ -317,7 +318,7 @@ describe('Prázdné hodnoty – tečky jen u povinných náležitostí', () => {
       pristroje: base.pristroje.map(x => ({ ...x, vyrobniCislo: '' })),
     });
     const html = zprava(ctx);
-    expect(html).toMatch(/Předání zprávy:<\/td><td><span class="dotline">/);
+    expect(html).toMatch(/dne <span class="dotline">/);
     // výrobní číslo přístroje je nepovinné → „—“
     expect(html).toContain('<td>Metrel MI 3125</td><td>—</td>');
     // vyhodnocení předchozích revizí bez textu → „—“
