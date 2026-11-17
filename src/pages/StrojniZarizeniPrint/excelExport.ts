@@ -40,7 +40,7 @@ const COLS = 6; // Počet sloupců A–F
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function exportStrojniExcel(data: any): Promise<void> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'RevizeApp';
+  wb.creator = 'Reveli App';
   wb.created = new Date();
 
   const ws = wb.addWorksheet('Protokol', {

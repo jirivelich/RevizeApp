@@ -586,9 +586,9 @@ export function NastaveniPage() {
 
       <Card title="O aplikaci">
         <div className="space-y-2 text-[var(--text-secondary)]">
-          <p><strong>RevizeApp</strong> - Aplikace pro správu elektrotechnických revizí</p>
+          <p><strong>Reveli App</strong> - Aplikace pro správu elektrotechnických revizí</p>
           <p>Verze: 1.0.0</p>
-          <p>© 2026 RevizeApp</p>
+          <p>© 2026 Reveli App</p>
           <p className="text-sm text-[var(--text-muted)] mt-4">
             Data jsou ukládána na serveru v PostgreSQL databázi. 
             Pro zálohování dat použijte záložku Zálohy.

@@ -13,8 +13,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'logo192.png', 'logo512.png'],
       manifest: {
-        name: 'RevizeApp',
-        short_name: 'RevizeApp',
+        name: 'Reveli App',
+        short_name: 'Reveli',
         description: 'Aplikace pro správu elektrických revizí v terénu i offline.',
         start_url: '/',
         display: 'standalone',

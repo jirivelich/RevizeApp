@@ -48,9 +48,9 @@ export default function LoginPage() {
       {/* Levý panel */}
       <aside className="hidden md:flex w-[42%] min-w-[340px] flex-col justify-between px-11 py-12 bg-[var(--bg-sidebar)] border-r border-[var(--border)]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[var(--radius-lg)] bg-[var(--primary)] text-[var(--primary-fg)] grid place-items-center font-extrabold">JV</div>
+          <div className="w-10 h-10 rounded-[var(--radius-lg)] bg-[var(--primary)] text-[var(--primary-fg)] grid place-items-center font-extrabold">RV</div>
           <div>
-            <div className="text-xl font-extrabold text-[var(--text)] tracking-tight">JV Revize</div>
+            <div className="text-xl font-extrabold text-[var(--text)] tracking-tight">Reveli App</div>
             <div className="text-xs text-[var(--text-muted)]">Správa elektro revizí</div>
           </div>
         </div>
@@ -86,9 +86,9 @@ export default function LoginPage() {
         <div className="w-full max-w-[420px] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] px-5 py-7 sm:px-9 sm:pt-10 sm:pb-9">
           {/* Mobilní logo */}
           <div className="md:hidden flex items-center gap-2.5 mb-7">
-            <div className="w-9 h-9 rounded-[var(--radius-lg)] bg-[var(--primary)] text-[var(--primary-fg)] grid place-items-center text-sm font-extrabold">JV</div>
+            <div className="w-9 h-9 rounded-[var(--radius-lg)] bg-[var(--primary)] text-[var(--primary-fg)] grid place-items-center text-sm font-extrabold">RV</div>
             <div>
-              <div className="text-[17px] font-bold text-[var(--text)]">JV Revize</div>
+              <div className="text-[17px] font-bold text-[var(--text)]">Reveli App</div>
               <div className="text-[11px] font-semibold text-[var(--text-muted)]">Správa elektro revizí</div>
             </div>
           </div>

@@ -1,10 +1,10 @@
 {
   "name": "revizeapp",
-  "productName": "RevizeApp",
+  "productName": "Reveli App",
   "description": "Aplikace pro správu elektrických revizí",
   "private": true,
   "version": "1.0.0",
-  "author": "RevizeApp Team",
+  "author": "Jiří Velich",
   "engines": {
     "node": ">=22.0.0"
   },

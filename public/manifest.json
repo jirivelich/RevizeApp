@@ -1,6 +1,6 @@
 {
-  "name": "RevizeApp",
-  "short_name": "RevizeApp",
+  "name": "Reveli App",
+  "short_name": "Reveli",
   "description": "Aplikace pro správu elektrických revizí v terénu i offline.",
   "start_url": "/",
   "display": "standalone",
