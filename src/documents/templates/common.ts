@@ -57,7 +57,11 @@ export function kv(rows: Row[]): string {
 /** Tabulka popisek/hodnota ve dvou sloupcových párech. */
 export function kv4(rows: [Row, Row | null][]): string {
   return `<table class="kv kv4"><tbody>${rows.map(([a, b]) =>
-    `<tr><td class="l">${a[0]}</td><td>${a[1]}</td>${b ? `<td class="l">${b[0]}</td><td>${b[1]}</td>` : '<td colspan="2"></td>'}</tr>`,
+    // Bez pravé dvojice se hodnota roztáhne přes zbytek řádku – dlouhý text pak
+    // nerozšíří sloupec hodnot a nezalomí krátké hodnoty (datumy) ve vedlejším sloupci.
+    b
+      ? `<tr><td class="l">${a[0]}</td><td>${a[1]}</td><td class="l">${b[0]}</td><td>${b[1]}</td></tr>`
+      : `<tr><td class="l">${a[0]}</td><td colspan="3">${a[1]}</td></tr>`,
   ).join('')}</tbody></table>`;
 }
 
