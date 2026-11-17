@@ -9,7 +9,7 @@
  *    potomek s třídou .keep (nadpis) nesmí zůstat sám na konci listu;
  *  - prvek s třídou .nosplit se nikdy nedělí (podpisy, výsledek);
  *  - prázdný <div class="pb"></div> vynutí nový list.
- * Volitelná hlavička .page-head (první potomek) se opakuje na každém listu.
+ * Volitelná hlavička .page-head (první potomek) se opakuje na každém listu kromě prvního.
  * Patička „Strana X (celkem Y)“ se doplní na konci (data-foot = text vlevo).
  *
  * Výstup je finální HTML (stejné pro náhled, PDF i Word).
@@ -211,7 +211,8 @@ export async function paginate(container: HTMLElement, rawHtml: string): Promise
     if (head) raw.removeChild(head);
     const blocks = [...raw.children] as HTMLElement[];
 
-    let sheet = createSheet(container, raw, head);
+    // První list má hlavičku firmy s číslem zprávy – průběžná hlavička až od druhého
+    let sheet = createSheet(container, raw, null);
     for (const block of blocks) {
       if (block.classList.contains('pb')) {
         if (sheet.body.childElementCount > 0) sheet = createSheet(container, raw, head);
