@@ -2544,6 +2544,12 @@ async function startServer() {
     if (req.path.startsWith('/api/')) {
       return res.status(404).json({ error: 'API endpoint nenalezen' });
     }
+    // Chybějící soubor sestavení (např. starý chunk po novém nasazení) – vrátit 404,
+    // ne index.html, jinak prohlížeč hlásí „Failed to fetch dynamically imported module“
+    // a service worker by si HTML mohl uložit místo skriptu.
+    if (req.path.startsWith('/assets/') || /\.(js|mjs|css|map|woff2?|png|svg|ico|json)$/i.test(req.path)) {
+      return res.status(404).send('Soubor nenalezen');
+    }
 
     const possiblePaths = [
       path.join(__dirname, '..', 'dist', 'index.html'),
