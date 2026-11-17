@@ -232,14 +232,18 @@ export function rozdelovnikTable(ctx: DocContext, text: string): string {
 }
 
 /** Podpisy technika a objednatele + místo a datum. */
-export function podpisy(ctx: DocContext, certLabel = 'Oprávnění'): string {
+/**
+ * Potvrzení o předání s podpisy. U technika se uvádí číslo osvědčení i číslo
+ * oprávnění; nevyplněné osvědčení se vytiskne jako tečky k doplnění.
+ */
+export function podpisy(ctx: DocContext): string {
   const { H, technik, provozovatel, revize } = ctx;
   const objednatel = provozovatel.kontakt || provozovatel.nazev;
   // Datum u podpisů = datum předání zprávy; nevyplněné → tečky k doplnění rukou
   return `<div class="nosplit"><p>V ${H.dots(30)} dne ${H.v(H.d(revize.datumPredani), 14)}</p>
   <table class="sig"><tbody>
     <tr>
-      <td><div class="line">revizní technik</div><div class="name">${H.v(technik.jmeno)}</div><div class="small">${certLabel}: ${H.v(technik.opravneni, 16)}</div></td>
+      <td><div class="line">revizní technik</div><div class="name">${H.v(technik.jmeno)}</div><div class="small">Ev. č. osvědčení: ${H.v(technik.osvedceni, 16)}</div><div class="small">Ev. č. oprávnění: ${H.v(technik.opravneni, 16)}</div></td>
       <td><div class="line">za provozovatele / objednatele</div><div class="name">${H.v(objednatel)}</div><div class="small">&nbsp;</div></td>
     </tr>
   </tbody></table></div>`;

@@ -153,7 +153,7 @@ function render(ctx: DocContext): string {
     sec('18. Doporučená lhůta provedení příští revize', `<p>Příští revize by měla být provedena nejpozději do <b>${lhutaText(ctx)}</b>.</p>`),
   );
   if (vis('rozdelovnik') && revize.rozdelovnik) parts.push(sec('Rozdělovník', rozdelovnikTable(ctx, revize.rozdelovnik)));
-  parts.push(sec('19. Potvrzení o předání zprávy', podpisy(ctx, 'Ev. č.')));
+  parts.push(sec('19. Potvrzení o předání zprávy', podpisy(ctx)));
   parts.push(prilohyPages(ctx));
 
   return flowPage(ctx, 'Revizní zpráva – Hromosvod', parts.join(''));

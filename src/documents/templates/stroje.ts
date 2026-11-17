@@ -129,7 +129,7 @@ function render(ctx: DocContext): string {
 
   parts.push(sec('15. Doporučená lhůta provedení příštího ověření',
     `<p>Příští ověření by mělo být provedeno nejpozději do <b>${lhutaText(ctx, true)}</b>.</p>`));
-  parts.push(sec('16. Potvrzení o předání protokolu', podpisy(ctx, 'Ev. č.')));
+  parts.push(sec('16. Potvrzení o předání protokolu', podpisy(ctx)));
   parts.push(prilohyPages(ctx));
 
   return flowPage(ctx, 'Zpráva o revizi elektrické instalace strojního zařízení', parts.join(''));

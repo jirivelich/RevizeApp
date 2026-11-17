@@ -150,7 +150,7 @@ function render(ctx: DocContext): string {
   parts.push(sec(t('lhuta', 'Doporučená lhůta příští revize'),
     `<p>Příští revize by měla být provedena nejpozději do <b>${lhutaText(ctx, true)}</b>.</p>`));
   if (nums.rozdelovnik) parts.push(sec(t('rozdelovnik', 'Rozdělovník'), H.paras(revize.rozdelovnik)));
-  parts.push(sec(t('predani', 'Potvrzení o předání revizní zprávy'), podpisy(ctx, 'Ev. č.')));
+  parts.push(sec(t('predani', 'Potvrzení o předání revizní zprávy'), podpisy(ctx)));
   parts.push(prilohyPages(ctx));
 
   return flowPage(ctx, 'Zpráva o revizi elektrické instalace odběrného místa', parts.join(''));
