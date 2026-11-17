@@ -11,13 +11,21 @@ export type Row = [label: string, valueHtml: string];
  * Otevře stránku s plynulým obsahem (data-flow) a opakovanou hlavičkou.
  * Hlavička uvádí, co bylo revidováno a kde, a číslo zprávy; na první straně
  * se netiskne (tam je hlavička firmy s číslem zprávy) – viz paginate.ts.
- * `predmet` nahradí text vlevo (např. název strojního zařízení místo místa revize).
+ * Volby: `predmet` nahradí text vlevo (např. název strojního zařízení místo místa revize),
+ * `sProvozovatelem` přidá pod něj druhý řádek s provozovatelem.
  */
-export function flowPage(ctx: DocContext, footText: string, content: string, predmet?: string): string {
-  const { H, revize } = ctx;
-  const left = predmet?.trim()
-    ? H.esc(predmet.trim())
-    : [revize.nazev, revize.adresa].map(s => s?.trim()).filter(Boolean).map(s => H.esc(s!)).join(', ');
+export function flowPage(
+  ctx: DocContext, footText: string, content: string,
+  opts: { predmet?: string; sProvozovatelem?: boolean } = {},
+): string {
+  const { H, revize, provozovatel } = ctx;
+  const radky = [
+    opts.predmet?.trim()
+      ? H.esc(opts.predmet.trim())
+      : [revize.nazev, revize.adresa].map(s => s?.trim()).filter(Boolean).map(s => H.esc(s!)).join(', '),
+  ];
+  if (opts.sProvozovatelem && provozovatel.nazev?.trim()) radky.push(`Provozovatel: ${H.esc(provozovatel.nazev.trim())}`);
+  const left = radky.filter(Boolean).join('<br>');
   const head = `<table class="page-head"><tbody><tr><td>${left}</td><td class="r">ev. č. ${H.v(revize.cisloRevize, 12)}</td></tr></tbody></table>`;
   return `<div class="page" data-flow data-foot="${H.esc(footText)}">${head}${content}</div>`;
 }

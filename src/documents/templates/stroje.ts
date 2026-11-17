@@ -132,8 +132,8 @@ function render(ctx: DocContext): string {
   parts.push(sec('16. Potvrzení o předání protokolu', podpisy(ctx)));
   parts.push(prilohyPages(ctx));
 
-  // V záhlaví stránek název revidovaného stroje (místo revize je na první straně)
-  return flowPage(ctx, 'Zpráva o revizi elektrické instalace strojního zařízení', parts.join(''), sd?.strojNazev);
+  // V záhlaví stránek název revidovaného stroje a provozovatel (místo revize je na první straně)
+  return flowPage(ctx, 'Zpráva o revizi elektrické instalace strojního zařízení', parts.join(''), { predmet: sd?.strojNazev, sProvozovatelem: true });
 }
 
 TPL.register({
