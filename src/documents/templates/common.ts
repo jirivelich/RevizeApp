@@ -11,10 +11,13 @@ export type Row = [label: string, valueHtml: string];
  * Otevře stránku s plynulým obsahem (data-flow) a opakovanou hlavičkou.
  * Hlavička uvádí, co bylo revidováno a kde, a číslo zprávy; na první straně
  * se netiskne (tam je hlavička firmy s číslem zprávy) – viz paginate.ts.
+ * `predmet` nahradí text vlevo (např. název strojního zařízení místo místa revize).
  */
-export function flowPage(ctx: DocContext, footText: string, content: string): string {
+export function flowPage(ctx: DocContext, footText: string, content: string, predmet?: string): string {
   const { H, revize } = ctx;
-  const left = [revize.nazev, revize.adresa].map(s => s?.trim()).filter(Boolean).map(s => H.esc(s!)).join(', ');
+  const left = predmet?.trim()
+    ? H.esc(predmet.trim())
+    : [revize.nazev, revize.adresa].map(s => s?.trim()).filter(Boolean).map(s => H.esc(s!)).join(', ');
   const head = `<table class="page-head"><tbody><tr><td>${left}</td><td class="r">ev. č. ${H.v(revize.cisloRevize, 12)}</td></tr></tbody></table>`;
   return `<div class="page" data-flow data-foot="${H.esc(footText)}">${head}${content}</div>`;
 }
