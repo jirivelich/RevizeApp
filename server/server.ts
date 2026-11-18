@@ -5,8 +5,8 @@ import bodyParser from 'body-parser';
 import { pool, initializeDatabase } from './database';
 import { authMiddleware, loginUser, registerUser, logoutSession, changePassword, AuthRequest } from './auth';
 import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion, analyzeRozvadecPhotos } from './ai';
-import { getAuthUrl, exchangeCodeAndSave, deleteTokens, getTokens, saveTokens, listCalendars, syncZakazkyToCalendar, isGoogleConfigured } from './googleCalendar';
-import { createState, verifyState, frontendBase as googleFrontendBase, popisChybyGoogle } from './google-utils';
+import { getAuthUrl, exchangeCodeAndSave, deleteTokens, getTokens, saveTokens, listCalendars, syncZakazkyToCalendar, isGoogleConfigured, removeAppEvents, resolvePrimaryAlias } from './googleCalendar';
+import { createState, verifyState, frontendBase as googleFrontendBase, popisChybyGoogle, parseCalendarIds, normalizeCalendarIds, MAX_KALENDARU } from './google-utils';
 import { PolozkaInput, toNum, vypocitejPolozku, vypocitejCelkem, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj } from './faktura-utils';
 import { diffZmen, zapisAudit } from './audit';
 import { hlidejZamek, jeZamceny } from './zamek';
@@ -1202,36 +1202,47 @@ async function startServer() {
     return null;
   }
 
+  // Kalendáře vybrané uživatelem k synchronizaci; null = Google Kalendář není propojen.
+  async function getUserCalendarIds(userId: number): Promise<string[] | null> {
+    const r = await pool.query('SELECT calendar_id, calendar_ids FROM google_oauth_tokens WHERE user_id = $1', [userId]);
+    if (r.rows.length === 0) return null;
+    return parseCalendarIds(r.rows[0].calendar_ids, r.rows[0].calendar_id);
+  }
+
+  // Synchronizovat všechny aktivní zakázky do všech vybraných kalendářů uživatele.
+  async function syncAllCalendars(userId: number, calendarIds: string[]) {
+    const zakazkyResult = await pool.query(`
+      SELECT id, nazev, klient, adresa, "datumPlanovany", "casPlanovany", "casKonec", "celyDen",
+             "datumDokonceni", "datumyRealizace", "datumOdevzdaniZpravy",
+             stav, priorita, poznamka
+      FROM zakazka
+      WHERE stav != 'zrušeno'
+      ORDER BY "datumPlanovany" DESC
+    `);
+    const zakazky = zakazkyResult.rows.map((r: any) => ({
+      ...r,
+      datumyRealizace: r.datumyRealizace
+        ? (typeof r.datumyRealizace === 'string' ? JSON.parse(r.datumyRealizace) : r.datumyRealizace)
+        : [],
+    }));
+    const nastaveniRow = await pool.query('SELECT "upozorneniZakazkaDni" FROM nastaveni LIMIT 1');
+    const reminderDaysBefore = nastaveniRow.rows[0]?.upozorneniZakazkaDni ?? undefined;
+
+    const total = { created: 0, updated: 0, deleted: 0, errors: 0, calendars: calendarIds.length };
+    for (const calendarId of calendarIds) {
+      const r = await syncZakazkyToCalendar(userId, calendarId, zakazky, reminderDaysBefore);
+      total.created += r.created; total.updated += r.updated; total.deleted += r.deleted; total.errors += r.errors;
+    }
+    return total;
+  }
+
   // Best-effort automatická synchronizace zakázek do Google Kalendáře po zápisu.
   // Nikdy neblokuje ani neshazuje odpověď klientovi - chyby se jen zalogují.
   async function triggerAutoGoogleSync(userId: number) {
     try {
-      const tokenRow = await pool.query(
-        'SELECT calendar_id FROM google_oauth_tokens WHERE user_id = $1',
-        [userId]
-      );
-      if (tokenRow.rows.length === 0) return; // uživatel nemá propojený Google Calendar
-      const calendarId = tokenRow.rows[0].calendar_id || 'primary';
-
-      const zakazkyResult = await pool.query(`
-        SELECT id, nazev, klient, adresa, "datumPlanovany", "casPlanovany", "casKonec", "celyDen",
-               "datumDokonceni", "datumyRealizace", "datumOdevzdaniZpravy",
-               stav, priorita, poznamka
-        FROM zakazka
-        WHERE stav != 'zrušeno'
-        ORDER BY "datumPlanovany" DESC
-      `);
-      const zakazky = zakazkyResult.rows.map((r: any) => ({
-        ...r,
-        datumyRealizace: r.datumyRealizace
-          ? (typeof r.datumyRealizace === 'string' ? JSON.parse(r.datumyRealizace) : r.datumyRealizace)
-          : [],
-      }));
-
-      const nastaveniRow = await pool.query('SELECT "upozorneniZakazkaDni" FROM nastaveni LIMIT 1');
-      const reminderDaysBefore = nastaveniRow.rows[0]?.upozorneniZakazkaDni ?? undefined;
-
-      await syncZakazkyToCalendar(userId, calendarId, zakazky, reminderDaysBefore);
+      const calendarIds = await getUserCalendarIds(userId);
+      if (!calendarIds) return; // uživatel nemá propojený Google Calendar
+      await syncAllCalendars(userId, calendarIds);
     } catch (err) {
       console.error('Automatická synchronizace do Google Calendar selhala:', err);
     }
@@ -2453,13 +2464,8 @@ async function startServer() {
       if (!tokens) {
         return res.json({ configured, connected: false, calendarId: null });
       }
-      // Načíst uložený calendarId
-      const row = await pool.query(
-        'SELECT calendar_id FROM google_oauth_tokens WHERE user_id = $1',
-        [req.user!.id]
-      );
-      const calendarId = row.rows[0]?.calendar_id ?? 'primary';
-      res.json({ configured, connected: true, calendarId });
+      const calendarIds = (await getUserCalendarIds(req.user!.id)) || ['primary'];
+      res.json({ configured, connected: true, calendarId: calendarIds[0], calendarIds });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -2485,57 +2491,42 @@ async function startServer() {
     }
   });
 
-  // Uložit vybraný kalendář
+  // Uložit vybrané kalendáře (pole calendarIds; kvůli zpětné kompatibilitě i jediné calendarId).
+  // Z kalendářů odebraných z výběru se na pozadí smažou události vytvořené aplikací.
   app.post('/api/google/calendar', authMiddleware, async (req: AuthRequest, res) => {
     try {
-      const { calendarId } = req.body;
-      if (!calendarId) return res.status(400).json({ error: 'calendarId je povinný' });
-      await pool.query(
-        'UPDATE google_oauth_tokens SET calendar_id = $1 WHERE user_id = $2',
-        [calendarId, req.user!.id]
+      const userId = req.user!.id;
+      const vstup = Array.isArray(req.body?.calendarIds) ? req.body.calendarIds : [req.body?.calendarId];
+      const calendarIds = normalizeCalendarIds(vstup);
+      if (!calendarIds) {
+        return res.status(400).json({ error: `Vyberte 1 až ${MAX_KALENDARU} kalendářů` });
+      }
+      // Zkratka „primary“ = hlavní kalendář; sjednotit, aby se nepovažoval za odebraný
+      const calendarIdsResolved = await resolvePrimaryAlias(userId, calendarIds);
+      const puvodni = await resolvePrimaryAlias(userId, (await getUserCalendarIds(userId)) || []);
+      const r = await pool.query(
+        'UPDATE google_oauth_tokens SET calendar_id = $1, calendar_ids = $2 WHERE user_id = $3',
+        [calendarIdsResolved[0], JSON.stringify(calendarIdsResolved), userId]
       );
-      res.json({ success: true });
+      if (r.rowCount === 0) return res.status(400).json({ error: 'Google Calendar není propojen' });
+      res.json({ success: true, calendarIds: calendarIdsResolved });
+
+      const odebrane = puvodni.filter(id => !calendarIdsResolved.includes(id));
+      for (const calendarId of odebrane) {
+        removeAppEvents(userId, calendarId).catch(err =>
+          console.error(`Úklid kalendáře ${calendarId} selhal:`, err));
+      }
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: popisChybyGoogle(error) });
     }
   });
 
   // Synchronizovat zakázky do Google Calendar
   app.post('/api/google/sync', authMiddleware, async (req: AuthRequest, res) => {
     try {
-      const userId = req.user!.id;
-
-      // Načíst vybraný kalendář pro tohoto uživatele
-      const tokenRow = await pool.query(
-        'SELECT calendar_id FROM google_oauth_tokens WHERE user_id = $1',
-        [userId]
-      );
-      if (tokenRow.rows.length === 0) {
-        return res.status(400).json({ error: 'Google Calendar není propojen' });
-      }
-      const calendarId = tokenRow.rows[0].calendar_id || 'primary';
-
-      // Načíst všechny zakázky z DB
-      const zakazkyResult = await pool.query(`
-        SELECT id, nazev, klient, adresa, "datumPlanovany", "casPlanovany", "casKonec", "celyDen",
-               "datumDokonceni", "datumyRealizace", "datumOdevzdaniZpravy",
-               stav, priorita, poznamka
-        FROM zakazka
-        WHERE stav != 'zrušeno'
-        ORDER BY "datumPlanovany" DESC
-      `);
-
-      const zakazky = zakazkyResult.rows.map((r: any) => ({
-        ...r,
-        datumyRealizace: r.datumyRealizace
-          ? (typeof r.datumyRealizace === 'string' ? JSON.parse(r.datumyRealizace) : r.datumyRealizace)
-          : [],
-      }));
-
-      const nastaveniRow = await pool.query('SELECT "upozorneniZakazkaDni" FROM nastaveni LIMIT 1');
-      const reminderDaysBefore = nastaveniRow.rows[0]?.upozorneniZakazkaDni ?? undefined;
-
-      const result = await syncZakazkyToCalendar(userId, calendarId, zakazky, reminderDaysBefore);
+      const calendarIds = await getUserCalendarIds(req.user!.id);
+      if (!calendarIds) return res.status(400).json({ error: 'Google Calendar není propojen' });
+      const result = await syncAllCalendars(req.user!.id, calendarIds);
       res.json({ success: true, ...result });
     } catch (error: any) {
       console.error('Google Calendar sync chyba:', error);

@@ -141,3 +141,28 @@ export function popisChybyGoogle(err: unknown): string {
   }
   return e?.message || 'Neznámá chyba Google API';
 }
+
+/** Nejvýše tolik kalendářů lze vybrat k synchronizaci. */
+export const MAX_KALENDARU = 10;
+
+/**
+ * Vybrané kalendáře uživatele: sloupec calendar_ids (JSON pole), jinak starší
+ * calendar_id, jinak hlavní kalendář.
+ */
+export function parseCalendarIds(calendarIdsJson: unknown, calendarId: unknown): string[] {
+  if (typeof calendarIdsJson === 'string' && calendarIdsJson.trim()) {
+    try {
+      const ids = normalizeCalendarIds(JSON.parse(calendarIdsJson));
+      if (ids && ids.length) return ids;
+    } catch { /* poškozený JSON – použít calendar_id */ }
+  }
+  return [typeof calendarId === 'string' && calendarId.trim() ? calendarId.trim() : 'primary'];
+}
+
+/** Ověří vstup z klienta: neprázdné pole unikátních řetězců (max. MAX_KALENDARU); jinak null. */
+export function normalizeCalendarIds(input: unknown): string[] | null {
+  if (!Array.isArray(input)) return null;
+  const ids = [...new Set(input.filter((x): x is string => typeof x === 'string').map(x => x.trim()).filter(Boolean))];
+  if (ids.length === 0 || ids.length > MAX_KALENDARU || ids.some(id => id.length > 255)) return null;
+  return ids;
+}

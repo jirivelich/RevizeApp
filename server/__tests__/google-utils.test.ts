@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createState, verifyState, frontendBase, buildEventData, addMinutes, nextDay, popisChybyGoogle } from '../google-utils';
+import { createState, verifyState, frontendBase, buildEventData, addMinutes, nextDay, popisChybyGoogle, parseCalendarIds, normalizeCalendarIds } from '../google-utils';
 
 const SECRET = 'tajne';
 const base = {
@@ -67,5 +67,21 @@ describe('popisChybyGoogle', () => {
     expect(popisChybyGoogle({ message: 'invalid_grant' })).toMatch(/znovu připojte/);
     expect(popisChybyGoogle({ response: { data: { error: 'invalid_grant' } } })).toMatch(/vypršelo/);
     expect(popisChybyGoogle(new Error('Něco jiného'))).toBe('Něco jiného');
+  });
+});
+
+
+describe('výběr více kalendářů', () => {
+  it('čte calendar_ids, jinak calendar_id, jinak primary', () => {
+    expect(parseCalendarIds('["a@x","b@y"]', 'a@x')).toEqual(['a@x', 'b@y']);
+    expect(parseCalendarIds(null, 'firma@group')).toEqual(['firma@group']);
+    expect(parseCalendarIds('rozbité{', null)).toEqual(['primary']);
+    expect(parseCalendarIds('[]', 'c@z')).toEqual(['c@z']);
+  });
+  it('validuje vstup z klienta', () => {
+    expect(normalizeCalendarIds([' a ', 'a', 'b'])).toEqual(['a', 'b']);
+    expect(normalizeCalendarIds([])).toBeNull();
+    expect(normalizeCalendarIds('a')).toBeNull();
+    expect(normalizeCalendarIds(Array.from({ length: 11 }, (_, i) => `k${i}`))).toBeNull();
   });
 });

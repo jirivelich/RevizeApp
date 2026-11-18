@@ -557,6 +557,8 @@ export async function initializeDatabase() {
         updated_at TEXT NOT NULL
       )`,
       'ALTER TABLE google_oauth_tokens ADD COLUMN IF NOT EXISTS calendar_id TEXT DEFAULT \'primary\'',
+      // Více kalendářů k synchronizaci (JSON pole id)
+      'ALTER TABLE google_oauth_tokens ADD COLUMN IF NOT EXISTS calendar_ids TEXT',
       // ===== Fakturace =====
       `CREATE TABLE IF NOT EXISTS faktura (
         id SERIAL PRIMARY KEY,

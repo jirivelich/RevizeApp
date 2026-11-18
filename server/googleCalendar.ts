@@ -94,14 +94,23 @@ async function getAuthorizedClient(userId: number) {
 }
 
 // Získat seznam kalendářů uživatele
-export async function listCalendars(userId: number): Promise<{ id: string; summary: string }[]> {
+export async function listCalendars(userId: number): Promise<{ id: string; summary: string; primary: boolean }[]> {
   const auth = await getAuthorizedClient(userId);
   const calendar = google.calendar({ version: 'v3', auth });
-  const response = await calendar.calendarList.list();
+  // Jen kalendáře, do kterých lze zapisovat (vlastník / zapisovatel)
+  const response = await calendar.calendarList.list({ minAccessRole: 'writer' });
   return (response.data.items || []).map((c) => ({
     id: c.id!,
-    summary: c.summary || c.id!,
+    summary: c.summaryOverride || c.summary || c.id!,
+    primary: !!c.primary,
   }));
+}
+
+/** Nahradí zkratku „primary“ skutečným ID hlavního kalendáře (a odstraní duplicity). */
+export async function resolvePrimaryAlias(userId: number, ids: string[]): Promise<string[]> {
+  if (!ids.includes('primary')) return ids;
+  const primary = (await listCalendars(userId)).find(c => c.primary)?.id;
+  return [...new Set(ids.map(id => (id === 'primary' && primary ? primary : id)))];
 }
 
 // Synchronizovat zakázky do Google Kalendáře.
@@ -165,6 +174,22 @@ export async function syncZakazkyToCalendar(
   }
 
   return { created, updated, deleted, errors };
+}
+
+// Odebrat z kalendáře všechny události vytvořené aplikací (při odebrání kalendáře z výběru)
+export async function removeAppEvents(userId: number, calendarId: string): Promise<number> {
+  const auth = await getAuthorizedClient(userId);
+  const calendar = google.calendar({ version: 'v3', auth });
+  const existing = await getExistingRevizeAppEvents(calendar, calendarId);
+  let deleted = 0;
+  for (const ids of existing.values()) {
+    for (const eventId of ids) {
+      try { await calendar.events.delete({ calendarId, eventId }); deleted++; } catch (err) {
+        console.error(`Chyba při mazání události ${eventId} z kalendáře ${calendarId}:`, err);
+      }
+    }
+  }
+  return deleted;
 }
 
 // Načíst existující události aplikace z Google Calendar → mapa eventKey → [eventId, …].

@@ -6,11 +6,14 @@ export interface GoogleCalendarStatus {
   configured?: boolean;
   connected: boolean;
   calendarId: string | null;
+  /** Všechny kalendáře vybrané k synchronizaci */
+  calendarIds?: string[];
 }
 
 export interface GoogleCalendarItem {
   id: string;
   summary: string;
+  primary?: boolean;
 }
 
 export interface SyncResult {
@@ -19,6 +22,7 @@ export interface SyncResult {
   updated: number;
   deleted?: number;
   errors: number;
+  calendars?: number;
 }
 
 /** Text výsledku synchronizace pro uživatele. */
@@ -26,7 +30,8 @@ export function popisSynchronizace(r: SyncResult): string {
   const casti = [`${r.created} nových`, `${r.updated} aktualizováno`];
   if (r.deleted) casti.push(`${r.deleted} odebráno`);
   if (r.errors) casti.push(`${r.errors} chyb`);
-  return `Synchronizace dokončena: ${casti.join(', ')}.`;
+  const kde = r.calendars && r.calendars > 1 ? ` (${r.calendars} kalendáře)` : '';
+  return `Synchronizace dokončena${kde}: ${casti.join(', ')}.`;
 }
 
 export const googleCalendarService = {
@@ -59,12 +64,12 @@ export const googleCalendarService = {
     return data.calendars;
   },
 
-  // Uložit vybraný kalendář
-  async saveCalendar(calendarId: string): Promise<void> {
+  // Uložit vybrané kalendáře (z odebraných se události aplikace smažou)
+  async saveCalendars(calendarIds: string[]): Promise<void> {
     const res = await fetch(buildApiUrl('/google/calendar'), {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ calendarId }),
+      body: JSON.stringify({ calendarIds }),
     });
     await handleResponse<{ success: boolean }>(res);
   },
