@@ -276,15 +276,23 @@ function Block({ b, p, top, hour, podil = 1 }: { b: TimedBlock; p: PlanProps; to
   const h = (b.to - b.from) * hour;
   // podil < 1: část šířky sloupce přenechaná událostem z Google Kalendáře
   const width = `calc((100% - 6px) * ${podil} / ${b.cols})`;
+  // úzký blok (víc zakázek vedle sebe) a krátký blok – méně textu, ať se nic neusekne v půlce řádku
+  const uzky = b.cols > 1 || podil < 1;
+  const kratky = h < 56;
+  const radkuNazvu = h < 34 ? 1 : h < 56 ? 1 : h < 90 || !uzky ? 2 : 3;
   return (
     <Drag z={b.z} id={`block|${b.z.id}`}
       style={{ position: 'absolute', top: top + 2, height: h - 4, left: `calc(3px + (100% - 6px) * ${podil} * ${b.col} / ${b.cols})`, width, zIndex: 1 }}>
-      <button type="button" onClick={() => p.onEdit(b.z)}
-        className={`w-full h-full box-border rounded-[var(--radius-sm)] px-2 py-1.5 flex flex-col gap-0.5 overflow-hidden text-left ${isClosed(b.z) ? 'opacity-55' : ''}`}
+      <button type="button" onClick={() => p.onEdit(b.z)} title={`${b.z.nazev} · ${formatTime(b.from)}–${formatTime(b.to)}${b.z.klient ? ` · ${b.z.klient}` : ''}`}
+        className={`w-full h-full box-border rounded-[var(--radius-sm)] ${uzky ? 'px-1 py-0.5' : kratky ? 'px-1.5 py-1' : 'px-2 py-1.5'} flex flex-col gap-0.5 overflow-hidden text-left ${isClosed(b.z) ? 'opacity-55' : ''}`}
         style={{ background: KAT_META[kat].bg, border: `1px solid color-mix(in srgb, ${KAT_META[kat].color} 45%, transparent)` }}>
-        <span className="text-xs font-semibold text-[var(--text)] leading-tight line-clamp-2">{b.z.nazev}</span>
-        <span className="text-[11px] font-medium" style={{ color: KAT_META[kat].color }}>{formatTime(b.from)}–{formatTime(b.to)}</span>
-        {h >= 72 && <span className="text-[11px] text-[var(--text-secondary)] truncate">{b.z.klient}</span>}
+        <span className={`${uzky ? 'text-[11px] break-words' : 'text-xs'} font-semibold text-[var(--text)] leading-tight ${radkuNazvu === 1 ? 'line-clamp-1' : radkuNazvu === 2 ? 'line-clamp-2' : 'line-clamp-3'}`}>{b.z.nazev}</span>
+        {h >= 34 && (
+          <span className="text-[11px] font-medium leading-tight whitespace-nowrap overflow-hidden text-ellipsis" style={{ color: KAT_META[kat].color }}>
+            {uzky ? formatTime(b.from) : `${formatTime(b.from)}–${formatTime(b.to)}`}
+          </span>
+        )}
+        {h >= 72 && !uzky && <span className="text-[11px] text-[var(--text-secondary)] truncate">{b.z.klient}</span>}
       </button>
     </Drag>
   );

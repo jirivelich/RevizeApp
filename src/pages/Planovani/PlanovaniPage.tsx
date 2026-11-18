@@ -75,6 +75,21 @@ export function PlanovaniPage() {
   const isMobile = useIsMobile();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // Plovoucí „+“ na mobilu: při posunu dolů se schová, ať nezakrývá obsah; při posunu nahoru se vrátí
+  const [fabVisible, setFabVisible] = useState(true);
+  useEffect(() => {
+    let posledni = 0;
+    const onScroll = (e: Event) => {
+      const el = e.target instanceof Element ? e.target : document.scrollingElement;
+      if (!el) return;
+      const y = el.scrollTop;
+      if (Math.abs(y - posledni) < 8) return;
+      setFabVisible(y < 40 || y < posledni);
+      posledni = y;
+    };
+    window.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    return () => window.removeEventListener('scroll', onScroll, { capture: true });
+  }, []);
   const [viewMode, setViewModeState] = useState<ViewMode>(readView);
   const setViewMode = (v: ViewMode) => {
     setViewModeState(v);
@@ -302,7 +317,7 @@ export function PlanovaniPage() {
       type="button"
       onClick={() => setViewMode(v)}
       aria-pressed={viewMode === v}
-      className={`px-3 md:px-4 min-h-[40px] text-[13px] font-semibold transition-colors ${
+      className={`flex-1 md:flex-none px-3 md:px-4 min-h-[44px] md:min-h-[40px] text-sm md:text-[13px] font-semibold transition-colors ${
         viewMode === v
           ? 'bg-[var(--bg-accent)] text-[var(--primary-text)]'
           : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
@@ -318,18 +333,33 @@ export function PlanovaniPage() {
         title="Plánování"
         subtitle="Zakázky a revize v kalendáři"
         actions={
-          <div className="flex gap-2 flex-wrap justify-end">
-            <div role="group" aria-label="Pohled" className="flex rounded-[var(--radius-md)] overflow-hidden border border-[var(--border-input)]">
+          <div className="flex gap-2 w-full md:w-auto">
+            <div role="group" aria-label="Pohled" className="flex flex-1 md:flex-none rounded-[var(--radius-md)] overflow-hidden border border-[var(--border-input)]">
               {viewBtn('list', 'Seznam')}
               {viewBtn('week', 'Týden')}
               {viewBtn('calendar', 'Měsíc')}
             </div>
+            {/* Mobil: jen ikona synchronizace */}
+            <button
+              type="button"
+              onClick={handleGcSync}
+              disabled={gcSyncing}
+              aria-label="Synchronizovat s Google Kalendářem"
+              title="Synchronizovat s Google Kalendářem"
+              className="md:hidden shrink-0 w-11 min-h-[44px] grid place-items-center rounded-[var(--radius-md)] border border-[var(--border-input)] text-[var(--text-secondary)] disabled:opacity-50"
+            >
+              <svg className={`w-5 h-5 ${gcSyncing ? 'animate-spin' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M23 4v6h-6M1 20v-6h6"/>
+                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+              </svg>
+            </button>
+            {/* Počítač: plná tlačítka (obal kvůli skrytí – Button má vlastní inline-flex) */}
+            <div className="hidden md:flex gap-2">
             <Button
               variant="secondary"
               onClick={handleGcSync}
               disabled={gcSyncing}
               title="Synchronizovat zakázky do Google Kalendáře"
-              className="hidden md:inline-flex"
             >
               <svg className="w-4 h-4 mr-1.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M23 4v6h-6M1 20v-6h6"/>
@@ -337,7 +367,8 @@ export function PlanovaniPage() {
               </svg>
               {gcSyncing ? 'Sync…' : 'Google Kalendář'}
             </Button>
-            <Button onClick={() => openCreate()} className="hidden md:inline-flex">+ Nová zakázka</Button>
+            <Button onClick={() => openCreate()}>+ Nová zakázka</Button>
+            </div>
           </div>
         }
       />
@@ -365,7 +396,10 @@ export function PlanovaniPage() {
           type="button"
           aria-label="Nová zakázka"
           onClick={() => openCreate()}
-          className="fixed right-4 z-40 w-14 h-14 rounded-2xl bg-[var(--primary)] text-[var(--primary-fg)] flex items-center justify-center shadow-[var(--shadow-lg)]"
+          tabIndex={fabVisible ? 0 : -1}
+          aria-hidden={!fabVisible}
+          className={`fixed right-4 z-40 w-14 h-14 rounded-2xl bg-[var(--primary)] text-[var(--primary-fg)] flex items-center justify-center shadow-[var(--shadow-lg)] transition-[transform,opacity] duration-200 ${
+            fabVisible ? 'translate-y-0 opacity-100' : 'translate-y-24 opacity-0 pointer-events-none'}`}
           style={{ bottom: 'calc(84px + env(safe-area-inset-bottom, 0px))' }}
         >
           <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>

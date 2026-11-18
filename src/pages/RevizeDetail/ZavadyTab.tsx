@@ -158,10 +158,10 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
       title="Závady"
       actions={
         <div className="flex gap-2">
+          <span className="hidden md:contents">
           <Button
             size="sm"
             variant={inlineMode ? 'primary' : 'secondary'}
-            className="hidden md:inline-flex"
             onClick={() => {
               const next = !inlineMode;
               setInlineMode(next);
@@ -170,6 +170,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
           >
             {inlineMode ? '← Karty' : '⌨ Hromadný vstup'}
           </Button>
+          </span>
           {!inlineMode && (
             <Button size="sm" onClick={() => { resetZavadaForm(); setIsZavadaModalOpen(true); }}>+ Přidat závadu</Button>
           )}
