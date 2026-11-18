@@ -286,7 +286,7 @@ export function timedBlocks(zakazky: Zakazka[], day: string): TimedBlock[] {
 }
 
 /** Rozsah časové osy: 7–17 h, rozšířený podle zakázek. */
-export function hourRange(blocks: TimedBlock[]): { start: number; end: number } {
+export function hourRange(blocks: { from: number; to: number }[]): { start: number; end: number } {
   let start = 7, end = 17;
   for (const b of blocks) {
     start = Math.min(start, Math.floor(b.from));
@@ -358,4 +358,43 @@ function formatHHmm(x: number): string {
   const h = Math.floor(x);
   const m = Math.round((x - h) * 60);
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+// ── Události z Google Kalendáře (jen zobrazení) ─────────────
+
+/** Minimální tvar události z Google (viz services/googleCalendar.ts). */
+export interface GUdalost { id: string; nazev: string; kalendar: string; start: string; end: string; celyDen: boolean; misto?: string; odkaz?: string }
+
+/** Časová událost Googlu v daném dni: hodiny od–do v místním čase (oříznuté na den). */
+export interface GBlok { u: GUdalost; from: number; to: number }
+
+const hodinyMistne = (d: Date) => d.getHours() + d.getMinutes() / 60;
+
+/** Celodenní události Googlu, které zasahují do dne (konec je exkluzivní). */
+export function googleCelodenni(udalosti: GUdalost[] | undefined, day: string): GUdalost[] {
+  return (udalosti || []).filter(u => u.celyDen && u.start.slice(0, 10) <= day && day < u.end.slice(0, 10));
+}
+
+/** Časové události Googlu v daném dni (vícedenní se v každém dni oříznou na jeho část). */
+export function googleCasove(udalosti: GUdalost[] | undefined, day: string): GBlok[] {
+  const out: GBlok[] = [];
+  for (const u of udalosti || []) {
+    if (u.celyDen) continue;
+    const s = new Date(u.start), e = new Date(u.end);
+    if (isNaN(s.getTime()) || isNaN(e.getTime())) continue;
+    const sDay = toDateStr(s), eDay = toDateStr(e);
+    if (day < sDay || day > eDay || (day === eDay && day !== sDay && hodinyMistne(e) === 0)) continue;
+    const from = day === sDay ? hodinyMistne(s) : 0;
+    const to = day === eDay ? Math.max(hodinyMistne(e), from + 0.25) : 24;
+    out.push({ u, from, to: Math.min(24, to) });
+  }
+  return out.sort((a, b) => a.from - b.from);
+}
+
+/** Všechny události Googlu v daném dni (pro měsíční pohled). */
+export function googleVeDni(udalosti: GUdalost[] | undefined, day: string): { u: GUdalost; cas?: string }[] {
+  return [
+    ...googleCelodenni(udalosti, day).map(u => ({ u })),
+    ...googleCasove(udalosti, day).map(b => ({ u: b.u, cas: `${formatTime(b.from)}–${formatTime(b.to)}` })),
+  ];
 }

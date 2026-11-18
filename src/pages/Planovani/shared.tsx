@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Revize, Zakaznik, Zakazka } from '../../types';
-import { KAT_META, KAT_ORDER, primaryAction, mapsUrl, telHref, isClosed, type KatKey } from './model';
+import { KAT_META, KAT_ORDER, primaryAction, mapsUrl, telHref, isClosed, type KatKey, type GUdalost } from './model';
 import { STAV_OPTIONS } from './utils';
 
 /** Data a akce společné všem pohledům. */
@@ -21,6 +21,8 @@ export interface PlanProps {
   onDelete: (id: number) => void;
   /** Přetažení na den; time = 'HH:mm' (časová osa) nebo 'allday' (řádek Celý den). */
   onMove: (z: Zakazka, date: string, time: string | 'allday') => void;
+  /** Události z Google Kalendáře – jen pro přehled (šedě, bez úprav). */
+  googleUdalosti?: GUdalost[];
 }
 
 // ── Kategorie ──────────────────────────────────────────────
@@ -246,4 +248,23 @@ export function RowMenu({ z, p }: { z: Zakazka; p: PlanProps }) {
       )}
     </>
   );
+}
+
+/** Událost z Google Kalendáře – jen pro přehled; klik otevře událost v Google Kalendáři. */
+export function GoogleKarta({ u, cas }: { u: GUdalost; cas?: string }) {
+  const obsah = (
+    <>
+      <span className="w-[3px] self-stretch rounded-full bg-[var(--text-muted)] shrink-0" />
+      <span className="flex-1 min-w-0">
+        <span className="block text-[13px] font-medium text-[var(--text)] truncate">{u.nazev}</span>
+        <span className="block text-[11px] text-[var(--text-secondary)] truncate">
+          {cas ?? 'celý den'} · {u.kalendar}{u.misto ? ` · ${u.misto}` : ''}
+        </span>
+      </span>
+    </>
+  );
+  const cls = 'flex items-center gap-2.5 px-2.5 py-2 rounded-[var(--radius-md)] border border-dashed border-[var(--border-input)] bg-[var(--bg-faint)] text-left';
+  return u.odkaz
+    ? <a href={u.odkaz} target="_blank" rel="noopener noreferrer" className={`${cls} hover:bg-[var(--bg-hover)]`} title="Otevřít v Google Kalendáři">{obsah}</a>
+    : <div className={cls}>{obsah}</div>;
 }

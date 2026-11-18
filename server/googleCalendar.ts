@@ -176,6 +176,61 @@ export async function syncZakazkyToCalendar(
   return { created, updated, deleted, errors };
 }
 
+export interface GoogleUdalost {
+  id: string;
+  calendarId: string;
+  kalendar: string;
+  nazev: string;
+  /** ISO datum-čas (s časovou zónou) u časových událostí, YYYY-MM-DD u celodenních */
+  start: string;
+  /** Konec – u celodenních exkluzivní (den po posledním dni), stejně jako v Google API */
+  end: string;
+  celyDen: boolean;
+  misto?: string;
+  odkaz?: string;
+}
+
+/**
+ * Načte události z daných kalendářů v rozsahu [timeMin, timeMax) jen pro zobrazení.
+ * Vynechá události vytvořené aplikací (ty jsou v aplikaci jako zakázky) a zrušené.
+ */
+export async function listGoogleEvents(
+  userId: number, calendarIds: string[], timeMin: string, timeMax: string,
+): Promise<GoogleUdalost[]> {
+  const auth = await getAuthorizedClient(userId);
+  const calendar = google.calendar({ version: 'v3', auth });
+  const nazvy = new Map((await listCalendars(userId)).map(c => [c.id, c.summary]));
+  const out: GoogleUdalost[] = [];
+  for (const calendarId of calendarIds) {
+    let pageToken: string | undefined;
+    let strany = 0;
+    do {
+      const response: any = await calendar.events.list({
+        calendarId, timeMin, timeMax, singleEvents: true, orderBy: 'startTime',
+        maxResults: 250, pageToken, showDeleted: false,
+      });
+      for (const e of response.data.items || []) {
+        if (e.status === 'cancelled' || e.extendedProperties?.private?.revizeapp_key) continue;
+        const celyDen = !!e.start?.date;
+        const start = e.start?.dateTime || e.start?.date;
+        const end = e.end?.dateTime || e.end?.date || start;
+        if (!start) continue;
+        out.push({
+          id: `${calendarId}|${e.id}`,
+          calendarId,
+          kalendar: nazvy.get(calendarId) || calendarId,
+          nazev: e.summary || '(bez názvu)',
+          start, end, celyDen,
+          misto: e.location || undefined,
+          odkaz: e.htmlLink || undefined,
+        });
+      }
+      pageToken = response.data.nextPageToken;
+    } while (pageToken && ++strany < 8); // pojistka: max. 2000 událostí na kalendář
+  }
+  return out;
+}
+
 // Odebrat z kalendáře všechny události vytvořené aplikací (při odebrání kalendáře z výběru)
 export async function removeAppEvents(userId: number, calendarId: string): Promise<number> {
   const auth = await getAuthorizedClient(userId);

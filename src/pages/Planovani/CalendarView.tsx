@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { Zakazka } from '../../types';
 import {
-  monthGrid, fromDateStr, jobsOnDay, deadlinesOnDay, loadLevel, kategorieOf, timeLabel, timeRange, longDay, MESICE, isClosed,
+  monthGrid, fromDateStr, jobsOnDay, deadlinesOnDay, loadLevel, kategorieOf, timeLabel, timeRange, longDay, MESICE, isClosed, googleVeDni,
 } from './model';
-import { KatDot, KatLegend, NavBar, PrimaryActionButton, MapLink, PhoneLink, IconDoc, type PlanProps } from './shared';
+import { KatDot, KatLegend, NavBar, PrimaryActionButton, MapLink, PhoneLink, IconDoc, GoogleKarta, type PlanProps } from './shared';
 import { phoneOf, useCalendarKeys, useIsMobile } from './hooks';
 
 const DNY = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
@@ -36,6 +36,9 @@ export function CalendarView(p: PlanProps) {
     return [...list].sort((a, b) => key(a) - key(b));
   }, [active, selected]);
   const dayDeadlines = useMemo(() => deadlinesOnDay(p.zakazky, selected), [p.zakazky, selected]);
+  const [showGoogle, setShowGoogle] = useState(true);
+  const gUdalosti = showGoogle ? p.googleUdalosti : undefined;
+  const dayGoogle = useMemo(() => googleVeDni(gUdalosti, selected), [gUdalosti, selected]);
 
   const legend = (
     <div className="flex flex-wrap items-center gap-3">
@@ -44,6 +47,12 @@ export function CalendarView(p: PlanProps) {
         <input type="checkbox" className="w-4 h-4 accent-[var(--primary)]" checked={showDeadlines} onChange={e => setShowDeadlines(e.target.checked)} />
         Termíny zpráv
       </label>
+      {p.googleUdalosti && (
+        <label className="inline-flex items-center gap-2 text-xs text-[var(--text-secondary)] min-h-[36px]">
+          <input type="checkbox" className="w-4 h-4 accent-[var(--primary)]" checked={showGoogle} onChange={e => setShowGoogle(e.target.checked)} />
+          Google Kalendář
+        </label>
+      )}
     </div>
   );
 
@@ -66,6 +75,7 @@ export function CalendarView(p: PlanProps) {
               const inMonth = dt.getMonth() === ym.m;
               const jobs = inMonth ? jobsOnDay(active, d) : [];
               const deadlines = inMonth && showDeadlines ? deadlinesOnDay(p.zakazky, d) : [];
+              const gCount = inMonth ? googleVeDni(gUdalosti, d).length : 0;
               const lateDeadline = deadlines.some(() => d < p.today);
               const isToday = d === p.today;
               const isSel = d === selected;
@@ -96,15 +106,20 @@ export function CalendarView(p: PlanProps) {
                       <span title="Termín odevzdání zprávy" className={lateDeadline ? 'text-[var(--danger-text)]' : 'text-[var(--warning-text)]'}><IconDoc /></span>
                     )}
                   </span>
-                  {jobs.length > 0 && (
+                  {(jobs.length > 0 || gCount > 0) && (
                     <span className={`flex items-center gap-1 ${isMobile ? 'h-[6px]' : 'mt-auto w-full'}`}>
                       {jobs.slice(0, isMobile ? 3 : 4).map(z => (
                         <KatDot key={z.id} kat={kategorieOf(z, p.revizeById)} size={isMobile ? 5 : 8} />
                       ))}
-                      {!isMobile && <span className="ml-auto text-[11px] font-semibold text-[var(--text-secondary)]">{jobs.length}</span>}
+                      {gCount > 0 && (
+                        <span title={`${gCount} ${gCount === 1 ? 'událost' : gCount < 5 ? 'události' : 'událostí'} z Google Kalendáře`}
+                          className="rounded-full border border-[var(--text-muted)] shrink-0"
+                          style={{ width: isMobile ? 5 : 8, height: isMobile ? 5 : 8 }} />
+                      )}
+                      {!isMobile && jobs.length > 0 && <span className="ml-auto text-[11px] font-semibold text-[var(--text-secondary)]">{jobs.length}</span>}
                     </span>
                   )}
-                  {isMobile && jobs.length === 0 && <span className="h-[6px]" />}
+                  {isMobile && jobs.length === 0 && gCount === 0 && <span className="h-[6px]" />}
                 </button>
               );
             })}
@@ -128,6 +143,13 @@ export function CalendarView(p: PlanProps) {
           </div>
 
           {dayJobs.map(z => <DayCard key={z.id} z={z} p={p} day={selected} />)}
+
+          {dayGoogle.length > 0 && (
+            <div className="pt-3 border-t border-[var(--border)] flex flex-col gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-secondary)]">Google Kalendář</span>
+              {dayGoogle.map(({ u, cas }) => <GoogleKarta key={u.id} u={u} cas={cas} />)}
+            </div>
+          )}
 
           {dayDeadlines.length > 0 && (
             <div className="pt-3 border-t border-[var(--border)] flex flex-col gap-2">

@@ -5,7 +5,7 @@ import bodyParser from 'body-parser';
 import { pool, initializeDatabase } from './database';
 import { authMiddleware, loginUser, registerUser, logoutSession, changePassword, AuthRequest } from './auth';
 import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion, analyzeRozvadecPhotos } from './ai';
-import { getAuthUrl, exchangeCodeAndSave, deleteTokens, getTokens, saveTokens, listCalendars, syncZakazkyToCalendar, isGoogleConfigured, removeAppEvents, resolvePrimaryAlias } from './googleCalendar';
+import { getAuthUrl, exchangeCodeAndSave, deleteTokens, getTokens, saveTokens, listCalendars, syncZakazkyToCalendar, isGoogleConfigured, removeAppEvents, resolvePrimaryAlias, listGoogleEvents } from './googleCalendar';
 import { createState, verifyState, frontendBase as googleFrontendBase, popisChybyGoogle, parseCalendarIds, normalizeCalendarIds, MAX_KALENDARU, cilovyKalendar } from './google-utils';
 import { PolozkaInput, toNum, vypocitejPolozku, vypocitejCelkem, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj } from './faktura-utils';
 import { diffZmen, zapisAudit } from './audit';
@@ -2542,6 +2542,30 @@ async function startServer() {
         removeAppEvents(userId, calendarId).catch(err =>
           console.error(`Úklid kalendáře ${calendarId} selhal:`, err));
       }
+    } catch (error: any) {
+      res.status(500).json({ error: popisChybyGoogle(error) });
+    }
+  });
+
+  // Události z Google kalendářů pro zobrazení v kalendáři aplikace (jen čtení).
+  // ?from=YYYY-MM-DD&to=YYYY-MM-DD (to včetně), rozsah max. 400 dní.
+  app.get('/api/google/events', authMiddleware, async (req: AuthRequest, res) => {
+    try {
+      const from = String(req.query.from || '');
+      const to = String(req.query.to || '');
+      const D = /^\d{4}-\d{2}-\d{2}$/;
+      if (!D.test(from) || !D.test(to) || from > to) {
+        return res.status(400).json({ error: 'Zadejte rozsah from/to ve tvaru YYYY-MM-DD' });
+      }
+      const dny = (Date.parse(to) - Date.parse(from)) / 86400000;
+      if (dny > 400) return res.status(400).json({ error: 'Rozsah může být nejvýše 400 dní' });
+      const cal = await getUserCalendars(req.user!.id);
+      if (!cal) return res.json({ events: [] });
+      const ids = await resolvePrimaryAlias(req.user!.id, cal.ids);
+      // Rozsah s rezervou ±1 den kvůli časovým zónám; přesné dny si určí klient
+      const timeMin = new Date(Date.parse(from) - 86400000).toISOString();
+      const timeMax = new Date(Date.parse(to) + 2 * 86400000).toISOString();
+      res.json({ events: await listGoogleEvents(req.user!.id, ids, timeMin, timeMax) });
     } catch (error: any) {
       res.status(500).json({ error: popisChybyGoogle(error) });
     }

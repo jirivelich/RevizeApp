@@ -7,7 +7,7 @@ import {
 import type { Zakazka } from '../../types';
 import {
   addDaysLocal, allDayBars, timedBlocks, hourRange, mondayOf, fromDateStr, formatTime, kategorieOf, isClosed, MESICE_GEN, KAT_META,
-  type TimedBlock,
+  googleCelodenni, googleCasove, type TimedBlock, type GBlok,
 } from './model';
 import { KatLegend, NavBar, type PlanProps } from './shared';
 import { useCalendarKeys, useIsMobile } from './hooks';
@@ -41,10 +41,16 @@ export function WeekView(p: PlanProps) {
   const visible = useMemo(() => p.zakazky.filter(z => z.stav !== 'zrušeno'), [p.zakazky]);
   const bars = useMemo(() => allDayBars(visible, days), [visible, days]);
   const blocksByDay = useMemo(() => new Map(days.map(d => [d, timedBlocks(visible, d)])), [visible, days]);
-  const range = useMemo(() => hourRange([...blocksByDay.values()].flat()), [blocksByDay]);
+  // Události z Google Kalendáře – jen pro přehled
+  const [showGoogle, setShowGoogle] = useState(true);
+  const gU = showGoogle ? p.googleUdalosti : undefined;
+  const gAllDay = useMemo(() => days.map(d => googleCelodenni(gU, d)), [gU, days]);
+  const gBlocksByDay = useMemo(() => new Map(days.map(d => [d, googleCasove(gU, d)])), [gU, days]);
+  const range = useMemo(() => hourRange([...[...blocksByDay.values()].flat(), ...[...gBlocksByDay.values()].flat()]), [blocksByDay, gBlocksByDay]);
   const HOUR = isMobile ? 44 : 48;
   const hours = Array.from({ length: range.end - range.start }, (_, i) => range.start + i);
-  const rows = Math.max(1, ...bars.map(b => b.row + 1));
+  const zakRows = bars.length ? Math.max(...bars.map(b => b.row + 1)) : 0;
+  const rows = Math.max(1, zakRows + Math.max(0, ...gAllDay.map(l => l.length)));
 
   // Hodiny „teď“ – překreslit každou minutu
   const [now, setNow] = useState(nowHours);
@@ -87,7 +93,17 @@ export function WeekView(p: PlanProps) {
         onPrev={prev} onNext={next} onToday={today}
         prevLabel={isMobile ? 'Předchozí dny' : 'Předchozí týden'}
         nextLabel={isMobile ? 'Další dny' : 'Další týden'}
-        right={!isMobile ? <KatLegend /> : undefined}
+        right={
+          <div className="flex flex-wrap items-center gap-3">
+            {!isMobile && <KatLegend />}
+            {p.googleUdalosti && (
+              <label className="inline-flex items-center gap-2 text-xs text-[var(--text-secondary)] min-h-[36px]">
+                <input type="checkbox" className="w-4 h-4 accent-[var(--primary)]" checked={showGoogle} onChange={e => setShowGoogle(e.target.checked)} />
+                Google Kalendář
+              </label>
+            )}
+          </div>
+        }
       />
 
       {isMobile && (
@@ -157,6 +173,13 @@ export function WeekView(p: PlanProps) {
                 </Drag>
               );
             })}
+            {gAllDay.map((list, i) => list.map((u, k) => (
+              <GoogleOdkaz key={`${u.id}-${days[i]}`} u={u}
+                className="mx-[3px] rounded-[var(--radius-sm)] px-2 flex items-center text-[11px] font-medium text-[var(--text-secondary)] border border-dashed border-[var(--border-input)] bg-[var(--surface)] whitespace-nowrap overflow-hidden"
+                style={{ gridColumn: `${i + 2} / ${i + 3}`, gridRow: `${zakRows + k + 1} / ${zakRows + k + 2}`, zIndex: 1 }}>
+                <span className="truncate">{u.nazev}</span>
+              </GoogleOdkaz>
+            )))}
           </div>
 
           {/* Časová osa */}
@@ -182,9 +205,24 @@ export function WeekView(p: PlanProps) {
                       label={`Nová zakázka ${dt.getDate()}. ${dt.getMonth() + 1}. v ${h}:00`}
                       onClick={() => p.onCreateAt(d, `${String(h).padStart(2, '0')}:00`)} />
                   ))}
-                  {(blocksByDay.get(d) ?? []).map(b => (
-                    <Block key={b.z.id} b={b} p={p} top={(b.from - range.start) * HOUR} hour={HOUR} />
-                  ))}
+                  {(() => {
+                    // Překryv zakázky s událostí z Googlu → zakázka vlevo, Google v užším pruhu vpravo
+                    const zb = blocksByDay.get(d) ?? [];
+                    const gb = gBlocksByDay.get(d) ?? [];
+                    const kryje = (a: { from: number; to: number }, b: { from: number; to: number }) => a.from < b.to && b.from < a.to;
+                    return (
+                      <>
+                        {gb.map(g => (
+                          <GoogleBlock key={g.u.id} g={g} top={(g.from - range.start) * HOUR} hour={HOUR}
+                            vedle={zb.some(b => kryje(b, g))} />
+                        ))}
+                        {zb.map(b => (
+                          <Block key={b.z.id} b={b} p={p} top={(b.from - range.start) * HOUR} hour={HOUR}
+                            podil={gb.some(g => kryje(b, g)) ? 0.62 : 1} />
+                        ))}
+                      </>
+                    );
+                  })()}
                   {isToday && now >= range.start && now <= range.end && (
                     <div aria-hidden="true" className="absolute left-0 right-0 h-[2px] bg-[var(--danger)] pointer-events-none z-[2]" style={{ top: (now - range.start) * HOUR }}>
                       <span className="absolute -left-[5px] -top-[4px] w-[10px] h-[10px] rounded-full bg-[var(--danger)]" />
@@ -233,13 +271,14 @@ function Drag({ z, id, style, children }: { z: Zakazka; id: string; style: CSSPr
   );
 }
 
-function Block({ b, p, top, hour }: { b: TimedBlock; p: PlanProps; top: number; hour: number }) {
+function Block({ b, p, top, hour, podil = 1 }: { b: TimedBlock; p: PlanProps; top: number; hour: number; podil?: number }) {
   const kat = kategorieOf(b.z, p.revizeById);
   const h = (b.to - b.from) * hour;
-  const width = `calc((100% - 6px) / ${b.cols})`;
+  // podil < 1: část šířky sloupce přenechaná událostem z Google Kalendáře
+  const width = `calc((100% - 6px) * ${podil} / ${b.cols})`;
   return (
     <Drag z={b.z} id={`block|${b.z.id}`}
-      style={{ position: 'absolute', top: top + 2, height: h - 4, left: `calc(3px + (100% - 6px) * ${b.col} / ${b.cols})`, width, zIndex: 1 }}>
+      style={{ position: 'absolute', top: top + 2, height: h - 4, left: `calc(3px + (100% - 6px) * ${podil} * ${b.col} / ${b.cols})`, width, zIndex: 1 }}>
       <button type="button" onClick={() => p.onEdit(b.z)}
         className={`w-full h-full box-border rounded-[var(--radius-sm)] px-2 py-1.5 flex flex-col gap-0.5 overflow-hidden text-left ${isClosed(b.z) ? 'opacity-55' : ''}`}
         style={{ background: KAT_META[kat].bg, border: `1px solid color-mix(in srgb, ${KAT_META[kat].color} 45%, transparent)` }}>
@@ -248,5 +287,29 @@ function Block({ b, p, top, hour }: { b: TimedBlock; p: PlanProps; top: number; 
         {h >= 72 && <span className="text-[11px] text-[var(--text-secondary)] truncate">{b.z.klient}</span>}
       </button>
     </Drag>
+  );
+}
+
+/** Odkaz na událost v Google Kalendáři (nebo prostý blok, když odkaz chybí). */
+function GoogleOdkaz({ u, className, style, children }: { u: GBlok['u']; className: string; style: CSSProperties; children: ReactNode }) {
+  const title = `${u.nazev} – ${u.kalendar} (Google Kalendář, jen pro přehled)`;
+  return u.odkaz
+    ? <a href={u.odkaz} target="_blank" rel="noopener noreferrer" title={title} className={`${className} hover:bg-[var(--bg-hover)]`} style={style}>{children}</a>
+    : <div title={title} className={className} style={style}>{children}</div>;
+}
+
+/** Časová událost z Google Kalendáře – šedý blok pod zakázkami. */
+function GoogleBlock({ g, top, hour, vedle = false }: { g: GBlok; top: number; hour: number; vedle?: boolean }) {
+  const h = Math.max((g.to - g.from) * hour, 18);
+  const pozice = vedle
+    ? { left: 'calc(3px + (100% - 6px) * 0.63)', width: 'calc((100% - 6px) * 0.37)' }
+    : { left: 3, width: 'calc(100% - 6px)' };
+  return (
+    <GoogleOdkaz u={g.u}
+      className={`box-border rounded-[var(--radius-sm)] ${vedle ? 'px-1' : 'px-2'} py-1 flex flex-col overflow-hidden text-left border border-dashed border-[var(--text-muted)] bg-[color-mix(in_srgb,var(--bg-faint)_85%,transparent)]`}
+      style={{ position: 'absolute', top: top + 2, height: h - 4, ...pozice, zIndex: 0 }}>
+      <span className={`${vedle ? 'text-[10px] break-words line-clamp-3' : 'text-[11px] truncate'} font-medium text-[var(--text-secondary)] leading-tight`}>{g.u.nazev}</span>
+      {h >= 40 && !vedle && <span className="text-[10px] text-[var(--text-muted)]">{formatTime(g.from)}–{formatTime(g.to)}</span>}
+    </GoogleOdkaz>
   );
 }

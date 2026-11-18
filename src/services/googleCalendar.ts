@@ -107,3 +107,25 @@ export async function nactiKalendareProZakazky(): Promise<{
     defaultCalendarId: norm(status.defaultCalendarId ?? status.calendarId ?? povolene[0]),
   };
 }
+
+/** Událost z Google Kalendáře – v aplikaci jen pro zobrazení. */
+export interface GoogleUdalost {
+  id: string;
+  calendarId: string;
+  kalendar: string;
+  nazev: string;
+  /** ISO datum-čas u časových událostí, YYYY-MM-DD u celodenních */
+  start: string;
+  /** Konec (u celodenních exkluzivní) */
+  end: string;
+  celyDen: boolean;
+  misto?: string;
+  odkaz?: string;
+}
+
+/** Události z povolených Google kalendářů v rozsahu dní (včetně). */
+export async function nactiGoogleUdalosti(from: string, to: string): Promise<GoogleUdalost[]> {
+  const res = await fetch(buildApiUrl(`/google/events?from=${from}&to=${to}`), { headers: getAuthHeaders() });
+  const data = await handleResponse<{ events: GoogleUdalost[] }>(res);
+  return data.events;
+}

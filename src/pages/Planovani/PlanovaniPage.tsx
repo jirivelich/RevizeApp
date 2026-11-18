@@ -12,7 +12,9 @@ import { ListView } from './ListView';
 import { CalendarView } from './CalendarView';
 import { WeekView } from './WeekView';
 import { ZakazkaForm } from './ZakazkaForm';
-import { googleCalendarService, popisSynchronizace } from '../../services/googleCalendar';
+import { googleCalendarService, popisSynchronizace, nactiKalendareProZakazky, nactiGoogleUdalosti } from '../../services/googleCalendar';
+import { useQuery } from '@tanstack/react-query';
+import { addDaysLocal } from './model';
 
 // Definice kategorií - sdílená s RevizePage
 const KATEGORIE_REVIZE: { value: KategorieRevize; label: string; popis: string; icon: React.ReactNode }[] = [
@@ -113,6 +115,7 @@ export function PlanovaniPage() {
     try {
       const result = await googleCalendarService.sync();
       setGcMessage(`✅ ${popisSynchronizace(result)}`);
+      refetchGoogle();
     } catch (err) {
       setGcMessage(`❌ ${(err as Error).message}`);
     }
@@ -260,8 +263,26 @@ export function PlanovaniPage() {
     setDeleteTargetId(null);
   };
 
+  // Události z Google Kalendáře jen pro přehled (načtou se, když je Google propojený)
+  const { data: gStav } = useQuery({
+    queryKey: ['google', 'kalendare-pro-zakazky'],
+    queryFn: nactiKalendareProZakazky,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+  const gOd = addDaysLocal(today, -62);
+  const gDo = addDaysLocal(today, 190);
+  const { data: googleUdalosti, refetch: refetchGoogle } = useQuery({
+    queryKey: ['google', 'udalosti', gOd, gDo],
+    queryFn: () => nactiGoogleUdalosti(gOd, gDo),
+    enabled: !!gStav?.connected,
+    staleTime: 2 * 60 * 1000,
+    retry: false,
+  });
+
   const planProps: PlanProps = {
     zakazky,
+    googleUdalosti,
     revizeById,
     zakazniciById,
     today,
