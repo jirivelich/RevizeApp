@@ -1152,8 +1152,19 @@ async function startServer() {
   const isValidDate = (v: string) => DATE_RE.test(v) && !isNaN(Date.parse(v));
   const isPositiveIntOrNull = (v: any) => v === null || v === undefined || (Number.isInteger(v) && v > 0);
 
+  // Nepovinná pole zakázky: prázdný řetězec z formuláře = nevyplněno (null).
+  // Bez toho server odmítl každou novou zakázku s nevyplněným datem odevzdání zprávy.
+  const ZAKAZKA_NEPOVINNA = ['datumDokonceni', 'datumOdevzdaniZpravy', 'casPlanovany', 'casKonec', 'kategorie', 'poznamka'];
+  function normalizeZakazkaBody(body: any): void {
+    if (!body || typeof body !== 'object') return;
+    for (const key of ZAKAZKA_NEPOVINNA) {
+      if (typeof body[key] === 'string' && body[key].trim() === '') body[key] = null;
+    }
+  }
+
   // Validuje tělo požadavku pro zakázku. isPartial=true pro PUT (pole se kontrolují jen pokud jsou přítomna).
   function validateZakazkaBody(body: any, isPartial: boolean): string | null {
+    normalizeZakazkaBody(body);
     if (!isPartial) {
       if (!body.nazev || !String(body.nazev).trim()) return 'Chybí název zakázky';
       if (!body.klient || !String(body.klient).trim()) return 'Chybí klient';

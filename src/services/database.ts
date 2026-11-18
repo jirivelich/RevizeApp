@@ -5,7 +5,7 @@ import { getZavadovnikZavady } from './zavadovnikData';
 import type { Revize, Rozvadec, Okruh, Chranic, Zavada, Mistnost, Zarizeni, Zakazka, Nastaveni, MericiPristroj, Firma, ZavadaKatalog, Zakaznik, PredvolenyText, Kalibrace, RevizePriloha, RozsahPolozka, RevizeDokument, Faktura, FakturaFilter, FakturaStav, CenikPolozka } from '../types';
 import { safeApiRequest } from './safeApiRequest';
 import { db } from '../db';
-import { buildApiUrl, getAuthHeaders, handleResponse } from './httpClient';
+import { buildApiUrl, getAuthHeaders, handleResponse, ApiError } from './httpClient';
 
 // ==================== REVIZE ====================
 export const revizeService = {
@@ -767,8 +767,9 @@ export const zakazkaService = {
         }).then(res => handleResponse<{ id: number }>(res));
         await db.zakazkaCache.put({ id: response.id, data: { ...data, id: response.id } as Zakazka, updatedAt: Date.now() });
         return response.id;
-      } catch {
-        // Network error - queue offline
+      } catch (err) {
+        // Chybu serveru (např. neplatná data) ukázat uživateli; offline frontu jen při výpadku sítě
+        if (err instanceof ApiError) throw err;
       }
     }
     {
@@ -792,8 +793,8 @@ export const zakazkaService = {
           await db.zakazkaCache.put({ id, data: { ...cached.data, ...data }, updatedAt: Date.now() });
         }
         return 1;
-      } catch {
-        // Network error - fallback to offline
+      } catch (err) {
+        if (err instanceof ApiError) throw err;
       }
     }
     const cached = await db.zakazkaCache.get(id);

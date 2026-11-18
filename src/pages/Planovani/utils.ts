@@ -62,8 +62,10 @@ export function formDataToZakazka(data: ZakazkaFormData): Partial<Zakazka> {
   return {
     ...data,
     kategorie: data.kategorie || null,
-    casKonec: data.celyDen ? '' : data.casKonec,
-  };
+    casKonec: data.celyDen || !data.casKonec ? null : data.casKonec,
+    datumOdevzdaniZpravy: data.datumOdevzdaniZpravy || null,
+    poznamka: data.poznamka || null,
+  } as Partial<Zakazka>;
 }
 
 export function zakazkaToFormData(z: Zakazka): ZakazkaFormData {

@@ -73,6 +73,16 @@ export async function verifySession(): Promise<boolean> {
   }
 }
 
+/** Chyba vrácená serverem (HTTP 4xx/5xx) – na rozdíl od výpadku sítě se nemá řadit do offline fronty. */
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 export async function handleResponse<T>(response: Response): Promise<T> {
   if (response.status === 401) {
     clearAuthState();
@@ -82,7 +92,7 @@ export async function handleResponse<T>(response: Response): Promise<T> {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Neznámá chyba' }));
-    throw new Error(error.error || 'API chyba');
+    throw new ApiError(error.error || 'API chyba', response.status);
   }
 
   return response.json() as Promise<T>;
