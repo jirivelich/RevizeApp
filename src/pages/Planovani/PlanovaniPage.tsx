@@ -12,7 +12,7 @@ import { ListView } from './ListView';
 import { CalendarView } from './CalendarView';
 import { WeekView } from './WeekView';
 import { ZakazkaForm } from './ZakazkaForm';
-import { googleCalendarService } from '../../services/googleCalendar';
+import { googleCalendarService, popisSynchronizace } from '../../services/googleCalendar';
 
 // Definice kategorií - sdílená s RevizePage
 const KATEGORIE_REVIZE: { value: KategorieRevize; label: string; popis: string; icon: React.ReactNode }[] = [
@@ -112,7 +112,7 @@ export function PlanovaniPage() {
     setGcMessage(null);
     try {
       const result = await googleCalendarService.sync();
-      setGcMessage(`✅ Synchronizováno: ${result.created} nových, ${result.updated} aktualizováno.`);
+      setGcMessage(`✅ ${popisSynchronizace(result)}`);
     } catch (err) {
       setGcMessage(`❌ ${(err as Error).message}`);
     }

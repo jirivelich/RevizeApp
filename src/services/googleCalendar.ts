@@ -2,6 +2,8 @@
 import { buildApiUrl, getAuthHeaders, handleResponse } from './httpClient';
 
 export interface GoogleCalendarStatus {
+  /** Jsou na serveru nastavené GOOGLE_CLIENT_ID a GOOGLE_CLIENT_SECRET */
+  configured?: boolean;
   connected: boolean;
   calendarId: string | null;
 }
@@ -15,7 +17,16 @@ export interface SyncResult {
   success: boolean;
   created: number;
   updated: number;
+  deleted?: number;
   errors: number;
+}
+
+/** Text výsledku synchronizace pro uživatele. */
+export function popisSynchronizace(r: SyncResult): string {
+  const casti = [`${r.created} nových`, `${r.updated} aktualizováno`];
+  if (r.deleted) casti.push(`${r.deleted} odebráno`);
+  if (r.errors) casti.push(`${r.errors} chyb`);
+  return `Synchronizace dokončena: ${casti.join(', ')}.`;
 }
 
 export const googleCalendarService = {

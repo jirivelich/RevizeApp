@@ -5,7 +5,8 @@ import bodyParser from 'body-parser';
 import { pool, initializeDatabase } from './database';
 import { authMiddleware, loginUser, registerUser, logoutSession, changePassword, AuthRequest } from './auth';
 import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion, analyzeRozvadecPhotos } from './ai';
-import { getAuthUrl, exchangeCodeAndSave, deleteTokens, getTokens, saveTokens, listCalendars, syncZakazkyToCalendar } from './googleCalendar';
+import { getAuthUrl, exchangeCodeAndSave, deleteTokens, getTokens, saveTokens, listCalendars, syncZakazkyToCalendar, isGoogleConfigured } from './googleCalendar';
+import { createState, verifyState, frontendBase as googleFrontendBase, popisChybyGoogle } from './google-utils';
 import { PolozkaInput, toNum, vypocitejPolozku, vypocitejCelkem, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj } from './faktura-utils';
 import { diffZmen, zapisAudit } from './audit';
 import { hlidejZamek, jeZamceny } from './zamek';
@@ -1213,7 +1214,7 @@ async function startServer() {
       const calendarId = tokenRow.rows[0].calendar_id || 'primary';
 
       const zakazkyResult = await pool.query(`
-        SELECT id, nazev, klient, adresa, "datumPlanovany", "casPlanovany",
+        SELECT id, nazev, klient, adresa, "datumPlanovany", "casPlanovany", "casKonec", "celyDen",
                "datumDokonceni", "datumyRealizace", "datumOdevzdaniZpravy",
                stav, priorita, poznamka
         FROM zakazka
@@ -2407,9 +2408,11 @@ async function startServer() {
   // Zahájit OAuth flow – vrátí URL pro přesměrování
   app.get('/api/google/auth', authMiddleware, async (req: AuthRequest, res) => {
     try {
-      const userId = req.user!.id;
-      // State obsahuje userId (base64) pro callback
-      const state = Buffer.from(String(userId)).toString('base64');
+      if (!isGoogleConfigured()) {
+        return res.status(503).json({ error: 'Google Kalendář není na serveru nastaven (chybí GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET).' });
+      }
+      // Podepsaný state s userId a expirací – callback ověří, že ho vydal tento server
+      const state = createState(req.user!.id, process.env.GOOGLE_CLIENT_SECRET!);
       const url = getAuthUrl(state);
       res.json({ url });
     } catch (error: any) {
@@ -2421,7 +2424,7 @@ async function startServer() {
   app.get('/api/google/callback', async (req, res) => {
     const { code, state, error } = req.query as Record<string, string>;
 
-    const frontendBase = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendBase = googleFrontendBase(process.env, `${req.protocol}://${req.get('host')}`);
 
     if (error) {
       return res.redirect(`${frontendBase}/nastaveni?googleCalendar=error&reason=${encodeURIComponent(error)}`);
@@ -2432,22 +2435,23 @@ async function startServer() {
     }
 
     try {
-      const userId = Number(Buffer.from(state, 'base64').toString('utf8'));
-      if (!userId || isNaN(userId)) throw new Error('Neplatný state parametr');
+      const userId = isGoogleConfigured() ? verifyState(state, process.env.GOOGLE_CLIENT_SECRET!) : null;
+      if (!userId) throw new Error('Neplatný nebo prošlý odkaz pro přihlášení – zkuste to znovu');
       await exchangeCodeAndSave(code, userId);
       return res.redirect(`${frontendBase}/nastaveni?googleCalendar=success`);
     } catch (err: any) {
       console.error('Google OAuth callback chyba:', err);
-      return res.redirect(`${frontendBase}/nastaveni?googleCalendar=error&reason=${encodeURIComponent(err.message)}`);
+      return res.redirect(`${frontendBase}/nastaveni?googleCalendar=error&reason=${encodeURIComponent(popisChybyGoogle(err))}`);
     }
   });
 
   // Stav propojení – je uživatel propojen?
   app.get('/api/google/status', authMiddleware, async (req: AuthRequest, res) => {
     try {
+      const configured = isGoogleConfigured();
       const tokens = await getTokens(req.user!.id);
       if (!tokens) {
-        return res.json({ connected: false, calendarId: null });
+        return res.json({ configured, connected: false, calendarId: null });
       }
       // Načíst uložený calendarId
       const row = await pool.query(
@@ -2455,7 +2459,7 @@ async function startServer() {
         [req.user!.id]
       );
       const calendarId = row.rows[0]?.calendar_id ?? 'primary';
-      res.json({ connected: true, calendarId });
+      res.json({ configured, connected: true, calendarId });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -2477,7 +2481,7 @@ async function startServer() {
       const calendars = await listCalendars(req.user!.id);
       res.json({ calendars });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: popisChybyGoogle(error) });
     }
   });
 
@@ -2513,7 +2517,7 @@ async function startServer() {
 
       // Načíst všechny zakázky z DB
       const zakazkyResult = await pool.query(`
-        SELECT id, nazev, klient, adresa, "datumPlanovany", "casPlanovany",
+        SELECT id, nazev, klient, adresa, "datumPlanovany", "casPlanovany", "casKonec", "celyDen",
                "datumDokonceni", "datumyRealizace", "datumOdevzdaniZpravy",
                stav, priorita, poznamka
         FROM zakazka
@@ -2535,7 +2539,7 @@ async function startServer() {
       res.json({ success: true, ...result });
     } catch (error: any) {
       console.error('Google Calendar sync chyba:', error);
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: popisChybyGoogle(error) });
     }
   });
 

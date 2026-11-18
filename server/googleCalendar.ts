@@ -1,9 +1,17 @@
 import { google } from 'googleapis';
 import { pool } from './database.js';
+import { buildEventData, eventKey, type ZakazkaForSync } from './google-utils.js';
 
 const SCOPES = ['https://www.googleapis.com/auth/calendar'];
+/** Značka událostí vytvořených aplikací (soukromá vlastnost události). */
+const APP_MARK = 'revizeapp';
 
 // Vytvoří OAuth2 klienta pro daného uživatele
+/** Jsou na serveru nastavené přístupové údaje Google? */
+export function isGoogleConfigured(): boolean {
+  return !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+}
+
 export function createOAuth2Client() {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -96,64 +104,43 @@ export async function listCalendars(userId: number): Promise<{ id: string; summa
   }));
 }
 
-interface ZakazkaForSync {
-  id: number;
-  nazev: string;
-  klient: string;
-  adresa: string;
-  datumPlanovany: string;
-  casPlanovany?: string;
-  datumDokonceni?: string;
-  datumyRealizace?: string[];
-  datumOdevzdaniZpravy?: string;
-  stav: string;
-  priorita: string;
-  poznamka?: string;
-}
-
-// Synchronizovat zakázky do Google Kalendáře
+// Synchronizovat zakázky do Google Kalendáře.
+// Události se párují se zakázkami přes soukromou vlastnost revizeapp_key; události
+// zakázek, které už nejsou aktivní (zrušené / smazané), se z kalendáře odeberou.
 export async function syncZakazkyToCalendar(
   userId: number,
   calendarId: string,
   zakazky: ZakazkaForSync[],
   reminderDaysBefore?: number
-): Promise<{ created: number; updated: number; errors: number }> {
+): Promise<{ created: number; updated: number; deleted: number; errors: number }> {
   const auth = await getAuthorizedClient(userId);
   const calendar = google.calendar({ version: 'v3', auth });
 
   let created = 0;
   let updated = 0;
+  let deleted = 0;
   let errors = 0;
 
-  // Načíst existující události s prefixem RevizeApp z daného kalendáře
   const existingEvents = await getExistingRevizeAppEvents(calendar, calendarId);
+  const aktivni = new Set<string>();
 
   for (const z of zakazky) {
-    // Přeskočit zrušené zakázky
     if (z.stav === 'zrušeno') continue;
-
+    const key = eventKey(z.id);
+    aktivni.add(key);
     try {
-      const eventKey = `revizeapp-zakazka-${z.id}`;
-      const existingEventId = existingEvents.get(eventKey);
-
       const eventData = buildEventData(z, reminderDaysBefore);
-
+      const existingEventId = existingEvents.get(key)?.[0];
       if (existingEventId) {
         await calendar.events.update({
-          calendarId,
-          eventId: existingEventId,
-          requestBody: eventData,
+          calendarId, eventId: existingEventId,
+          requestBody: { ...eventData, extendedProperties: { private: { revizeapp_key: key, [APP_MARK]: '1' } } },
         });
         updated++;
       } else {
         await calendar.events.insert({
           calendarId,
-          requestBody: {
-            ...eventData,
-            extendedProperties: {
-              private: { revizeapp_key: eventKey },
-            },
-          },
+          requestBody: { ...eventData, extendedProperties: { private: { revizeapp_key: key, [APP_MARK]: '1' } } },
         });
         created++;
       }
@@ -163,100 +150,51 @@ export async function syncZakazkyToCalendar(
     }
   }
 
-  return { created, updated, errors };
+  // Odebrat události zrušených / smazaných zakázek a duplicity ze starších synchronizací
+  for (const [key, ids] of existingEvents) {
+    const smazat = aktivni.has(key) ? ids.slice(1) : ids;
+    for (const eventId of smazat) {
+      try {
+        await calendar.events.delete({ calendarId, eventId });
+        deleted++;
+      } catch (err) {
+        console.error(`Chyba při mazání události ${key}:`, err);
+        errors++;
+      }
+    }
+  }
+
+  return { created, updated, deleted, errors };
 }
 
-// Načíst existující RevizeApp události z Google Calendar → mapa eventKey → eventId
+// Načíst existující události aplikace z Google Calendar → mapa eventKey → [eventId, …].
+// Nové události nesou značku revizeapp=1 (filtr privateExtendedProperty musí mít tvar
+// „název=hodnota“). Starší události ji nemají – dohledají se fulltextem podle popisu.
 async function getExistingRevizeAppEvents(
   calendar: ReturnType<typeof google.calendar>,
   calendarId: string
-): Promise<Map<string, string>> {
-  const map = new Map<string, string>();
-  try {
+): Promise<Map<string, string[]>> {
+  const map = new Map<string, string[]>();
+  const add = (event: any) => {
+    const key = event.extendedProperties?.private?.revizeapp_key;
+    if (!key || !event.id) return;
+    const ids = map.get(key) || [];
+    if (!ids.includes(event.id)) ids.push(event.id);
+    map.set(key, ids);
+  };
+  const dotazy: Record<string, unknown>[] = [
+    { privateExtendedProperty: [`${APP_MARK}=1`] },
+    { q: 'Synchronizováno z RevizeApp' },
+  ];
+  for (const filtr of dotazy) {
     let pageToken: string | undefined;
     do {
       const response: any = await calendar.events.list({
-        calendarId,
-        privateExtendedProperty: ['revizeapp_key'],
-        maxResults: 250,
-        pageToken,
-        showDeleted: false,
+        calendarId, maxResults: 250, pageToken, showDeleted: false, ...filtr,
       });
-      for (const event of response.data.items || []) {
-        const key = event.extendedProperties?.private?.revizeapp_key;
-        if (key && event.id) {
-          map.set(key, event.id);
-        }
-      }
+      for (const event of response.data.items || []) add(event);
       pageToken = response.data.nextPageToken;
     } while (pageToken);
-  } catch {
-    // Ignorovat chybu při načítání existujících (první sync)
   }
   return map;
-}
-
-// Sestavit data události Google Calendaru ze zakázky
-function buildEventData(z: ZakazkaForSync, reminderDaysBefore?: number): object {
-  const prioritaEmoji = z.priorita === 'vysoká' ? '🔴' : z.priorita === 'střední' ? '🟡' : '🟢';
-  const title = `${prioritaEmoji} ${z.nazev} – ${z.klient}`;
-
-  // Určit datum zahájení a konce
-  const startDate = (z.datumyRealizace && z.datumyRealizace.length > 0)
-    ? z.datumyRealizace[0]
-    : z.datumPlanovany;
-  const endDate = (z.datumyRealizace && z.datumyRealizace.length > 0)
-    ? z.datumyRealizace[z.datumyRealizace.length - 1]
-    : (z.datumDokonceni || z.datumPlanovany);
-
-  let start: object;
-  let end: object;
-
-  if (z.casPlanovany && !z.datumyRealizace?.length) {
-    // Zakázka s přesným časem – použít dateTime
-    const [hh, mm] = z.casPlanovany.split(':');
-    const startDT = `${startDate}T${hh}:${mm}:00`;
-    // Výchozí délka 2 hodiny
-    const endHour = String(Number(hh) + 2).padStart(2, '0');
-    const endDT = `${startDate}T${endHour}:${mm}:00`;
-    start = { dateTime: startDT, timeZone: 'Europe/Prague' };
-    end = { dateTime: endDT, timeZone: 'Europe/Prague' };
-  } else {
-    // Celodenní událost
-    // Pro vícedenní: end date musí být den po posledním dni
-    const endDateObj = new Date(endDate);
-    endDateObj.setDate(endDateObj.getDate() + 1);
-    const endDateStr = endDateObj.toISOString().split('T')[0];
-    start = { date: startDate };
-    end = { date: endDateStr };
-  }
-
-  const description = [
-    z.adresa && `📍 ${z.adresa}`,
-    z.poznamka && `📝 ${z.poznamka}`,
-    z.datumOdevzdaniZpravy && `📋 Odevzdání zprávy: ${z.datumOdevzdaniZpravy}`,
-    `\n— Synchronizováno z RevizeApp —`,
-  ]
-    .filter(Boolean)
-    .join('\n');
-
-  const reminderMinutes = reminderDaysBefore && reminderDaysBefore > 0 ? reminderDaysBefore * 24 * 60 : undefined;
-
-  return {
-    summary: title,
-    description,
-    location: z.adresa || undefined,
-    start,
-    end,
-    colorId: z.priorita === 'vysoká' ? '11' : z.priorita === 'střední' ? '5' : '2',
-    reminders: reminderMinutes
-      ? {
-          useDefault: false,
-          overrides: [
-            { method: 'popup', minutes: reminderMinutes },
-            { method: 'email', minutes: reminderMinutes },
-          ],
-        }
-      : undefined,
-  };
 }

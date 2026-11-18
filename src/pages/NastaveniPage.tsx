@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { googleCalendarService, type GoogleCalendarStatus, type GoogleCalendarItem } from '../services/googleCalendar';
+import { googleCalendarService, popisSynchronizace, type GoogleCalendarStatus, type GoogleCalendarItem } from '../services/googleCalendar';
 import { Button, Card, Input, Select, ConfirmDialog, PageHeader, Badge, Textarea } from '../components/ui';
 import { backupService } from '../services/database';
 import { useNastaveni, useSaveNastaveni, usePredvoleneTexty, useCreatePredvolenyText, useUpdatePredvolenyText, useDeletePredvolenyText, useDatabaseStats, useTechnikHistorie, useAddTechnikHistorie, useDeleteTechnikHistorie } from '../hooks/useQueries';
@@ -220,7 +220,7 @@ export function NastaveniPage() {
       const result = await googleCalendarService.sync();
       setGcMessage({
         type: 'success',
-        text: `Synchronizace dokončena: ${result.created} nových, ${result.updated} aktualizováno${result.errors > 0 ? `, ${result.errors} chyb` : ''}.`,
+        text: popisSynchronizace(result),
       });
     } catch (err: any) {
       setGcMessage({ type: 'error', text: err.message });
@@ -1042,12 +1042,14 @@ export function NastaveniPage() {
                   <p className="text-sm text-[var(--text-secondary)]">
                     Propojte aplikaci s Googlem a zakázky z plánování se automaticky synchronizují do vámi zvoleného Google Kalendáře.
                   </p>
+                  {gcStatus?.configured === false && (
                   <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg p-3 text-xs text-[var(--text-secondary)] space-y-1">
                     <p className="font-medium text-[var(--text)]">Vyžaduje nastavení na serveru:</p>
                     <p><code className="bg-[var(--bg-input)] px-1 rounded">GOOGLE_CLIENT_ID</code> a <code className="bg-[var(--bg-input)] px-1 rounded">GOOGLE_CLIENT_SECRET</code> z Google Cloud Console</p>
                     <p><code className="bg-[var(--bg-input)] px-1 rounded">GOOGLE_REDIRECT_URI</code> = <code className="bg-[var(--bg-input)] px-1 rounded">{window.location.origin}/api/google/callback</code></p>
                   </div>
-                  <Button onClick={handleGcConnect} disabled={gcLoading}>
+                  )}
+                  <Button onClick={handleGcConnect} disabled={gcLoading || gcStatus?.configured === false}>
                     <svg className="w-4 h-4 mr-2 inline" viewBox="0 0 24 24" fill="none">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                       <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
