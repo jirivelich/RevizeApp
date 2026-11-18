@@ -509,6 +509,8 @@ export interface FakturaPolozka {
   jednotka?: string;
   cenaZaJednotku: number;
   celkem: number;
+  /** Druh činnosti (výdajový paušál), viz utils/druhyCinnosti.ts */
+  cinnost?: string | null;
 }
 
 export interface Faktura {
@@ -548,4 +550,8 @@ export interface CenikPolozka {
   cena: number;
   aktivni: boolean;
   poznamka?: string;
+  /** Kategorie ceníku (volný text, např. „Revize“, „Měření“) */
+  kategorie?: string | null;
+  /** Druh činnosti (výdajový paušál), viz utils/druhyCinnosti.ts */
+  cinnost?: string | null;
 }

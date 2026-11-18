@@ -8,6 +8,7 @@ import {
 import { spoctiCelkem, spoctiPolozku } from '../services/fakturaUtils';
 import type { Faktura, FakturaStav, CenikPolozka } from '../types';
 import { STAV_LABEL, FORMA_UHRADY_OPTIONS, formatKc, chybaZmenyStavu } from './fakturaUi';
+import { CINNOST_OPTIONS, nazevCinnosti, seskupitPodleKategorie } from '../utils/druhyCinnosti';
 
 interface RadekState {
   key: number;
@@ -15,6 +16,8 @@ interface RadekState {
   mnozstvi: string;
   jednotka: string;
   cena: string;
+  /** Druh činnosti (výdajový paušál), '' = neurčeno */
+  cinnost: string;
 }
 
 interface FormState {
@@ -42,7 +45,7 @@ const isoDate = (d: Date): string => {
 
 let radekCounter = 0;
 const novyRadek = (p?: Partial<RadekState>): RadekState => ({
-  key: ++radekCounter, popis: '', mnozstvi: '1', jednotka: 'ks', cena: '0', ...p,
+  key: ++radekCounter, popis: '', mnozstvi: '1', jednotka: 'ks', cena: '0', cinnost: '', ...p,
 });
 
 const EMPTY_FORM: FormState = {
@@ -69,6 +72,7 @@ const FakturaForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [cenikOpen, setCenikOpen] = useState(false);
+  const [cenikHledat, setCenikHledat] = useState('');
   const [initializedFor, setInitializedFor] = useState<number | 'new' | null>(null);
 
   const stav: FakturaStav = faktura?.stav ?? 'koncept';
@@ -106,6 +110,7 @@ const FakturaForm: React.FC = () => {
         polozky.length
           ? polozky.map(p => novyRadek({
               popis: p.popis, mnozstvi: String(p.mnozstvi), jednotka: p.jednotka || '', cena: String(p.cenaZaJednotku),
+              cinnost: p.cinnost || '',
             }))
           : [novyRadek()],
       );
@@ -140,12 +145,13 @@ const FakturaForm: React.FC = () => {
 
   const pridatZCeniku = (c: CenikPolozka) => {
     setRadky(rs => {
-      const novy = novyRadek({ popis: c.nazev, mnozstvi: '1', jednotka: c.jednotka || '', cena: String(c.cena) });
+      const novy = novyRadek({ popis: c.nazev, mnozstvi: '1', jednotka: c.jednotka || '', cena: String(c.cena), cinnost: c.cinnost || '' });
       // prázdný výchozí řádek nahradíme
       const jenPrazdny = rs.length === 1 && !rs[0].popis.trim() && toNum(rs[0].cena) === 0;
       return jenPrazdny ? [novy] : [...rs, novy];
     });
     setCenikOpen(false);
+    setCenikHledat('');
   };
 
   const buildPayload = (): Partial<Faktura> => ({
@@ -169,6 +175,7 @@ const FakturaForm: React.FC = () => {
         jednotka: r.jednotka || undefined,
         cenaZaJednotku: toNum(r.cena),
         celkem: spoctiPolozku(toNum(r.mnozstvi), toNum(r.cena)),
+        cinnost: r.cinnost || null,
       })),
   });
 
@@ -246,6 +253,10 @@ const FakturaForm: React.FC = () => {
     ...zakaznici.map(z => ({ value: String(z.id), label: z.nazev })),
   ];
   const aktivniCenik = cenik.filter(c => c.aktivni);
+  const cenikSkupiny = seskupitPodleKategorie(aktivniCenik.filter(c => {
+    const q = cenikHledat.trim().toLowerCase();
+    return !q || c.nazev.toLowerCase().includes(q) || (c.kategorie || '').toLowerCase().includes(q);
+  }));
 
   return (
     <div className="space-y-6">
@@ -315,8 +326,13 @@ const FakturaForm: React.FC = () => {
             </div>
             {radky.map((r, idx) => (
               <div key={r.key} className="grid grid-cols-2 md:grid-cols-[1fr_80px_80px_110px_110px_32px] gap-2 items-center" data-testid="radek">
-                <div className="col-span-2 md:col-span-1">
+                <div className="col-span-2 md:col-span-1 space-y-1">
                   <Input aria-label={`Popis položky ${idx + 1}`} placeholder="Popis" value={r.popis} onChange={(e) => updateRadek(r.key, { popis: e.target.value })} />
+                  <select aria-label={`Druh činnosti ${idx + 1}`} value={r.cinnost} disabled={readOnly}
+                    onChange={(e) => updateRadek(r.key, { cinnost: e.target.value })}
+                    className="w-full min-h-[30px] px-2 text-xs rounded-[var(--radius-sm)] bg-transparent border border-[var(--border-subtle)] text-[var(--text-secondary)]">
+                    {CINNOST_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.value ? o.label : 'Druh činnosti – neurčeno'}</option>)}
+                  </select>
                 </div>
                 <Input aria-label={`Množství ${idx + 1}`} inputMode="decimal" value={r.mnozstvi} onChange={(e) => updateRadek(r.key, { mnozstvi: e.target.value })} />
                 <Input aria-label={`Jednotka ${idx + 1}`} value={r.jednotka} onChange={(e) => updateRadek(r.key, { jednotka: e.target.value })} />
@@ -368,22 +384,34 @@ const FakturaForm: React.FC = () => {
         </div>
       )}
 
-      <Modal isOpen={cenikOpen} onClose={() => setCenikOpen(false)} title="Přidat z ceníku">
-        <div className="space-y-2">
+      <Modal isOpen={cenikOpen} onClose={() => { setCenikOpen(false); setCenikHledat(''); }} title="Přidat z ceníku">
+        <div className="space-y-3">
           {aktivniCenik.length === 0 ? (
             <p className="text-xs text-[var(--text-secondary)] text-center py-4">Ceník je prázdný.</p>
           ) : (
-            aktivniCenik.map(c => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => pridatZCeniku(c)}
-                className="w-full flex justify-between items-center p-3 border border-[var(--border)] rounded-lg hover:bg-[var(--bg-hover)] text-left cursor-pointer"
-              >
-                <span className="text-xs text-[var(--text)]">{c.nazev}</span>
-                <span className="text-xs text-[var(--text-secondary)]">{formatKc(c.cena)}{c.jednotka ? ` / ${c.jednotka}` : ''}</span>
-              </button>
-            ))
+            <>
+              <Input placeholder="Hledat v ceníku…" value={cenikHledat} onChange={(e) => setCenikHledat(e.target.value)} autoFocus />
+              {cenikSkupiny.length === 0 && <p className="text-xs text-[var(--text-secondary)] text-center py-2">Nic nenalezeno.</p>}
+              {cenikSkupiny.map(([kat, polozky]) => (
+                <div key={kat} className="space-y-1.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-secondary)]">{kat}</p>
+                  {polozky.map(c => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => pridatZCeniku(c)}
+                      className="w-full flex justify-between items-center gap-3 p-3 border border-[var(--border)] rounded-lg hover:bg-[var(--bg-hover)] text-left cursor-pointer"
+                    >
+                      <span className="min-w-0">
+                        <span className="block text-sm text-[var(--text)] truncate">{c.nazev}</span>
+                        {c.cinnost && <span className="block text-[11px] text-[var(--text-muted)]">{nazevCinnosti(c.cinnost)}</span>}
+                      </span>
+                      <span className="text-xs text-[var(--text-secondary)] whitespace-nowrap">{formatKc(c.cena)}{c.jednotka ? ` / ${c.jednotka}` : ''}</span>
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </>
           )}
         </div>
       </Modal>

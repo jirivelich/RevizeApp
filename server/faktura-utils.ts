@@ -7,6 +7,27 @@ export interface PolozkaInput {
   mnozstvi?: number | string | null;
   jednotka?: string;
   cenaZaJednotku?: number | string | null;
+  cinnost?: string | null;
+}
+
+/**
+ * Druhy činnosti pro výdajový paušál (§ 7 ZDP) – stejné kódy jako ve fakturaci jv-revize.cz.
+ * Sazba = procento výdajového paušálu.
+ */
+export const DRUHY_CINNOSTI: Record<string, { nazev: string; sazba: number }> = {
+  REV: { nazev: 'Revize a zkoušky elektro', sazba: 80 },
+  ELE: { nazev: 'Montáže a opravy elektro', sazba: 80 },
+  OPR: { nazev: 'Opravy elektrických přístrojů', sazba: 80 },
+  POR: { nazev: 'Technické poradenství', sazba: 60 },
+  MER: { nazev: 'Samostatné technické měření', sazba: 60 },
+  SKO: { nazev: 'Odborná školení', sazba: 60 },
+  SW: { nazev: 'Vývoj software', sazba: 60 },
+};
+
+/** Platný kód druhu činnosti, jinak null. */
+export function sanitizeCinnost(kod: unknown): string | null {
+  const k = String(kod ?? '').trim().toUpperCase();
+  return k && k in DRUHY_CINNOSTI ? k : null;
 }
 
 export function round2(n: number): number {

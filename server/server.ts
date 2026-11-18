@@ -7,7 +7,7 @@ import { authMiddleware, loginUser, registerUser, logoutSession, changePassword,
 import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion, analyzeRozvadecPhotos } from './ai';
 import { getAuthUrl, exchangeCodeAndSave, deleteTokens, getTokens, saveTokens, listCalendars, syncZakazkyToCalendar, isGoogleConfigured, removeAppEvents, resolvePrimaryAlias, listGoogleEvents } from './googleCalendar';
 import { createState, verifyState, frontendBase as googleFrontendBase, popisChybyGoogle, parseCalendarIds, normalizeCalendarIds, MAX_KALENDARU, cilovyKalendar } from './google-utils';
-import { PolozkaInput, toNum, vypocitejPolozku, vypocitejCelkem, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj } from './faktura-utils';
+import { PolozkaInput, toNum, vypocitejPolozku, vypocitejCelkem, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj, sanitizeCinnost } from './faktura-utils';
 import { diffZmen, zapisAudit } from './audit';
 import { hlidejZamek, jeZamceny } from './zamek';
 import { najdiPodleIco, hledejPodleNazvu, AresChyba } from './ares';
@@ -1728,9 +1728,9 @@ async function startServer() {
     let poradi = 0;
     for (const p of polozky) {
       await db.query(
-        `INSERT INTO "fakturaPolozka" ("fakturaId", poradi, popis, mnozstvi, jednotka, "cenaZaJednotku", celkem)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [fakturaId, poradi++, p.popis ?? '', toNum(p.mnozstvi), p.jednotka ?? null, toNum(p.cenaZaJednotku), vypocitejPolozku(p)]
+        `INSERT INTO "fakturaPolozka" ("fakturaId", poradi, popis, mnozstvi, jednotka, "cenaZaJednotku", celkem, cinnost)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [fakturaId, poradi++, p.popis ?? '', toNum(p.mnozstvi), p.jednotka ?? null, toNum(p.cenaZaJednotku), vypocitejPolozku(p), sanitizeCinnost(p.cinnost)]
       );
     }
   }
@@ -1922,7 +1922,7 @@ async function startServer() {
   // ==================== CENÍK ====================
   app.get('/api/cenik', authMiddleware, async (req, res) => {
     try {
-      const result = await pool.query('SELECT * FROM cenik ORDER BY nazev');
+      const result = await pool.query('SELECT * FROM cenik ORDER BY kategorie NULLS LAST, nazev');
       res.json(result.rows.map(r => numerizuj(r, ['cena'])));
     } catch (error: any) {
       if (error.message?.includes('does not exist')) return res.json([]);
@@ -1932,13 +1932,14 @@ async function startServer() {
 
   app.post('/api/cenik', authMiddleware, async (req, res) => {
     try {
-      const { nazev, jednotka, cena, aktivni, poznamka } = req.body || {};
+      const { nazev, jednotka, cena, aktivni, poznamka, kategorie, cinnost } = req.body || {};
       if (!nazev) return res.status(400).json({ error: 'Název je povinný' });
       const now = new Date().toISOString();
       const result = await pool.query(
-        `INSERT INTO cenik (nazev, jednotka, cena, aktivni, poznamka, "createdAt", "updatedAt")
-         VALUES ($1,$2,$3,$4,$5,$6,$6) RETURNING id`,
-        [nazev, jednotka || null, toNum(cena), aktivni !== false, poznamka || null, now]
+        `INSERT INTO cenik (nazev, jednotka, cena, aktivni, poznamka, kategorie, cinnost, "createdAt", "updatedAt")
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$8) RETURNING id`,
+        [nazev, jednotka || null, toNum(cena), aktivni !== false, poznamka || null,
+          String(kategorie ?? '').trim() || null, sanitizeCinnost(cinnost), now]
       );
       res.json({ id: result.rows[0].id });
     } catch (error) {
@@ -1949,7 +1950,9 @@ async function startServer() {
   app.put('/api/cenik/:id', authMiddleware, async (req, res) => {
     try {
       const updates: Record<string, any> = {};
-      for (const k of ['nazev', 'jednotka', 'cena', 'aktivni', 'poznamka']) if (k in (req.body || {})) updates[k] = req.body[k];
+      for (const k of ['nazev', 'jednotka', 'cena', 'aktivni', 'poznamka', 'kategorie', 'cinnost']) if (k in (req.body || {})) updates[k] = req.body[k];
+      if ('kategorie' in updates) updates.kategorie = String(updates.kategorie ?? '').trim() || null;
+      if ('cinnost' in updates) updates.cinnost = sanitizeCinnost(updates.cinnost);
       updates.updatedAt = new Date().toISOString();
       const keys = Object.keys(updates);
       const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');

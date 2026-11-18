@@ -561,6 +561,10 @@ export async function initializeDatabase() {
       'ALTER TABLE google_oauth_tokens ADD COLUMN IF NOT EXISTS calendar_ids TEXT',
       // Kalendář, do kterého se zakázka zapisuje (null = výchozí kalendář uživatele)
       'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS "googleCalendarId" TEXT',
+      // Ceník: kategorie (volný text) a druh činnosti pro výdajový paušál; druh činnosti i u položky faktury
+      'ALTER TABLE cenik ADD COLUMN IF NOT EXISTS kategorie TEXT',
+      'ALTER TABLE cenik ADD COLUMN IF NOT EXISTS cinnost TEXT',
+      'ALTER TABLE "fakturaPolozka" ADD COLUMN IF NOT EXISTS cinnost TEXT',
       // ===== Fakturace =====
       `CREATE TABLE IF NOT EXISTS faktura (
         id SERIAL PRIMARY KEY,
