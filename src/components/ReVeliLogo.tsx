@@ -20,10 +20,10 @@ export function LogoIcon({ size = 32, className = '' }: LogoIconProps) {
   );
 }
 
-/** Barva „Veli“ v nápisu – stejná na světlém i tmavém pozadí (jako v souborech loga). */
-export const WORDMARK_COLOR = '#E5483B';
+/** Barva „Veli“ v nápisu – vínová jako ikona, na světlém i tmavém pozadí (jako v souborech loga). */
+export const WORDMARK_COLOR = BRAND_COLOR;
 
-/** Nápis „ReVeli“ – „Veli“ ve světlejší značkové červené. */
+/** Nápis „ReVeli“ – „Veli“ ve vínové barvě značky. */
 export function Wordmark({ className = '' }: { className?: string }) {
   return (
     <span className={`font-extrabold tracking-tight text-[var(--text)] ${className}`}>
