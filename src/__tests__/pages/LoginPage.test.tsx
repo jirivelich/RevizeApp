@@ -1,6 +1,6 @@
 /**
  * Test 7: LoginPage
- * Ověřuje přihlašovací formulář, přepínání login/register, error handling.
+ * Ověřuje přihlašovací formulář, zobrazení hesla, zapamatování jména a chyby.
  */
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -34,26 +34,30 @@ function renderLoginPage() {
 describe('LoginPage', () => {
   it('should render login form by default', () => {
     renderLoginPage();
-    expect(screen.getByText('RevizeApp')).toBeInTheDocument();
-    expect(screen.getByText('Přihlášení')).toBeInTheDocument();
+    expect(screen.getAllByText('Veli').length).toBeGreaterThan(0);
+    expect(screen.getByRole('heading', { name: 'Přihlášení' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /přihlásit se/i })).toBeInTheDocument();
   });
 
   it('should have username and password fields', () => {
     renderLoginPage();
-    expect(screen.getByPlaceholderText(/uživatelské jméno/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/heslo/i)).toBeInTheDocument();
+    expect(screen.getByLabelText('Uživatelské jméno')).toHaveAttribute('autocomplete', 'username');
+    expect(screen.getByLabelText('Heslo')).toHaveAttribute('type', 'password');
   });
 
-  it('should switch to register mode', async () => {
+  it('should toggle password visibility', async () => {
     const user = userEvent.setup();
     renderLoginPage();
+    await user.click(screen.getByRole('button', { name: 'Zobrazit heslo' }));
+    expect(screen.getByLabelText('Heslo')).toHaveAttribute('type', 'text');
+    await user.click(screen.getByRole('button', { name: 'Skrýt heslo' }));
+    expect(screen.getByLabelText('Heslo')).toHaveAttribute('type', 'password');
+  });
 
-    // Click the register tab
-    const registerTab = screen.getByText('Registrace');
-    await user.click(registerTab);
-
-    // Should show additional fields (email, jméno)
-    expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument();
+  it('should prefill last successful username', () => {
+    localStorage.setItem('reveli_posledni_jmeno', 'jiri');
+    renderLoginPage();
+    expect(screen.getByLabelText('Uživatelské jméno')).toHaveValue('jiri');
   });
 
   it('should submit login and navigate on success', async () => {
@@ -65,13 +69,14 @@ describe('LoginPage', () => {
 
     renderLoginPage();
 
-    await user.type(screen.getByPlaceholderText(/uživatelské jméno/i), 'admin');
-    await user.type(screen.getByPlaceholderText(/heslo/i), 'heslo123');
+    await user.type(screen.getByLabelText('Uživatelské jméno'), 'admin');
+    await user.type(screen.getByLabelText('Heslo'), 'heslo123');
     await user.click(screen.getByRole('button', { name: /přihlásit/i }));
 
     await waitFor(() => {
       expect(localStorage.getItem('token')).toBe('jwt-123');
       expect(mockNavigate).toHaveBeenCalledWith('/');
+      expect(localStorage.getItem('reveli_posledni_jmeno')).toBe('admin');
     });
   });
 
@@ -84,8 +89,8 @@ describe('LoginPage', () => {
 
     renderLoginPage();
 
-    await user.type(screen.getByPlaceholderText(/uživatelské jméno/i), 'admin');
-    await user.type(screen.getByPlaceholderText(/heslo/i), 'wrong');
+    await user.type(screen.getByLabelText('Uživatelské jméno'), 'admin');
+    await user.type(screen.getByLabelText('Heslo'), 'wrong');
     await user.click(screen.getByRole('button', { name: /přihlásit/i }));
 
     await waitFor(() => {
@@ -99,8 +104,8 @@ describe('LoginPage', () => {
 
     renderLoginPage();
 
-    await user.type(screen.getByPlaceholderText(/uživatelské jméno/i), 'admin');
-    await user.type(screen.getByPlaceholderText(/heslo/i), 'heslo');
+    await user.type(screen.getByLabelText('Uživatelské jméno'), 'admin');
+    await user.type(screen.getByLabelText('Heslo'), 'heslo');
     await user.click(screen.getByRole('button', { name: /přihlásit/i }));
 
     await waitFor(() => {
@@ -117,8 +122,8 @@ describe('LoginPage', () => {
 
     renderLoginPage();
 
-    await user.type(screen.getByPlaceholderText(/uživatelské jméno/i), 'testuser');
-    await user.type(screen.getByPlaceholderText(/heslo/i), 'pass');
+    await user.type(screen.getByLabelText('Uživatelské jméno'), 'testuser');
+    await user.type(screen.getByLabelText('Heslo'), 'pass');
     await user.click(screen.getByRole('button', { name: /přihlásit/i }));
 
     await waitFor(() => {

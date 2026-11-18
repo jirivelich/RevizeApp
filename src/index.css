@@ -196,7 +196,7 @@ select {
 
 /* Prevence zoom na iOS při doteku */
 @supports (padding: max(0px)) {
-  body, main {
+  body {
     padding-left: max(0px, env(safe-area-inset-left));
     padding-right: max(0px, env(safe-area-inset-right));
   }
