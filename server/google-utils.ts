@@ -58,6 +58,7 @@ export interface ZakazkaForSync {
   stav: string;
   priorita: string;
   poznamka?: string | null;
+  googleCalendarId?: string | null;
 }
 
 /** Klíč, podle kterého se událost v kalendáři páruje se zakázkou. */
@@ -165,4 +166,14 @@ export function normalizeCalendarIds(input: unknown): string[] | null {
   const ids = [...new Set(input.filter((x): x is string => typeof x === 'string').map(x => x.trim()).filter(Boolean))];
   if (ids.length === 0 || ids.length > MAX_KALENDARU || ids.some(id => id.length > 255)) return null;
   return ids;
+}
+
+/**
+ * Cílový kalendář zakázky: její vlastní, pokud je mezi povolenými,
+ * jinak výchozí (a když ani ten není povolený, první povolený).
+ */
+export function cilovyKalendar(zakazkaCalendarId: string | null | undefined, povolene: string[], vychozi: string | null | undefined): string {
+  if (zakazkaCalendarId && povolene.includes(zakazkaCalendarId)) return zakazkaCalendarId;
+  if (vychozi && povolene.includes(vychozi)) return vychozi;
+  return povolene[0];
 }

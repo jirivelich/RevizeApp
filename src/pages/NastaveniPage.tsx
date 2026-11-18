@@ -210,6 +210,23 @@ export function NastaveniPage() {
       .map((id) => (id === 'primary' && primaryId ? primaryId : id)),
   )];
 
+  const rawDefault = gcStatus?.defaultCalendarId ?? gcStatus?.calendarId ?? null;
+  const vychoziKalendar = rawDefault === 'primary' && primaryId ? primaryId : rawDefault;
+
+  // Uloží povolené kalendáře a výchozí kalendář; při chybě vrátí původní stav
+  const ulozKalendare = async (ids: string[], vychozi: string, zprava: string) => {
+    const predchozi = gcStatus;
+    setGcStatus((prev) => prev ? { ...prev, calendarId: vychozi, calendarIds: ids, defaultCalendarId: vychozi } : prev);
+    try {
+      await googleCalendarService.saveCalendars(ids, vychozi);
+      qc.invalidateQueries({ queryKey: ['google', 'kalendare-pro-zakazky'] });
+      setGcMessage({ type: 'success', text: zprava });
+    } catch (err: any) {
+      setGcStatus(predchozi);
+      setGcMessage({ type: 'error', text: err.message });
+    }
+  };
+
   const handleGcToggleCalendar = async (calendarId: string, zapnout: boolean) => {
     const nove = zapnout
       ? [...vybraneKalendare.filter((id) => id !== calendarId), calendarId]
@@ -218,20 +235,16 @@ export function NastaveniPage() {
       setGcMessage({ type: 'error', text: 'Musí zůstat vybraný alespoň jeden kalendář.' });
       return;
     }
-    const predchozi = gcStatus;
-    setGcStatus((prev) => prev ? { ...prev, calendarId: nove[0], calendarIds: nove } : prev);
-    try {
-      await googleCalendarService.saveCalendars(nove);
-      setGcMessage({
-        type: 'success',
-        text: zapnout
-          ? 'Kalendář přidán. Zakázky se do něj zapíšou při příští synchronizaci.'
-          : 'Kalendář odebrán. Události zakázek se z něj odstraní.',
-      });
-    } catch (err: any) {
-      setGcStatus(predchozi);
-      setGcMessage({ type: 'error', text: err.message });
-    }
+    // Odebraný výchozí kalendář → výchozím se stane první zbývající
+    const vychozi = vychoziKalendar && nove.includes(vychoziKalendar) ? vychoziKalendar : nove[0];
+    await ulozKalendare(nove, vychozi, zapnout
+      ? 'Kalendář přidán – lze ho vybrat u zakázek.'
+      : 'Kalendář odebrán. Události zakázek se z něj odstraní a zakázky přejdou do výchozího kalendáře.');
+  };
+
+  const handleGcSetDefault = async (calendarId: string) => {
+    await ulozKalendare(vybraneKalendare, calendarId,
+      'Výchozí kalendář uložen. Zakázky bez vlastního výběru se zapíšou do něj.');
   };
 
   const handleGcSync = async () => {
@@ -1103,13 +1116,26 @@ export function NastaveniPage() {
                               />
                               <span className="text-sm text-[var(--text)]">{c.summary}</span>
                               {c.primary && <span className="text-xs text-[var(--text-muted)]">(hlavní)</span>}
+                              <span className="ml-auto">
+                                {vybrany && (c.id === vychoziKalendar ? (
+                                  <Badge variant="info">výchozí</Badge>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => { e.preventDefault(); handleGcSetDefault(c.id); }}
+                                    className="text-xs font-medium text-[var(--primary-text)] hover:underline"
+                                  >
+                                    Nastavit jako výchozí
+                                  </button>
+                                ))}
+                              </span>
                             </label>
                           );
                         })}
                       </div>
                     )}
                     <p className="text-xs text-[var(--text-secondary)] mt-2">
-                      Zakázky se zapisují do všech zaškrtnutých kalendářů (např. váš „Revize“ a sdílený firemní kalendář). Z odškrtnutého kalendáře se události zakázek odstraní.
+                      Zaškrtnuté kalendáře lze vybrat u každé zakázky (pole „Google kalendář“). Zakázka bez vlastního výběru se zapíše do <strong>výchozího</strong> kalendáře. Každá zakázka je vždy jen v jednom kalendáři.
                     </p>
                   </fieldset>
 
@@ -1133,7 +1159,7 @@ export function NastaveniPage() {
 
           <Card title="Jak synchronizace funguje">
             <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
-              <li className="flex gap-2"><span className="text-[var(--primary-text)] mt-0.5">•</span><span>Každá nezrušená zakázka se přenese jako událost do všech zaškrtnutých Google Kalendářů.</span></li>
+              <li className="flex gap-2"><span className="text-[var(--primary-text)] mt-0.5">•</span><span>Každá nezrušená zakázka se přenese jako událost do kalendáře vybraného u zakázky, jinak do výchozího. Po změně kalendáře u zakázky se událost přesune.</span></li>
               <li className="flex gap-2"><span className="text-[var(--primary-text)] mt-0.5">•</span><span>Při opakované synchronizaci se existující události aktualizují a nové vytvoří. Události zrušených nebo smazaných zakázek se odstraní. Jiných událostí v kalendáři se aplikace nedotýká.</span></li>
               <li className="flex gap-2"><span className="text-[var(--primary-text)] mt-0.5">•</span><span>Barva události odpovídá prioritě: <span className="text-[var(--success-text)]">zelená</span> = nízká, <span className="text-[var(--warning-text)]">žlutá</span> = střední, <span className="text-[var(--danger-text)]">červená</span> = vysoká.</span></li>
               <li className="flex gap-2"><span className="text-[var(--primary-text)] mt-0.5">•</span><span>Synchronizaci spusťte ručně kdykoli z tohoto nastavení nebo přes tlačítko na stránce Plánování.</span></li>

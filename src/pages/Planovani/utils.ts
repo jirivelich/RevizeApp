@@ -17,6 +17,7 @@ export type ZakazkaFormData = {
   priorita: Zakazka['priorita'];
   revizeId: number | undefined;
   poznamka: string;
+  googleCalendarId: string;        // '' = výchozí Google kalendář
 };
 
 export const emptyFormData: ZakazkaFormData = {
@@ -36,6 +37,7 @@ export const emptyFormData: ZakazkaFormData = {
   priorita: 'střední',
   revizeId: undefined,
   poznamka: '',
+  googleCalendarId: '',
 };
 
 export function getStatusColor(stav: Zakazka['stav']): string {
@@ -65,6 +67,7 @@ export function formDataToZakazka(data: ZakazkaFormData): Partial<Zakazka> {
     casKonec: data.celyDen || !data.casKonec ? null : data.casKonec,
     datumOdevzdaniZpravy: data.datumOdevzdaniZpravy || null,
     poznamka: data.poznamka || null,
+    googleCalendarId: data.googleCalendarId || null,
   } as Partial<Zakazka>;
 }
 
@@ -86,6 +89,7 @@ export function zakazkaToFormData(z: Zakazka): ZakazkaFormData {
     priorita: z.priorita,
     revizeId: z.revizeId,
     poznamka: z.poznamka || '',
+    googleCalendarId: z.googleCalendarId || '',
   };
 }
 

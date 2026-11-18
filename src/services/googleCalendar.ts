@@ -6,8 +6,10 @@ export interface GoogleCalendarStatus {
   configured?: boolean;
   connected: boolean;
   calendarId: string | null;
-  /** Všechny kalendáře vybrané k synchronizaci */
+  /** Kalendáře povolené k synchronizaci (nabízí se u zakázek) */
   calendarIds?: string[];
+  /** Výchozí kalendář pro zakázky bez vlastního výběru */
+  defaultCalendarId?: string;
 }
 
 export interface GoogleCalendarItem {
@@ -65,11 +67,11 @@ export const googleCalendarService = {
   },
 
   // Uložit vybrané kalendáře (z odebraných se události aplikace smažou)
-  async saveCalendars(calendarIds: string[]): Promise<void> {
+  async saveCalendars(calendarIds: string[], defaultCalendarId?: string): Promise<void> {
     const res = await fetch(buildApiUrl('/google/calendar'), {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ calendarIds }),
+      body: JSON.stringify({ calendarIds, defaultCalendarId }),
     });
     await handleResponse<{ success: boolean }>(res);
   },
@@ -83,3 +85,25 @@ export const googleCalendarService = {
     return handleResponse<SyncResult>(res);
   },
 };
+
+/**
+ * Kalendáře, které lze vybrat u zakázky: povolené kalendáře s názvy a výchozí kalendář.
+ * Když Google Kalendář není propojený (nebo nastavený), vrátí connected: false.
+ */
+export async function nactiKalendareProZakazky(): Promise<{
+  connected: boolean;
+  kalendare: GoogleCalendarItem[];
+  defaultCalendarId: string | null;
+}> {
+  const status = await googleCalendarService.getStatus();
+  if (!status.connected) return { connected: false, kalendare: [], defaultCalendarId: null };
+  const vsechny = await googleCalendarService.listCalendars();
+  const primaryId = vsechny.find((c) => c.primary)?.id;
+  const norm = (id: string) => (id === 'primary' && primaryId ? primaryId : id);
+  const povolene = (status.calendarIds ?? [status.calendarId ?? 'primary']).map(norm);
+  return {
+    connected: true,
+    kalendare: vsechny.filter((c) => povolene.includes(c.id)),
+    defaultCalendarId: norm(status.defaultCalendarId ?? status.calendarId ?? povolene[0]),
+  };
+}

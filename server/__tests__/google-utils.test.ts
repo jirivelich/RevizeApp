@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createState, verifyState, frontendBase, buildEventData, addMinutes, nextDay, popisChybyGoogle, parseCalendarIds, normalizeCalendarIds } from '../google-utils';
+import { createState, verifyState, frontendBase, buildEventData, addMinutes, nextDay, popisChybyGoogle, parseCalendarIds, normalizeCalendarIds, cilovyKalendar } from '../google-utils';
 
 const SECRET = 'tajne';
 const base = {
@@ -83,5 +83,15 @@ describe('výběr více kalendářů', () => {
     expect(normalizeCalendarIds([])).toBeNull();
     expect(normalizeCalendarIds('a')).toBeNull();
     expect(normalizeCalendarIds(Array.from({ length: 11 }, (_, i) => `k${i}`))).toBeNull();
+  });
+});
+
+describe('cilovyKalendar', () => {
+  const povolene = ['hlavni@x', 'revize@g', 'firma@g'];
+  it('vlastní kalendář zakázky, jinak výchozí, jinak první povolený', () => {
+    expect(cilovyKalendar('firma@g', povolene, 'revize@g')).toBe('firma@g');
+    expect(cilovyKalendar(null, povolene, 'revize@g')).toBe('revize@g');
+    expect(cilovyKalendar('odebrany@g', povolene, 'revize@g')).toBe('revize@g');
+    expect(cilovyKalendar(null, povolene, 'neni-v-seznamu')).toBe('hlavni@x');
   });
 });

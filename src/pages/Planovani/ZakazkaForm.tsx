@@ -4,6 +4,8 @@ import type { Revize, Zakaznik, KategorieRevize } from '../../types';
 import { KATEGORIE_LABELS } from '../../types';
 import type { ZakazkaFormData } from './utils';
 import { PRIORITA_OPTIONS, STAV_OPTIONS, addDays } from './utils';
+import { useQuery } from '@tanstack/react-query';
+import { nactiKalendareProZakazky } from '../../services/googleCalendar';
 
 interface ZakazkaFormProps {
   isOpen: boolean;
@@ -27,6 +29,15 @@ export function ZakazkaForm({
   isEditing,
 }: ZakazkaFormProps) {
   const [formError, setFormError] = useState<string | null>(null);
+  // Google kalendáře, do kterých lze zakázku zapsat (jen při propojeném Google Kalendáři)
+  const { data: gKalendare } = useQuery({
+    queryKey: ['google', 'kalendare-pro-zakazky'],
+    queryFn: nactiKalendareProZakazky,
+    enabled: isOpen && typeof navigator !== 'undefined' && navigator.onLine,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+  const vychoziKalendar = gKalendare?.kalendare.find((c) => c.id === gKalendare.defaultCalendarId);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,6 +184,20 @@ export function ZakazkaForm({
             ...(Object.keys(KATEGORIE_LABELS) as KategorieRevize[]).map((k) => ({ value: k, label: KATEGORIE_LABELS[k].plny })),
           ]}
         />
+
+        {gKalendare?.connected && gKalendare.kalendare.length > 0 && (
+          <Select
+            label="Google kalendář"
+            value={formData.googleCalendarId && gKalendare.kalendare.some((c) => c.id === formData.googleCalendarId) ? formData.googleCalendarId : ''}
+            onChange={(e) => setFormData((prev) => ({ ...prev, googleCalendarId: e.target.value }))}
+            options={[
+              { value: '', label: `Výchozí${vychoziKalendar ? ` (${vychoziKalendar.summary})` : ''}` },
+              ...gKalendare.kalendare
+                .filter((c) => c.id !== gKalendare.defaultCalendarId)
+                .map((c) => ({ value: c.id, label: c.summary })),
+            ]}
+          />
+        )}
 
         {/* Revizní zpráva */}
         <div className="border-t border-[var(--border-input)] pt-4 space-y-3">
