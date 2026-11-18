@@ -46,7 +46,7 @@ export default defineConfig({
           },
         ],
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [/^\/api\//, /^\/ochrana-osobnich-udaju/],
       },
     }),
   ],
