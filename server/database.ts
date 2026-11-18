@@ -663,6 +663,9 @@ export async function initializeDatabase() {
       )`,
       'CREATE INDEX IF NOT EXISTS idx_nabidka_polozka ON "nabidkaPolozka"("nabidkaId")',
       'ALTER TABLE faktura ADD COLUMN IF NOT EXISTS "nabidkaId" INTEGER',
+      // Procentuální sleva na celý doklad (0–100)
+      'ALTER TABLE faktura ADD COLUMN IF NOT EXISTS "slevaProcent" NUMERIC DEFAULT 0',
+      'ALTER TABLE nabidka ADD COLUMN IF NOT EXISTS "slevaProcent" NUMERIC DEFAULT 0',
       // ===== Verzování schématu a auditní stopa (aditivní, bez dopadu na stávající data) =====
       `CREATE TABLE IF NOT EXISTS schema_migrations (
         version INTEGER PRIMARY KEY,

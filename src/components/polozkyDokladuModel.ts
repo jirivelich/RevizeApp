@@ -47,6 +47,22 @@ export function radkyNaPolozky(radky: RadekState[]): FakturaPolozka[] {
     }));
 }
 
-export const celkemRadku = (radky: RadekState[]): number =>
-  spoctiCelkem(radky.map(r => ({ mnozstvi: toNumCz(r.mnozstvi), cenaZaJednotku: toNumCz(r.cena) })));
+/** Procentuální sleva z textu: 0–100, neplatná = 0. */
+export const slevaZTextu = (s: string | number | null | undefined): number => {
+  const n = toNumCz(String(s ?? ''));
+  return n > 0 ? Math.min(n, 100) : 0;
+};
+
+const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+
+/** Rozpis dokladu: mezisoučet, částka slevy a celkem (stejně jako server). */
+export function souhrnDokladu(mezisoucet: number, slevaProcent: string | number | null | undefined) {
+  const procento = slevaZTextu(slevaProcent);
+  const sleva = r2((mezisoucet * procento) / 100);
+  return { mezisoucet: r2(mezisoucet), procento, sleva, celkem: r2(mezisoucet - sleva) };
+}
+
+/** Celkem za řádky (po případné slevě v %). */
+export const celkemRadku = (radky: RadekState[], slevaProcent?: string | number): number =>
+  souhrnDokladu(spoctiCelkem(radky.map(r => ({ mnozstvi: toNumCz(r.mnozstvi), cenaZaJednotku: toNumCz(r.cena) }))), slevaProcent).celkem;
 

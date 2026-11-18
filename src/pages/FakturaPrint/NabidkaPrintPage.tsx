@@ -116,6 +116,17 @@ export default function NabidkaPrintPage() {
           </tbody>
         </table>
 
+        {(() => {
+          const pol = (nabidka.polozky ?? []).reduce((s, p) => s + (Number(p.celkem) || 0), 0);
+          const pct = Number(nabidka.slevaProcent) || 0;
+          if (pct <= 0) return null;
+          return (
+            <div className="fp-sleva">
+              <div>Mezisoučet: {cena(pol)}</div>
+              <div>Sleva {pct.toLocaleString('cs-CZ')} %: −{cena(pol - (Number(nabidka.celkem) || 0))}</div>
+            </div>
+          );
+        })()}
         <div className="fp-total">
           <div className="fp-total-box">Cena celkem: {cena(nabidka.celkem)}</div>
         </div>

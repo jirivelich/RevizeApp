@@ -6,7 +6,8 @@ import { useState } from 'react';
 import type React from 'react';
 import { Button, Input, Modal } from './ui';
 import { spoctiPolozku } from '../services/fakturaUtils';
-import { novyRadek, toNumCz, celkemRadku, type RadekState } from './polozkyDokladuModel';
+import { novyRadek, toNumCz, souhrnDokladu, type RadekState } from './polozkyDokladuModel';
+import { spoctiCelkem } from '../services/fakturaUtils';
 import { formatKc } from '../pages/fakturaUi';
 import { CINNOST_OPTIONS, nazevCinnosti, seskupitPodleKategorie } from '../utils/druhyCinnosti';
 import type { CenikPolozka } from '../types';
@@ -16,9 +17,12 @@ interface Props {
   setRadky: React.Dispatch<React.SetStateAction<RadekState[]>>;
   cenik: CenikPolozka[];
   readOnly?: boolean;
+  /** Procentuální sleva na celý doklad (text z pole); bez setSleva se pole nezobrazí */
+  sleva?: string;
+  setSleva?: (v: string) => void;
 }
 
-export function PolozkyDokladu({ radky, setRadky, cenik, readOnly = false }: Props) {
+export function PolozkyDokladu({ radky, setRadky, cenik, readOnly = false, sleva = '', setSleva }: Props) {
   const [cenikOpen, setCenikOpen] = useState(false);
   const [cenikHledat, setCenikHledat] = useState('');
 
@@ -82,9 +86,32 @@ export function PolozkyDokladu({ radky, setRadky, cenik, readOnly = false }: Pro
           <Button variant="secondary" size="sm" onClick={() => setCenikOpen(true)}>Přidat z ceníku</Button>
         </div>
       )}
-      <div className="flex justify-end pt-2 border-t border-[var(--border)]">
-        <span className="text-lg font-bold text-[var(--text)] tabular-nums" data-testid="celkem">Celkem: {formatKc(celkemRadku(radky))}</span>
-      </div>
+      {(() => {
+        const s = souhrnDokladu(
+          spoctiCelkem(radky.map(r => ({ mnozstvi: toNumCz(r.mnozstvi), cenaZaJednotku: toNumCz(r.cena) }))), sleva);
+        return (
+          <div className="pt-2 border-t border-[var(--border)] flex flex-col items-end gap-1.5">
+            {setSleva && (
+              <div className="flex items-center gap-2">
+                <label htmlFor="sleva-procent" className="text-sm text-[var(--text-secondary)]">Sleva</label>
+                <div className="w-24">
+                  <Input id="sleva-procent" inputMode="decimal" placeholder="0" value={sleva} disabled={readOnly}
+                    onChange={(e) => setSleva(e.target.value)} className="text-right" />
+                </div>
+                <span className="text-sm text-[var(--text-secondary)]">%</span>
+                <span className="hidden sm:inline text-xs text-[var(--text-muted)]">např. při objednání více služeb najednou</span>
+              </div>
+            )}
+            {s.procento > 0 && (
+              <>
+                <span className="text-sm text-[var(--text-secondary)] tabular-nums">Mezisoučet: {formatKc(s.mezisoucet)}</span>
+                <span className="text-sm text-[var(--success-text)] tabular-nums" data-testid="sleva">Sleva {s.procento.toLocaleString('cs-CZ')} %: −{formatKc(s.sleva)}</span>
+              </>
+            )}
+            <span className="text-lg font-bold text-[var(--text)] tabular-nums" data-testid="celkem">Celkem: {formatKc(s.celkem)}</span>
+          </div>
+        );
+      })()}
       <p className="text-xs text-[var(--text-muted)] text-right">Nejsem plátce DPH.</p>
 
       <Modal isOpen={cenikOpen} onClose={() => { setCenikOpen(false); setCenikHledat(''); }} title="Přidat z ceníku">

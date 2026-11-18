@@ -77,7 +77,7 @@ const NabidkyPage: React.FC = () => {
           ) : n.stav !== 'odmitnuta' && (
             <Button size="sm" onClick={() => vytvorFakturu(n)} disabled={naFakturu.isPending}>Vytvořit fakturu</Button>
           )}
-          {!n.fakturaId && <Button variant="danger" size="sm" onClick={() => setDeleteTarget(n)}>Smazat</Button>}
+          <Button variant="danger" size="sm" onClick={() => setDeleteTarget(n)}>Smazat</Button>
         </>
       ),
     },
@@ -132,7 +132,7 @@ const NabidkyPage: React.FC = () => {
       <ConfirmDialog
         isOpen={deleteTarget !== null}
         title="Smazat nabídku"
-        message={`Opravdu chcete smazat nabídku ${deleteTarget?.cislo ?? ''}?`}
+        message={`Opravdu chcete smazat nabídku ${deleteTarget?.cislo ?? ''}?${deleteTarget?.fakturaId ? ' Faktura vytvořená z nabídky zůstane zachovaná.' : ''}`}
         confirmLabel="Smazat"
         variant="danger"
         onConfirm={async () => {

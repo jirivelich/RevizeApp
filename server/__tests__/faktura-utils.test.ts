@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { vypocitejCelkem, vypocitejPolozku, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj, toNum, jePrechodNabidkyPovolen, lzeUpravitNabidku } from '../faktura-utils';
+import { vypocitejCelkem, vypocitejPolozku, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj, toNum, jePrechodNabidkyPovolen, lzeUpravitNabidku, rokPoslednihoCisla, normalizujSlevu, castkaSlevy, celkemSeSlevou } from '../faktura-utils';
 
 describe('faktura-utils', () => {
   it('počítá položku a celkem se zaokrouhlením na 2 des.', () => {
@@ -50,5 +50,38 @@ describe('cenové nabídky', () => {
     expect(lzeUpravitNabidku('koncept')).toBe(true);
     expect(lzeUpravitNabidku('odeslana')).toBe(true);
     expect(lzeUpravitNabidku('prijata')).toBe(false);
+  });
+});
+
+describe('uvolnění čísla po smazání', () => {
+  const rady = [{ rok: 2025, posledniCislo: 12 }, { rok: 2026, posledniCislo: 3 }];
+  it('pozná poslední číslo v řadě (i s prefixem)', () => {
+    expect(rokPoslednihoCisla('20260003', rady)).toBe(2026);
+    expect(rokPoslednihoCisla('20250012', rady)).toBe(2025);
+    expect(rokPoslednihoCisla('N20260003', rady, 'N')).toBe(2026);
+  });
+  it('jiné než poslední číslo, koncept bez čísla → null', () => {
+    expect(rokPoslednihoCisla('20260002', rady)).toBeNull();
+    expect(rokPoslednihoCisla(null, rady)).toBeNull();
+    expect(rokPoslednihoCisla('N20260003', rady)).toBeNull();
+  });
+});
+
+describe('procentuální sleva', () => {
+  it('normalizace hodnoty', () => {
+    expect(normalizujSlevu('10')).toBe(10);
+    expect(normalizujSlevu('7,5')).toBe(7.5);
+    expect(normalizujSlevu(-5)).toBe(0);
+    expect(normalizujSlevu(150)).toBe(100);
+    expect(normalizujSlevu('abc')).toBe(0);
+    expect(normalizujSlevu(null)).toBe(0);
+  });
+  it('výpočet celkem po slevě', () => {
+    const p = [{ mnozstvi: 1, cenaZaJednotku: 3500 }, { mnozstvi: 25, cenaZaJednotku: 60 }];
+    expect(castkaSlevy(5000, 10)).toBe(500);
+    expect(celkemSeSlevou(p, 10)).toBe(4500);
+    expect(celkemSeSlevou(p, 0)).toBe(5000);
+    expect(castkaSlevy(999, 7.5)).toBe(74.93);
+    expect(celkemSeSlevou([{ mnozstvi: 1, cenaZaJednotku: 999 }], 7.5)).toBe(924.07);
   });
 });

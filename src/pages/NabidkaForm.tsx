@@ -5,9 +5,9 @@ import { useZakaznici, useCenik } from '../hooks/useQueries';
 import type { Nabidka, NabidkaStav } from '../types';
 import { formatKc } from './fakturaUi';
 import { PolozkyDokladu } from '../components/PolozkyDokladu';
-import { novyRadek, radkyZPolozek, radkyNaPolozky, celkemRadku, type RadekState } from '../components/polozkyDokladuModel';
+import { novyRadek, radkyZPolozek, radkyNaPolozky, celkemRadku, slevaZTextu, type RadekState } from '../components/polozkyDokladuModel';
 import {
-  useNabidka, useCreateNabidka, useUpdateNabidka, useZmenStavNabidky, useNabidkaNaFakturu,
+  useNabidka, useCreateNabidka, useUpdateNabidka, useZmenStavNabidky, useNabidkaNaFakturu, useDeleteNabidka,
   NABIDKA_STAV_LABEL, NABIDKA_STAV_VARIANT,
 } from '../services/nabidky';
 
@@ -51,9 +51,23 @@ const NabidkaForm: React.FC = () => {
   const update = useUpdateNabidka();
   const zmenStav = useZmenStavNabidky();
   const naFakturu = useNabidkaNaFakturu();
+  const smazat = useDeleteNabidka();
+
+  const handleSmazat = async () => {
+    if (!nabidkaId) return;
+    const otazka = `Smazat nabídku ${nabidka?.cislo ?? ''}?${nabidka?.fakturaId ? ' Faktura vytvořená z nabídky zůstane zachovaná.' : ''}`;
+    if (!window.confirm(otazka)) return;
+    try {
+      await smazat.mutateAsync(nabidkaId);
+      navigate('/nabidky');
+    } catch (e) {
+      setError((e as Error).message || 'Nabídku se nepodařilo smazat');
+    }
+  };
 
   const [form, setForm] = useState<FormState>(EMPTY);
   const [radky, setRadky] = useState<RadekState[]>(() => [novyRadek()]);
+  const [sleva, setSleva] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [initializedFor, setInitializedFor] = useState<number | 'new' | null>(null);
@@ -86,11 +100,12 @@ const NabidkaForm: React.FC = () => {
         poznamka: nabidka.poznamka || '',
       });
       setRadky(radkyZPolozek(nabidka.polozky));
+      setSleva(nabidka.slevaProcent ? String(nabidka.slevaProcent).replace('.', ',') : '');
       setInitializedFor(nabidka.id);
     }
   }, [isNew, nabidka, initializedFor]);
 
-  const celkem = useMemo(() => celkemRadku(radky), [radky]);
+  const celkem = useMemo(() => celkemRadku(radky, sleva), [radky, sleva]);
   const setField = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm(f => ({ ...f, [k]: v }));
 
   const handleZakaznik = (value: string) => {
@@ -115,6 +130,7 @@ const NabidkaForm: React.FC = () => {
     predmet: form.predmet, misto: form.misto,
     datumVystaveni: form.datumVystaveni, platnostDo: form.platnostDo, terminOd: form.terminOd, terminDo: form.terminDo,
     poznamka: form.poznamka,
+    slevaProcent: slevaZTextu(sleva),
     polozky: radkyNaPolozky(radky),
   });
 
@@ -194,7 +210,10 @@ const NabidkaForm: React.FC = () => {
             <Badge variant={NABIDKA_STAV_VARIANT[stav]}>{NABIDKA_STAV_LABEL[stav]}</Badge>
             <Button variant="secondary" onClick={() => navigate('/nabidky')}>← Zpět</Button>
             {!isNew && (
-              <Button variant="secondary" onClick={() => navigate(`/nabidka/${nabidkaId}/nahled`)}>Tisk / PDF</Button>
+              <>
+                <Button variant="secondary" onClick={() => navigate(`/nabidka/${nabidkaId}/nahled`)}>Tisk / PDF</Button>
+                <Button variant="danger" disabled={smazat.isPending} onClick={handleSmazat}>Smazat</Button>
+              </>
             )}
           </div>
         }
@@ -237,7 +256,7 @@ const NabidkaForm: React.FC = () => {
         </Card>
 
         <Card title="Položky">
-          <PolozkyDokladu radky={radky} setRadky={setRadky} cenik={cenik} readOnly={readOnly} />
+          <PolozkyDokladu radky={radky} setRadky={setRadky} cenik={cenik} readOnly={readOnly} sleva={sleva} setSleva={setSleva} />
         </Card>
 
         <Card title="Poznámka">

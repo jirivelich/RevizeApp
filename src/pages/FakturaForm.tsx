@@ -2,13 +2,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button, Card, Input, Select, Badge, PageHeader, Textarea } from '../components/ui';
 import {
-  useFaktura, useCreateFaktura, useUpdateFaktura, useZmenStavFaktury, useKopirovatFakturu,
+  useFaktura, useCreateFaktura, useUpdateFaktura, useZmenStavFaktury, useKopirovatFakturu, useDeleteFaktura,
   useZakaznici, useCenik, useNastaveni,
 } from '../hooks/useQueries';
 import type { Faktura, FakturaStav } from '../types';
 import { STAV_LABEL, FORMA_UHRADY_OPTIONS, chybaZmenyStavu } from './fakturaUi';
 import { PolozkyDokladu } from '../components/PolozkyDokladu';
-import { novyRadek, radkyZPolozek, radkyNaPolozky, celkemRadku, type RadekState } from '../components/polozkyDokladuModel';
+import { novyRadek, radkyZPolozek, radkyNaPolozky, celkemRadku, slevaZTextu, type RadekState } from '../components/polozkyDokladuModel';
 
 interface FormState {
   zakaznikId: string;
@@ -49,9 +49,25 @@ const FakturaForm: React.FC = () => {
   const updateFaktura = useUpdateFaktura();
   const zmenStav = useZmenStavFaktury();
   const kopirovat = useKopirovatFakturu();
+  const smazat = useDeleteFaktura();
+
+  const handleSmazat = async () => {
+    if (!fakturaId) return;
+    const otazka = stav === 'koncept'
+      ? 'Smazat tento koncept faktury?'
+      : `Faktura ${faktura?.cisloFaktury ?? ''} trvale zmizí z evidence. Běžně ji jen stornujte – mazat se hodí testovací nebo omylem vystavené faktury. Je-li poslední vystavená, její číslo se uvolní. Opravdu smazat?`;
+    if (!window.confirm(otazka)) return;
+    try {
+      await smazat.mutateAsync(fakturaId);
+      navigate('/faktury');
+    } catch (e) {
+      setError((e as Error).message || 'Fakturu se nepodařilo smazat');
+    }
+  };
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [radky, setRadky] = useState<RadekState[]>(() => [novyRadek()]);
+  const [sleva, setSleva] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [initializedFor, setInitializedFor] = useState<number | 'new' | null>(null);
@@ -87,11 +103,12 @@ const FakturaForm: React.FC = () => {
         poznamka: faktura.poznamka || '',
       });
       setRadky(radkyZPolozek(faktura.polozky));
+      setSleva(faktura.slevaProcent ? String(faktura.slevaProcent).replace('.', ',') : '');
       setInitializedFor(faktura.id);
     }
   }, [isNew, faktura, nastaveni, initializedFor]);
 
-  const celkem = useMemo(() => celkemRadku(radky), [radky]);
+  const celkem = useMemo(() => celkemRadku(radky, sleva), [radky, sleva]);
 
   const setField = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm(f => ({ ...f, [k]: v }));
 
@@ -123,6 +140,7 @@ const FakturaForm: React.FC = () => {
     formaUhrady: form.formaUhrady,
     poznamka: form.poznamka || undefined,
     celkem,
+    slevaProcent: slevaZTextu(sleva),
     polozky: radkyNaPolozky(radky),
   });
 
@@ -223,6 +241,7 @@ const FakturaForm: React.FC = () => {
             {readOnly && stav === 'vystavena' && (
               <Button variant="success" onClick={() => handleStav('zaplacena')}>Označit zaplacenou</Button>
             )}
+            {!isNew && <Button variant="danger" disabled={smazat.isPending} onClick={handleSmazat}>Smazat</Button>}
             {readOnly && (stav === 'vystavena' || stav === 'zaplacena') && (
               <Button variant="warning" onClick={() => {
                 if (window.confirm(`Stornovat fakturu ${faktura?.cisloFaktury ?? ''}? Zůstane v evidenci jako stornovaná.`)) handleStav('storno');
@@ -271,7 +290,7 @@ const FakturaForm: React.FC = () => {
         </Card>
 
         <Card title="Položky">
-          <PolozkyDokladu radky={radky} setRadky={setRadky} cenik={cenik} readOnly={readOnly} />
+          <PolozkyDokladu radky={radky} setRadky={setRadky} cenik={cenik} readOnly={readOnly} sleva={sleva} setSleva={setSleva} />
         </Card>
 
         <Card title="Poznámka">

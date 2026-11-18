@@ -1439,6 +1439,13 @@ export const fakturyService = {
   },
 
   async delete(id: number): Promise<void> {
+    if (navigator.onLine) {
+      // Online: chybu serveru ukázat (nezařazovat tiše do offline fronty)
+      await fetch(buildApiUrl(`/faktury/${id}`), { method: 'DELETE', headers: getAuthHeaders() })
+        .then(res => handleResponse<unknown>(res));
+      await db.fakturaCache.delete(id);
+      return;
+    }
     await db.fakturaCache.delete(id);
     await safeApiRequest({ url: buildApiUrl(`/faktury/${id}`), method: 'DELETE', headers: getAuthHeaders() as Record<string, string> });
   },

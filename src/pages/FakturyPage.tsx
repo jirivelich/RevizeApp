@@ -82,7 +82,7 @@ const FakturyPage: React.FC = () => {
     } catch (e) {
       console.error('Chyba při mazání faktury:', e);
       setDeleteTarget(null);
-      setError('Nepodařilo se smazat fakturu');
+      setError((e as Error).message || 'Nepodařilo se smazat fakturu');
     }
   };
 
@@ -123,9 +123,7 @@ const FakturyPage: React.FC = () => {
           {(f.stav === 'vystavena' || f.stav === 'zaplacena') && (
             <Button variant="warning" size="sm" onClick={() => setStornoTarget(f)}>Storno</Button>
           )}
-          {f.stav === 'koncept' && (
-            <Button variant="danger" size="sm" onClick={() => setDeleteTarget(f)}>Smazat</Button>
-          )}
+          <Button variant="danger" size="sm" onClick={() => setDeleteTarget(f)}>Smazat</Button>
         </>
       ),
     },
@@ -193,7 +191,9 @@ const FakturyPage: React.FC = () => {
       <ConfirmDialog
         isOpen={deleteTarget !== null}
         title="Smazat fakturu"
-        message={`Opravdu chcete smazat koncept faktury pro „${deleteTarget?.odberatelNazev ?? ''}“?`}
+        message={deleteTarget?.stav === 'koncept'
+          ? `Opravdu chcete smazat koncept faktury pro „${deleteTarget?.odberatelNazev ?? ''}“?`
+          : `Faktura ${deleteTarget?.cisloFaktury ?? ''} je ${deleteTarget?.stav === 'storno' ? 'stornovaná' : 'vystavená'} – smazáním trvale zmizí z evidence. Číselná řada faktur má zůstat nepřerušená, proto ji běžně jen stornujte; mazat se hodí hlavně testovací nebo omylem vystavené faktury. Je-li to poslední vystavená faktura, její číslo se uvolní pro příští fakturu. Opravdu smazat?`}
         confirmLabel="Smazat"
         variant="danger"
         onConfirm={handleConfirmDelete}

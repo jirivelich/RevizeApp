@@ -7,7 +7,7 @@ import { authMiddleware, loginUser, registerUser, logoutSession, changePassword,
 import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion, analyzeRozvadecPhotos } from './ai';
 import { getAuthUrl, exchangeCodeAndSave, deleteTokens, getTokens, saveTokens, listCalendars, syncZakazkyToCalendar, isGoogleConfigured, removeAppEvents, resolvePrimaryAlias, listGoogleEvents } from './googleCalendar';
 import { createState, verifyState, frontendBase as googleFrontendBase, popisChybyGoogle, parseCalendarIds, normalizeCalendarIds, MAX_KALENDARU, cilovyKalendar } from './google-utils';
-import { PolozkaInput, toNum, vypocitejPolozku, vypocitejCelkem, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj, sanitizeCinnost, jePrechodNabidkyPovolen, lzeUpravitNabidku } from './faktura-utils';
+import { PolozkaInput, toNum, vypocitejPolozku, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj, sanitizeCinnost, jePrechodNabidkyPovolen, lzeUpravitNabidku, rokPoslednihoCisla, celkemSeSlevou, normalizujSlevu } from './faktura-utils';
 import { diffZmen, zapisAudit } from './audit';
 import { hlidejZamek, jeZamceny } from './zamek';
 import { najdiPodleIco, hledejPodleNazvu, AresChyba } from './ares';
@@ -1716,11 +1716,12 @@ async function startServer() {
   });
 
   // ==================== FAKTURACE ====================
-  const FAKTURA_NUM = ['celkem'];
+  const FAKTURA_NUM = ['celkem', 'slevaProcent'];
   const POLOZKA_NUM = ['mnozstvi', 'cenaZaJednotku', 'celkem'];
   const FAKTURA_EDIT_FIELDS = [
     'variabilniSymbol', 'zakaznikId', 'odberatelNazev', 'odberatelAdresa', 'odberatelIco', 'odberatelDic',
     'revizeId', 'zakazkaId', 'datumVystaveni', 'datumZdanitelnehoPlneni', 'datumSplatnosti', 'formaUhrady', 'poznamka', 'datumUhrady',
+    'slevaProcent',
   ];
   const dnesIso = () => new Date().toISOString().slice(0, 10);
 
@@ -1774,11 +1775,11 @@ async function startServer() {
       await client.query('BEGIN');
       const r = await client.query(
         `INSERT INTO faktura ("variabilniSymbol", "zakaznikId", "odberatelNazev", "odberatelAdresa", "odberatelIco", "odberatelDic",
-           "revizeId", "zakazkaId", "datumVystaveni", "datumZdanitelnehoPlneni", "datumSplatnosti", "formaUhrady", stav, poznamka, celkem, "createdAt", "updatedAt")
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'koncept',$13,$14,$15,$15) RETURNING id`,
+           "revizeId", "zakazkaId", "datumVystaveni", "datumZdanitelnehoPlneni", "datumSplatnosti", "formaUhrady", stav, poznamka, celkem, "slevaProcent", "createdAt", "updatedAt")
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'koncept',$13,$14,$15,$16,$16) RETURNING id`,
         [b.variabilniSymbol || null, b.zakaznikId || null, b.odberatelNazev || null, b.odberatelAdresa || null, b.odberatelIco || null, b.odberatelDic || null,
          b.revizeId || null, b.zakazkaId || null, b.datumVystaveni || null, b.datumZdanitelnehoPlneni || null, b.datumSplatnosti || null,
-         b.formaUhrady || 'prevod', b.poznamka || null, vypocitejCelkem(polozky), now]
+         b.formaUhrady || 'prevod', b.poznamka || null, celkemSeSlevou(polozky, b.slevaProcent), normalizujSlevu(b.slevaProcent), now]
       );
       await vlozPolozky(client, r.rows[0].id, polozky);
       await client.query('COMMIT');
@@ -1807,10 +1808,18 @@ async function startServer() {
       const allowed = isKoncept ? FAKTURA_EDIT_FIELDS : ['poznamka', 'datumUhrady'];
       const updates: Record<string, any> = {};
       for (const k of allowed) if (k in b) updates[k] = b[k] === '' ? null : b[k];
+      if ('slevaProcent' in updates) updates.slevaProcent = normalizujSlevu(updates.slevaProcent);
       if (isKoncept && Array.isArray(b.polozky)) {
         await client.query('DELETE FROM "fakturaPolozka" WHERE "fakturaId" = $1', [req.params.id]);
         await vlozPolozky(client, Number(req.params.id), b.polozky);
-        updates.celkem = vypocitejCelkem(b.polozky);
+      }
+      if (isKoncept && (Array.isArray(b.polozky) || 'slevaProcent' in updates)) {
+        // Celkem z (nových nebo uložených) položek a (nové nebo uložené) slevy
+        const pol = Array.isArray(b.polozky) ? b.polozky
+          : (await client.query('SELECT mnozstvi, "cenaZaJednotku" FROM "fakturaPolozka" WHERE "fakturaId" = $1', [req.params.id])).rows;
+        const sleva = 'slevaProcent' in updates ? updates.slevaProcent
+          : (await client.query('SELECT "slevaProcent" FROM faktura WHERE id = $1', [req.params.id])).rows[0]?.slevaProcent;
+        updates.celkem = celkemSeSlevou(pol, sleva);
       }
       updates.updatedAt = now;
       const keys = Object.keys(updates);
@@ -1826,15 +1835,37 @@ async function startServer() {
     }
   });
 
+  // Smazání faktury (i vystavené – rozhodnutí uživatele, v aplikaci s varováním).
+  // Byla-li to poslední vystavená faktura v řadě, číslo se uvolní pro příští fakturu.
   app.delete('/api/faktury/:id', authMiddleware, async (req, res) => {
+    const client = await pool.connect();
     try {
-      const cur = await pool.query('SELECT stav FROM faktura WHERE id = $1', [req.params.id]);
-      if (cur.rows.length === 0) return res.status(404).json({ error: 'Faktura nenalezena' });
-      if (cur.rows[0].stav !== 'koncept') return res.status(409).json({ error: 'Smazat lze pouze koncept' });
-      await pool.query('DELETE FROM faktura WHERE id = $1', [req.params.id]);
-      res.json({ success: true });
+      await client.query('BEGIN');
+      const cur = await client.query('SELECT "cisloFaktury" FROM faktura WHERE id = $1 FOR UPDATE', [req.params.id]);
+      if (cur.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Faktura nenalezena' });
+      }
+      const cislo = cur.rows[0].cisloFaktury;
+      let cisloUvolneno = false;
+      if (cislo) {
+        const nast = await client.query('SELECT "fakturaPrefix" FROM nastaveni LIMIT 1');
+        const rady = await client.query('SELECT rok, "posledniCislo" FROM "fakturaRada" FOR UPDATE');
+        const rok = rokPoslednihoCisla(cislo, rady.rows, nast.rows[0]?.fakturaPrefix || '');
+        if (rok !== null) {
+          await client.query('UPDATE "fakturaRada" SET "posledniCislo" = "posledniCislo" - 1 WHERE rok = $1', [rok]);
+          cisloUvolneno = true;
+        }
+      }
+      await client.query('UPDATE nabidka SET "fakturaId" = NULL WHERE "fakturaId" = $1', [req.params.id]);
+      await client.query('DELETE FROM faktura WHERE id = $1', [req.params.id]);
+      await client.query('COMMIT');
+      res.json({ success: true, cisloUvolneno });
     } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
       res.status(500).json({ error: (error as Error).message });
+    } finally {
+      client.release();
     }
   });
 
@@ -1908,11 +1939,11 @@ async function startServer() {
       await client.query('BEGIN');
       const r = await client.query(
         `INSERT INTO faktura ("zakaznikId", "odberatelNazev", "odberatelAdresa", "odberatelIco", "odberatelDic",
-           "datumVystaveni", "datumZdanitelnehoPlneni", "datumSplatnosti", "formaUhrady", stav, poznamka, celkem, "createdAt", "updatedAt")
-         VALUES ($1,$2,$3,$4,$5,$6,$6,$7,$8,'koncept',$9,$10,$11,$11) RETURNING id`,
+           "datumVystaveni", "datumZdanitelnehoPlneni", "datumSplatnosti", "formaUhrady", stav, poznamka, celkem, "slevaProcent", "createdAt", "updatedAt")
+         VALUES ($1,$2,$3,$4,$5,$6,$6,$7,$8,'koncept',$9,$10,$11,$12,$12) RETURNING id`,
         [src.zakaznikId, src.odberatelNazev, src.odberatelAdresa, src.odberatelIco, src.odberatelDic,
          dnes, pridejDny(dnes, Number(nast.rows[0]?.splatnostDni ?? 14)), src.formaUhrady || 'prevod', src.poznamka,
-         vypocitejCelkem(polozky), now]
+         celkemSeSlevou(polozky, src.slevaProcent), normalizujSlevu(src.slevaProcent), now]
       );
       await vlozPolozky(client, r.rows[0].id, polozky);
       await client.query('COMMIT');
@@ -2010,7 +2041,7 @@ async function startServer() {
   // ==================== CENOVÉ NABÍDKY ====================
   const NABIDKA_EDIT_FIELDS = [
     'zakaznikId', 'odberatelNazev', 'odberatelAdresa', 'odberatelIco', 'odberatelDic', 'odberatelEmail',
-    'predmet', 'misto', 'datumVystaveni', 'platnostDo', 'terminOd', 'terminDo', 'poznamka',
+    'predmet', 'misto', 'datumVystaveni', 'platnostDo', 'terminOd', 'terminDo', 'poznamka', 'slevaProcent',
   ];
 
   async function vlozPolozkyNabidky(db: { query: (q: string, p?: any[]) => Promise<any> }, nabidkaId: number, polozky: PolozkaInput[]) {
@@ -2065,11 +2096,11 @@ async function startServer() {
       const v = (k: string) => (b[k] === '' || b[k] === undefined ? null : b[k]);
       const r = await client.query(
         `INSERT INTO nabidka (cislo, "zakaznikId", "odberatelNazev", "odberatelAdresa", "odberatelIco", "odberatelDic", "odberatelEmail",
-           predmet, misto, "datumVystaveni", "platnostDo", "terminOd", "terminDo", stav, poznamka, celkem, "createdAt", "updatedAt")
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'koncept',$14,$15,$16,$16) RETURNING id`,
+           predmet, misto, "datumVystaveni", "platnostDo", "terminOd", "terminDo", stav, poznamka, celkem, "slevaProcent", "createdAt", "updatedAt")
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'koncept',$14,$15,$16,$17,$17) RETURNING id`,
         [cislo, v('zakaznikId'), String(b.odberatelNazev).trim(), v('odberatelAdresa'), v('odberatelIco'), v('odberatelDic'), v('odberatelEmail'),
          v('predmet'), v('misto'), v('datumVystaveni') || dnesIso(), v('platnostDo'), v('terminOd'), v('terminDo'),
-         v('poznamka'), vypocitejCelkem(polozky), now]
+         v('poznamka'), celkemSeSlevou(polozky, b.slevaProcent), normalizujSlevu(b.slevaProcent), now]
       );
       await vlozPolozkyNabidky(client, r.rows[0].id, polozky);
       await client.query('COMMIT');
@@ -2097,10 +2128,17 @@ async function startServer() {
       const allowed = upravitelna ? NABIDKA_EDIT_FIELDS : ['poznamka'];
       const updates: Record<string, any> = {};
       for (const k of allowed) if (k in b) updates[k] = b[k] === '' ? null : b[k];
+      if ('slevaProcent' in updates) updates.slevaProcent = normalizujSlevu(updates.slevaProcent);
       if (upravitelna && Array.isArray(b.polozky)) {
         await client.query('DELETE FROM "nabidkaPolozka" WHERE "nabidkaId" = $1', [req.params.id]);
         await vlozPolozkyNabidky(client, Number(req.params.id), b.polozky);
-        updates.celkem = vypocitejCelkem(b.polozky);
+      }
+      if (upravitelna && (Array.isArray(b.polozky) || 'slevaProcent' in updates)) {
+        const pol = Array.isArray(b.polozky) ? b.polozky
+          : (await client.query('SELECT mnozstvi, "cenaZaJednotku" FROM "nabidkaPolozka" WHERE "nabidkaId" = $1', [req.params.id])).rows;
+        const sleva = 'slevaProcent' in updates ? updates.slevaProcent
+          : (await client.query('SELECT "slevaProcent" FROM nabidka WHERE id = $1', [req.params.id])).rows[0]?.slevaProcent;
+        updates.celkem = celkemSeSlevou(pol, sleva);
       }
       updates.updatedAt = new Date().toISOString();
       const keys = Object.keys(updates);
@@ -2116,15 +2154,29 @@ async function startServer() {
     }
   });
 
+  // Smazání nabídky v libovolném stavu. Faktura vytvořená z nabídky zůstává (jen bez odkazu);
+  // poslední číslo v řadě nabídek se uvolní.
   app.delete('/api/nabidky/:id', authMiddleware, async (req, res) => {
+    const client = await pool.connect();
     try {
-      const cur = await pool.query('SELECT "fakturaId" FROM nabidka WHERE id = $1', [req.params.id]);
-      if (cur.rows.length === 0) return res.status(404).json({ error: 'Nabídka nenalezena' });
-      if (cur.rows[0].fakturaId) return res.status(409).json({ error: 'Z nabídky už byla vytvořena faktura – nelze ji smazat' });
-      await pool.query('DELETE FROM nabidka WHERE id = $1', [req.params.id]);
-      res.json({ success: true });
+      await client.query('BEGIN');
+      const cur = await client.query('SELECT cislo FROM nabidka WHERE id = $1 FOR UPDATE', [req.params.id]);
+      if (cur.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Nabídka nenalezena' });
+      }
+      const rady = await client.query('SELECT rok, "posledniCislo" FROM "nabidkaRada" FOR UPDATE');
+      const rok = rokPoslednihoCisla(cur.rows[0].cislo, rady.rows, 'N');
+      if (rok !== null) await client.query('UPDATE "nabidkaRada" SET "posledniCislo" = "posledniCislo" - 1 WHERE rok = $1', [rok]);
+      await client.query('UPDATE faktura SET "nabidkaId" = NULL WHERE "nabidkaId" = $1', [req.params.id]);
+      await client.query('DELETE FROM nabidka WHERE id = $1', [req.params.id]);
+      await client.query('COMMIT');
+      res.json({ success: true, cisloUvolneno: rok !== null });
     } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
       res.status(500).json({ error: (error as Error).message });
+    } finally {
+      client.release();
     }
   });
 
@@ -2175,10 +2227,11 @@ async function startServer() {
       const poznamka = [`Dle cenové nabídky č. ${nab.cislo}`, nab.predmet && `Předmět: ${nab.predmet}`].filter(Boolean).join('\n');
       const f = await client.query(
         `INSERT INTO faktura ("zakaznikId", "odberatelNazev", "odberatelAdresa", "odberatelIco", "odberatelDic",
-           "datumVystaveni", "datumZdanitelnehoPlneni", "datumSplatnosti", "formaUhrady", stav, poznamka, celkem, "nabidkaId", "createdAt", "updatedAt")
-         VALUES ($1,$2,$3,$4,$5,$6,$6,$7,'prevod','koncept',$8,$9,$10,$11,$11) RETURNING id`,
+           "datumVystaveni", "datumZdanitelnehoPlneni", "datumSplatnosti", "formaUhrady", stav, poznamka, celkem, "slevaProcent", "nabidkaId", "createdAt", "updatedAt")
+         VALUES ($1,$2,$3,$4,$5,$6,$6,$7,'prevod','koncept',$8,$9,$10,$11,$12,$12) RETURNING id`,
         [nab.zakaznikId, nab.odberatelNazev, nab.odberatelAdresa, nab.odberatelIco, nab.odberatelDic,
-         dnes, pridejDny(dnes, Number(nast.rows[0]?.splatnostDni ?? 14)), poznamka, vypocitejCelkem(polozky), nab.id, now]
+         dnes, pridejDny(dnes, Number(nast.rows[0]?.splatnostDni ?? 14)), poznamka,
+         celkemSeSlevou(polozky, nab.slevaProcent), normalizujSlevu(nab.slevaProcent), nab.id, now]
       );
       await vlozPolozky(client, f.rows[0].id, polozky);
       await client.query('UPDATE nabidka SET "fakturaId" = $1, stav = \'prijata\', "updatedAt" = $2 WHERE id = $3', [f.rows[0].id, now, nab.id]);

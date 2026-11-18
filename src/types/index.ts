@@ -532,6 +532,8 @@ export interface Faktura {
   datumUhrady?: string;
   poznamka?: string;
   celkem: number;
+  /** Procentuální sleva na celý doklad (0–100) */
+  slevaProcent?: number;
   polozky?: FakturaPolozka[];
   createdAt: string;
   updatedAt: string;
@@ -581,6 +583,8 @@ export interface Nabidka {
   stav: NabidkaStav;
   poznamka?: string | null;
   celkem: number;
+  /** Procentuální sleva na celý doklad (0–100) */
+  slevaProcent?: number;
   /** Faktura vytvořená z nabídky */
   fakturaId?: number | null;
   polozky?: FakturaPolozka[];

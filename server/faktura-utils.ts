@@ -97,3 +97,37 @@ export function jePrechodNabidkyPovolen(z: string, na: string): boolean {
 
 /** Nabídku lze upravovat jen jako koncept nebo odeslanou (ne přijatou/odmítnutou). */
 export const lzeUpravitNabidku = (stav: string) => stav === 'koncept' || stav === 'odeslana';
+
+/**
+ * Je doklad s číslem `cislo` posledním vystaveným v některé roční řadě?
+ * Vrátí rok té řady (číslo lze po smazání uvolnit), jinak null.
+ */
+export function rokPoslednihoCisla(
+  cislo: string | null | undefined,
+  rady: { rok: number; posledniCislo: number }[],
+  prefix?: string | null,
+): number | null {
+  if (!cislo) return null;
+  const r = rady.find(x => x.posledniCislo > 0 && formatCisloFaktury(Number(x.rok), Number(x.posledniCislo), prefix) === cislo);
+  return r ? Number(r.rok) : null;
+}
+
+// ==================== SLEVA ====================
+
+/** Procentuální sleva na celý doklad: 0–100, dvě desetinná místa; neplatná hodnota = 0. */
+export function normalizujSlevu(v: unknown): number {
+  const n = toNum(v as number | string | null | undefined);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return round2(Math.min(n, 100));
+}
+
+/** Částka slevy z mezisoučtu (zaokrouhleno na haléře). */
+export function castkaSlevy(mezisoucet: number, slevaProcent: number): number {
+  return round2((mezisoucet * normalizujSlevu(slevaProcent)) / 100);
+}
+
+/** Celkem po slevě. */
+export function celkemSeSlevou(polozky: PolozkaInput[], slevaProcent: unknown): number {
+  const mezisoucet = vypocitejCelkem(polozky);
+  return round2(mezisoucet - castkaSlevy(mezisoucet, normalizujSlevu(slevaProcent)));
+}

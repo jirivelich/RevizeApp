@@ -136,6 +136,17 @@ export default function FakturaPrintPage() {
           </tbody>
         </table>
 
+        {(() => {
+          const pol = (faktura.polozky ?? []).reduce((s, p) => s + (Number(p.celkem) || 0), 0);
+          const pct = Number(faktura.slevaProcent) || 0;
+          if (pct <= 0) return null;
+          return (
+            <div className="fp-sleva">
+              <div>Mezisoučet: {cena(pol)}</div>
+              <div>Sleva {pct.toLocaleString('cs-CZ')} %: −{cena(pol - (Number(faktura.celkem) || 0))}</div>
+            </div>
+          );
+        })()}
         <div className="fp-total">
           <div className="fp-total-box">Celkem k úhradě: {cena(faktura.celkem)}</div>
         </div>
