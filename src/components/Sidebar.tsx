@@ -16,9 +16,6 @@ const navItems: { path: string; label: string; section: NavSection; icon: IconNa
   { path: '/revize', label: 'Revizní zprávy', section: 'Práce', icon: 'doc' },
   { path: '/zavady', label: 'Závady', section: 'Práce', icon: 'warning' },
   { path: '/planovani', label: 'Kalendář', section: 'Práce', icon: 'calendar' },
-  { path: '/nabidky', label: 'Nabídky', section: 'Práce', icon: 'quote' },
-  { path: '/faktury', label: 'Faktury', section: 'Práce', icon: 'invoice' },
-  { path: '/cenik', label: 'Ceník', section: 'Práce', icon: 'tag' },
   { path: '/pristroje', label: 'Přístroje', section: 'Vybavení', icon: 'bolt' },
   { path: '/firmy', label: 'Firmy', section: 'Správa', icon: 'building' },
   { path: '/zakaznici', label: 'Zákazníci', section: 'Správa', icon: 'users' },
@@ -26,6 +23,18 @@ const navItems: { path: string; label: string; section: NavSection; icon: IconNa
 ];
 
 const SECTIONS: NavSection[] = ['Práce', 'Vybavení', 'Správa'];
+
+/** Rozbalovací skupina „Fakturace“ v sekci Práce (za Kalendářem). */
+const FAKTURACE = {
+  label: 'Fakturace',
+  icon: 'invoice' as IconName,
+  items: [
+    { path: '/nabidky', label: 'Nabídky', icon: 'quote' as IconName },
+    { path: '/faktury', label: 'Faktury', icon: 'invoice' as IconName },
+    { path: '/cenik', label: 'Ceník', icon: 'tag' as IconName },
+  ],
+};
+const FAKTURACE_KEY = 'reveli_menu_fakturace';
 
 interface SidebarProps {
   onClose?: () => void;
@@ -40,6 +49,18 @@ export function Sidebar({ onClose }: SidebarProps) {
   const { themeName, setTheme } = useTheme();
   const [showZmenaHesla, setShowZmenaHesla] = React.useState(false);
 
+  // Skupina Fakturace: rozbalená, když je v ní aktivní stránka; jinak podle posledního stavu
+  const fakturaceAktivni = FAKTURACE.items.some(i => location.pathname.startsWith(i.path));
+  const [fakturaceOtevrena, setFakturaceOtevrena] = React.useState<boolean>(() => {
+    try { return localStorage.getItem(FAKTURACE_KEY) === '1'; } catch { return false; }
+  });
+  const otevrena = fakturaceOtevrena || fakturaceAktivni;
+  const prepniFakturaci = () => {
+    const nova = !otevrena;
+    setFakturaceOtevrena(nova);
+    try { localStorage.setItem(FAKTURACE_KEY, nova ? '1' : '0'); } catch { /* bez úložiště */ }
+  };
+
   const handleLogout = async () => {
     await logoutApi();
     navigate('/login');
@@ -50,7 +71,7 @@ export function Sidebar({ onClose }: SidebarProps) {
     ? user.username.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)
     : 'U';
 
-  const renderNavItem = (item: typeof navItems[0]) => {
+  const renderNavItem = (item: { path: string; label: string; icon: IconName }, vnoreny = false) => {
     const isActive = location.pathname === item.path ||
       (item.path !== '/' && location.pathname.startsWith(item.path));
 
@@ -60,17 +81,43 @@ export function Sidebar({ onClose }: SidebarProps) {
         to={item.path}
         onClick={onClose}
         aria-current={isActive ? 'page' : undefined}
-        className={`flex items-center gap-2.5 h-[38px] px-2.5 rounded-[var(--radius-md)] text-[13px] font-medium transition-colors ${FOCUS} ${
+        className={`flex items-center gap-2.5 ${vnoreny ? 'h-[34px] pl-[30px] pr-2.5' : 'h-[38px] px-2.5'} rounded-[var(--radius-md)] text-[13px] font-medium transition-colors ${FOCUS} ${
           isActive
             ? 'bg-[var(--active-bg)] text-[var(--nav-text-active)] shadow-[inset_2px_0_0_var(--primary)]'
             : 'text-[var(--nav-text)] hover:bg-[var(--bg-hover)] hover:text-[var(--text)]'
         }`}
       >
-        <Icon name={item.icon} size={20} />
+        <Icon name={item.icon} size={vnoreny ? 17 : 20} />
         {item.label}
       </Link>
     );
   };
+
+  const renderFakturace = () => (
+    <div key="fakturace" className="flex flex-col gap-0.5">
+      <button
+        type="button"
+        onClick={prepniFakturaci}
+        aria-expanded={otevrena}
+        aria-controls="menu-fakturace"
+        className={`flex items-center gap-2.5 h-[38px] px-2.5 rounded-[var(--radius-md)] text-[13px] font-medium transition-colors cursor-pointer ${FOCUS} ${
+          fakturaceAktivni && !otevrena ? 'text-[var(--nav-text-active)]' : 'text-[var(--nav-text)] hover:bg-[var(--bg-hover)] hover:text-[var(--text)]'
+        }`}
+      >
+        <Icon name={FAKTURACE.icon} size={20} />
+        <span className="flex-1 text-left">{FAKTURACE.label}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          aria-hidden="true" className={`transition-transform ${otevrena ? 'rotate-180' : ''}`}>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {otevrena && (
+        <div id="menu-fakturace" className="flex flex-col gap-0.5">
+          {FAKTURACE.items.map(i => renderNavItem(i, true))}
+        </div>
+      )}
+    </div>
+  );
 
   const dashboardItem = navItems.find(i => i.section === null)!;
 
@@ -98,7 +145,8 @@ export function Sidebar({ onClose }: SidebarProps) {
           {SECTIONS.map(section => (
             <div key={section} className="flex flex-col gap-0.5">
               <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)] px-2.5 pt-3 pb-1">{section}</div>
-              {navItems.filter(i => i.section === section).map(renderNavItem)}
+              {navItems.filter(i => i.section === section).map(i => renderNavItem(i))}
+              {section === 'Práce' && renderFakturace()}
             </div>
           ))}
         </nav>
