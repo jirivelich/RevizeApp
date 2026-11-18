@@ -78,3 +78,22 @@ export function numerizuj<T extends Record<string, any>>(row: T, pole: string[])
   }
   return out as T;
 }
+
+// ==================== CENOVÉ NABÍDKY ====================
+
+export type NabidkaStav = 'koncept' | 'odeslana' | 'prijata' | 'odmitnuta';
+
+/** Povolené změny stavu nabídky. Odeslanou lze vrátit do konceptu (úpravy po domluvě se zákazníkem). */
+const NABIDKA_PRECHODY: Record<NabidkaStav, NabidkaStav[]> = {
+  koncept: ['odeslana', 'prijata', 'odmitnuta'],
+  odeslana: ['koncept', 'prijata', 'odmitnuta'],
+  prijata: ['odeslana'],
+  odmitnuta: ['odeslana'],
+};
+
+export function jePrechodNabidkyPovolen(z: string, na: string): boolean {
+  return (NABIDKA_PRECHODY[z as NabidkaStav] ?? []).includes(na as NabidkaStav);
+}
+
+/** Nabídku lze upravovat jen jako koncept nebo odeslanou (ne přijatou/odmítnutou). */
+export const lzeUpravitNabidku = (stav: string) => stav === 'koncept' || stav === 'odeslana';

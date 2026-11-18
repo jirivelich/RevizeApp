@@ -7,7 +7,7 @@ import { authMiddleware, loginUser, registerUser, logoutSession, changePassword,
 import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion, analyzeRozvadecPhotos } from './ai';
 import { getAuthUrl, exchangeCodeAndSave, deleteTokens, getTokens, saveTokens, listCalendars, syncZakazkyToCalendar, isGoogleConfigured, removeAppEvents, resolvePrimaryAlias, listGoogleEvents } from './googleCalendar';
 import { createState, verifyState, frontendBase as googleFrontendBase, popisChybyGoogle, parseCalendarIds, normalizeCalendarIds, MAX_KALENDARU, cilovyKalendar } from './google-utils';
-import { PolozkaInput, toNum, vypocitejPolozku, vypocitejCelkem, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj, sanitizeCinnost } from './faktura-utils';
+import { PolozkaInput, toNum, vypocitejPolozku, vypocitejCelkem, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj, sanitizeCinnost, jePrechodNabidkyPovolen, lzeUpravitNabidku } from './faktura-utils';
 import { diffZmen, zapisAudit } from './audit';
 import { hlidejZamek, jeZamceny } from './zamek';
 import { najdiPodleIco, hledejPodleNazvu, AresChyba } from './ares';
@@ -1969,6 +1969,192 @@ async function startServer() {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // ==================== CENOVÉ NABÍDKY ====================
+  const NABIDKA_EDIT_FIELDS = [
+    'zakaznikId', 'odberatelNazev', 'odberatelAdresa', 'odberatelIco', 'odberatelDic', 'odberatelEmail',
+    'predmet', 'misto', 'datumVystaveni', 'platnostDo', 'terminOd', 'terminDo', 'poznamka',
+  ];
+
+  async function vlozPolozkyNabidky(db: { query: (q: string, p?: any[]) => Promise<any> }, nabidkaId: number, polozky: PolozkaInput[]) {
+    let poradi = 0;
+    for (const p of polozky) {
+      await db.query(
+        `INSERT INTO "nabidkaPolozka" ("nabidkaId", poradi, popis, mnozstvi, jednotka, "cenaZaJednotku", celkem, cinnost)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [nabidkaId, poradi++, p.popis ?? '', toNum(p.mnozstvi), p.jednotka ?? null, toNum(p.cenaZaJednotku), vypocitejPolozku(p), sanitizeCinnost(p.cinnost)]
+      );
+    }
+  }
+
+  app.get('/api/nabidky', authMiddleware, async (_req, res) => {
+    try {
+      const r = await pool.query('SELECT * FROM nabidka ORDER BY id DESC');
+      res.json(r.rows.map(x => numerizuj(x, FAKTURA_NUM)));
+    } catch (error: any) {
+      if (error.message?.includes('does not exist')) return res.json([]);
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.get('/api/nabidky/:id', authMiddleware, async (req, res) => {
+    try {
+      const n = await pool.query('SELECT * FROM nabidka WHERE id = $1', [req.params.id]);
+      if (n.rows.length === 0) return res.status(404).json({ error: 'Nabídka nenalezena' });
+      const p = await pool.query('SELECT * FROM "nabidkaPolozka" WHERE "nabidkaId" = $1 ORDER BY poradi, id', [req.params.id]);
+      res.json({ ...numerizuj(n.rows[0], FAKTURA_NUM), polozky: p.rows.map(r => numerizuj(r, POLOZKA_NUM)) });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Nová nabídka dostane číslo hned (řada N + rok + pořadí, např. N20260001)
+  app.post('/api/nabidky', authMiddleware, async (req, res) => {
+    const client = await pool.connect();
+    try {
+      const b = req.body || {};
+      if (!String(b.odberatelNazev ?? '').trim()) return res.status(400).json({ error: 'Vyplňte odběratele' });
+      const polozky: PolozkaInput[] = Array.isArray(b.polozky) ? b.polozky : [];
+      const now = new Date().toISOString();
+      await client.query('BEGIN');
+      const rok = new Date().getFullYear();
+      const rada = await client.query(
+        `INSERT INTO "nabidkaRada" (rok, "posledniCislo") VALUES ($1, 1)
+         ON CONFLICT (rok) DO UPDATE SET "posledniCislo" = "nabidkaRada"."posledniCislo" + 1
+         RETURNING "posledniCislo"`,
+        [rok]
+      );
+      const cislo = formatCisloFaktury(rok, rada.rows[0].posledniCislo, 'N');
+      const v = (k: string) => (b[k] === '' || b[k] === undefined ? null : b[k]);
+      const r = await client.query(
+        `INSERT INTO nabidka (cislo, "zakaznikId", "odberatelNazev", "odberatelAdresa", "odberatelIco", "odberatelDic", "odberatelEmail",
+           predmet, misto, "datumVystaveni", "platnostDo", "terminOd", "terminDo", stav, poznamka, celkem, "createdAt", "updatedAt")
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'koncept',$14,$15,$16,$16) RETURNING id`,
+        [cislo, v('zakaznikId'), String(b.odberatelNazev).trim(), v('odberatelAdresa'), v('odberatelIco'), v('odberatelDic'), v('odberatelEmail'),
+         v('predmet'), v('misto'), v('datumVystaveni') || dnesIso(), v('platnostDo'), v('terminOd'), v('terminDo'),
+         v('poznamka'), vypocitejCelkem(polozky), now]
+      );
+      await vlozPolozkyNabidky(client, r.rows[0].id, polozky);
+      await client.query('COMMIT');
+      res.json({ id: r.rows[0].id, cislo });
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      console.error('Error creating nabidka:', error);
+      res.status(500).json({ error: (error as Error).message });
+    } finally {
+      client.release();
+    }
+  });
+
+  app.put('/api/nabidky/:id', authMiddleware, async (req, res) => {
+    const client = await pool.connect();
+    try {
+      const b = req.body || {};
+      await client.query('BEGIN');
+      const cur = await client.query('SELECT stav FROM nabidka WHERE id = $1 FOR UPDATE', [req.params.id]);
+      if (cur.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Nabídka nenalezena' });
+      }
+      const upravitelna = lzeUpravitNabidku(cur.rows[0].stav);
+      const allowed = upravitelna ? NABIDKA_EDIT_FIELDS : ['poznamka'];
+      const updates: Record<string, any> = {};
+      for (const k of allowed) if (k in b) updates[k] = b[k] === '' ? null : b[k];
+      if (upravitelna && Array.isArray(b.polozky)) {
+        await client.query('DELETE FROM "nabidkaPolozka" WHERE "nabidkaId" = $1', [req.params.id]);
+        await vlozPolozkyNabidky(client, Number(req.params.id), b.polozky);
+        updates.celkem = vypocitejCelkem(b.polozky);
+      }
+      updates.updatedAt = new Date().toISOString();
+      const keys = Object.keys(updates);
+      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+      await client.query(`UPDATE nabidka SET ${setClause} WHERE id = $${keys.length + 1}`, [...keys.map(k => updates[k]), req.params.id]);
+      await client.query('COMMIT');
+      res.json({ success: true });
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      res.status(500).json({ error: (error as Error).message });
+    } finally {
+      client.release();
+    }
+  });
+
+  app.delete('/api/nabidky/:id', authMiddleware, async (req, res) => {
+    try {
+      const cur = await pool.query('SELECT "fakturaId" FROM nabidka WHERE id = $1', [req.params.id]);
+      if (cur.rows.length === 0) return res.status(404).json({ error: 'Nabídka nenalezena' });
+      if (cur.rows[0].fakturaId) return res.status(409).json({ error: 'Z nabídky už byla vytvořena faktura – nelze ji smazat' });
+      await pool.query('DELETE FROM nabidka WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.post('/api/nabidky/:id/stav', authMiddleware, async (req, res) => {
+    try {
+      const novy = String(req.body?.stav || '');
+      const cur = await pool.query('SELECT stav FROM nabidka WHERE id = $1', [req.params.id]);
+      if (cur.rows.length === 0) return res.status(404).json({ error: 'Nabídka nenalezena' });
+      if (!jePrechodNabidkyPovolen(cur.rows[0].stav, novy)) {
+        return res.status(409).json({ error: `Přechod ${cur.rows[0].stav} → ${novy} není povolen` });
+      }
+      await pool.query('UPDATE nabidka SET stav = $1, "updatedAt" = $2 WHERE id = $3', [novy, new Date().toISOString(), req.params.id]);
+      res.json({ success: true, stav: novy });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Vytvoří z nabídky koncept faktury (odběratel + položky vč. druhu činnosti); nabídka → přijatá
+  app.post('/api/nabidky/:id/faktura', authMiddleware, async (req, res) => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const n = await client.query('SELECT * FROM nabidka WHERE id = $1 FOR UPDATE', [req.params.id]);
+      if (n.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Nabídka nenalezena' });
+      }
+      const nab = n.rows[0];
+      if (nab.fakturaId) {
+        const existuje = await client.query('SELECT id FROM faktura WHERE id = $1', [nab.fakturaId]);
+        if (existuje.rows.length) {
+          await client.query('ROLLBACK');
+          return res.status(409).json({ error: 'Z nabídky už faktura existuje', fakturaId: nab.fakturaId });
+        }
+      }
+      if (nab.stav === 'odmitnuta') {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ error: 'Z odmítnuté nabídky nelze vytvořit fakturu' });
+      }
+      const pol = await client.query('SELECT * FROM "nabidkaPolozka" WHERE "nabidkaId" = $1 ORDER BY poradi, id', [nab.id]);
+      const polozky: PolozkaInput[] = pol.rows.map((p: any) => ({
+        popis: p.popis, mnozstvi: p.mnozstvi, jednotka: p.jednotka, cenaZaJednotku: p.cenaZaJednotku, cinnost: p.cinnost,
+      }));
+      const nast = await client.query('SELECT "splatnostDni" FROM nastaveni LIMIT 1');
+      const dnes = dnesIso();
+      const now = new Date().toISOString();
+      const poznamka = [`Dle cenové nabídky č. ${nab.cislo}`, nab.predmet && `Předmět: ${nab.predmet}`].filter(Boolean).join('\n');
+      const f = await client.query(
+        `INSERT INTO faktura ("zakaznikId", "odberatelNazev", "odberatelAdresa", "odberatelIco", "odberatelDic",
+           "datumVystaveni", "datumZdanitelnehoPlneni", "datumSplatnosti", "formaUhrady", stav, poznamka, celkem, "nabidkaId", "createdAt", "updatedAt")
+         VALUES ($1,$2,$3,$4,$5,$6,$6,$7,'prevod','koncept',$8,$9,$10,$11,$11) RETURNING id`,
+        [nab.zakaznikId, nab.odberatelNazev, nab.odberatelAdresa, nab.odberatelIco, nab.odberatelDic,
+         dnes, pridejDny(dnes, Number(nast.rows[0]?.splatnostDni ?? 14)), poznamka, vypocitejCelkem(polozky), nab.id, now]
+      );
+      await vlozPolozky(client, f.rows[0].id, polozky);
+      await client.query('UPDATE nabidka SET "fakturaId" = $1, stav = \'prijata\', "updatedAt" = $2 WHERE id = $3', [f.rows[0].id, now, nab.id]);
+      await client.query('COMMIT');
+      res.json({ fakturaId: f.rows[0].id });
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      console.error('Error converting nabidka:', error);
+      res.status(500).json({ error: (error as Error).message });
+    } finally {
+      client.release();
     }
   });
 

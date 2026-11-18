@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { vypocitejCelkem, vypocitejPolozku, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj, toNum } from '../faktura-utils';
+import { vypocitejCelkem, vypocitejPolozku, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj, toNum, jePrechodNabidkyPovolen, lzeUpravitNabidku } from '../faktura-utils';
 
 describe('faktura-utils', () => {
   it('počítá položku a celkem se zaokrouhlením na 2 des.', () => {
@@ -33,5 +33,22 @@ describe('faktura-utils', () => {
 
   it('převádí NUMERIC řetězce na čísla', () => {
     expect(numerizuj({ celkem: '12.50', a: 'x', b: null }, ['celkem', 'b'])).toEqual({ celkem: 12.5, a: 'x', b: null });
+  });
+});
+
+
+describe('cenové nabídky', () => {
+  it('povolené přechody stavů', () => {
+    expect(jePrechodNabidkyPovolen('koncept', 'odeslana')).toBe(true);
+    expect(jePrechodNabidkyPovolen('odeslana', 'prijata')).toBe(true);
+    expect(jePrechodNabidkyPovolen('odeslana', 'koncept')).toBe(true);
+    expect(jePrechodNabidkyPovolen('prijata', 'koncept')).toBe(false);
+    expect(jePrechodNabidkyPovolen('odmitnuta', 'prijata')).toBe(false);
+    expect(jePrechodNabidkyPovolen('nesmysl', 'odeslana')).toBe(false);
+  });
+  it('upravovat lze koncept a odeslanou', () => {
+    expect(lzeUpravitNabidku('koncept')).toBe(true);
+    expect(lzeUpravitNabidku('odeslana')).toBe(true);
+    expect(lzeUpravitNabidku('prijata')).toBe(false);
   });
 });

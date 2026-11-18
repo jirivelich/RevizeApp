@@ -28,6 +28,9 @@ import { useOfflineQueueSync } from './hooks/useOfflineQueue';
 import { ThemeProvider } from './context/ThemeContext';
 
 const FakturaPrintPage = lazy(() => import('./pages/FakturaPrint/FakturaPrintPage'));
+const NabidkaPrintPage = lazy(() => import('./pages/FakturaPrint/NabidkaPrintPage'));
+const NabidkyPage = lazy(() => import('./pages/NabidkyPage'));
+const NabidkaForm = lazy(() => import('./pages/NabidkaForm'));
 // Vývojová stránka se vzorovými daty šablon zpráv (jen v dev režimu)
 const DevSablony = import.meta.env.DEV ? lazy(() => import('./documents/DevSablony')) : null;
 const DevPlanovani = import.meta.env.DEV ? lazy(() => import('./pages/Planovani/DevPlanovani')) : null;
@@ -134,6 +137,13 @@ function App() {
                 </Suspense>
               </ProtectedRoute>
             } />
+            <Route path="/nabidka/:id/nahled" element={
+              <ProtectedRoute>
+                <Suspense fallback={null}>
+                  <NabidkaPrintPage />
+                </Suspense>
+              </ProtectedRoute>
+            } />
             <Route
               path="/"
               element={
@@ -154,6 +164,9 @@ function App() {
               <Route path="faktury/nova" element={<FakturaFormPage />} />
               <Route path="faktury/:id" element={<FakturaFormPage />} />
               <Route path="cenik" element={<CenikPage />} />
+              <Route path="nabidky" element={<Suspense fallback={null}><NabidkyPage /></Suspense>} />
+              <Route path="nabidky/nova" element={<Suspense fallback={null}><NabidkaForm /></Suspense>} />
+              <Route path="nabidky/:id" element={<Suspense fallback={null}><NabidkaForm /></Suspense>} />
               <Route path="planovani" element={<PlanovaniPage />} />
               <Route path="nastaveni" element={<NastaveniPage />} />
               <Route path="form-builder" element={<FormBuilderPage />} />

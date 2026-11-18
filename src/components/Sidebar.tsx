@@ -16,6 +16,7 @@ const navItems: { path: string; label: string; section: NavSection; icon: IconNa
   { path: '/revize', label: 'Revizní zprávy', section: 'Práce', icon: 'doc' },
   { path: '/zavady', label: 'Závady', section: 'Práce', icon: 'warning' },
   { path: '/planovani', label: 'Kalendář', section: 'Práce', icon: 'calendar' },
+  { path: '/nabidky', label: 'Nabídky', section: 'Práce', icon: 'quote' },
   { path: '/faktury', label: 'Faktury', section: 'Práce', icon: 'invoice' },
   { path: '/cenik', label: 'Ceník', section: 'Práce', icon: 'tag' },
   { path: '/pristroje', label: 'Přístroje', section: 'Vybavení', icon: 'bolt' },

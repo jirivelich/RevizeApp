@@ -555,3 +555,35 @@ export interface CenikPolozka {
   /** Druh činnosti (výdajový paušál), viz utils/druhyCinnosti.ts */
   cinnost?: string | null;
 }
+
+// ==================== CENOVÉ NABÍDKY ====================
+
+export type NabidkaStav = 'koncept' | 'odeslana' | 'prijata' | 'odmitnuta';
+
+export interface Nabidka {
+  id: number;
+  cislo?: string;
+  zakaznikId?: number | null;
+  odberatelNazev: string;
+  odberatelAdresa?: string | null;
+  odberatelIco?: string | null;
+  odberatelDic?: string | null;
+  odberatelEmail?: string | null;
+  /** Předmět nabídky (např. „Revize elektroinstalace RD“) */
+  predmet?: string | null;
+  /** Místo plnění */
+  misto?: string | null;
+  datumVystaveni?: string | null;
+  platnostDo?: string | null;
+  /** Předpokládaný termín realizace */
+  terminOd?: string | null;
+  terminDo?: string | null;
+  stav: NabidkaStav;
+  poznamka?: string | null;
+  celkem: number;
+  /** Faktura vytvořená z nabídky */
+  fakturaId?: number | null;
+  polozky?: FakturaPolozka[];
+  createdAt: string;
+  updatedAt: string;
+}

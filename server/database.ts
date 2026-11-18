@@ -561,10 +561,6 @@ export async function initializeDatabase() {
       'ALTER TABLE google_oauth_tokens ADD COLUMN IF NOT EXISTS calendar_ids TEXT',
       // Kalendář, do kterého se zakázka zapisuje (null = výchozí kalendář uživatele)
       'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS "googleCalendarId" TEXT',
-      // Ceník: kategorie (volný text) a druh činnosti pro výdajový paušál; druh činnosti i u položky faktury
-      'ALTER TABLE cenik ADD COLUMN IF NOT EXISTS kategorie TEXT',
-      'ALTER TABLE cenik ADD COLUMN IF NOT EXISTS cinnost TEXT',
-      'ALTER TABLE "fakturaPolozka" ADD COLUMN IF NOT EXISTS cinnost TEXT',
       // ===== Fakturace =====
       `CREATE TABLE IF NOT EXISTS faktura (
         id SERIAL PRIMARY KEY,
@@ -623,6 +619,50 @@ export async function initializeDatabase() {
       'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "fakturaPrefix" TEXT',
       'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS "fakturaPoznamkaPata" TEXT',
       'ALTER TABLE nastaveni ADD COLUMN IF NOT EXISTS razitko TEXT',
+      // Ceník: kategorie (volný text) a druh činnosti pro výdajový paušál; druh činnosti i u položky faktury
+      'ALTER TABLE cenik ADD COLUMN IF NOT EXISTS kategorie TEXT',
+      'ALTER TABLE cenik ADD COLUMN IF NOT EXISTS cinnost TEXT',
+      'ALTER TABLE "fakturaPolozka" ADD COLUMN IF NOT EXISTS cinnost TEXT',
+      // ===== Cenové nabídky =====
+      `CREATE TABLE IF NOT EXISTS nabidka (
+        id SERIAL PRIMARY KEY,
+        cislo TEXT UNIQUE,
+        "zakaznikId" INTEGER REFERENCES zakaznik(id) ON DELETE SET NULL,
+        "odberatelNazev" TEXT,
+        "odberatelAdresa" TEXT,
+        "odberatelIco" TEXT,
+        "odberatelDic" TEXT,
+        "odberatelEmail" TEXT,
+        predmet TEXT,
+        misto TEXT,
+        "datumVystaveni" TEXT,
+        "platnostDo" TEXT,
+        "terminOd" TEXT,
+        "terminDo" TEXT,
+        stav TEXT NOT NULL DEFAULT 'koncept',
+        poznamka TEXT,
+        celkem NUMERIC DEFAULT 0,
+        "fakturaId" INTEGER REFERENCES faktura(id) ON DELETE SET NULL,
+        "createdAt" TEXT NOT NULL,
+        "updatedAt" TEXT NOT NULL
+      )`,
+      `CREATE TABLE IF NOT EXISTS "nabidkaPolozka" (
+        id SERIAL PRIMARY KEY,
+        "nabidkaId" INTEGER NOT NULL REFERENCES nabidka(id) ON DELETE CASCADE,
+        poradi INTEGER,
+        popis TEXT,
+        mnozstvi NUMERIC,
+        jednotka TEXT,
+        "cenaZaJednotku" NUMERIC,
+        celkem NUMERIC,
+        cinnost TEXT
+      )`,
+      `CREATE TABLE IF NOT EXISTS "nabidkaRada" (
+        rok INTEGER PRIMARY KEY,
+        "posledniCislo" INTEGER NOT NULL DEFAULT 0
+      )`,
+      'CREATE INDEX IF NOT EXISTS idx_nabidka_polozka ON "nabidkaPolozka"("nabidkaId")',
+      'ALTER TABLE faktura ADD COLUMN IF NOT EXISTS "nabidkaId" INTEGER',
       // ===== Verzování schématu a auditní stopa (aditivní, bez dopadu na stávající data) =====
       `CREATE TABLE IF NOT EXISTS schema_migrations (
         version INTEGER PRIMARY KEY,
