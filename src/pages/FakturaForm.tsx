@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button, Card, Input, Select, Badge, PageHeader, Textarea } from '../components/ui';
 import {
-  useFaktura, useCreateFaktura, useUpdateFaktura, useZmenStavFaktury,
+  useFaktura, useCreateFaktura, useUpdateFaktura, useZmenStavFaktury, useKopirovatFakturu,
   useZakaznici, useCenik, useNastaveni,
 } from '../hooks/useQueries';
 import type { Faktura, FakturaStav } from '../types';
@@ -48,6 +48,7 @@ const FakturaForm: React.FC = () => {
   const createFaktura = useCreateFaktura();
   const updateFaktura = useUpdateFaktura();
   const zmenStav = useZmenStavFaktury();
+  const kopirovat = useKopirovatFakturu();
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [radky, setRadky] = useState<RadekState[]>(() => [novyRadek()]);
@@ -209,14 +210,23 @@ const FakturaForm: React.FC = () => {
               {STAV_LABEL[stav]}
             </Badge>
             <Button variant="secondary" onClick={() => navigate('/faktury')}>← Zpět</Button>
-            {!isNew && stav !== 'storno' && (
-              <Button variant="secondary" onClick={() => window.open(`/faktura/${fakturaId}/nahled`, '_blank')}>Tisk</Button>
+            {!isNew && (
+              <>
+                <Button variant="secondary" onClick={() => navigate(`/faktura/${fakturaId}/nahled`)}>Tisk / PDF</Button>
+                <Button variant="secondary" disabled={kopirovat.isPending} onClick={async () => {
+                  setError(null);
+                  try { navigate(`/faktury/${await kopirovat.mutateAsync(fakturaId!)}`); }
+                  catch (e) { setError((e as Error).message || 'Fakturu se nepodařilo zkopírovat'); }
+                }}>Kopírovat</Button>
+              </>
             )}
             {readOnly && stav === 'vystavena' && (
-              <>
-                <Button variant="success" onClick={() => handleStav('zaplacena')}>Označit zaplacenou</Button>
-                <Button variant="warning" onClick={() => handleStav('storno')}>Storno</Button>
-              </>
+              <Button variant="success" onClick={() => handleStav('zaplacena')}>Označit zaplacenou</Button>
+            )}
+            {readOnly && (stav === 'vystavena' || stav === 'zaplacena') && (
+              <Button variant="warning" onClick={() => {
+                if (window.confirm(`Stornovat fakturu ${faktura?.cisloFaktury ?? ''}? Zůstane v evidenci jako stornovaná.`)) handleStav('storno');
+              }}>Storno</Button>
             )}
           </div>
         }
@@ -224,7 +234,7 @@ const FakturaForm: React.FC = () => {
 
       {readOnly && (
         <p className="text-xs text-[var(--text-secondary)] bg-[var(--bg-hover)] rounded-lg px-3 py-2">
-          Vystavená faktura je pouze ke čtení.
+          {stav === 'storno' ? 'Stornovaná' : 'Vystavená'} faktura je pouze ke čtení. Pro opravu ji stornujte a vytvořte novou přes „Kopírovat“.
         </p>
       )}
       {error && (

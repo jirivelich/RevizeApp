@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useFaktura, useNastaveni } from '../../hooks/useQueries';
 import { qrDataUrl, sestavSpayd } from './qrPlatba';
+import { stahnoutPdf } from './pdfZeStranky';
 import './faktura-print.css';
 
 const meny = new Intl.NumberFormat('cs-CZ', { style: 'currency', currency: 'CZK', minimumFractionDigits: 2 });
@@ -21,6 +22,8 @@ export default function FakturaPrintPage() {
   const { data: faktura, isLoading } = useFaktura(id ? Number(id) : undefined);
   const { data: nastaveni } = useNastaveni();
   const [qr, setQr] = useState<string | null>(null);
+  const stranka = useRef<HTMLDivElement>(null);
+  const [pdfBezi, setPdfBezi] = useState(false);
 
   const iban = nastaveni?.iban?.trim();
   const castka = Number(faktura?.celkem) || 0;
@@ -59,11 +62,20 @@ export default function FakturaPrintPage() {
       <div className="fp-toolbar fp-no-print">
         <div className="fp-toolbar-inner">
           <button className="fp-btn" onClick={() => navigate(-1)}>← Zpět</button>
-          <button className="fp-btn fp-btn-primary" onClick={() => window.print()}>Tisk</button>
+          <div className="fp-toolbar-actions">
+            <button className="fp-btn" disabled={pdfBezi} onClick={async () => {
+              if (!stranka.current) return;
+              setPdfBezi(true);
+              try { await stahnoutPdf(stranka.current, `Faktura_${faktura.cisloFaktury || `koncept-${faktura.id}`}.pdf`); }
+              catch (e) { console.error('Export PDF selhal:', e); alert('PDF se nepodařilo vytvořit. Zkuste Tisk → Uložit jako PDF.'); }
+              finally { setPdfBezi(false); }
+            }}>{pdfBezi ? 'Vytvářím PDF…' : 'Stáhnout PDF'}</button>
+            <button className="fp-btn fp-btn-primary" onClick={() => window.print()}>Tisk</button>
+          </div>
         </div>
       </div>
 
-      <div className="fp-page">
+      <div className="fp-page" ref={stranka}>
         {watermark && <div className="fp-watermark">{watermark}</div>}
 
         <div className="fp-head">

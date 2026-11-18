@@ -1,6 +1,8 @@
+import { useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useNastaveni } from '../../hooks/useQueries';
 import { useNabidka } from '../../services/nabidky';
+import { stahnoutPdf } from './pdfZeStranky';
 import './faktura-print.css';
 
 const meny = new Intl.NumberFormat('cs-CZ', { style: 'currency', currency: 'CZK', minimumFractionDigits: 2 });
@@ -14,6 +16,8 @@ export default function NabidkaPrintPage() {
   const navigate = useNavigate();
   const { data: nabidka, isLoading } = useNabidka(id ? Number(id) : undefined);
   const { data: nastaveni } = useNastaveni();
+  const stranka = useRef<HTMLDivElement>(null);
+  const [pdfBezi, setPdfBezi] = useState(false);
 
   if (isLoading) return <div style={{ padding: 24 }}>Načítám nabídku…</div>;
   if (!nabidka) {
@@ -34,11 +38,20 @@ export default function NabidkaPrintPage() {
       <div className="fp-toolbar fp-no-print">
         <div className="fp-toolbar-inner">
           <button className="fp-btn" onClick={() => navigate(-1)}>← Zpět</button>
-          <button className="fp-btn fp-btn-primary" onClick={() => window.print()}>Tisk / uložit PDF</button>
+          <div className="fp-toolbar-actions">
+            <button className="fp-btn" disabled={pdfBezi} onClick={async () => {
+              if (!stranka.current) return;
+              setPdfBezi(true);
+              try { await stahnoutPdf(stranka.current, `Cenova-nabidka_${nabidka.cislo || nabidka.id}.pdf`); }
+              catch (e) { console.error('Export PDF selhal:', e); alert('PDF se nepodařilo vytvořit. Zkuste Tisk → Uložit jako PDF.'); }
+              finally { setPdfBezi(false); }
+            }}>{pdfBezi ? 'Vytvářím PDF…' : 'Stáhnout PDF'}</button>
+            <button className="fp-btn fp-btn-primary" onClick={() => window.print()}>Tisk</button>
+          </div>
         </div>
       </div>
 
-      <div className="fp-page">
+      <div className="fp-page" ref={stranka}>
         {nabidka.stav === 'koncept' && <div className="fp-watermark">KONCEPT</div>}
 
         <div className="fp-head">

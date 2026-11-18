@@ -1457,6 +1457,16 @@ export const fakturyService = {
     await db.fakturaCache.delete(id);
   },
 
+  /** Kopie faktury jako nový koncept (dnešní datum) – pouze online. Vrací id nové faktury. */
+  async kopie(id: number): Promise<number> {
+    if (!navigator.onLine) {
+      throw new Error('Kopírování faktury vyžaduje připojení k internetu.');
+    }
+    const r = await fetch(buildApiUrl(`/faktury/${id}/kopie`), { method: 'POST', headers: getAuthHeaders() })
+      .then(res => handleResponse<{ id: number }>(res));
+    return r.id;
+  },
+
   /** Vytvoření faktury z revize – pouze online. */
   async vytvorZRevize(revizeId: number): Promise<number> {
     if (!navigator.onLine) {

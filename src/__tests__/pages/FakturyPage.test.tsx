@@ -21,6 +21,7 @@ vi.mock('../../hooks/useQueries', () => ({
   useFaktury: () => ({ data: faktury, isLoading: false }),
   useDeleteFaktura: () => ({ mutateAsync: vi.fn() }),
   useZmenStavFaktury: () => ({ mutateAsync }),
+  useKopirovatFakturu: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useFaktura: () => ({ data: undefined, isLoading: false }),
   useCreateFaktura: () => ({ mutateAsync: vi.fn() }),
   useUpdateFaktura: () => ({ mutateAsync: vi.fn() }),

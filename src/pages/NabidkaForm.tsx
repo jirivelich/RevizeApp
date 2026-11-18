@@ -194,7 +194,7 @@ const NabidkaForm: React.FC = () => {
             <Badge variant={NABIDKA_STAV_VARIANT[stav]}>{NABIDKA_STAV_LABEL[stav]}</Badge>
             <Button variant="secondary" onClick={() => navigate('/nabidky')}>← Zpět</Button>
             {!isNew && (
-              <Button variant="secondary" onClick={() => window.open(`/nabidka/${nabidkaId}/nahled`, '_blank')}>Tisk / PDF</Button>
+              <Button variant="secondary" onClick={() => navigate(`/nabidka/${nabidkaId}/nahled`)}>Tisk / PDF</Button>
             )}
           </div>
         }

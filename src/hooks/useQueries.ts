@@ -616,6 +616,16 @@ export function useDeleteFaktura() {
   });
 }
 
+export function useKopirovatFakturu() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => fakturyService.kopie(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.faktury.all });
+    },
+  });
+}
+
 export function useZmenStavFaktury() {
   const qc = useQueryClient();
   return useMutation({

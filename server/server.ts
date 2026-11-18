@@ -1890,6 +1890,41 @@ async function startServer() {
     }
   });
 
+  // Kopie faktury: nový koncept se stejným odběratelem, položkami (vč. druhu činnosti),
+  // formou úhrady a poznámkou; data vystavení/plnění = dnes, splatnost podle Nastavení.
+  app.post('/api/faktury/:id/kopie', authMiddleware, async (req, res) => {
+    const client = await pool.connect();
+    try {
+      const f = await client.query('SELECT * FROM faktura WHERE id = $1', [req.params.id]);
+      if (f.rows.length === 0) return res.status(404).json({ error: 'Faktura nenalezena' });
+      const src = f.rows[0];
+      const pol = await client.query('SELECT * FROM "fakturaPolozka" WHERE "fakturaId" = $1 ORDER BY poradi, id', [req.params.id]);
+      const polozky: PolozkaInput[] = pol.rows.map((p: any) => ({
+        popis: p.popis, mnozstvi: p.mnozstvi, jednotka: p.jednotka, cenaZaJednotku: p.cenaZaJednotku, cinnost: p.cinnost,
+      }));
+      const nast = await client.query('SELECT "splatnostDni" FROM nastaveni LIMIT 1');
+      const dnes = dnesIso();
+      const now = new Date().toISOString();
+      await client.query('BEGIN');
+      const r = await client.query(
+        `INSERT INTO faktura ("zakaznikId", "odberatelNazev", "odberatelAdresa", "odberatelIco", "odberatelDic",
+           "datumVystaveni", "datumZdanitelnehoPlneni", "datumSplatnosti", "formaUhrady", stav, poznamka, celkem, "createdAt", "updatedAt")
+         VALUES ($1,$2,$3,$4,$5,$6,$6,$7,$8,'koncept',$9,$10,$11,$11) RETURNING id`,
+        [src.zakaznikId, src.odberatelNazev, src.odberatelAdresa, src.odberatelIco, src.odberatelDic,
+         dnes, pridejDny(dnes, Number(nast.rows[0]?.splatnostDni ?? 14)), src.formaUhrady || 'prevod', src.poznamka,
+         vypocitejCelkem(polozky), now]
+      );
+      await vlozPolozky(client, r.rows[0].id, polozky);
+      await client.query('COMMIT');
+      res.json({ id: r.rows[0].id });
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      res.status(500).json({ error: (error as Error).message });
+    } finally {
+      client.release();
+    }
+  });
+
   app.post('/api/revize/:id/faktura', authMiddleware, async (req, res) => {
     const client = await pool.connect();
     try {

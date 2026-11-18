@@ -5,8 +5,12 @@
 .fp-toolbar-inner { max-width: 210mm; margin: 0 auto; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .fp-btn { padding: 8px 16px; border-radius: 8px; border: 0; cursor: pointer; font-size: 14px; background: #f1f5f9; color: #0f172a; }
 .fp-btn:hover { background: #e2e8f0; }
-.fp-btn-primary { background: #2563eb; color: #fff; }
-.fp-btn-primary:hover { background: #1d4ed8; }
+.fp-btn-primary { background: #B42318; color: #fff; }
+.fp-btn-primary:hover { background: #912018; }
+.fp-btn:disabled { opacity: .6; cursor: wait; }
+.fp-toolbar-actions { display: flex; gap: 8px; }
+/* Snímání do PDF: bez okraje a stínu stránky */
+.fp-page.fp-exporting { margin: 0; box-shadow: none; }
 
 .fp-page {
   position: relative; width: 210mm; min-height: 297mm; margin: 16px auto; padding: 15mm 15mm 18mm;

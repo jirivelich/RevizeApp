@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Card, Select, Badge, ConfirmDialog, PageHeader, EmptyState, DataTable } from '../components/ui';
 import type { DataTableColumn } from '../components/ui';
 import type { BadgeVariant } from '../components/ui';
-import { useFaktury, useDeleteFaktura, useZmenStavFaktury } from '../hooks/useQueries';
+import { useFaktury, useDeleteFaktura, useZmenStavFaktury, useKopirovatFakturu } from '../hooks/useQueries';
 import type { Faktura, FakturaFilter, FakturaStav } from '../types';
 import { STAV_LABEL, formatKc, chybaZmenyStavu } from './fakturaUi';
 
@@ -39,6 +39,17 @@ const FakturyPage: React.FC = () => {
   const { data: faktury = [], isLoading: loading } = useFaktury(filter);
   const deleteFaktura = useDeleteFaktura();
   const zmenStav = useZmenStavFaktury();
+  const kopirovat = useKopirovatFakturu();
+
+  const handleKopie = async (f: Faktura) => {
+    setError(null);
+    try {
+      const noveId = await kopirovat.mutateAsync(f.id);
+      navigate(`/faktury/${noveId}`);
+    } catch (e) {
+      setError((e as Error).message || 'Fakturu se nepodařilo zkopírovat');
+    }
+  };
 
   const [deleteTarget, setDeleteTarget] = useState<Faktura | null>(null);
   const [stornoTarget, setStornoTarget] = useState<Faktura | null>(null);
@@ -102,16 +113,15 @@ const FakturyPage: React.FC = () => {
             </>
           )}
           {f.stav === 'vystavena' && (
-            <>
-              <Button variant="success" size="sm" onClick={() => handleZmenStav(f, 'zaplacena')}>Zaplacena</Button>
-              <Button variant="warning" size="sm" onClick={() => setStornoTarget(f)}>Storno</Button>
-            </>
+            <Button variant="success" size="sm" onClick={() => handleZmenStav(f, 'zaplacena')}>Zaplacena</Button>
           )}
           {f.stav !== 'koncept' && (
             <Button variant="secondary" size="sm" onClick={() => navigate(`/faktury/${f.id}`)}>Detail</Button>
           )}
-          {f.stav !== 'storno' && (
-            <Button variant="secondary" size="sm" onClick={() => window.open(`/faktura/${f.id}/nahled`, '_blank')}>Tisk</Button>
+          <Button variant="secondary" size="sm" title="Náhled k tisku a stažení PDF" onClick={() => navigate(`/faktura/${f.id}/nahled`)}>Tisk / PDF</Button>
+          <Button variant="secondary" size="sm" title="Vytvořit nový koncept se stejnými údaji" disabled={kopirovat.isPending} onClick={() => handleKopie(f)}>Kopírovat</Button>
+          {(f.stav === 'vystavena' || f.stav === 'zaplacena') && (
+            <Button variant="warning" size="sm" onClick={() => setStornoTarget(f)}>Storno</Button>
           )}
           {f.stav === 'koncept' && (
             <Button variant="danger" size="sm" onClick={() => setDeleteTarget(f)}>Smazat</Button>
@@ -192,7 +202,7 @@ const FakturyPage: React.FC = () => {
       <ConfirmDialog
         isOpen={stornoTarget !== null}
         title="Stornovat fakturu"
-        message={`Opravdu chcete stornovat fakturu ${stornoTarget?.cisloFaktury ?? ''}?`}
+        message={`Opravdu chcete stornovat fakturu ${stornoTarget?.cisloFaktury ?? ''}? Vystavená faktura se nemaže (číselná řada musí zůstat nepřerušená) – zůstane v evidenci jako stornovaná a půjde dál vytisknout. Pro opravu použijte „Kopírovat“.`}
         confirmLabel="Stornovat"
         variant="danger"
         onConfirm={handleConfirmStorno}
