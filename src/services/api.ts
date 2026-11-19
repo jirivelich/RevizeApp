@@ -145,6 +145,14 @@ export async function checkServerHealth() {
 }
 
 // ==================== AI ====================
+/** Záznam, který AI asistent v aplikaci vytvořil. */
+export interface AIChatAkce {
+  typ: 'revize' | 'zavada' | 'udalost' | 'zakaznik';
+  id: number;
+  popis: string;
+  odkaz: string;
+}
+
 export interface AIMistnostNavrh {
   nazev: string;
   patro: string;
@@ -181,13 +189,13 @@ export const aiApi = {
   /** Chat s AI asistentem */
   async chat(
     messages: { role: 'user' | 'assistant'; content: string }[],
-    revizeContext?: any,
-  ): Promise<{ reply: string }> {
+    revizeContext?: { id?: number },
+  ): Promise<{ reply: string; akce?: AIChatAkce[] }> {
     return fetch(buildApiUrl('/ai/chat'), {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ messages, revizeContext }),
-    }).then(res => handleResponse<{ reply: string }>(res));
+    }).then(res => handleResponse<{ reply: string; akce?: AIChatAkce[] }>(res));
   },
 
   /** Auto-vyplnění pole formuláře */

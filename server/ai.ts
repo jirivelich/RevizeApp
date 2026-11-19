@@ -4,7 +4,7 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
 let client: Anthropic | null = null;
 
-function getClient(): Anthropic {
+export function getAnthropicClient(): Anthropic {
   if (!client) {
     if (!ANTHROPIC_API_KEY || ANTHROPIC_API_KEY === 'your-api-key-here') {
       throw new Error('ANTHROPIC_API_KEY není nastavena. Přidejte platný klíč do server/.env');
@@ -37,7 +37,7 @@ async function callClaude(params: {
   maxTokens?: number;
   schema?: Record<string, unknown>;
 }): Promise<string> {
-  const ai = getClient();
+  const ai = getAnthropicClient();
   const response = await ai.messages.create({
     model: AI_MODEL,
     max_tokens: params.maxTokens ?? 16000,
@@ -110,26 +110,6 @@ Pravidla:
 - Uveď datum příští revize na základě termínu platnosti
 - Nepoužívej markdown formátování (žádné # nebo **)
 - Piš pouze text, který půjde přímo do revizní zprávy`;
-
-const SYSTEM_CHAT = `Jsi odborný asistent pro revizní techniky elektroinstalací v České republice.
-
-Tvé znalosti zahrnují:
-- ČSN 33 1500 (Revize elektrických zařízení)
-- ČSN 33 2000-6 (Ověřování)
-- ČSN 33 2000-4-41 (Ochrana před úrazem elektrickým proudem)
-- ČSN 33 2000-5-54 (Uzemnění a ochranné vodiče)
-- ČSN EN 62305 (Ochrana před bleskem)
-- Zákon 458/2000 Sb. (Energetický zákon)
-- Vyhláška 50/1978 Sb. (Odborná způsobilost v elektrotechnice)
-- NV 190/2022 Sb.
-- Praktické postupy měření (izolační odpor, impedance smyčky, proudové chrániče)
-
-Pravidla:
-- Odpovídej stručně a věcně v češtině
-- Odkazuj na konkrétní normy a články kde je to relevantní
-- Pokud si nejsi jistý, řekni to
-- Pomáhej s vyplňováním revizních zpráv, klasifikací závad, měřeními
-- Nepoužívej markdown formátování`;
 
 const SYSTEM_AUTOFILL = `Jsi odborný asistent pro vyplňování formulářů revizních zpráv elektroinstalací.
 Na základě kontextu (typ objektu, prostředí, kategorie revize) navrhni vhodnou hodnotu požadovaného pole formuláře.
@@ -227,22 +207,6 @@ export function sanitizeChatMessages(input: unknown): ChatMessage[] {
     .slice(-MAX_CHAT_MESSAGES);
   while (cleaned.length && cleaned[0].role !== 'user') cleaned.shift();
   return cleaned;
-}
-
-export async function chatWithAssistant(
-  messages: ChatMessage[],
-  revizeContext?: any
-): Promise<string> {
-  let system = SYSTEM_CHAT;
-  if (revizeContext && typeof revizeContext === 'object') {
-    system += `\n\nKontext aktuální revize:\n- Číslo: ${val(revizeContext.cisloRevize)}\n- Název: ${val(revizeContext.nazev)}\n- Adresa: ${val(revizeContext.adresa)}\n- Typ: ${val(revizeContext.typRevize)}\n- Kategorie: ${val(revizeContext.kategorieRevize)}`;
-  }
-
-  return callClaude({
-    system,
-    messages: messages.map((m) => ({ role: m.role, content: m.content })),
-    effort: 'low',
-  });
 }
 
 // ==================== AUTO-VYPLŇOVÁNÍ ====================

@@ -1,11 +1,22 @@
 import { useState, useRef, useEffect } from 'react';
-import { aiApi } from '../services/api';
+import { Link, useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { aiApi, type AIChatAkce } from '../services/api';
 import { Icon } from './icons';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  /** Záznamy, které asistent při této odpovědi vytvořil (jen pro zobrazení). */
+  akce?: AIChatAkce[];
 }
+
+const AKCE_IKONA: Record<AIChatAkce['typ'], string> = {
+  revize: '📋',
+  zavada: '⚠️',
+  udalost: '📅',
+  zakaznik: '👤',
+};
 
 export function AIChatAssistant() {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,7 +25,11 @@ export function AIChatAssistant() {
   const [loading, setLoading] = useState(false);
   const [aiAvailable, setAiAvailable] = useState<boolean | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const qc = useQueryClient();
+  const location = useLocation();
+  // Otevřená revize (/revize/123…) – „tahle revize“ v chatu
+  const revizeId = Number(location.pathname.match(/^\/revize\/(\d+)/)?.[1]) || undefined;
 
   // Check AI availability on mount
   useEffect(() => {
@@ -40,11 +55,17 @@ export function AIChatAssistant() {
     const newMessages: ChatMessage[] = [...messages, { role: 'user', content: text }];
     setMessages(newMessages);
     setInput('');
+    if (inputRef.current) inputRef.current.style.height = 'auto';
     setLoading(true);
 
     try {
-      const { reply } = await aiApi.chat(newMessages);
-      setMessages([...newMessages, { role: 'assistant', content: reply }]);
+      const { reply, akce } = await aiApi.chat(
+        newMessages.map(({ role, content }) => ({ role, content })),
+        revizeId ? { id: revizeId } : undefined,
+      );
+      setMessages([...newMessages, { role: 'assistant', content: reply, akce }]);
+      // Asistent něco vytvořil → obnovit data v aplikaci
+      if (akce && akce.length > 0) qc.invalidateQueries();
     } catch (err: any) {
       setMessages([
         ...newMessages,
@@ -81,12 +102,12 @@ export function AIChatAssistant() {
 
       {/* Chat panel */}
       {isOpen && (
-        <div className="fixed bottom-20 lg:bottom-6 right-2 lg:right-6 z-50 w-[calc(100vw-16px)] max-w-96 h-[min(520px,calc(100dvh-96px))] bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] border border-[var(--border-input)] flex flex-col overflow-hidden">
+        <div className="fixed bottom-20 lg:bottom-6 right-2 lg:right-6 z-50 w-[calc(100vw-16px)] max-w-md h-[min(600px,calc(100dvh-96px))] bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow-lg)] border border-[var(--border-input)] flex flex-col overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 bg-[var(--primary)] text-[var(--primary-fg)]">
             <div className="flex items-center gap-2">
               <Icon name="sparkle" size={20} />
-              <span className="font-medium text-sm">AI Asistent — Revize</span>
+              <span className="font-medium text-sm">AI Asistent</span>
             </div>
             <button
               onClick={() => setIsOpen(false)}
@@ -105,12 +126,13 @@ export function AIChatAssistant() {
                   <Icon name="sparkle" size={24} />
                 </div>
                 <p className="text-sm text-[var(--text-secondary)] font-medium mb-1">AI Asistent pro revize</p>
-                <p className="text-xs text-[var(--text-secondary)]">Zeptejte se na normy ČSN, postupy měření, klasifikaci závad...</p>
+                <p className="text-xs text-[var(--text-secondary)]">Vidí vaše zákazníky, revize, závady a kalendář. Umí založit revizi, událost, závadu nebo zákazníka – vždy se nejdřív zeptá.</p>
                 <div className="mt-4 space-y-2">
                   {[
-                    'Jaké jsou lhůty revizí dle ČSN 33 1500?',
-                    'Jak klasifikovat závadu C1 vs C2?',
-                    'Jaký je min. izolační odpor pro 230V?',
+                    'Kterým revizím končí platnost v příštích 2 měsících?',
+                    'Co mám v kalendáři tento týden?',
+                    'Naplánuj revizi u zákazníka Novák na příští úterý v 9:00',
+                    'Jaký je min. izolační odpor pro 230 V?',
                   ].map((q) => (
                     <button
                       key={q}
@@ -136,6 +158,21 @@ export function AIChatAssistant() {
                   }`}
                 >
                   {msg.content}
+                  {msg.akce && msg.akce.length > 0 && (
+                    <ul className="mt-2 pt-2 border-t border-[var(--border)] space-y-1">
+                      {msg.akce.map((a) => (
+                        <li key={`${a.typ}-${a.id}`}>
+                          <Link
+                            to={a.odkaz}
+                            className="flex items-center gap-1.5 text-xs font-medium text-[var(--primary-text)] hover:underline"
+                          >
+                            <span aria-hidden="true">{AKCE_IKONA[a.typ]}</span>
+                            <span>{a.popis}</span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
             ))}
@@ -156,15 +193,19 @@ export function AIChatAssistant() {
           {/* Input */}
           <div className="border-t border-[var(--border)] px-3 py-2">
             <div className="flex gap-2">
-              <input
+              <textarea
                 ref={inputRef}
-                type="text"
+                rows={1}
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+                }}
                 onKeyDown={handleKeyDown}
-                placeholder="Napsat zprávu..."
+                placeholder="Napsat zprávu… (Shift+Enter = nový řádek)"
                 disabled={loading}
-                className="flex-1 px-3 py-2 text-sm border border-[var(--border-input)] rounded-[var(--radius-md)] focus:outline-none focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--focus-ring-color)] bg-[var(--bg-input)] text-[var(--text)] disabled:bg-[var(--bg-surface)]"
+                className="flex-1 resize-none px-3 py-2 text-sm border border-[var(--border-input)] rounded-[var(--radius-md)] focus:outline-none focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--focus-ring-color)] bg-[var(--bg-input)] text-[var(--text)] disabled:bg-[var(--bg-surface)]"
               />
               <button
                 onClick={handleSend}

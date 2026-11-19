@@ -22,7 +22,6 @@ import {
   AI_MODEL,
   analyzeRozvadecPhotos,
   buildReportPrompt,
-  chatWithAssistant,
   dataUrlToImageBlock,
   generateReport,
   getAIErrorMessage,
@@ -103,12 +102,6 @@ describe('chat', () => {
     expect(sanitizeChatMessages('nesmysl')).toEqual([]);
   });
 
-  it('přidá kontext revize do systémového promptu', async () => {
-    createMock.mockResolvedValue(textResponse('Odpověď'));
-    const reply = await chatWithAssistant([{ role: 'user', content: 'Jaký je limit?' }], { cisloRevize: 'R-9' });
-    expect(reply).toBe('Odpověď');
-    expect(createMock.mock.calls[0][0].system).toContain('Číslo: R-9');
-  });
 });
 
 describe('autofill', () => {

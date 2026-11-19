@@ -4,11 +4,12 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import { pool, initializeDatabase } from './database';
 import { authMiddleware, loginUser, registerUser, logoutSession, changePassword, AuthRequest } from './auth';
-import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion, analyzeRozvadecPhotos, getAIErrorMessage, sanitizeChatMessages, AUTOFILL_FIELD_RE, AI_MODEL, navrhniMistnosti, navrhniZarizeni } from './ai';
+import { isAIConfigured, generateReport, getAutofillSuggestion, analyzeRozvadecPhotos, getAIErrorMessage, sanitizeChatMessages, AUTOFILL_FIELD_RE, AI_MODEL, navrhniMistnosti, navrhniZarizeni } from './ai';
 import { getAuthUrl, exchangeCodeAndSave, deleteTokens, getTokens, saveTokens, listCalendars, syncZakazkyToCalendar, isGoogleConfigured, removeAppEvents, resolvePrimaryAlias, listGoogleEvents } from './googleCalendar';
 import { createState, verifyState, frontendBase as googleFrontendBase, popisChybyGoogle, parseCalendarIds, normalizeCalendarIds, MAX_KALENDARU, cilovyKalendar } from './google-utils';
 import { PolozkaInput, toNum, vypocitejPolozku, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj, sanitizeCinnost, jePrechodNabidkyPovolen, lzeUpravitNabidku, rokPoslednihoCisla, celkemSeSlevou, normalizujSlevu } from './faktura-utils';
 import { diffZmen, zapisAudit } from './audit';
+import { chatSDaty } from './aiChat';
 import { hlidejZamek, jeZamceny } from './zamek';
 import { najdiPodleIco, hledejPodleNazvu, AresChyba } from './ares';
 import fs from 'fs';
@@ -147,35 +148,40 @@ async function startServer() {
     }
   });
 
+  /** Založí revizi (se snapshotem revizního technika). Sdílí endpoint i AI chat. */
+  async function vytvorRevizi(data: Record<string, any>): Promise<number> {
+    const { cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav, kategorieRevize } = data;
+    const now = new Date().toISOString();
+
+    // Načíst nejnovější doklad technika pro snapshot
+    const histRow = await pool.query('SELECT * FROM "technikHistorie" ORDER BY "createdAt" DESC LIMIT 1');
+    const h = histRow.rows[0] || {};
+    // Fallback na nastaveni pokud ještě nejsou záznamy v historii
+    const nastaveniRow = await pool.query('SELECT * FROM nastaveni LIMIT 1');
+    const n = nastaveniRow.rows[0] || {};
+
+    const result = await pool.query(`
+      INSERT INTO revize ("cisloRevize", nazev, adresa, objednatel, datum, termin, "typRevize", stav, "kategorieRevize",
+        "rtJmeno", "rtCisloOpravneni", "rtPlatnostOpravneni", "rtCisloOsvedceni", "rtPlatnostOsvedceni",
+        "createdAt", "updatedAt")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+      RETURNING id
+    `, [
+      cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav, kategorieRevize || 'elektro',
+      h.reviznniTechnikJmeno || n.reviznniTechnikJmeno || null,
+      h.reviznniTechnikCisloOpravneni || n.reviznniTechnikCisloOpravneni || null,
+      h.reviznniTechnikPlatnostOpravneni || n.reviznniTechnikPlatnostOpravneni || null,
+      h.reviznniTechnikOsvedceni || n.reviznniTechnikOsvedceni || null,
+      h.reviznniTechnikPlatnostOsvedceni || n.reviznniTechnikPlatnostOsvedceni || null,
+      now, now,
+    ]);
+    return result.rows[0].id;
+  }
+
   app.post('/api/revize', authMiddleware, async (req, res) => {
     try {
-      const { cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav, kategorieRevize } = req.body;
-      const now = new Date().toISOString();
-
-      // Načíst nejnovější doklad technika pro snapshot
-      const histRow = await pool.query('SELECT * FROM "technikHistorie" ORDER BY "createdAt" DESC LIMIT 1');
-      const h = histRow.rows[0] || {};
-      // Fallback na nastaveni pokud ještě nejsou záznamy v historii
-      const nastaveniRow = await pool.query('SELECT * FROM nastaveni LIMIT 1');
-      const n = nastaveniRow.rows[0] || {};
-
-      const result = await pool.query(`
-        INSERT INTO revize ("cisloRevize", nazev, adresa, objednatel, datum, termin, "typRevize", stav, "kategorieRevize",
-          "rtJmeno", "rtCisloOpravneni", "rtPlatnostOpravneni", "rtCisloOsvedceni", "rtPlatnostOsvedceni",
-          "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-        RETURNING id
-      `, [
-        cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav, kategorieRevize || 'elektro',
-        h.reviznniTechnikJmeno || n.reviznniTechnikJmeno || null,
-        h.reviznniTechnikCisloOpravneni || n.reviznniTechnikCisloOpravneni || null,
-        h.reviznniTechnikPlatnostOpravneni || n.reviznniTechnikPlatnostOpravneni || null,
-        h.reviznniTechnikOsvedceni || n.reviznniTechnikOsvedceni || null,
-        h.reviznniTechnikPlatnostOsvedceni || n.reviznniTechnikPlatnostOsvedceni || null,
-        now, now,
-      ]);
-
-      res.json({ id: result.rows[0].id });
+      const id = await vytvorRevizi(req.body);
+      res.json({ id });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
@@ -1018,19 +1024,25 @@ async function startServer() {
     }
   });
 
+  /** Přidá závadu k revizi (s auditem). Sdílí endpoint i AI chat. */
+  async function vytvorZavadu(data: Record<string, any>, uzivatel?: string): Promise<number> {
+    const { revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, fotky, poznamka, typ, zduvodneni, norma, riziko } = data;
+    const datumZjisteni = new Date().toISOString().split('T')[0];
+
+    const result = await pool.query(`
+      INSERT INTO zavada ("revizeId", "rozvadecId", "mistnostId", popis, zavaznost, stav, fotky, "datumZjisteni", poznamka, typ, zduvodneni, norma, riziko)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      RETURNING id
+    `, [revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, JSON.stringify(fotky || []), datumZjisteni, poznamka, typ || 'zavada', zduvodneni, norma, riziko]);
+
+    await zapisAudit({ entita: 'zavada', entitaId: result.rows[0].id, revizeId, akce: 'vytvoreno', uzivatel, zmeny: { popis, zavaznost, stav, typ: typ || 'zavada' } });
+    return result.rows[0].id;
+  }
+
   app.post('/api/zavady', authMiddleware, async (req, res) => {
     try {
-      const { revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, fotky, poznamka, typ, zduvodneni, norma, riziko } = req.body;
-      const datumZjisteni = new Date().toISOString().split('T')[0];
-
-      const result = await pool.query(`
-        INSERT INTO zavada ("revizeId", "rozvadecId", "mistnostId", popis, zavaznost, stav, fotky, "datumZjisteni", poznamka, typ, zduvodneni, norma, riziko)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-        RETURNING id
-      `, [revizeId, rozvadecId, mistnostId, popis, zavaznost, stav, JSON.stringify(fotky || []), datumZjisteni, poznamka, typ || 'zavada', zduvodneni, norma, riziko]);
-
-      await zapisAudit({ entita: 'zavada', entitaId: result.rows[0].id, revizeId, akce: 'vytvoreno', uzivatel: (req as AuthRequest).user?.username, zmeny: { popis, zavaznost, stav, typ: typ || 'zavada' } });
-      res.json({ id: result.rows[0].id });
+      const id = await vytvorZavadu(req.body, (req as AuthRequest).user?.username);
+      res.json({ id });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
@@ -1281,30 +1293,40 @@ async function startServer() {
     }
   });
 
+  /** Chyba validace vstupu (→ HTTP 400). */
+  class ValidacniChyba extends Error {}
+
+  /** Založí zakázku (událost v kalendáři) a spustí synchronizaci s Google. Sdílí endpoint i AI chat. */
+  async function vytvorZakazku(data: Record<string, any>, userId: number): Promise<number> {
+    const validationError = validateZakazkaBody(data, false);
+    if (validationError) throw new ValidacniChyba(validationError);
+
+    const { nazev, klient, adresa, zakaznikId, datumPlanovany, casPlanovany, stav, priorita, revizeId, poznamka,
+            datumyRealizace, lhutaZpravyDni, datumOdevzdaniZpravy, casKonec, celyDen, kategorie, googleCalendarId } = data;
+    const now = new Date().toISOString();
+    const realizaceJson = Array.isArray(datumyRealizace) && datumyRealizace.length > 0
+      ? JSON.stringify(datumyRealizace) : null;
+
+    const result = await pool.query(`
+      INSERT INTO zakazka (nazev, klient, adresa, "zakaznikId", "datumPlanovany", "casPlanovany", stav, priorita,
+        "revizeId", poznamka, "datumyRealizace", "lhutaZpravyDni", "datumOdevzdaniZpravy",
+        "casKonec", "celyDen", kategorie, "googleCalendarId", "createdAt", "updatedAt")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+      RETURNING id
+    `, [nazev, klient, adresa, zakaznikId || null, datumPlanovany, casPlanovany || null, stav, priorita,
+        revizeId || null, poznamka || null, realizaceJson, lhutaZpravyDni ?? 4,
+        datumOdevzdaniZpravy || null, casKonec || null, !!celyDen, kategorie || null, googleCalendarId || null, now, now]);
+
+    triggerAutoGoogleSync(userId);
+    return result.rows[0].id;
+  }
+
   app.post('/api/zakazky', authMiddleware, async (req: AuthRequest, res) => {
     try {
-      const validationError = validateZakazkaBody(req.body, false);
-      if (validationError) return res.status(400).json({ error: validationError });
-
-      const { nazev, klient, adresa, zakaznikId, datumPlanovany, casPlanovany, stav, priorita, revizeId, poznamka,
-              datumyRealizace, lhutaZpravyDni, datumOdevzdaniZpravy, casKonec, celyDen, kategorie, googleCalendarId } = req.body;
-      const now = new Date().toISOString();
-      const realizaceJson = Array.isArray(datumyRealizace) && datumyRealizace.length > 0
-        ? JSON.stringify(datumyRealizace) : null;
-
-      const result = await pool.query(`
-        INSERT INTO zakazka (nazev, klient, adresa, "zakaznikId", "datumPlanovany", "casPlanovany", stav, priorita,
-          "revizeId", poznamka, "datumyRealizace", "lhutaZpravyDni", "datumOdevzdaniZpravy",
-          "casKonec", "celyDen", kategorie, "googleCalendarId", "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
-        RETURNING id
-      `, [nazev, klient, adresa, zakaznikId || null, datumPlanovany, casPlanovany || null, stav, priorita,
-          revizeId || null, poznamka || null, realizaceJson, lhutaZpravyDni ?? 4,
-          datumOdevzdaniZpravy || null, casKonec || null, !!celyDen, kategorie || null, googleCalendarId || null, now, now]);
-
-      res.json({ id: result.rows[0].id });
-      triggerAutoGoogleSync(req.user!.id);
+      const id = await vytvorZakazku(req.body, req.user!.id);
+      res.json({ id });
     } catch (error) {
+      if (error instanceof ValidacniChyba) return res.status(400).json({ error: error.message });
       res.status(500).json({ error: (error as Error).message });
     }
   });
@@ -1595,18 +1617,22 @@ async function startServer() {
     }
   });
 
+  /** Založí zákazníka. Sdílí endpoint i AI chat. */
+  async function vytvorZakaznika(data: Record<string, any>): Promise<number> {
+    const { nazev, adresa, ico, dic, kontaktOsoba, telefon, email, poznamka } = data;
+    const now = new Date().toISOString();
+    const result = await pool.query(`
+      INSERT INTO zakaznik (nazev, adresa, ico, dic, "kontaktOsoba", telefon, email, poznamka, "createdAt", "updatedAt")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING id
+    `, [nazev, adresa, ico, dic, kontaktOsoba, telefon, email, poznamka, now, now]);
+    return result.rows[0].id;
+  }
+
   app.post('/api/zakaznici', authMiddleware, async (req, res) => {
     try {
-      const { nazev, adresa, ico, dic, kontaktOsoba, telefon, email, poznamka } = req.body;
-      const now = new Date().toISOString();
-      
-      const result = await pool.query(`
-        INSERT INTO zakaznik (nazev, adresa, ico, dic, "kontaktOsoba", telefon, email, poznamka, "createdAt", "updatedAt")
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING id
-      `, [nazev, adresa, ico, dic, kontaktOsoba, telefon, email, poznamka, now, now]);
-      
-      res.json({ id: result.rows[0].id });
+      const id = await vytvorZakaznika(req.body);
+      res.json({ id });
     } catch (error) {
       console.error('Error creating zakaznik:', error);
       res.status(500).json({ error: (error as Error).message });
@@ -2643,8 +2669,16 @@ async function startServer() {
         return res.status(400).json({ error: 'messages musí obsahovat alespoň jednu zprávu uživatele' });
       }
 
-      const reply = await chatWithAssistant(messages, revizeContext);
-      res.json({ reply });
+      const revizeId = Number(revizeContext?.id ?? req.body.revizeId);
+      const uzivatel = (req as AuthRequest).user;
+      const { reply, akce } = await chatSDaty(messages, {
+        query: (sql, params) => pool.query(sql, params as any[]),
+        vytvorRevizi,
+        vytvorZavadu: (data) => vytvorZavadu(data, uzivatel?.username),
+        vytvorZakazku: (data) => vytvorZakazku(data, uzivatel!.id),
+        vytvorZakaznika,
+      }, { revizeId: Number.isInteger(revizeId) && revizeId > 0 ? revizeId : undefined });
+      res.json({ reply, akce });
     } catch (error) {
       sendAIError(res, 'chat', error);
     }
