@@ -4,7 +4,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import { pool, initializeDatabase } from './database';
 import { authMiddleware, loginUser, registerUser, logoutSession, changePassword, AuthRequest } from './auth';
-import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion, analyzeRozvadecPhotos, getAIErrorMessage, sanitizeChatMessages, AUTOFILL_FIELD_RE, AI_MODEL } from './ai';
+import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion, analyzeRozvadecPhotos, getAIErrorMessage, sanitizeChatMessages, AUTOFILL_FIELD_RE, AI_MODEL, navrhniMistnosti, navrhniZarizeni } from './ai';
 import { getAuthUrl, exchangeCodeAndSave, deleteTokens, getTokens, saveTokens, listCalendars, syncZakazkyToCalendar, isGoogleConfigured, removeAppEvents, resolvePrimaryAlias, listGoogleEvents } from './googleCalendar';
 import { createState, verifyState, frontendBase as googleFrontendBase, popisChybyGoogle, parseCalendarIds, normalizeCalendarIds, MAX_KALENDARU, cilovyKalendar } from './google-utils';
 import { PolozkaInput, toNum, vypocitejPolozku, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj, sanitizeCinnost, jePrechodNabidkyPovolen, lzeUpravitNabidku, rokPoslednihoCisla, celkemSeSlevou, normalizujSlevu } from './faktura-utils';
@@ -2671,6 +2671,43 @@ async function startServer() {
       res.json({ suggestion });
     } catch (error) {
       sendAIError(res, 'autofill', error);
+    }
+  });
+
+  // Návrh místností z popisu objektu
+  app.post('/api/ai/navrh-mistnosti', authMiddleware, async (req, res) => {
+    try {
+      const { popis, revizeId } = req.body;
+      if (typeof popis !== 'string' || !popis.trim()) {
+        return res.status(400).json({ error: 'Popište objekt (popis je povinný)' });
+      }
+      let revize = null;
+      if (revizeId) {
+        const r = await pool.query('SELECT nazev, adresa, "popisZarizeni" FROM revize WHERE id = $1', [revizeId]);
+        revize = r.rows[0] || null;
+      }
+      const mistnosti = await navrhniMistnosti(popis, revize);
+      res.json({ mistnosti });
+    } catch (error) {
+      sendAIError(res, 'navrh-mistnosti', error);
+    }
+  });
+
+  // Návrh zařízení pro místnost
+  app.post('/api/ai/navrh-zarizeni', authMiddleware, async (req, res) => {
+    try {
+      const { mistnost, popis, existujici } = req.body;
+      if (!mistnost || typeof mistnost !== 'object' || typeof mistnost.nazev !== 'string' || !mistnost.nazev.trim()) {
+        return res.status(400).json({ error: 'mistnost.nazev je povinné' });
+      }
+      const zarizeni = await navrhniZarizeni({
+        mistnost,
+        popis: typeof popis === 'string' ? popis : undefined,
+        existujici: Array.isArray(existujici) ? existujici : [],
+      });
+      res.json({ zarizeni });
+    } catch (error) {
+      sendAIError(res, 'navrh-zarizeni', error);
     }
   });
 

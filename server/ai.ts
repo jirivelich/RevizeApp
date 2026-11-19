@@ -412,3 +412,170 @@ Identifikuj všechny jističe a jejich okruhy.`,
     throw new AIUserError('AI vrátila neplatnou odpověď. Zkuste to znovu.');
   }
 }
+
+// ==================== NÁVRH MÍSTNOSTÍ A ZAŘÍZENÍ ====================
+
+export const PROSTREDI = ['Normální', 'Nebezpečné', 'Zvlášť nebezpečné'] as const;
+
+const SYSTEM_MISTNOSTI = `Jsi zkušený revizní technik elektroinstalací v České republice.
+Z popisu objektu od technika sestav seznam místností pro revizní zprávu.
+
+Pravidla:
+- Vytvoř místnosti jen podle popisu; pokud technik uvede počet (např. "3 ložnice"), vytvoř je jednotlivě a očísluj ("Ložnice 1", "Ložnice 2"…)
+- Běžné místnosti (chodba, WC, technická místnost…) doplň jen tehdy, když to popis naznačuje (např. "rodinný dům" bez výčtu)
+- patro: zkratka podlaží ve tvaru "1.PP", "1.NP", "2.NP", "podkroví"; pokud podlaží neznáš, prázdný řetězec
+- plocha: v m² jako číslo, pokud ji technik uvedl; jinak 0
+- prostredi dle ČSN 33 2000-1 / ČSN 33 2000-7-701: koupelna, sprcha, prádelna, venkovní prostory, sauna, garáž s rizikem → "Nebezpečné" nebo "Zvlášť nebezpečné" (prostor se sprchou/vanou, sauna, bazén → "Zvlášť nebezpečné"); obytné místnosti → "Normální"
+- poznamka: krátce jen pokud z popisu plyne něco podstatného (např. "zóny dle ČSN 33 2000-7-701"), jinak prázdný řetězec
+- Názvy piš česky s velkým počátečním písmenem`;
+
+const MISTNOSTI_SCHEMA = {
+  type: 'object',
+  properties: {
+    mistnosti: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          nazev: { type: 'string' },
+          patro: { type: 'string' },
+          plocha: { type: 'number' },
+          prostredi: { type: 'string', enum: [...PROSTREDI] },
+          poznamka: { type: 'string' },
+        },
+        required: ['nazev', 'patro', 'plocha', 'prostredi', 'poznamka'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['mistnosti'],
+  additionalProperties: false,
+};
+
+export interface MistnostNavrhAI {
+  nazev: string;
+  patro: string;
+  plocha: number | null;
+  prostredi: (typeof PROSTREDI)[number];
+  poznamka: string;
+}
+
+export function sanitizeMistnosti(raw: unknown): MistnostNavrhAI[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((m: any) => m && typeof m.nazev === 'string' && m.nazev.trim())
+    .slice(0, 100)
+    .map((m: any) => {
+      const plocha = typeof m.plocha === 'number' && Number.isFinite(m.plocha) && m.plocha > 0 ? Math.round(m.plocha * 100) / 100 : null;
+      return {
+        nazev: m.nazev.trim().slice(0, 120),
+        patro: typeof m.patro === 'string' ? m.patro.trim().slice(0, 30) : '',
+        plocha,
+        prostredi: (PROSTREDI as readonly string[]).includes(m.prostredi) ? m.prostredi : 'Normální',
+        poznamka: typeof m.poznamka === 'string' ? m.poznamka.trim().slice(0, 300) : '',
+      };
+    });
+}
+
+export async function navrhniMistnosti(popis: string, revize?: any): Promise<MistnostNavrhAI[]> {
+  const kontext = revize
+    ? `Revize: ${val(revize.nazev)}, adresa: ${val(revize.adresa)}, popis zařízení: ${val(revize.popisZarizeni)}\n\n`
+    : '';
+  const text = await callClaude({
+    system: SYSTEM_MISTNOSTI,
+    messages: [{ role: 'user', content: `${kontext}POPIS OBJEKTU OD TECHNIKA:\n${popis.slice(0, 4000)}` }],
+    effort: 'low',
+    schema: MISTNOSTI_SCHEMA,
+  });
+  try {
+    return sanitizeMistnosti(JSON.parse(text)?.mistnosti);
+  } catch {
+    throw new AIUserError('AI vrátila neplatnou odpověď. Zkuste to znovu.');
+  }
+}
+
+const SYSTEM_ZARIZENI = `Jsi zkušený revizní technik elektroinstalací v České republice.
+Pro zadanou místnost navrhni seznam elektrických zařízení (předmětů), která se v revizní zprávě u místnosti uvádějí:
+zásuvky, svítidla, vypínače, pevně připojené spotřebiče (bojler, sporák, digestoř, myčka, pračka, ventilátor, topení…).
+
+Pravidla:
+- Pokud technik zařízení vyjmenuje, drž se jeho výčtu a počtů; jinak navrhni obvyklé vybavení daného typu místnosti
+- Stejná zařízení seskup do jedné položky s počtem kusů (např. "Zásuvka 230 V", pocetKs 4)
+- oznaceni: krátké označení (Z1, S1, V1, B1…), jinak prázdný řetězec
+- trida: třída ochrany dle ČSN EN 61140 – "I" (s ochranným vodičem: zásuvky, kovová svítidla, bojler, sporák, pračka), "II" (dvojitá izolace: plastová svítidla, vypínače, digestoř bývá I), "III" (malé napětí SELV/PELV)
+- prikonW: jmenovitý příkon ve W, jen když je typický a jednoznačný (bojler 2000, sporák…); u zásuvek a vypínačů 0
+- Nevymýšlej zařízení, která v místnosti daného typu běžně nebývají
+- Nevracej zařízení, která už v místnosti jsou (seznam je uveden)`;
+
+const ZARIZENI_SCHEMA = {
+  type: 'object',
+  properties: {
+    zarizeni: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          nazev: { type: 'string' },
+          oznaceni: { type: 'string' },
+          pocetKs: { type: 'integer' },
+          trida: { type: 'string', enum: ['I', 'II', 'III'] },
+          prikonW: { type: 'number' },
+        },
+        required: ['nazev', 'oznaceni', 'pocetKs', 'trida', 'prikonW'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['zarizeni'],
+  additionalProperties: false,
+};
+
+export interface ZarizeniNavrhAI {
+  nazev: string;
+  oznaceni: string;
+  pocetKs: number;
+  trida: 'I' | 'II' | 'III';
+  prikonW: number | null;
+}
+
+export function sanitizeZarizeni(raw: unknown): ZarizeniNavrhAI[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((z: any) => z && typeof z.nazev === 'string' && z.nazev.trim())
+    .slice(0, 100)
+    .map((z: any) => ({
+      nazev: z.nazev.trim().slice(0, 120),
+      oznaceni: typeof z.oznaceni === 'string' ? z.oznaceni.trim().slice(0, 20) : '',
+      pocetKs: Number.isInteger(z.pocetKs) && z.pocetKs > 0 ? Math.min(z.pocetKs, 999) : 1,
+      trida: z.trida === 'II' || z.trida === 'III' ? z.trida : 'I',
+      prikonW: typeof z.prikonW === 'number' && Number.isFinite(z.prikonW) && z.prikonW > 0 ? Math.round(z.prikonW) : null,
+    }));
+}
+
+export async function navrhniZarizeni(params: {
+  mistnost: { nazev?: string; patro?: string; prostredi?: string; poznamka?: string };
+  popis?: string;
+  existujici?: string[];
+}): Promise<ZarizeniNavrhAI[]> {
+  const { mistnost } = params;
+  const existujici = (params.existujici || []).filter((s) => typeof s === 'string').slice(0, 100);
+  const prompt = `MÍSTNOST: ${val(mistnost.nazev)}
+- Patro: ${val(mistnost.patro)}
+- Prostředí: ${val(mistnost.prostredi, 'Normální')}${mistnost.poznamka ? `\n- Poznámka: ${mistnost.poznamka}` : ''}
+
+Zařízení, která už v místnosti jsou: ${existujici.length ? existujici.join(', ') : 'žádná'}
+
+${params.popis?.trim() ? `POPIS OD TECHNIKA (hlavní podklad):\n${params.popis.trim().slice(0, 4000)}` : 'Technik nic nepopsal – navrhni obvyklé vybavení tohoto typu místnosti.'}`;
+
+  const text = await callClaude({
+    system: SYSTEM_ZARIZENI,
+    messages: [{ role: 'user', content: prompt }],
+    effort: 'low',
+    schema: ZARIZENI_SCHEMA,
+  });
+  try {
+    return sanitizeZarizeni(JSON.parse(text)?.zarizeni);
+  } catch {
+    throw new AIUserError('AI vrátila neplatnou odpověď. Zkuste to znovu.');
+  }
+}

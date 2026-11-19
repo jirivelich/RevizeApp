@@ -8,6 +8,9 @@ import { useCreateMistnost, useUpdateMistnost, useDeleteMistnost } from '../../h
 import type { Mistnost, Zarizeni, Okruh, Rozvadec } from '../../types';
 import { vyhodnotOkruh } from './mereniLimity';
 import { StavBadge } from './MereniUi';
+import { AIButton, AIMistnostiModal, AIZarizeniModal } from './AINavrhModals';
+import { useAIAvailable } from '../../hooks/useAIAvailable';
+import type { AIMistnostNavrh, AIZarizeniNavrh } from '../../services/api';
 
 const PROSTREDI = ['Normální', 'Nebezpečné', 'Zvlášť nebezpečné'];
 const BEZ_PATRA = 'Bez patra';
@@ -83,6 +86,41 @@ export function MistnostiTab({ mistnosti, rozvadece = [], zarizeniCounts: propCo
   const maVadnyOkruh = (m: Mistnost) => napajeciOkruhy(m).some(o => vyhodnotOkruh(o).stav === 'fail');
   const okruhLabel = (o: OkruhRevize) => `${o.rozvadec.oznaceni || o.rozvadec.nazev} / ${o.cislo}`;
   const [filtrProstredi, setFiltrProstredi] = useState<string>('');
+  const aiAvailable = useAIAvailable();
+  const [isAIMistnostiOpen, setIsAIMistnostiOpen] = useState(false);
+  const [isAIZarizeniOpen, setIsAIZarizeniOpen] = useState(false);
+
+  /** Uloží místnosti navržené AI a vybere první z nich. */
+  const handleAIMistnosti = async (navrh: AIMistnostNavrh[]) => {
+    let prvni: Mistnost | null = null;
+    for (const m of navrh) {
+      if (!m.nazev.trim()) continue;
+      const data = {
+        nazev: m.nazev.trim(), patro: m.patro.trim(), prostredi: m.prostredi,
+        plocha: m.plocha ?? undefined, poznamka: m.poznamka || undefined, revizeId,
+      };
+      const newId = await createMistnost.mutateAsync(data as any);
+      prvni ??= { id: newId as unknown as number, ...data };
+    }
+    if (prvni) { setSelectedMistnost(prvni); setZarizeni([]); }
+  };
+
+  /** Uloží zařízení navržená AI do vybrané místnosti. */
+  const handleAIZarizeni = async (navrh: AIZarizeniNavrh[]) => {
+    const mistnostId = selectedMistnost?.id;
+    if (!mistnostId) return;
+    for (const z of navrh) {
+      if (!z.nazev.trim()) continue;
+      const ochranaPredDotykem = z.trida === 'II' ? 'izolací' : z.trida === 'III' ? 'MN' : z.pocetKs > 1 ? 'max.' : '';
+      await zarizeniService.create({
+        nazev: z.nazev.trim(), oznaceni: z.oznaceni || undefined, pocetKs: z.pocetKs, trida: z.trida,
+        prikonW: z.prikonW ?? undefined, ochranaPredDotykem, stav: 'nekontrolováno', mistnostId,
+      } as any);
+    }
+    const zarizeniData = await zarizeniService.getByMistnost(mistnostId);
+    setZarizeni(zarizeniData);
+    setZarizeniCounts(prev => ({ ...prev, [mistnostId]: zarizeniData.length }));
+  };
 
   /** Data místnosti pro uložení (plocha jako číslo). */
   const mistnostPayload = () => {
@@ -323,6 +361,7 @@ export function MistnostiTab({ mistnosti, rozvadece = [], zarizeniCounts: propCo
               className={TW.input}
             />
           </label>
+          {aiAvailable && <AIButton onClick={() => setIsAIMistnostiOpen(true)} title="AI návrh místností z popisu objektu" />}
           <Button size="sm" className="min-h-[40px] shrink-0" onClick={() => { resetMistnostForm(); setIsMistnostModalOpen(true); }}>+ Místnost</Button>
         </div>
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Prostředí">
@@ -428,11 +467,14 @@ export function MistnostiTab({ mistnosti, rozvadece = [], zarizeniCounts: propCo
               <h4 className="font-semibold text-sm text-[var(--text)]">
                 Zařízení ({zarizeni.length}){pocetZavad > 0 && <span className="ml-2"><Badge variant="danger">{pocetZavad} {pocetZavad === 1 ? 'závada' : 'závady'}</Badge></span>}
               </h4>
+              <div className="flex gap-2">
+              {aiAvailable && <AIButton onClick={() => setIsAIZarizeniOpen(true)} title="AI návrh zařízení v místnosti" />}
               <Button size="sm" onClick={() => {
                 resetZarizeniForm();
                 if (window.innerWidth < 640) { setIsZarizeniSheetOpen(true); }
                 else { setIsZarizeniModalOpen(true); }
               }}>+ Zařízení</Button>
+              </div>
             </div>
             {zarizeni.length > 0 ? (
               <>
@@ -498,11 +540,29 @@ export function MistnostiTab({ mistnosti, rozvadece = [], zarizeniCounts: propCo
             <div className="text-center py-12">
               <p className="text-sm text-[var(--text-secondary)] mb-4">V revizi zatím nejsou žádné místnosti.</p>
               <Button size="sm" onClick={() => { resetMistnostForm(); setIsMistnostModalOpen(true); }}>+ Přidat místnost</Button>
+              {aiAvailable && <AIButton onClick={() => setIsAIMistnostiOpen(true)} title="AI návrh místností z popisu objektu" />}
             </div>
           </Card>
         )}
       </div>
     </div>
+
+    <AIMistnostiModal
+      isOpen={isAIMistnostiOpen}
+      onClose={() => setIsAIMistnostiOpen(false)}
+      revizeId={revizeId}
+      existujici={mistnosti.map(m => m.nazev)}
+      onConfirm={handleAIMistnosti}
+    />
+    {selected && (
+      <AIZarizeniModal
+        isOpen={isAIZarizeniOpen}
+        onClose={() => setIsAIZarizeniOpen(false)}
+        mistnost={{ nazev: selected.nazev, patro: selected.patro, prostredi: selected.prostredi, poznamka: selected.poznamka }}
+        existujici={zarizeni.map(z => z.pocetKs > 1 ? `${z.nazev} (${z.pocetKs} ks)` : z.nazev)}
+        onConfirm={handleAIZarizeni}
+      />
+    )}
 
     {/* Modal pro přidání/úpravu místnosti */}
     <Modal

@@ -145,6 +145,22 @@ export async function checkServerHealth() {
 }
 
 // ==================== AI ====================
+export interface AIMistnostNavrh {
+  nazev: string;
+  patro: string;
+  plocha: number | null;
+  prostredi: 'Normální' | 'Nebezpečné' | 'Zvlášť nebezpečné';
+  poznamka: string;
+}
+
+export interface AIZarizeniNavrh {
+  nazev: string;
+  oznaceni: string;
+  pocetKs: number;
+  trida: 'I' | 'II' | 'III';
+  prikonW: number | null;
+}
+
 export const aiApi = {
   /** Zkontrolovat, zda je AI nakonfigurováno */
   async getStatus(): Promise<{ configured: boolean }> {
@@ -186,6 +202,28 @@ export const aiApi = {
       headers: getAuthHeaders(),
       body: JSON.stringify({ field, formData, entityType, pokyny }),
     }).then(res => handleResponse<{ suggestion: Record<string, string> }>(res));
+  },
+
+  /** Navrhnout místnosti z popisu objektu */
+  async navrhMistnosti(popis: string, revizeId?: number): Promise<{ mistnosti: AIMistnostNavrh[] }> {
+    return fetch(buildApiUrl('/ai/navrh-mistnosti'), {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ popis, revizeId }),
+    }).then(res => handleResponse<{ mistnosti: AIMistnostNavrh[] }>(res));
+  },
+
+  /** Navrhnout zařízení pro místnost */
+  async navrhZarizeni(
+    mistnost: { nazev: string; patro?: string; prostredi?: string; poznamka?: string },
+    popis?: string,
+    existujici?: string[],
+  ): Promise<{ zarizeni: AIZarizeniNavrh[] }> {
+    return fetch(buildApiUrl('/ai/navrh-zarizeni'), {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ mistnost, popis, existujici }),
+    }).then(res => handleResponse<{ zarizeni: AIZarizeniNavrh[] }>(res));
   },
 
   /** Analyzovat fotografie rozvaděče a navrhnout okruhy */

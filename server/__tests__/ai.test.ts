@@ -28,6 +28,10 @@ import {
   getAIErrorMessage,
   getAutofillSuggestion,
   isAIConfigured,
+  navrhniMistnosti,
+  navrhniZarizeni,
+  sanitizeMistnosti,
+  sanitizeZarizeni,
   sanitizeChatMessages,
   sanitizeOkruhy,
 } from '../ai';
@@ -158,6 +162,40 @@ describe('analýza fotografií', () => {
   it('nepodporovaný obrázek odmítne bez volání API', async () => {
     await expect(analyzeRozvadecPhotos(['data:image/bmp;base64,AAAA'], 'RB1')).rejects.toThrow('Nepodporovaný formát');
     expect(createMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('návrh místností a zařízení', () => {
+  it('sanitizeMistnosti opraví prostředí, plochu a vyhodí prázdné názvy', () => {
+    expect(sanitizeMistnosti([
+      { nazev: ' Koupelna ', patro: '1.NP', plocha: 6.456, prostredi: 'Zvlášť nebezpečné', poznamka: '' },
+      { nazev: 'Kuchyň', patro: '', plocha: 0, prostredi: 'mokré', poznamka: '' },
+      { nazev: '   ' },
+    ])).toEqual([
+      { nazev: 'Koupelna', patro: '1.NP', plocha: 6.46, prostredi: 'Zvlášť nebezpečné', poznamka: '' },
+      { nazev: 'Kuchyň', patro: '', plocha: null, prostredi: 'Normální', poznamka: '' },
+    ]);
+  });
+
+  it('sanitizeZarizeni normalizuje počet, třídu a příkon', () => {
+    expect(sanitizeZarizeni([{ nazev: 'Zásuvka', oznaceni: 'Z1', pocetKs: 0, trida: 'X', prikonW: 0 }])).toEqual([
+      { nazev: 'Zásuvka', oznaceni: 'Z1', pocetKs: 1, trida: 'I', prikonW: null },
+    ]);
+  });
+
+  it('navrhniMistnosti posílá popis a schéma s výčtem prostředí', async () => {
+    createMock.mockResolvedValue(textResponse(JSON.stringify({ mistnosti: [{ nazev: 'Obývák', patro: '1.NP', plocha: 0, prostredi: 'Normální', poznamka: '' }] })));
+    const out = await navrhniMistnosti('RD, obývák', { nazev: 'RD Novák' });
+    expect(out).toHaveLength(1);
+    const params = createMock.mock.calls[0][0];
+    expect(params.messages[0].content).toContain('RD, obývák');
+    expect(params.output_config.format.schema.properties.mistnosti.items.properties.prostredi.enum).toContain('Zvlášť nebezpečné');
+  });
+
+  it('navrhniZarizeni předá existující zařízení, aby se neopakovala', async () => {
+    createMock.mockResolvedValue(textResponse(JSON.stringify({ zarizeni: [] })));
+    await navrhniZarizeni({ mistnost: { nazev: 'Kuchyň' }, existujici: ['Sporák'] });
+    expect(createMock.mock.calls[0][0].messages[0].content).toContain('Sporák');
   });
 });
 
