@@ -10,6 +10,8 @@ interface UseAutosaveReturn {
   saveNow: () => void;
   /** Flushes pending debounce timer immediately. Returns a Promise that resolves when the save is done. */
   flush: () => Promise<void>;
+  /** Znovu uloží aktuální data (např. po chybě ukládání). */
+  retry: () => Promise<void>;
 }
 
 export function useAutosave(
@@ -113,5 +115,7 @@ export function useAutosave(
     saveImmediatelyRef.current = true;
   }, []);
 
-  return { status, lastSavedAt, saveNow, flush };
+  const retry = useCallback(() => doSave(formDataRef.current), [doSave]);
+
+  return { status, lastSavedAt, saveNow, flush, retry };
 }

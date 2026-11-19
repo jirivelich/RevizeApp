@@ -69,13 +69,13 @@ export function RevizeDetailPage() {
   }, [revize]);
 
   // Autosave handler — called by useAutosave hook (no special 'dokončeno' logic here;
-  // that logic lives in the stav select onChange and in the manual handleSave button).
+  // that logic lives in the stav select onChange, which also saves immediately).
   const handleAutosave = useCallback(async (data: Partial<Revize>) => {
     if (!revize?.id) return;
     await updateRevize.mutateAsync({ id: revize.id, data });
   }, [revize?.id, updateRevize]);
 
-  const { status: autoStatus, saveNow, flush } = useAutosave(formData, revize, handleAutosave);
+  const { status: autoStatus, saveNow, flush, retry } = useAutosave(formData, revize, handleAutosave);
 
   // Zamčená (dokončená) revize: jen čtení a kopírování textu, odemknutí opsáním čísla revize.
   // Hooky musí být před předčasnými return níže.
@@ -155,21 +155,6 @@ export function RevizeDetailPage() {
   const loading = loadingRevize;
   const error = revizeError?.message ?? null;
 
-  const handleSave = async () => {
-    if (revize?.id) {
-      let dataToSave = { ...formData };
-      if (formData.stav === 'dokončeno' && revize.stav !== 'dokončeno') {
-        const baseDate = formData.datumDokonceni ? new Date(formData.datumDokonceni) : new Date();
-        const platnostDo = new Date(baseDate);
-        platnostDo.setMonth(platnostDo.getMonth() + (formData.termin || 36));
-        dataToSave.datumPlatnosti = platnostDo.toISOString().split('T')[0];
-        dataToSave.datumVypracovani = new Date().toISOString().split('T')[0];
-        setFormData(dataToSave);
-      }
-      updateRevize.mutate({ id: revize.id, data: dataToSave });
-    }
-  };
-
   // Loading / Error / Not found guards
   if (loading) {
     return (
@@ -247,18 +232,39 @@ export function RevizeDetailPage() {
   };
 
   return (
-    <div className="space-y-6 pb-36 lg:pb-20">
+    <div className="space-y-6 pb-20 lg:pb-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm mb-1">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[var(--text-muted)] text-sm mb-1">
               <Link to="/revize" className="hover:text-[var(--primary-text)]">Revize</Link>
             <span>/</span>
             <span>{revize.cisloRevize}</span>
+            {!zamcena && (
+              <span role="status" aria-live="polite" className="flex items-center gap-1.5 whitespace-nowrap">
+                {displayStatus === 'saving' && (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span className="inline-block w-3 h-3 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
+                    <span>Ukládání…</span>
+                  </>
+                )}
+                {displayStatus === 'saved' && <><span aria-hidden="true">·</span><span className="text-[var(--success-text)]">✓ Uloženo</span></>}
+                {displayStatus === 'error' && (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span className="text-[var(--danger-text)] font-medium">Chyba ukládání</span>
+                    <button type="button" onClick={() => retry()} className="underline font-medium text-[var(--danger-text)] hover:opacity-80">
+                      Zkusit znovu
+                    </button>
+                  </>
+                )}
+              </span>
+            )}
           </div>
           <h1 className="text-2xl font-bold text-[var(--text)]">{revize.nazev}</h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => navigate('/revize')}>← Zpět</Button>
           <Button variant="secondary" onClick={handleVystavitFakturu} disabled={vytvorFakturu.isPending}>
             {vytvorFakturu.isPending ? 'Vytvářím…' : 'Vystavit fakturu'}
@@ -405,31 +411,6 @@ export function RevizeDetailPage() {
 
       </div>
 
-      {/* Fixed save bar */}
-      {!zamcena && (activeTab === 'info' || activeTab === 'dokumentace' || activeTab === 'hromosvod_zarizeni' || activeTab === 'hromosvod_nacrt' || activeTab === 'strojni_zarizeni' || activeTab === 'odberne_misto' || activeTab === 'rozsah') && (
-        <div className="fixed bottom-[calc(56px+env(safe-area-inset-bottom))] lg:bottom-0 left-0 lg:left-64 right-0 z-40 bg-[var(--surface)] border-t border-[var(--border-medium)]">
-          <div className="max-w-4xl mx-auto px-4 py-2 flex items-center justify-between gap-4">
-            <div className="text-sm min-w-[140px]" role="status" aria-live="polite">
-              {displayStatus === 'saving' && (
-                <span className="flex items-center gap-1.5 text-[var(--text)]">
-                  <span className="inline-block w-3 h-3 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
-                  Ukládání...
-                </span>
-              )}
-              {displayStatus === 'saved' && (
-                <span className="text-[var(--success-text)]">✓ Uloženo</span>
-              )}
-              {displayStatus === 'unsaved' && (
-                <span className="text-[var(--warning-text)]">Neuložené změny</span>
-              )}
-              {displayStatus === 'error' && (
-                <span className="text-[var(--danger-text)]">Chyba ukládání</span>
-              )}
-            </div>
-            <Button size="sm" onClick={handleSave}>Uložit</Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
