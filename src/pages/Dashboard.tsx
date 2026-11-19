@@ -377,10 +377,10 @@ function RevizeBarChart({ revize }: { revize: Revize[] }) {
 
 /* ═══ Fakturace ═══ */
 
-function InvoiceRow({ label, value, tone }: { label: string; value: string; tone?: 'danger' | 'success' }) {
+function InvoiceRow({ label, value, tone, hint }: { label: string; value: string; tone?: 'danger' | 'success'; hint?: string }) {
   const color = tone === 'danger' ? 'text-[var(--danger-text)]' : tone === 'success' ? 'text-[var(--success-text)]' : 'text-[var(--text)]';
   return (
-    <div className="flex items-baseline justify-between gap-3">
+    <div className="flex items-baseline justify-between gap-3" title={hint}>
       <span className="text-[13px] text-[var(--text-secondary)]">{label}</span>
       <span className={`text-[14px] font-semibold tabular-nums whitespace-nowrap ${color}`}>{value}</span>
     </div>
@@ -623,7 +623,11 @@ export function Dashboard() {
           <WeekPanel zakazky={zakazky} className="lg:flex-1" />
           <RevizeBarChart revize={revize} />
           <Panel title="Fakturace" action={<PanelLink to="/faktury">Faktury</PanelLink>} bodyClassName="flex flex-col gap-3 px-4 py-3.5">
-            <InvoiceRow label={`Dokončeno, nevyfakturováno (${FAKTURACE_OKNO_DNI} dní)`} value={String(data.faktury.nevyfakturovano)} />
+            <InvoiceRow
+              label={`Revize k vyfakturování (${FAKTURACE_OKNO_DNI} dní)`}
+              value={String(data.faktury.nevyfakturovano)}
+              hint={`Dokončené nebo schválené revize za posledních ${FAKTURACE_OKNO_DNI} dní, ke kterým zatím není vystavená faktura.`}
+            />
             <InvoiceRow
               label="Po splatnosti"
               value={data.faktury.poSplatnostiCount > 0 ? `${data.faktury.poSplatnostiCount} · ${formatKcCele(data.faktury.poSplatnostiSum)}` : '0'}
