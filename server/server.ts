@@ -2713,6 +2713,23 @@ async function startServer() {
 
   // ==================== GOOGLE CALENDAR ====================
 
+  // Diagnostika: lze se z hostingu (Railway) připojit na SMTP Seznamu?
+  // Veřejné a neškodné – jen zkusí TCP spojení na pevně dané porty smtp.seznam.cz, nic neposílá.
+  app.get('/api/diagnostika/smtp', async (_req, res) => {
+    const net = await import('net');
+    const zkus = (port: number) => new Promise<{ port: number; ok: boolean; detail: string; ms: number }>((resolve) => {
+      const start = Date.now();
+      const s = net.connect(port, 'smtp.seznam.cz');
+      const hotovo = (ok: boolean, detail: string) => { s.destroy(); resolve({ port, ok, detail, ms: Date.now() - start }); };
+      s.setTimeout(8000);
+      s.once('connect', () => hotovo(true, 'spojení navázáno'));
+      s.once('timeout', () => hotovo(false, 'timeout (port pravděpodobně blokovaný)'));
+      s.once('error', (e) => hotovo(false, e.message));
+    });
+    const vysledky = await Promise.all([465, 587].map(zkus));
+    res.json({ host: 'smtp.seznam.cz', smtpFunguje: vysledky.some(v => v.ok), vysledky });
+  });
+
   // Zahájit OAuth flow – vrátí URL pro přesměrování
   app.get('/api/google/auth', authMiddleware, async (req: AuthRequest, res) => {
     try {
