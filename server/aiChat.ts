@@ -16,6 +16,10 @@ export interface ChatDeps {
   vytvorZavadu: (data: Record<string, any>) => Promise<number>;
   vytvorZakazku: (data: Record<string, any>) => Promise<number>;
   vytvorZakaznika: (data: Record<string, any>) => Promise<number>;
+  /** Úpravy přes stejné funkce jako REST (audit, validace, synchronizace s Google). */
+  upravRevizi: (id: number, data: Record<string, any>) => Promise<void>;
+  upravZavadu: (id: number, data: Record<string, any>) => Promise<void>;
+  upravZakazku: (id: number, data: Record<string, any>) => Promise<void>;
 }
 
 /** Co asistent v aplikaci změnil – frontend z toho udělá odkazy a obnoví data. */
@@ -45,6 +49,10 @@ Práce s daty:
 - Na dotazy o zákaznících, revizích, termínech a závadách odpovídej z dat získaných nástroji, nic si nevymýšlej. Když nic nenajdeš, řekni to.
 - Pokud odkazy nejsou jednoznačné (např. dva zákazníci „Novák“), zeptej se, kterého uživatel myslí.
 - Než cokoliv založíš, shrň v jedné krátké zprávě, co přesně vytvoříš (všechny důležité údaje), a počkej na potvrzení uživatele. Bez potvrzení zapisovací nástroj nevolej. Výjimka: uživatel v poslední zprávě už výslovně potvrdil přesně tento záznam („ano“, „vytvoř to“).
+- Úpravy existujících záznamů: když uživatel jednoznačně řekne, co a jak změnit (např. „u okruhu 3 zapiš izolační odpor 250 a impedanci 0,45“, „závadu s krytem označ jako vyřešenou“, „přesuň schůzku u Nováka na pátek 10:00“), proveď to rovnou – to je potvrzení. Zeptej se jen, když není jasné, který záznam myslí, nebo když jde o hromadnou či rozsáhlou změnu (přepsání závěru, změna více záznamů najednou bez výčtu).
+- Před úpravou si záznam dohledej (detail_revize, kalendar, hledej_zakazniky…), ať máš správné id a víš, jakou hodnotu přepisuješ. Měň jen pole, o která uživatel žádá.
+- Naměřené hodnoty zapisuj přesně tak, jak je uživatel nadiktoval (čísla s desetinnou čárkou, bez jednotek; izolační odpor v MΩ, impedance smyčky v Ω; „víc než 200“ zapiš jako „>200“).
+- Mazat záznamy neumíš – když o to uživatel požádá, řekni mu, ať to udělá v aplikaci.
 - Chybějící povinné údaje si vyžádej, nedomýšlej je (datum, adresu, klienta…). Rozumné výchozí hodnoty (typ revize pravidelná, lhůta 36 měsíců, kategorie elektro, dnešní datum revize) můžeš navrhnout v shrnutí.
 - Relativní data („zítra“, „příští úterý“) převeď podle dnešního data.
 - U zakládané revize, která patří existujícímu zákazníkovi, použij jeho id (nejdřív ho dohledej).
@@ -308,6 +316,182 @@ export const CHAT_TOOLS: Anthropic.Tool[] = [
       required: ['mistnostId', 'zarizeni'],
     },
   },
+  {
+    name: 'uprav_revizi',
+    description: 'Upraví údaje revize. Uveď jen pole, která se mění.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'integer' },
+        nazev: { type: 'string' },
+        adresa: { type: 'string' },
+        objednatel: { type: 'string' },
+        zakaznikId: { type: 'integer' },
+        datum: { type: 'string', description: DATE_DESC },
+        termin: { type: 'integer', description: 'lhůta příští revize v měsících' },
+        typRevize: { type: 'string', enum: ['pravidelná', 'výchozí', 'mimořádná'] },
+        duvodMimoradne: { type: 'string' },
+        napetovaSoustava: { type: 'string', description: 'např. TN-C-S, TN-S, 3/PEN AC 400/230 V' },
+        popisZarizeni: { type: 'string' },
+        rozsahRevize: { type: 'string' },
+        predmetNeni: { type: 'string' },
+        zaver: { type: 'string' },
+        poznamka: { type: 'string' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'uprav_zavadu',
+    description: 'Upraví závadu – popis, závažnost, stav (např. vyřešená), normu.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'integer' },
+        popis: { type: 'string' },
+        zavaznost: { type: 'string', enum: ['C1', 'C2', 'C3'] },
+        stav: { type: 'string', enum: ['otevřená', 'v řešení', 'vyřešená'] },
+        typ: { type: 'string', enum: ['zavada', 'doporuceni'] },
+        norma: { type: 'string' },
+        poznamka: { type: 'string' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'uprav_rozvadec',
+    description: 'Upraví údaje rozvaděče.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'integer' },
+        nazev: { type: 'string' },
+        oznaceni: { type: 'string' },
+        umisteni: { type: 'string' },
+        typRozvadece: { type: 'string' },
+        stupenKryti: { type: 'string' },
+        poznamka: { type: 'string' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'uprav_okruhy',
+    description: 'Upraví okruhy rozvaděče podle jejich čísla – typicky zápis naměřených hodnot (izolační odpor, impedance smyčky) nebo oprava jističe, kabelu či názvu. Jedno volání pro všechny okruhy daného rozvaděče.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        rozvadecId: { type: 'integer' },
+        okruhy: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              cislo: { type: 'integer', description: 'číslo okruhu, který se mění' },
+              noveCislo: { type: 'integer', description: 'jen při přečíslování' },
+              nazev: { type: 'string' },
+              jisticTyp: { type: 'string' },
+              jisticProud: { type: 'integer', description: 'A' },
+              pocetFazi: { type: 'integer', enum: [1, 3] },
+              typKabelu: { type: 'string' },
+              pocetZil: { type: 'string' },
+              prurez: { type: 'string' },
+              izolacniOdpor: { type: 'string', description: 'MΩ, např. „250“, „>200“, „0,8“' },
+              impedanceSmycky: { type: 'string', description: 'Ω, např. „0,45“' },
+              poznamka: { type: 'string' },
+            },
+            required: ['cislo'],
+          },
+        },
+      },
+      required: ['rozvadecId', 'okruhy'],
+    },
+  },
+  {
+    name: 'uprav_mistnost',
+    description: 'Upraví místnost.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'integer' },
+        nazev: { type: 'string' },
+        patro: { type: 'string' },
+        plocha: { type: 'number' },
+        prostredi: { type: 'string', enum: ['Normální', 'Nebezpečné', 'Zvlášť nebezpečné'] },
+        poznamka: { type: 'string' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'uprav_zarizeni',
+    description: 'Upraví jedno nebo více zařízení (např. stav OK/závada po kontrole, naměřená ochrana před dotykem, počet kusů).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        zarizeni: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              nazev: { type: 'string' },
+              oznaceni: { type: 'string' },
+              pocetKs: { type: 'integer' },
+              trida: { type: 'string', enum: ['I', 'II', 'III'] },
+              prikonW: { type: 'number' },
+              ochranaPredDotykem: { type: 'string', description: 'u třídy I naměřený odpor ochranného vodiče, např. „0,6 Ω“' },
+              stav: { type: 'string', enum: ['OK', 'závada', 'nekontrolováno'] },
+              poznamka: { type: 'string' },
+            },
+            required: ['id'],
+          },
+        },
+      },
+      required: ['zarizeni'],
+    },
+  },
+  {
+    name: 'uprav_udalost',
+    description: 'Upraví událost (zakázku) v kalendáři – přesun termínu, změna stavu apod. Synchronizuje se do Google Kalendáře.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'integer' },
+        nazev: { type: 'string' },
+        klient: { type: 'string' },
+        adresa: { type: 'string' },
+        datum: { type: 'string', description: DATE_DESC },
+        cas: { type: 'string', description: 'HH:mm' },
+        casKonec: { type: 'string', description: 'HH:mm' },
+        celyDen: { type: 'boolean' },
+        stav: { type: 'string', enum: ['plánováno', 'v realizaci', 'dokončeno', 'zrušeno'] },
+        priorita: { type: 'string', enum: ['nizká', 'střední', 'vysoká'] },
+        revizeId: { type: 'integer' },
+        poznamka: { type: 'string' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'uprav_zakaznika',
+    description: 'Upraví kontaktní údaje zákazníka.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'integer' },
+        nazev: { type: 'string' },
+        adresa: { type: 'string' },
+        ico: { type: 'string' },
+        dic: { type: 'string' },
+        kontaktOsoba: { type: 'string' },
+        telefon: { type: 'string' },
+        email: { type: 'string' },
+        poznamka: { type: 'string' },
+      },
+      required: ['id'],
+    },
+  },
 ];
 
 // ==================== Pomocné funkce ====================
@@ -344,6 +528,33 @@ function polozky(v: unknown, max: number, co: string): Record<string, any>[] {
   const out = v.filter((x) => x && typeof x === 'object' && str((x as any).nazev));
   if (out.length !== v.length) throw new ToolInputError(`Každá položka (${co}) musí mít název`);
   return out as Record<string, any>[];
+}
+
+/** Vybere z input jen povolená textová pole (prázdný řetězec = vymazat hodnotu). */
+function textovaPole(input: Record<string, any>, pole: Record<string, number>): Record<string, string | null> {
+  const out: Record<string, string | null> = {};
+  for (const [k, max] of Object.entries(pole)) {
+    if (typeof input[k] === 'string') out[k] = input[k].trim() ? input[k].trim().slice(0, max) : null;
+  }
+  return out;
+}
+
+/** Hodnota měření: desetinná čárka, bez jednotek (např. „0,45“, „>200“). */
+function mereni(v: unknown): string | null | undefined {
+  if (v === undefined) return undefined;
+  if (typeof v === 'number') return String(v).replace('.', ',');
+  if (typeof v !== 'string') return undefined;
+  const t = v.trim().replace(/\s*(MΩ|MOhm|Ω|ohm)\s*$/i, '').replace('.', ',');
+  return t || null;
+}
+
+/** UPDATE s pevně danými (whitelistovanými) sloupci. */
+async function aktualizuj(query: ChatDeps['query'], tabulka: string, id: number, zmeny: Record<string, unknown>, updatedAt = false) {
+  const data = updatedAt ? { ...zmeny, updatedAt: new Date().toISOString() } : zmeny;
+  const keys = Object.keys(data);
+  if (keys.length === 0) throw new ToolInputError('Nebyla zadána žádná změna');
+  const set = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+  await query(`UPDATE ${tabulka} SET ${set} WHERE id = $${keys.length + 1}`, [...Object.values(data), id]);
 }
 
 function povinne<T>(value: T | undefined, msg: string): T {
@@ -441,10 +652,10 @@ export async function runTool(
       const mistIds = mistnosti.rows.map((x) => x.id);
       const [okruhy, zarizeni] = await Promise.all([
         rozvIds.length
-          ? query('SELECT "rozvadecId", cislo, nazev, "jisticTyp", "jisticProud", "pocetFazi" FROM okruh WHERE "rozvadecId" = ANY($1) ORDER BY cislo', [rozvIds])
+          ? query('SELECT id, "rozvadecId", cislo, nazev, "jisticTyp", "jisticProud", "pocetFazi", vodic, "izolacniOdpor", "impedanceSmycky" FROM okruh WHERE "rozvadecId" = ANY($1) ORDER BY cislo', [rozvIds])
           : Promise.resolve({ rows: [] as any[] }),
         mistIds.length
-          ? query('SELECT "mistnostId", nazev, "pocetKs" FROM zarizeni WHERE "mistnostId" = ANY($1) ORDER BY id', [mistIds])
+          ? query('SELECT id, "mistnostId", nazev, "pocetKs", trida, stav FROM zarizeni WHERE "mistnostId" = ANY($1) ORDER BY id', [mistIds])
           : Promise.resolve({ rows: [] as any[] }),
       ]);
       return {
@@ -453,12 +664,12 @@ export async function runTool(
         rozvadece: rozvadece.rows.map((rz) => ({
           ...compact(rz),
           okruhy: okruhy.rows.filter((o) => o.rozvadecId === rz.id).slice(0, 80)
-            .map((o) => `${o.cislo}: ${o.nazev ?? ''} ${o.jisticTyp ?? ''}${o.jisticProud ?? ''}${o.pocetFazi === 3 ? ' 3f' : ''}`.trim()),
+            .map(({ rozvadecId: _r, ...o }) => compact(o)),
         })),
         mistnosti: mistnosti.rows.map((m) => ({
           ...compact(m),
           zarizeni: zarizeni.rows.filter((z) => z.mistnostId === m.id).slice(0, 80)
-            .map((z) => (z.pocetKs > 1 ? `${z.nazev} (${z.pocetKs} ks)` : z.nazev)),
+            .map(({ mistnostId: _m, ...z }) => compact(z)),
         })),
       };
     }
@@ -695,6 +906,186 @@ export async function runTool(
         odkaz: `/revize/${mi.rows[0].revizeId}?zalozka=mistnosti`,
       });
       return { ok: true, pocet: ids.length, ids };
+    }
+
+    case 'uprav_revizi': {
+      const id = povinne(int(input.id), 'Chybí id revize');
+      const rev = await overOdemcenouRevizi(query, id);
+      const zmeny: Record<string, unknown> = textovaPole(input, {
+        nazev: 300, adresa: 300, objednatel: 300, duvodMimoradne: 500, napetovaSoustava: 100,
+        popisZarizeni: 8000, rozsahRevize: 8000, predmetNeni: 4000, zaver: 8000, poznamka: 4000,
+      });
+      if (input.datum !== undefined) zmeny.datum = povinne(DATE_RE.test(input.datum) ? input.datum : undefined, `Neplatné datum (${DATE_DESC})`);
+      if (int(input.termin)) zmeny.termin = int(input.termin);
+      if (int(input.zakaznikId)) zmeny.zakaznikId = int(input.zakaznikId);
+      const typ = oneOf(input.typRevize, ['pravidelná', 'výchozí', 'mimořádná'] as const);
+      if (typ) zmeny.typRevize = typ;
+      if (Object.keys(zmeny).length === 0) throw new ToolInputError('Nebyla zadána žádná změna');
+      await deps.upravRevizi(id, zmeny);
+      akce.push({ typ: 'revize', id, popis: `Upravena revize ${rev.cisloRevize} (${Object.keys(zmeny).join(', ')})`, odkaz: `/revize/${id}` });
+      return { ok: true, zmeneno: Object.keys(zmeny) };
+    }
+
+    case 'uprav_zavadu': {
+      const id = povinne(int(input.id), 'Chybí id závady');
+      const z = await query('SELECT id, "revizeId" FROM zavada WHERE id = $1', [id]);
+      if (!z.rows[0]) throw new ToolInputError(`Závada s id ${id} neexistuje`);
+      const rev = await overOdemcenouRevizi(query, z.rows[0].revizeId);
+      const zmeny: Record<string, unknown> = textovaPole(input, { popis: 2000, norma: 300, poznamka: 2000 });
+      if (zmeny.popis === null) throw new ToolInputError('Popis závady nesmí být prázdný');
+      const zav = oneOf(input.zavaznost, ['C1', 'C2', 'C3'] as const);
+      if (zav) zmeny.zavaznost = zav;
+      const stav = oneOf(input.stav, ['otevřená', 'v řešení', 'vyřešená'] as const);
+      if (stav) {
+        zmeny.stav = stav;
+        zmeny.datumVyreseni = stav === 'vyřešená' ? new Date().toISOString().split('T')[0] : null;
+      }
+      const typ = oneOf(input.typ, ['zavada', 'doporuceni'] as const);
+      if (typ) zmeny.typ = typ;
+      if (Object.keys(zmeny).length === 0) throw new ToolInputError('Nebyla zadána žádná změna');
+      await deps.upravZavadu(id, zmeny);
+      akce.push({ typ: 'zavada', id, popis: `Upravena závada v revizi ${rev.cisloRevize}${stav ? ` (${stav})` : ''}`, odkaz: `/revize/${rev.id}?zalozka=zavady` });
+      return { ok: true };
+    }
+
+    case 'uprav_rozvadec': {
+      const id = povinne(int(input.id), 'Chybí id rozvaděče');
+      const rz = await query('SELECT id, "revizeId", nazev FROM rozvadec WHERE id = $1', [id]);
+      if (!rz.rows[0]) throw new ToolInputError(`Rozvaděč s id ${id} neexistuje`);
+      await overOdemcenouRevizi(query, rz.rows[0].revizeId);
+      const zmeny = textovaPole(input, { nazev: 200, oznaceni: 30, umisteni: 200, typRozvadece: 100, stupenKryti: 20, poznamka: 2000 });
+      if (zmeny.nazev === null) throw new ToolInputError('Název rozvaděče nesmí být prázdný');
+      await aktualizuj(query, 'rozvadec', id, zmeny, true);
+      akce.push({ typ: 'rozvadec', id, popis: `Upraven rozvaděč ${zmeny.nazev ?? rz.rows[0].nazev}`, odkaz: `/revize/${rz.rows[0].revizeId}?zalozka=rozvadece` });
+      return { ok: true };
+    }
+
+    case 'uprav_okruhy': {
+      const rozvadecId = povinne(int(input.rozvadecId), 'Chybí id rozvaděče');
+      const rz = await query('SELECT id, "revizeId", nazev FROM rozvadec WHERE id = $1', [rozvadecId]);
+      if (!rz.rows[0]) throw new ToolInputError(`Rozvaděč s id ${rozvadecId} neexistuje`);
+      await overOdemcenouRevizi(query, rz.rows[0].revizeId);
+      if (!Array.isArray(input.okruhy) || input.okruhy.length === 0) throw new ToolInputError('Chybí seznam okruhů');
+      if (input.okruhy.length > 80) throw new ToolInputError('Najednou lze upravit nejvýš 80 okruhů');
+      const existujici = await query('SELECT id, cislo, "typKabelu", "pocetZil", prurez FROM okruh WHERE "rozvadecId" = $1', [rozvadecId]);
+      const podleCisla = new Map(existujici.rows.map((o) => [o.cislo, o]));
+      const chybi = input.okruhy.map((o: any) => o?.cislo).filter((c: unknown) => !podleCisla.has(c));
+      if (chybi.length) throw new ToolInputError(`V rozvaděči ${rz.rows[0].nazev} nejsou okruhy č. ${chybi.join(', ')}`);
+      const upraveno: number[] = [];
+      for (const o of input.okruhy as Record<string, any>[]) {
+        const puvodni = podleCisla.get(o.cislo)!;
+        const zmeny: Record<string, unknown> = textovaPole(o, { nazev: 200, typKabelu: 20, pocetZil: 10, prurez: 10, poznamka: 2000 });
+        if (typeof zmeny.prurez === 'string') zmeny.prurez = zmeny.prurez.replace('.', ',');
+        if (int(o.noveCislo)) zmeny.cislo = int(o.noveCislo);
+        const jt = str(o.jisticTyp, 5);
+        if (jt) zmeny.jisticTyp = /^[bcd]$/.test(jt) ? jt.toUpperCase() : jt;
+        if (typeof o.jisticProud === 'number' && o.jisticProud > 0) zmeny.jisticProud = `${o.jisticProud}A`;
+        if (o.pocetFazi === 1 || o.pocetFazi === 3) zmeny.pocetFazi = o.pocetFazi;
+        const riso = mereni(o.izolacniOdpor);
+        if (riso !== undefined) zmeny.izolacniOdpor = riso;
+        const zs = mereni(o.impedanceSmycky);
+        if (zs !== undefined) zmeny.impedanceSmycky = zs;
+        if ('typKabelu' in zmeny || 'pocetZil' in zmeny || 'prurez' in zmeny) {
+          const typKabelu = ('typKabelu' in zmeny ? zmeny.typKabelu : puvodni.typKabelu) as string | null;
+          const pocetZil = ('pocetZil' in zmeny ? zmeny.pocetZil : puvodni.pocetZil) as string | null;
+          const prurez = ('prurez' in zmeny ? zmeny.prurez : puvodni.prurez) as string | null;
+          const jadro = pocetZil ? `${pocetZil}x${prurez ?? ''}` : prurez ?? '';
+          zmeny.vodic = [typKabelu, jadro].filter(Boolean).join(' ') || null;
+        }
+        if (Object.keys(zmeny).length === 0) continue;
+        await aktualizuj(query, 'okruh', puvodni.id, zmeny);
+        upraveno.push(o.cislo);
+      }
+      if (upraveno.length === 0) throw new ToolInputError('Nebyla zadána žádná změna');
+      akce.push({
+        typ: 'okruh', id: podleCisla.get(upraveno[0])!.id,
+        popis: `Upraveny okruhy ${upraveno.join(', ')} v rozvaděči ${rz.rows[0].nazev}`,
+        odkaz: `/revize/${rz.rows[0].revizeId}?zalozka=rozvadece`,
+      });
+      return { ok: true, upraveno };
+    }
+
+    case 'uprav_mistnost': {
+      const id = povinne(int(input.id), 'Chybí id místnosti');
+      const mi = await query('SELECT id, "revizeId", nazev FROM mistnost WHERE id = $1', [id]);
+      if (!mi.rows[0]) throw new ToolInputError(`Místnost s id ${id} neexistuje`);
+      await overOdemcenouRevizi(query, mi.rows[0].revizeId);
+      const zmeny: Record<string, unknown> = textovaPole(input, { nazev: 120, patro: 30, poznamka: 2000 });
+      if (zmeny.nazev === null) throw new ToolInputError('Název místnosti nesmí být prázdný');
+      if (typeof input.plocha === 'number') zmeny.plocha = input.plocha > 0 ? input.plocha : null;
+      const pr = oneOf(input.prostredi, ['Normální', 'Nebezpečné', 'Zvlášť nebezpečné'] as const);
+      if (pr) zmeny.prostredi = pr;
+      await aktualizuj(query, 'mistnost', id, zmeny);
+      akce.push({ typ: 'mistnost', id, popis: `Upravena místnost ${zmeny.nazev ?? mi.rows[0].nazev}`, odkaz: `/revize/${mi.rows[0].revizeId}?zalozka=mistnosti` });
+      return { ok: true };
+    }
+
+    case 'uprav_zarizeni': {
+      if (!Array.isArray(input.zarizeni) || input.zarizeni.length === 0) throw new ToolInputError('Chybí seznam zařízení');
+      if (input.zarizeni.length > 80) throw new ToolInputError('Najednou lze upravit nejvýš 80 zařízení');
+      const maybeIds: (number | undefined)[] = input.zarizeni.map((z: any) => int(z?.id));
+      if (maybeIds.some((x) => !x)) throw new ToolInputError('Každé zařízení musí mít id');
+      const ids = maybeIds as number[];
+      const ex = await query(
+        'SELECT z.id, z."mistnostId", m."revizeId", m.nazev AS mistnost FROM zarizeni z JOIN mistnost m ON m.id = z."mistnostId" WHERE z.id = ANY($1)', [ids]);
+      const podleId = new Map(ex.rows.map((r) => [r.id, r]));
+      const chybi = ids.filter((x) => !podleId.has(x));
+      if (chybi.length) throw new ToolInputError(`Zařízení s id ${chybi.join(', ')} neexistují`);
+      for (const revizeId of new Set(ex.rows.map((r) => r.revizeId))) await overOdemcenouRevizi(query, revizeId as number);
+      for (const z of input.zarizeni as Record<string, any>[]) {
+        const zmeny: Record<string, unknown> = textovaPole(z, { nazev: 120, oznaceni: 20, ochranaPredDotykem: 50, poznamka: 2000 });
+        if (zmeny.nazev === null) throw new ToolInputError('Název zařízení nesmí být prázdný');
+        if (int(z.pocetKs)) zmeny.pocetKs = int(z.pocetKs);
+        const tr = oneOf(z.trida, ['I', 'II', 'III'] as const);
+        if (tr) zmeny.trida = tr;
+        if (typeof z.prikonW === 'number') zmeny.prikonW = z.prikonW > 0 ? z.prikonW : null;
+        const st = oneOf(z.stav, ['OK', 'závada', 'nekontrolováno'] as const);
+        if (st) zmeny.stav = st;
+        await aktualizuj(query, 'zarizeni', z.id, zmeny);
+      }
+      const prvni = podleId.get(ids[0])!;
+      akce.push({ typ: 'zarizeni', id: ids[0], popis: `Upraveno ${ids.length} zařízení (${prvni.mistnost})`, odkaz: `/revize/${prvni.revizeId}?zalozka=mistnosti` });
+      return { ok: true, pocet: ids.length };
+    }
+
+    case 'uprav_udalost': {
+      const id = povinne(int(input.id), 'Chybí id události');
+      const u = await query('SELECT id, nazev FROM zakazka WHERE id = $1', [id]);
+      if (!u.rows[0]) throw new ToolInputError(`Událost s id ${id} neexistuje`);
+      const zmeny: Record<string, unknown> = textovaPole(input, { nazev: 300, klient: 300, adresa: 300, poznamka: 2000 });
+      for (const k of ['nazev', 'klient', 'adresa']) if (zmeny[k] === null) throw new ToolInputError(`Pole ${k} nesmí být prázdné`);
+      if (input.datum !== undefined) zmeny.datumPlanovany = povinne(DATE_RE.test(input.datum) ? input.datum : undefined, `Neplatné datum (${DATE_DESC})`);
+      for (const [k, sloupec] of [['cas', 'casPlanovany'], ['casKonec', 'casKonec']] as const) {
+        if (typeof input[k] === 'string') {
+          const t = input[k].trim();
+          if (t && !TIME_RE.test(t)) throw new ToolInputError(`Neplatný čas ${k} (HH:mm)`);
+          zmeny[sloupec] = t || null;
+        }
+      }
+      if (typeof input.celyDen === 'boolean') {
+        zmeny.celyDen = input.celyDen;
+        if (input.celyDen) { zmeny.casPlanovany = null; zmeny.casKonec = null; }
+      }
+      const st = oneOf(input.stav, ['plánováno', 'v realizaci', 'dokončeno', 'zrušeno'] as const);
+      if (st) zmeny.stav = st;
+      const pr = oneOf(input.priorita, ['nizká', 'střední', 'vysoká'] as const);
+      if (pr) zmeny.priorita = pr;
+      if (int(input.revizeId)) zmeny.revizeId = int(input.revizeId);
+      if (Object.keys(zmeny).length === 0) throw new ToolInputError('Nebyla zadána žádná změna');
+      await deps.upravZakazku(id, zmeny);
+      akce.push({ typ: 'udalost', id, popis: `Upravena událost ${zmeny.nazev ?? u.rows[0].nazev}`, odkaz: '/planovani' });
+      return { ok: true };
+    }
+
+    case 'uprav_zakaznika': {
+      const id = povinne(int(input.id), 'Chybí id zákazníka');
+      const z = await query('SELECT id, nazev FROM zakaznik WHERE id = $1', [id]);
+      if (!z.rows[0]) throw new ToolInputError(`Zákazník s id ${id} neexistuje`);
+      const zmeny = textovaPole(input, { nazev: 200, adresa: 300, ico: 20, dic: 20, kontaktOsoba: 200, telefon: 50, email: 200, poznamka: 2000 });
+      if (zmeny.nazev === null) throw new ToolInputError('Název zákazníka nesmí být prázdný');
+      await aktualizuj(query, 'zakaznik', id, zmeny, true);
+      akce.push({ typ: 'zakaznik', id, popis: `Upraven zákazník ${zmeny.nazev ?? z.rows[0].nazev}`, odkaz: '/zakaznici' });
+      return { ok: true };
     }
 
     default:

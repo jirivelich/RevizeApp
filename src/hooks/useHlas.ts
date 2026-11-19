@@ -144,14 +144,15 @@ export function usePredcitani() {
     setMluvi(false);
   }, []);
 
-  const precti = useCallback((text: string) => {
-    if (!predcitaniPodporovano()) return;
+  /** Přečte text nahlas; onKonec se zavolá po dočtení (ne při přerušení). */
+  const precti = useCallback((text: string, onKonec?: () => void) => {
+    if (!predcitaniPodporovano()) { onKonec?.(); return; }
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(textProPredcitani(text));
     u.lang = 'cs-CZ';
     const hlas = ceskyHlas();
     if (hlas) u.voice = hlas;
-    u.onend = () => setMluvi(false);
+    u.onend = () => { setMluvi(false); onKonec?.(); };
     u.onerror = () => setMluvi(false);
     setMluvi(true);
     window.speechSynthesis.speak(u);

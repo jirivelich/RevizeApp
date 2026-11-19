@@ -49,6 +49,31 @@ export function AIChatAssistant() {
     onKonec: (t) => sendRef.current(t), // po domluvení rovnou odeslat
   });
 
+  // Hlasový režim: poslech → odpověď nahlas → znovu poslech (rozhovor bez rukou)
+  const [hlasovyRezim, setHlasovyRezim] = useState(false);
+  const hlasovyRezimRef = useRef(false);
+  useEffect(() => { hlasovyRezimRef.current = hlasovyRezim; }, [hlasovyRezim]);
+  const hlasovyRezimDostupny = diktovani.podporovano && predcitani.podporovano;
+
+  const prepniHlasovyRezim = () => {
+    if (hlasovyRezim) {
+      setHlasovyRezim(false);
+      diktovani.stop();
+      predcitani.zastav();
+      return;
+    }
+    setHlasovyRezim(true);
+    predcitani.zastav();
+    if (!diktovani.posloucha && !loading) diktovani.start('');
+  };
+
+  /** Odpověď v hlasovém režimu přečíst a pak znovu poslouchat. */
+  const odpovezHlasem = (text: string) => {
+    predcitani.precti(text, () => {
+      if (hlasovyRezimRef.current) diktovani.start('');
+    });
+  };
+
   const prepniPredcitani = () => {
     const nove = !predcitat;
     setPredcitat(nove);
@@ -95,14 +120,17 @@ export function AIChatAssistant() {
         revizeId ? { id: revizeId } : undefined,
       );
       setMessages([...newMessages, { role: 'assistant', content: reply, akce }]);
-      if (predcitat) predcitani.precti(reply);
+      if (hlasovyRezimRef.current) odpovezHlasem(reply);
+      else if (predcitat) predcitani.precti(reply);
       // Asistent něco vytvořil → obnovit data v aplikaci
       if (akce && akce.length > 0) { qc.invalidateQueries(); oznamZmenuDat(); }
     } catch (err: any) {
+      const chyba = err.message || 'Nepodařilo se získat odpověď.';
       setMessages([
         ...newMessages,
-        { role: 'assistant', content: `Chyba: ${err.message || 'Nepodařilo se získat odpověď.'}` },
+        { role: 'assistant', content: `Chyba: ${chyba}` },
       ]);
+      if (hlasovyRezimRef.current) odpovezHlasem(`Chyba. ${chyba}`);
     } finally {
       setLoading(false);
     }
@@ -144,7 +172,24 @@ export function AIChatAssistant() {
               <span className="font-medium text-sm">AI Asistent</span>
             </div>
             <div className="flex items-center gap-1">
-            {predcitani.podporovano && (
+            {hlasovyRezimDostupny && (
+              <button
+                onClick={prepniHlasovyRezim}
+                className={`flex items-center gap-1 px-2 py-1 rounded-[var(--radius-md)] text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-fg)] ${
+                  hlasovyRezim ? 'bg-[var(--primary-fg)] text-[var(--primary)]' : 'hover:bg-[var(--primary-hover)]'
+                }`}
+                aria-pressed={hlasovyRezim}
+                aria-label={hlasovyRezim ? 'Vypnout hlasový režim' : 'Zapnout hlasový režim'}
+                title="Hlasový režim: mluvte, asistent odpoví nahlas a znovu poslouchá"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M3 18v-6a9 9 0 0118 0v6" />
+                  <path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z" />
+                </svg>
+                Hlas
+              </button>
+            )}
+            {predcitani.podporovano && !hlasovyRezim && (
               <button
                 onClick={prepniPredcitani}
                 className="p-1 hover:bg-[var(--primary-hover)] rounded-[var(--radius-md)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-fg)]"
@@ -161,7 +206,7 @@ export function AIChatAssistant() {
               </button>
             )}
             <button
-              onClick={() => { setIsOpen(false); diktovani.stop(); predcitani.zastav(); }}
+              onClick={() => { setIsOpen(false); setHlasovyRezim(false); diktovani.stop(); predcitani.zastav(); }}
               className="p-1 hover:bg-[var(--primary-hover)] rounded-[var(--radius-md)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-fg)]"
               aria-label="Zavřít"
             >
@@ -241,6 +286,20 @@ export function AIChatAssistant() {
             )}
             <div ref={messagesEndRef} />
           </div>
+
+          {hlasovyRezim && (
+            <div className="px-4 py-2 text-xs flex items-center justify-between gap-2 bg-[var(--bg-accent)] text-[var(--primary-text)] border-t border-[var(--border)]" role="status" aria-live="polite">
+              <span className="flex items-center gap-2">
+                <span className={`inline-block w-2 h-2 rounded-full ${diktovani.posloucha ? 'bg-[var(--danger)] animate-pulse' : predcitani.mluvi ? 'bg-[var(--success)] animate-pulse' : 'bg-[var(--text-muted)]'}`} />
+                {diktovani.posloucha ? 'Poslouchám…' : loading ? 'Přemýšlím…' : predcitani.mluvi ? 'Odpovídám…' : 'Hlasový režim – klepněte na mikrofon a mluvte'}
+              </span>
+              {predcitani.mluvi && (
+                <button type="button" className="underline" onClick={() => { predcitani.zastav(); diktovani.start(''); }}>
+                  Přeskočit
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Input */}
           <div className="border-t border-[var(--border)] px-3 py-2">

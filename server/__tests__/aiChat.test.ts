@@ -37,6 +37,9 @@ function makeDeps(rows: Record<string, any[]> = {}): ChatDeps & { query: ReturnT
     vytvorZavadu: vi.fn(async () => 22),
     vytvorZakazku: vi.fn(async () => 33),
     vytvorZakaznika: vi.fn(async () => 44),
+    upravRevizi: vi.fn(async () => {}),
+    upravZavadu: vi.fn(async () => {}),
+    upravZakazku: vi.fn(async () => {}),
   } as any;
 }
 
@@ -175,5 +178,53 @@ describe('runTool – rozvaděče, okruhy, místnosti, zařízení', () => {
   it('položka bez názvu se odmítne celá', async () => {
     const deps = makeDeps(odemcena);
     await expect(runTool('vytvor_mistnosti', { revizeId: 7, mistnosti: [{ nazev: 'WC' }, { patro: '1.NP' }] }, deps, [], '2026-11-19')).rejects.toThrow('název');
+  });
+});
+
+describe('runTool – úpravy', () => {
+  const odemcena = { 'FROM revize WHERE id': [{ id: 7, cisloRevize: 'R7', stav: 'rozpracováno' }] };
+
+  it('uprav_okruhy zapíše měření podle čísla okruhu a přepočítá vodič', async () => {
+    const deps = makeDeps({
+      ...odemcena,
+      'FROM rozvadec WHERE id': [{ id: 3, revizeId: 7, nazev: 'RB1' }],
+      'FROM okruh WHERE "rozvadecId"': [
+        { id: 31, cislo: 1, typKabelu: 'CYKY', pocetZil: '3', prurez: '1,5' },
+        { id: 32, cislo: 2, typKabelu: null, pocetZil: null, prurez: null },
+      ],
+    });
+    const akce: ChatAkce[] = [];
+    await runTool('uprav_okruhy', { rozvadecId: 3, okruhy: [
+      { cislo: 1, izolacniOdpor: '250 MΩ', impedanceSmycky: 0.45, prurez: '2.5' },
+      { cislo: 2, izolacniOdpor: '>200' },
+    ] }, deps, akce, '2026-11-19');
+    const upd = deps.query.mock.calls.filter(([sql]) => String(sql).startsWith('UPDATE okruh'));
+    expect(upd[0][0]).toBe('UPDATE okruh SET "prurez" = $1, "izolacniOdpor" = $2, "impedanceSmycky" = $3, "vodic" = $4 WHERE id = $5');
+    expect(upd[0][1]).toEqual(['2,5', '250', '0,45', 'CYKY 3x2,5', 31]);
+    expect(upd[1][1]).toEqual(['>200', 32]);
+    expect(akce[0].popis).toBe('Upraveny okruhy 1, 2 v rozvaděči RB1');
+  });
+
+  it('uprav_okruhy odmítne neexistující číslo okruhu', async () => {
+    const deps = makeDeps({ ...odemcena, 'FROM rozvadec WHERE id': [{ id: 3, revizeId: 7, nazev: 'RB1' }], 'FROM okruh WHERE "rozvadecId"': [{ id: 31, cislo: 1 }] });
+    await expect(runTool('uprav_okruhy', { rozvadecId: 3, okruhy: [{ cislo: 9, izolacniOdpor: '1' }] }, deps, [], '2026-11-19')).rejects.toThrow('č. 9');
+  });
+
+  it('uprav_zavadu jako vyřešenou doplní datum a jde přes audit', async () => {
+    const deps = makeDeps({ ...odemcena, 'FROM zavada WHERE id': [{ id: 5, revizeId: 7 }] });
+    await runTool('uprav_zavadu', { id: 5, stav: 'vyřešená' }, deps, [], '2026-11-19');
+    expect(deps.upravZavadu).toHaveBeenCalledWith(5, { stav: 'vyřešená', datumVyreseni: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) });
+  });
+
+  it('uprav_udalost přesune termín přes validaci zakázek', async () => {
+    const deps = makeDeps({ 'FROM zakazka WHERE id': [{ id: 2, nazev: 'Revize' }] });
+    await runTool('uprav_udalost', { id: 2, datum: '2026-11-27', cas: '10:00' }, deps, [], '2026-11-19');
+    expect(deps.upravZakazku).toHaveBeenCalledWith(2, { datumPlanovany: '2026-11-27', casPlanovany: '10:00' });
+  });
+
+  it('úprava v zamčené revizi se odmítne', async () => {
+    const deps = makeDeps({ 'FROM revize WHERE id': [{ id: 7, cisloRevize: 'R7', stav: 'dokončeno' }], 'FROM mistnost WHERE id': [{ id: 1, revizeId: 7, nazev: 'WC' }] });
+    await expect(runTool('uprav_mistnost', { id: 1, nazev: 'Toaleta' }, deps, [], '2026-11-19')).rejects.toThrow('zamčená');
+    await expect(runTool('uprav_revizi', { id: 7, zaver: 'x' }, deps, [], '2026-11-19')).rejects.toThrow('zamčená');
   });
 });

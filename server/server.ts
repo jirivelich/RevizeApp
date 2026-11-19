@@ -187,74 +187,76 @@ async function startServer() {
     }
   });
 
+  /** Upraví revizi (povolené sloupce + audit změn). Sdílí endpoint i AI chat. */
+  async function upravRevizi(id: string | number, data: Record<string, any>, uzivatel?: string): Promise<void> {
+    const now = new Date().toISOString();
+    // Definovat povolené sloupce pro revize
+    const allowedColumns = [
+      'cisloRevize', 'nazev', 'adresa', 'objednatel', 'zakaznikId',
+      'datum', 'datumDokonceni', 'datumPlatnosti', 'termin', 'datumVypracovani', 'datumPredani',
+      'mistoUlozeniPodkladu', 'napravneUkony',
+      'typRevize', 'duvodMimoradne', 'stav', 'poznamka', 'vysledek',
+      'vysledekOduvodneni', 'rozsahRevize', 'predmetNeni', 'napetovaSoustava',
+      'ochranaOpatreni', 'podklady', 'vyhodnoceniPredchozich',
+      'pouzitePristroje', 'provedeneUkony', 'firmaJmeno', 'firmaAdresa',
+      'firmaIco', 'firmaDic', 'zaver', 'kategorieRevize', 'updatedAt',
+      'tiskSekce', 'popisZarizeni', 'druhRozsahu', 'ucelRevize',
+      // Hromosvod (LPS) sloupce
+      'hromosvodTridaLps', 'hromosvodTypOchrany', 'hromosvodRokInstalace',
+      'hromosvodNorma', 'hromosvodPopisLps',
+      'hromosvodNormaZrizeni', 'hromosvodOdpovidaNorme', 'hromosvodFunkcniStav',
+      'hromosvodJimaciTyp', 'hromosvodJimaciMaterial', 'hromosvodJimaciStav',
+      'hromosvodJimaciPoznamka',
+      'hromosvodSvodyPocet', 'hromosvodSvodyMaterial', 'hromosvodSvodyPrurez',
+      'hromosvodSvodyZkusebniSvorky', 'hromosvodSvodyStav', 'hromosvodSvodyPoznamka',
+      'hromosvodUzemneniTyp', 'hromosvodUzemneniMaterial', 'hromosvodUzemneniStav',
+      'hromosvodUzemneniPoznamka',
+      'hromosvodSpdTyp', 'hromosvodSpdStav', 'hromosvodEkvipotencialni',
+      'hromosvodSpdPoznamka',
+      'hromosvodMereniOdporu',
+      // Strojní zařízení (JSON)
+      'strojniData',
+      // Odběrné místo (JSON)
+      'odberneMistoData',
+      // Normy soulad + vlastní text lhůty
+      'normySoulad', 'lhutaText', 'datumUvedeniDoProvozu', 'zdrojUvedeniDoProvozu',
+      // Historie / návaznost revizí
+      'predchoziRevizeId', 'skupinaRevizi',
+      // Snapshot revizního technika
+      'rtJmeno', 'rtCisloOpravneni', 'rtPlatnostOpravneni', 'rtCisloOsvedceni', 'rtPlatnostOsvedceni',
+      // Rozdělovník – seznam příjemců zprávy
+      'rozdelovnik',
+      // Náčrt LPS – base64 PNG
+      'hromosvodNacrt',
+      // Přílohy – textový seznam příloh
+      'prilohy',
+    ];
+    
+    const updates: Record<string, any> = { updatedAt: now };
+    for (const key of Object.keys(data)) {
+      if (allowedColumns.includes(key)) {
+        updates[key] = data[key];
+      }
+    }
+    
+    
+    const keys = Object.keys(updates);
+    const values = Object.values(updates);
+    
+    const puvodniRes = await pool.query('SELECT * FROM revize WHERE id = $1', [id]);
+    const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+    await pool.query(`UPDATE revize SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, id]);
+
+    const zmeny = diffZmen(puvodniRes.rows[0] ?? {}, updates);
+    if (zmeny.length > 0) {
+      await zapisAudit({ entita: 'revize', entitaId: id, revizeId: id, akce: 'zmeneno', uzivatel: uzivatel, zmeny });
+    }
+
+  }
+
   app.put('/api/revize/:id', authMiddleware, async (req, res) => {
     try {
-      const now = new Date().toISOString();
-      
-      // Definovat povolené sloupce pro revize
-      const allowedColumns = [
-        'cisloRevize', 'nazev', 'adresa', 'objednatel', 'zakaznikId',
-        'datum', 'datumDokonceni', 'datumPlatnosti', 'termin', 'datumVypracovani', 'datumPredani',
-        'mistoUlozeniPodkladu', 'napravneUkony',
-        'typRevize', 'duvodMimoradne', 'stav', 'poznamka', 'vysledek',
-        'vysledekOduvodneni', 'rozsahRevize', 'predmetNeni', 'napetovaSoustava',
-        'ochranaOpatreni', 'podklady', 'vyhodnoceniPredchozich',
-        'pouzitePristroje', 'provedeneUkony', 'firmaJmeno', 'firmaAdresa',
-        'firmaIco', 'firmaDic', 'zaver', 'kategorieRevize', 'updatedAt',
-        'tiskSekce', 'popisZarizeni', 'druhRozsahu', 'ucelRevize',
-        // Hromosvod (LPS) sloupce
-        'hromosvodTridaLps', 'hromosvodTypOchrany', 'hromosvodRokInstalace',
-        'hromosvodNorma', 'hromosvodPopisLps',
-        'hromosvodNormaZrizeni', 'hromosvodOdpovidaNorme', 'hromosvodFunkcniStav',
-        'hromosvodJimaciTyp', 'hromosvodJimaciMaterial', 'hromosvodJimaciStav',
-        'hromosvodJimaciPoznamka',
-        'hromosvodSvodyPocet', 'hromosvodSvodyMaterial', 'hromosvodSvodyPrurez',
-        'hromosvodSvodyZkusebniSvorky', 'hromosvodSvodyStav', 'hromosvodSvodyPoznamka',
-        'hromosvodUzemneniTyp', 'hromosvodUzemneniMaterial', 'hromosvodUzemneniStav',
-        'hromosvodUzemneniPoznamka',
-        'hromosvodSpdTyp', 'hromosvodSpdStav', 'hromosvodEkvipotencialni',
-        'hromosvodSpdPoznamka',
-        'hromosvodMereniOdporu',
-        // Strojní zařízení (JSON)
-        'strojniData',
-        // Odběrné místo (JSON)
-        'odberneMistoData',
-        // Normy soulad + vlastní text lhůty
-        'normySoulad', 'lhutaText', 'datumUvedeniDoProvozu', 'zdrojUvedeniDoProvozu',
-        // Historie / návaznost revizí
-        'predchoziRevizeId', 'skupinaRevizi',
-        // Snapshot revizního technika
-        'rtJmeno', 'rtCisloOpravneni', 'rtPlatnostOpravneni', 'rtCisloOsvedceni', 'rtPlatnostOsvedceni',
-        // Rozdělovník – seznam příjemců zprávy
-        'rozdelovnik',
-        // Náčrt LPS – base64 PNG
-        'hromosvodNacrt',
-        // Přílohy – textový seznam příloh
-        'prilohy',
-      ];
-      
-      const updates: Record<string, any> = { updatedAt: now };
-      for (const key of Object.keys(req.body)) {
-        if (allowedColumns.includes(key)) {
-          updates[key] = req.body[key];
-        }
-      }
-      
-      // DEBUG – logovat lhutaText
-      console.log('[PUT revize] lhutaText in body:', JSON.stringify(req.body.lhutaText), '| in updates:', JSON.stringify(updates.lhutaText));
-      
-      const keys = Object.keys(updates);
-      const values = Object.values(updates);
-      
-      const puvodniRes = await pool.query('SELECT * FROM revize WHERE id = $1', [req.params.id]);
-      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
-      await pool.query(`UPDATE revize SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
-
-      const zmeny = diffZmen(puvodniRes.rows[0] ?? {}, updates);
-      if (zmeny.length > 0) {
-        await zapisAudit({ entita: 'revize', entitaId: req.params.id, revizeId: req.params.id, akce: 'zmeneno', uzivatel: (req as AuthRequest).user?.username, zmeny });
-      }
-
+      await upravRevizi(req.params.id, req.body, (req as AuthRequest).user?.username);
       res.json({ success: true });
     } catch (error: any) {
       console.error('Error updating revize:', error);
@@ -1048,24 +1050,28 @@ async function startServer() {
     }
   });
 
+  /** Upraví závadu (s auditem). Sdílí endpoint i AI chat. */
+  async function upravZavadu(id: string | number, data: Record<string, any>, uzivatel?: string): Promise<void> {
+    const updates = { ...data };
+    if (updates.fotky) updates.fotky = JSON.stringify(updates.fotky);
+
+    const keys = Object.keys(updates);
+    const values = Object.values(updates);
+
+    const puvodniRes = await pool.query('SELECT * FROM zavada WHERE id = $1', [id]);
+    const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+    await pool.query(`UPDATE zavada SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, id]);
+
+    const puvodni = puvodniRes.rows[0] ?? {};
+    const zmeny = diffZmen(puvodni, updates);
+    if (zmeny.length > 0) {
+      await zapisAudit({ entita: 'zavada', entitaId: id, revizeId: puvodni.revizeId, akce: 'zmeneno', uzivatel, zmeny });
+    }
+  }
+
   app.put('/api/zavady/:id', authMiddleware, async (req, res) => {
     try {
-      const updates = { ...req.body };
-      if (updates.fotky) updates.fotky = JSON.stringify(updates.fotky);
-      
-      const keys = Object.keys(updates);
-      const values = Object.values(updates);
-      
-      const puvodniRes = await pool.query('SELECT * FROM zavada WHERE id = $1', [req.params.id]);
-      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
-      await pool.query(`UPDATE zavada SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
-
-      const puvodni = puvodniRes.rows[0] ?? {};
-      const zmeny = diffZmen(puvodni, updates);
-      if (zmeny.length > 0) {
-        await zapisAudit({ entita: 'zavada', entitaId: req.params.id, revizeId: puvodni.revizeId, akce: 'zmeneno', uzivatel: (req as AuthRequest).user?.username, zmeny });
-      }
-
+      await upravZavadu(req.params.id, req.body, (req as AuthRequest).user?.username);
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -1331,31 +1337,36 @@ async function startServer() {
     }
   });
 
+  /** Upraví zakázku (událost) a spustí synchronizaci s Google. Sdílí endpoint i AI chat. */
+  async function upravZakazku(id: string | number, data: Record<string, any>, userId: number): Promise<void> {
+    const validationError = validateZakazkaBody(data, true);
+    if (validationError) throw new ValidacniChyba(validationError);
+
+    const now = new Date().toISOString();
+    const body: Record<string, any> = {};
+    for (const key of ALLOWED_ZAKAZKA_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) body[key] = data[key];
+    }
+    // Serializace pole datumyRealizace
+    if (Array.isArray(body.datumyRealizace)) {
+      body.datumyRealizace = body.datumyRealizace.length > 0
+        ? JSON.stringify(body.datumyRealizace) : null;
+    }
+    const updates = { ...body, updatedAt: now };
+    const keys = Object.keys(updates);
+    const values = Object.values(updates);
+
+    const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+    await pool.query(`UPDATE zakazka SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, id]);
+    triggerAutoGoogleSync(userId);
+  }
+
   app.put('/api/zakazky/:id', authMiddleware, async (req: AuthRequest, res) => {
     try {
-      const validationError = validateZakazkaBody(req.body, true);
-      if (validationError) return res.status(400).json({ error: validationError });
-
-      const now = new Date().toISOString();
-      const body: Record<string, any> = {};
-      for (const key of ALLOWED_ZAKAZKA_FIELDS) {
-        if (Object.prototype.hasOwnProperty.call(req.body, key)) body[key] = req.body[key];
-      }
-      // Serializace pole datumyRealizace
-      if (Array.isArray(body.datumyRealizace)) {
-        body.datumyRealizace = body.datumyRealizace.length > 0
-          ? JSON.stringify(body.datumyRealizace) : null;
-      }
-      const updates = { ...body, updatedAt: now };
-      const keys = Object.keys(updates);
-      const values = Object.values(updates);
-
-      const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
-      await pool.query(`UPDATE zakazka SET ${setClause} WHERE id = $${keys.length + 1}`, [...values, req.params.id]);
-
+      await upravZakazku(req.params.id, req.body, req.user!.id);
       res.json({ success: true });
-      triggerAutoGoogleSync(req.user!.id);
     } catch (error) {
+      if (error instanceof ValidacniChyba) return res.status(400).json({ error: error.message });
       res.status(500).json({ error: (error as Error).message });
     }
   });
@@ -2677,6 +2688,9 @@ async function startServer() {
         vytvorZavadu: (data) => vytvorZavadu(data, uzivatel?.username),
         vytvorZakazku: (data) => vytvorZakazku(data, uzivatel!.id),
         vytvorZakaznika,
+        upravRevizi: (id, data) => upravRevizi(id, data, uzivatel?.username),
+        upravZavadu: (id, data) => upravZavadu(id, data, uzivatel?.username),
+        upravZakazku: (id, data) => upravZakazku(id, data, uzivatel!.id),
       }, { revizeId: Number.isInteger(revizeId) && revizeId > 0 ? revizeId : undefined });
       res.json({ reply, akce });
     } catch (error) {
