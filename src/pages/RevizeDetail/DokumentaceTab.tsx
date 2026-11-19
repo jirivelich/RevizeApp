@@ -106,6 +106,8 @@ export function DokumentaceTab({
           <div className="flex justify-end gap-1 mb-1">
             <AIAutofillButton
               field="popisZarizeni"
+              fieldLabel="Popis revidovaného zařízení"
+              hint="Např. rodinný dům, 2 podlaží, rok výstavby 1995, soustava TN-C-S, hlavní jistič 3×25 A, rozvaděč v chodbě, částečná rekonstrukce 2018…"
               formData={formData as Record<string, any>}
               entityType="revize"
               onApply={(vals) => setFormData({ ...formData, ...vals })}
@@ -141,6 +143,8 @@ export function DokumentaceTab({
               <div className="flex gap-1">
                 <AIAutofillButton
                   field="rozsahRevize"
+                  fieldLabel="Předmět revize"
+                  hint="Např. kompletní elektroinstalace bytu, rozvaděč RB1, světelné a zásuvkové obvody, bez hromosvodu…"
                   formData={formData as Record<string, any>}
                   entityType="revize"
                   onApply={(vals) => setFormData({ ...formData, ...vals })}

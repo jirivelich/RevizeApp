@@ -2653,7 +2653,7 @@ async function startServer() {
   // Auto-vyplňování
   app.post('/api/ai/autofill', authMiddleware, async (req, res) => {
     try {
-      const { field, formData, entityType } = req.body;
+      const { field, formData, entityType, pokyny } = req.body;
       
       if (!field || !entityType) {
         return res.status(400).json({ error: 'field a entityType jsou povinné' });
@@ -2662,7 +2662,12 @@ async function startServer() {
         return res.status(400).json({ error: 'Neplatný název pole' });
       }
 
-      const suggestion = await getAutofillSuggestion({ field, formData: formData || {}, entityType });
+      const suggestion = await getAutofillSuggestion({
+        field,
+        formData: formData || {},
+        entityType,
+        pokyny: typeof pokyny === 'string' ? pokyny : undefined,
+      });
       res.json({ suggestion });
     } catch (error) {
       sendAIError(res, 'autofill', error);

@@ -117,6 +117,13 @@ describe('autofill', () => {
     expect(params.messages[0].content).not.toContain('"id"');
   });
 
+  it('základní údaje od technika jdou do promptu jako hlavní podklad', async () => {
+    createMock.mockResolvedValue(textResponse(JSON.stringify({ popisZarizeni: 'Text' })));
+    await getAutofillSuggestion({ field: 'popisZarizeni', formData: {}, entityType: 'revize', pokyny: 'RD, 2 podlaží, TN-C-S' });
+    expect(createMock.mock.calls[0][0].messages[0].content).toContain('ZÁKLADNÍ ÚDAJE OD REVIZNÍHO TECHNIKA');
+    expect(createMock.mock.calls[0][0].messages[0].content).toContain('RD, 2 podlaží, TN-C-S');
+  });
+
   it('odmítne neplatný název pole bez volání API', async () => {
     await expect(getAutofillSuggestion({ field: '__proto__"', formData: {}, entityType: 'revize' })).rejects.toThrow();
     expect(createMock).not.toHaveBeenCalled();

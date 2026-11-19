@@ -179,11 +179,12 @@ export const aiApi = {
     field: string,
     formData: Record<string, any>,
     entityType: string,
+    pokyny?: string,
   ): Promise<{ suggestion: Record<string, string> }> {
     return fetch(buildApiUrl('/ai/autofill'), {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ field, formData, entityType }),
+      body: JSON.stringify({ field, formData, entityType, pokyny }),
     }).then(res => handleResponse<{ suggestion: Record<string, string> }>(res));
   },
 

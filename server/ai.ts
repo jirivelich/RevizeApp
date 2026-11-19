@@ -251,6 +251,7 @@ interface AutofillContext {
   field: string; // název pole k vyplnění
   formData: Record<string, any>; // aktuální data formuláře
   entityType: string; // typ entity (revize, mistnost, rozvadec, zarizeni)
+  pokyny?: string; // základní údaje / pokyny od technika
 }
 
 /** Název pole musí být jednoduchý identifikátor (používá se jako klíč v JSON schématu). */
@@ -275,7 +276,7 @@ export async function getAutofillSuggestion(context: AutofillContext): Promise<R
 Aktuální data formuláře:
 ${JSON.stringify(relevantData, null, 2)}
 
-${context.formData?.[context.field] ? `Současná hodnota pole (můžeš ji vylepšit/doplnit):\n${String(context.formData[context.field]).slice(0, 2000)}\n\n` : ''}Navrhni pouze text, který dává smysl v kontextu elektrotechnických revizí a přímo se vloží do formuláře.`;
+${context.pokyny?.trim() ? `ZÁKLADNÍ ÚDAJE OD REVIZNÍHO TECHNIKA (hlavní podklad – vycházej především z nich, nic si nevymýšlej):\n${context.pokyny.trim().slice(0, 4000)}\n\n` : ''}${context.formData?.[context.field] ? `Současná hodnota pole (můžeš ji vylepšit/doplnit):\n${String(context.formData[context.field]).slice(0, 2000)}\n\n` : ''}Navrhni pouze text, který dává smysl v kontextu elektrotechnických revizí a přímo se vloží do formuláře.`;
 
   const text = await callClaude({
     system: SYSTEM_AUTOFILL,
