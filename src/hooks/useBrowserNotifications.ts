@@ -22,6 +22,24 @@ function saveSeen(seen: Set<string>) {
   }
 }
 
+// Na Androidu (Chrome, Edge) konstruktor `new Notification()` vyhodí „Illegal constructor“ –
+// notifikace tam jde zobrazit jen přes service worker. Na desktopu slouží konstruktor jako záloha.
+async function zobrazNotifikaci(title: string, options: NotificationOptions) {
+  const opts: NotificationOptions = { icon: '/logo192.png', badge: '/logo192.png', ...options };
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) {
+        await reg.showNotification(title, opts);
+        return;
+      }
+    }
+    new Notification(title, opts);
+  } catch (err) {
+    console.warn('Notifikaci se nepodařilo zobrazit:', err);
+  }
+}
+
 // Zobrazí systémová upozornění prohlížeče pro nové kritické/varovné položky.
 // Vyžaduje explicitní zapnutí (enabled) a udělené oprávnění prohlížeče.
 export function useBrowserNotifications(notifications: AppNotification[], enabled: boolean) {
@@ -39,7 +57,7 @@ export function useBrowserNotifications(notifications: AppNotification[], enable
       if (n.severity === 'info') continue;
       if (seen.has(n.id)) continue;
       seen.add(n.id);
-      new Notification(n.title, { body: n.description, tag: n.id });
+      void zobrazNotifikaci(n.title, { body: n.description, tag: n.id });
     }
     saveSeen(seen);
   }, [notifications, enabled]);
