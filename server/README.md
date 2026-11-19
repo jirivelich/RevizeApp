@@ -86,6 +86,15 @@ Vytvořit `.env.local` v rootu projektu:
 VITE_API_URL=http://localhost:3001/api
 ```
 
+### AI funkce (server/.env)
+
+```
+ANTHROPIC_API_KEY=sk-ant-...        # povinné pro AI funkce (chat, závěr, autofill, fotky)
+AI_MODEL=claude-opus-5-5            # volitelné; levnější varianta: claude-sonnet-5-5
+```
+
+Bez `ANTHROPIC_API_KEY` se AI prvky v aplikaci skryjí (`GET /api/ai/status` vrací `configured: false`).
+
 ## Spuštění celé aplikace
 
 **Terminal 1 - Backend:**

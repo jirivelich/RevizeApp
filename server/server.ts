@@ -4,7 +4,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import { pool, initializeDatabase } from './database';
 import { authMiddleware, loginUser, registerUser, logoutSession, changePassword, AuthRequest } from './auth';
-import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion, analyzeRozvadecPhotos } from './ai';
+import { isAIConfigured, generateReport, chatWithAssistant, getAutofillSuggestion, analyzeRozvadecPhotos, getAIErrorMessage, sanitizeChatMessages, AUTOFILL_FIELD_RE, AI_MODEL } from './ai';
 import { getAuthUrl, exchangeCodeAndSave, deleteTokens, getTokens, saveTokens, listCalendars, syncZakazkyToCalendar, isGoogleConfigured, removeAppEvents, resolvePrimaryAlias, listGoogleEvents } from './googleCalendar';
 import { createState, verifyState, frontendBase as googleFrontendBase, popisChybyGoogle, parseCalendarIds, normalizeCalendarIds, MAX_KALENDARU, cilovyKalendar } from './google-utils';
 import { PolozkaInput, toNum, vypocitejPolozku, formatCisloFaktury, jePrechodPovolen, pridejDny, numerizuj, sanitizeCinnost, jePrechodNabidkyPovolen, lzeUpravitNabidku, rokPoslednihoCisla, celkemSeSlevou, normalizujSlevu } from './faktura-utils';
@@ -2545,28 +2545,16 @@ async function startServer() {
 
   // ==================== AI ENDPOINTY ====================
 
-  // Helper: extrahuj srozumitelnou chybovou hlášku z Anthropic erroru
-  function getAIErrorMessage(error: any): string {
-    // Anthropic SDK error with nested message
-    if (error?.error?.error?.message) {
-      const msg = error.error.error.message;
-      if (msg.includes('credit balance is too low')) {
-        return 'Nedostatečný kredit na Anthropic účtu. Dobijte kredit na https://console.anthropic.com/settings/plans';
-      }
-      if (msg.includes('invalid x-api-key') || msg.includes('Invalid API Key')) {
-        return 'Neplatný API klíč. Zkontrolujte ANTHROPIC_API_KEY v server/.env';
-      }
-      return msg;
-    }
-    const message = (error as Error).message || 'Neznámá chyba';
-    if (message.includes('ANTHROPIC_API_KEY')) return message;
-    if (message.includes('credit balance')) return 'Nedostatečný kredit na Anthropic účtu.';
-    return message;
+  // Odeslat chybu z AI jako srozumitelnou českou hlášku
+  function sendAIError(res: express.Response, label: string, error: unknown) {
+    console.error(`❌ AI ${label} error:`, error);
+    const { status, message } = getAIErrorMessage(error);
+    res.status(status).json({ error: message });
   }
-  
+
   // Kontrola konfigurace AI
   app.get('/api/ai/status', authMiddleware, (_req, res) => {
-    res.json({ configured: isAIConfigured() });
+    res.json({ configured: isAIConfigured(), model: AI_MODEL });
   });
 
   // Generování revizní zprávy
@@ -2641,27 +2629,24 @@ async function startServer() {
 
       res.json({ text: report });
     } catch (error) {
-      console.error('❌ AI generate-report error:', error);
-      const userMessage = getAIErrorMessage(error);
-      res.status(500).json({ error: userMessage });
+      sendAIError(res, 'generate-report', error);
     }
   });
 
   // Chat asistent
   app.post('/api/ai/chat', authMiddleware, async (req, res) => {
     try {
-      const { messages, revizeContext } = req.body;
-      
-      if (!messages || !Array.isArray(messages) || messages.length === 0) {
-        return res.status(400).json({ error: 'messages je povinné pole' });
+      const { revizeContext } = req.body;
+      const messages = sanitizeChatMessages(req.body.messages);
+
+      if (messages.length === 0 || messages[messages.length - 1].role !== 'user') {
+        return res.status(400).json({ error: 'messages musí obsahovat alespoň jednu zprávu uživatele' });
       }
 
       const reply = await chatWithAssistant(messages, revizeContext);
       res.json({ reply });
     } catch (error) {
-      console.error('❌ AI chat error:', error);
-      const userMessage = getAIErrorMessage(error);
-      res.status(500).json({ error: userMessage });
+      sendAIError(res, 'chat', error);
     }
   });
 
@@ -2673,13 +2658,14 @@ async function startServer() {
       if (!field || !entityType) {
         return res.status(400).json({ error: 'field a entityType jsou povinné' });
       }
+      if (typeof field !== 'string' || !AUTOFILL_FIELD_RE.test(field)) {
+        return res.status(400).json({ error: 'Neplatný název pole' });
+      }
 
       const suggestion = await getAutofillSuggestion({ field, formData: formData || {}, entityType });
       res.json({ suggestion });
     } catch (error) {
-      console.error('❌ AI autofill error:', error);
-      const userMessage = getAIErrorMessage(error);
-      res.status(500).json({ error: userMessage });
+      sendAIError(res, 'autofill', error);
     }
   });
 
@@ -2694,20 +2680,21 @@ async function startServer() {
       if (images.length > 5) {
         return res.status(400).json({ error: 'Maximálně 5 fotografií' });
       }
+      if (images.some((img: unknown) => typeof img !== 'string' || img.length > 7_000_000)) {
+        return res.status(400).json({ error: 'Fotografie je příliš velká (max. cca 5 MB)' });
+      }
       if (!rozvadecId) {
         return res.status(400).json({ error: 'rozvadecId je povinné' });
       }
 
       // Načíst název rozvaděče pro kontext AI
-      const rozvadecResult = await pool.query('SELECT nazev FROM rozvadece WHERE id = $1', [rozvadecId]);
+      const rozvadecResult = await pool.query('SELECT nazev FROM rozvadec WHERE id = $1', [rozvadecId]);
       const rozvadecNazev = rozvadecResult.rows[0]?.nazev || 'Rozvaděč';
 
       const okruhy = await analyzeRozvadecPhotos(images, rozvadecNazev);
       res.json({ okruhy });
     } catch (error) {
-      console.error('❌ AI analyze-photos error:', error);
-      const userMessage = getAIErrorMessage(error);
-      res.status(500).json({ error: userMessage });
+      sendAIError(res, 'analyze-photos', error);
     }
   });
 

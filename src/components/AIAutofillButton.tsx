@@ -14,16 +14,21 @@ interface AIAutofillButtonProps {
 
 export function AIAutofillButton({ field, formData, entityType, onApply }: AIAutofillButtonProps) {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleAutofill = async () => {
     setLoading(true);
+    setError(null);
     try {
       const { suggestion } = await aiApi.autofill(field, formData, entityType);
       if (Object.keys(suggestion).length > 0) {
         onApply(suggestion);
+      } else {
+        setError('AI nenavrhla žádný text.');
       }
     } catch (err: any) {
       console.error('AI autofill error:', err.message);
+      setError(err.message || 'Chyba AI návrhu');
     } finally {
       setLoading(false);
     }
@@ -34,8 +39,13 @@ export function AIAutofillButton({ field, formData, entityType, onApply }: AIAut
       type="button"
       onClick={handleAutofill}
       disabled={loading}
-      title="AI návrh"
-      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-[var(--bg-accent)] text-[var(--primary-text)] border border-[var(--primary)]/25 hover:brightness-110 disabled:opacity-50 transition-colors"
+      title={error ? `AI návrh – ${error}` : 'AI návrh'}
+      aria-label={error ? `AI návrh – ${error}` : 'AI návrh'}
+      className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border hover:brightness-110 disabled:opacity-50 transition-colors ${
+        error
+          ? 'bg-[var(--danger-bg)] text-[var(--danger-text)] border-[var(--danger)]/40'
+          : 'bg-[var(--bg-accent)] text-[var(--primary-text)] border-[var(--primary)]/25'
+      }`}
     >
       {loading ? (
         <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
@@ -47,7 +57,7 @@ export function AIAutofillButton({ field, formData, entityType, onApply }: AIAut
           <path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7z" />
         </svg>
       )}
-      AI
+      {error ? 'AI ⚠' : 'AI'}
     </button>
   );
 }
