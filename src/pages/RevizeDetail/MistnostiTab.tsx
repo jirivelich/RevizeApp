@@ -10,6 +10,7 @@ import { vyhodnotOkruh } from './mereniLimity';
 import { StavBadge } from './MereniUi';
 import { AIButton, AIMistnostiModal, AIZarizeniModal } from './AINavrhModals';
 import { useAIAvailable } from '../../hooks/useAIAvailable';
+import { useZmenaDat } from '../../hooks/useDataZmena';
 import type { AIMistnostNavrh, AIZarizeniNavrh } from '../../services/api';
 
 const PROSTREDI = ['Normální', 'Nebezpečné', 'Zvlášť nebezpečné'];
@@ -142,6 +143,12 @@ export function MistnostiTab({ mistnosti, rozvadece = [], zarizeniCounts: propCo
 
   // Sync counts from parent
   useEffect(() => { setZarizeniCounts(propCounts); }, [propCounts]);
+
+  // Data se změnila jinde (např. AI chat přidal zařízení) → znovu načíst zařízení vybrané místnosti
+  useZmenaDat(() => {
+    const id = selectedMistnost?.id;
+    if (id) zarizeniService.getByMistnost(id).then(setZarizeni);
+  });
 
   // Aktuální data vybrané místnosti (po úpravě se načtou znovu z rodiče)
   const selected = selectedMistnost ? (mistnosti.find(m => m.id === selectedMistnost.id) ?? selectedMistnost) : null;

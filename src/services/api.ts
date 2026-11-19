@@ -147,7 +147,7 @@ export async function checkServerHealth() {
 // ==================== AI ====================
 /** Záznam, který AI asistent v aplikaci vytvořil. */
 export interface AIChatAkce {
-  typ: 'revize' | 'zavada' | 'udalost' | 'zakaznik';
+  typ: 'revize' | 'zavada' | 'udalost' | 'zakaznik' | 'rozvadec' | 'okruh' | 'mistnost' | 'zarizeni';
   id: number;
   popis: string;
   odkaz: string;

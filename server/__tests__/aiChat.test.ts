@@ -72,7 +72,7 @@ describe('chatSDaty – smyčka nástrojů', () => {
     const out = await chatSDaty([{ role: 'user', content: 'ano, přidej' }], deps, { dnes: '2026-11-19', revizeId: 5 });
 
     expect(deps.vytvorZavadu).toHaveBeenCalledWith(expect.objectContaining({ revizeId: 5, zavaznost: 'C2', stav: 'otevřená', typ: 'zavada' }));
-    expect(out.akce).toEqual([{ typ: 'zavada', id: 22, popis: 'Závada C2 v revizi 202611190900', odkaz: '/revize/5' }]);
+    expect(out.akce).toEqual([{ typ: 'zavada', id: 22, popis: 'Závada C2 v revizi 202611190900', odkaz: '/revize/5?zalozka=zavady' }]);
     expect(createMock.mock.calls[0][0].system).toContain('revizi s id 5');
   });
 
@@ -126,5 +126,54 @@ describe('runTool – zapisovací nástroje', () => {
     const deps = makeDeps();
     await runTool('hledej_revize', { dotaz: '100%_' }, deps, [], '2026-11-19');
     expect(deps.query.mock.calls[0][1]).toEqual(['%100\\%\\_%']);
+  });
+});
+
+describe('runTool – rozvaděče, okruhy, místnosti, zařízení', () => {
+  const odemcena = { 'FROM revize WHERE id': [{ id: 7, cisloRevize: 'R7', stav: 'rozpracováno' }] };
+
+  it('pridej_okruhy naváže čísla, sestaví vodič a sjednotí jistič', async () => {
+    const deps = makeDeps({
+      ...odemcena,
+      'FROM rozvadec WHERE id': [{ id: 3, revizeId: 7, nazev: 'RB1' }],
+      'MAX(cislo)': [{ max: 4 }],
+      'INSERT INTO okruh': [{ id: 100 }],
+    });
+    const akce: ChatAkce[] = [];
+    await runTool('pridej_okruhy', {
+      rozvadecId: 3,
+      okruhy: [
+        { nazev: 'Světla', jisticTyp: 'b', jisticProud: 10, typKabelu: 'CYKY', pocetZil: '3', prurez: '1.5' },
+        { nazev: 'Sporák', jisticTyp: 'B', jisticProud: '16 A', pocetFazi: 3 },
+      ],
+    }, deps, akce, '2026-11-19');
+    const inserts = deps.query.mock.calls.filter(([sql]) => String(sql).includes('INSERT INTO okruh'));
+    expect(inserts[0][1]).toEqual([3, 5, 'Světla', 'B', '10A', 1, 'CYKY 3x1,5', 'CYKY', '3', '1,5', null]);
+    expect(inserts[1][1].slice(1, 7)).toEqual([6, 'Sporák', 'B', '16A', 3, null]);
+    expect(akce[0]).toMatchObject({ typ: 'okruh', popis: '2 okruhy v rozvaděči RB1', odkaz: '/revize/7?zalozka=rozvadece' });
+  });
+
+  it('pridej_zarizeni doplní ochranu před dotykem podle třídy a počtu', async () => {
+    const deps = makeDeps({
+      ...odemcena,
+      'FROM mistnost WHERE id': [{ id: 9, revizeId: 7, nazev: 'Kuchyň' }],
+      'INSERT INTO zarizeni': [{ id: 200 }],
+    });
+    await runTool('pridej_zarizeni', { mistnostId: 9, zarizeni: [{ nazev: 'Zásuvka', pocetKs: 4 }, { nazev: 'Svítidlo', trida: 'II' }] }, deps, [], '2026-11-19');
+    const inserts = deps.query.mock.calls.filter(([sql]) => String(sql).includes('INSERT INTO zarizeni'));
+    expect(inserts[0][1].slice(3, 8)).toEqual([4, 'I', null, 'max.', 'nekontrolováno']);
+    expect(inserts[1][1].slice(3, 8)).toEqual([1, 'II', null, 'izolací', 'nekontrolováno']);
+  });
+
+  it('zamčená revize nepustí rozvaděč ani místnosti', async () => {
+    const deps = makeDeps({ 'FROM revize WHERE id': [{ id: 7, cisloRevize: 'R7', stav: 'schváleno' }] });
+    await expect(runTool('vytvor_rozvadec', { revizeId: 7, nazev: 'RH' }, deps, [], '2026-11-19')).rejects.toThrow('zamčená');
+    await expect(runTool('vytvor_mistnosti', { revizeId: 7, mistnosti: [{ nazev: 'WC' }] }, deps, [], '2026-11-19')).rejects.toThrow('zamčená');
+    expect(deps.query.mock.calls.some(([sql]) => String(sql).includes('INSERT'))).toBe(false);
+  });
+
+  it('položka bez názvu se odmítne celá', async () => {
+    const deps = makeDeps(odemcena);
+    await expect(runTool('vytvor_mistnosti', { revizeId: 7, mistnosti: [{ nazev: 'WC' }, { patro: '1.NP' }] }, deps, [], '2026-11-19')).rejects.toThrow('název');
   });
 });

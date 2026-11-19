@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Button } from '../../components/ui';
 import {
   okruhService, zarizeniService,
@@ -12,6 +12,7 @@ import {
   useNastaveni, usePredvoleneTexty, useZavadyKatalog, useVytvorFakturuZRevize,
 } from '../../hooks/useQueries';
 import { useAutosave } from '../../hooks/useAutosave';
+import { useZmenaDat } from '../../hooks/useDataZmena';
 import type { AutosaveStatus } from '../../hooks/useAutosave';
 
 const EMPTY_ARR: never[] = [];
@@ -39,6 +40,14 @@ export function RevizeDetailPage() {
   // Core state (local)
   const [formData, setFormData] = useState<Partial<Revize>>({});
   const [activeTab, setActiveTab] = useState<'info' | 'dokumentace' | 'rozvadece' | 'zavady' | 'mistnosti' | 'hromosvod_zarizeni' | 'hromosvod_nacrt' | 'strojni_zarizeni' | 'odberne_misto' | 'rozsah' | 'prilohy'>('info');
+
+  // Odkaz s ?zalozka=… (např. z AI chatu) otevře rovnou danou záložku
+  const [searchParams] = useSearchParams();
+  const zalozka = searchParams.get('zalozka');
+  useEffect(() => {
+    const povolene = ['info', 'dokumentace', 'rozvadece', 'zavady', 'mistnosti', 'rozsah', 'prilohy'] as const;
+    if (zalozka && (povolene as readonly string[]).includes(zalozka)) setActiveTab(zalozka as typeof povolene[number]);
+  }, [zalozka]);
   const [selectedFirmaId, setSelectedFirmaId] = useState<string>('');
   const [selectedZakaznikId, setSelectedZakaznikId] = useState<string>('');
 
@@ -116,6 +125,10 @@ export function RevizeDetailPage() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [autoStatus]);
 
+  // Změna dat jinde (AI chat) → přepočítat počty okruhů a zařízení
+  const [verzeDat, setVerzeDat] = useState(0);
+  useZmenaDat(() => setVerzeDat((v) => v + 1));
+
   // Okruhy counts — N+1 but computed only when rozvadece change
   const [okruhyCounts, setOkruhyCounts] = useState<Record<number, number>>({});
   useEffect(() => {
@@ -132,7 +145,7 @@ export function RevizeDetailPage() {
       if (!cancelled) setOkruhyCounts(counts);
     })();
     return () => { cancelled = true; };
-  }, [rozvadece]);
+  }, [rozvadece, verzeDat]);
 
   // Zarizeni counts — N+1 but computed only when mistnosti change
   const [zarizeniCounts, setZarizeniCounts] = useState<Record<number, number>>({});
@@ -150,7 +163,7 @@ export function RevizeDetailPage() {
       if (!cancelled) setZarizeniCounts(counts);
     })();
     return () => { cancelled = true; };
-  }, [mistnosti]);
+  }, [mistnosti, verzeDat]);
 
   const loading = loadingRevize;
   const error = revizeError?.message ?? null;

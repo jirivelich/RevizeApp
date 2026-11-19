@@ -20,7 +20,7 @@ export interface ChatDeps {
 
 /** Co asistent v aplikaci změnil – frontend z toho udělá odkazy a obnoví data. */
 export interface ChatAkce {
-  typ: 'revize' | 'zavada' | 'udalost' | 'zakaznik';
+  typ: 'revize' | 'zavada' | 'udalost' | 'zakaznik' | 'rozvadec' | 'okruh' | 'mistnost' | 'zarizeni';
   id: number;
   popis: string;
   odkaz: string;
@@ -39,7 +39,7 @@ function systemPrompt(dnes: string, revizeId?: number): string {
   return `Jsi asistent v aplikaci ReVeli pro revizní techniky elektroinstalací v České republice.
 Pomáháš s odbornými dotazy (ČSN 33 1500, ČSN 33 2000-6, ČSN 33 2000-4-41, ČSN 33 2000-5-54, ČSN EN 62305, NV 190/2022 Sb., vyhláška 50/1978 Sb.) a s prací s daty aplikace.
 
-Máš nástroje pro čtení dat (zákazníci, revize, závady, kalendář) a pro zakládání záznamů (zákazník, revize, událost v kalendáři, závada).
+Máš nástroje pro čtení dat (zákazníci, revize, závady, kalendář) a pro zakládání záznamů (zákazník, revize, událost v kalendáři, závada, rozvaděč, okruhy, místnosti, zařízení v místnostech).
 
 Práce s daty:
 - Na dotazy o zákaznících, revizích, termínech a závadách odpovídej z dat získaných nástroji, nic si nevymýšlej. Když nic nenajdeš, řekni to.
@@ -50,6 +50,9 @@ Práce s daty:
 - U zakládané revize, která patří existujícímu zákazníkovi, použij jeho id (nejdřív ho dohledej).
 - Závady klasifikuj C1 (bezprostřední ohrožení, nutné okamžitě odstranit), C2 (potenciální ohrožení, odstranit v přiměřené lhůtě), C3 (doporučení ke zlepšení) a uveď normu, je-li zřejmá.
 - Revize ve stavu dokončeno nebo schváleno jsou zamčené – závady do nich přidat nejde, dokud je uživatel v aplikaci neodemkne.
+- Rozvaděče, okruhy, místnosti a zařízení zakládej vždy k určité revizi. Nejdřív si přes detail_revize ověř, co v ní už je (ať nevznikají duplicity), a id rozvaděče/místnosti ber odtud.
+- Okruhy a zařízení přidávej najednou celým seznamem (jedno volání nástroje), čísla okruhů navazuj na existující.
+- U okruhů vyplň jen to, co uživatel řekl nebo co jednoznačně plyne (typ jističe B/C/D, proud, počet fází, kabel). Naměřené hodnoty si nevymýšlej.
 - Po založení záznamu potvrď stručně, co vzniklo.
 
 Styl:
@@ -208,6 +211,103 @@ export const CHAT_TOOLS: Anthropic.Tool[] = [
       required: ['revizeId', 'popis', 'zavaznost'],
     },
   },
+  {
+    name: 'vytvor_rozvadec',
+    description: 'Přidá rozvaděč do revize. Volej až po potvrzení uživatelem.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        revizeId: { type: 'integer' },
+        nazev: { type: 'string', description: 'např. „Hlavní rozvaděč“, „Bytový rozvaděč 1.NP“' },
+        oznaceni: { type: 'string', description: 'např. RH, RB1, R1' },
+        umisteni: { type: 'string', description: 'kde rozvaděč je, např. „chodba 1.NP“' },
+        typRozvadece: { type: 'string', description: 'např. „bytový“, „podružný“, „hlavní domovní“, „elektroměrový“' },
+        stupenKryti: { type: 'string', description: 'IP kód, např. IP20, IP40, IP54 (výchozí IP20)' },
+        poznamka: { type: 'string' },
+      },
+      required: ['revizeId', 'nazev'],
+    },
+  },
+  {
+    name: 'pridej_okruhy',
+    description: 'Přidá jeden nebo více okruhů (jističů) do rozvaděče. Volej až po potvrzení uživatelem.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        rozvadecId: { type: 'integer' },
+        okruhy: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              cislo: { type: 'integer', description: 'číslo okruhu; když chybí, naváže se na poslední' },
+              nazev: { type: 'string', description: 'např. „Zásuvky kuchyň“, „Osvětlení 1.NP“' },
+              jisticTyp: { type: 'string', description: 'charakteristika: B, C, D, gG…' },
+              jisticProud: { type: 'integer', description: 'jmenovitý proud v A, např. 16' },
+              pocetFazi: { type: 'integer', enum: [1, 3] },
+              typKabelu: { type: 'string', description: 'např. CYKY, CY, NYM' },
+              pocetZil: { type: 'string', description: 'např. 3, 5, 3J' },
+              prurez: { type: 'string', description: 'v mm², např. 1,5 nebo 2,5' },
+              poznamka: { type: 'string' },
+            },
+            required: ['nazev'],
+          },
+        },
+      },
+      required: ['rozvadecId', 'okruhy'],
+    },
+  },
+  {
+    name: 'vytvor_mistnosti',
+    description: 'Přidá jednu nebo více místností do revize. Volej až po potvrzení uživatelem.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        revizeId: { type: 'integer' },
+        mistnosti: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              nazev: { type: 'string' },
+              patro: { type: 'string', description: 'např. 1.NP, 2.NP, 1.PP' },
+              plocha: { type: 'number', description: 'm²' },
+              prostredi: { type: 'string', enum: ['Normální', 'Nebezpečné', 'Zvlášť nebezpečné'] },
+              poznamka: { type: 'string' },
+            },
+            required: ['nazev'],
+          },
+        },
+      },
+      required: ['revizeId', 'mistnosti'],
+    },
+  },
+  {
+    name: 'pridej_zarizeni',
+    description: 'Přidá jedno nebo více elektrických zařízení (zásuvky, svítidla, spotřebiče…) do místnosti. Volej až po potvrzení uživatelem.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        mistnostId: { type: 'integer' },
+        zarizeni: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              nazev: { type: 'string', description: 'např. „Zásuvka 230 V“, „Stropní svítidlo“, „Bojler“' },
+              oznaceni: { type: 'string' },
+              pocetKs: { type: 'integer' },
+              trida: { type: 'string', enum: ['I', 'II', 'III'], description: 'třída ochrany (výchozí I)' },
+              prikonW: { type: 'number' },
+              poznamka: { type: 'string' },
+            },
+            required: ['nazev'],
+          },
+        },
+      },
+      required: ['mistnostId', 'zarizeni'],
+    },
+  },
 ];
 
 // ==================== Pomocné funkce ====================
@@ -225,6 +325,26 @@ const like = (q: string) => `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 
 /** Chyba vstupu nástroje – vrací se modelu jako is_error, aby ji mohl opravit. */
 class ToolInputError extends Error {}
+
+/** Ověří, že revize existuje a není zamčená (stejně jako middleware hlidejZamek u REST API). */
+async function overOdemcenouRevizi(query: ChatDeps['query'], revizeId: number) {
+  const r = await query('SELECT id, "cisloRevize", stav FROM revize WHERE id = $1', [revizeId]);
+  const rev = r.rows[0];
+  if (!rev) throw new ToolInputError(`Revize s id ${revizeId} neexistuje`);
+  if (jeZamceny(rev.stav)) {
+    throw new ToolInputError(`Revize ${rev.cisloRevize} je ve stavu „${rev.stav}“ a je zamčená. Nic do ní nelze přidat – uživatel ji musí nejdřív v aplikaci odemknout (tlačítko zámku v detailu revize).`);
+  }
+  return rev as { id: number; cisloRevize: string; stav: string };
+}
+
+/** Pole položek z nástroje (max. počet, jen objekty s názvem). */
+function polozky(v: unknown, max: number, co: string): Record<string, any>[] {
+  if (!Array.isArray(v) || v.length === 0) throw new ToolInputError(`Chybí seznam (${co})`);
+  if (v.length > max) throw new ToolInputError(`Najednou lze přidat nejvýš ${max} položek (${co})`);
+  const out = v.filter((x) => x && typeof x === 'object' && str((x as any).nazev));
+  if (out.length !== v.length) throw new ToolInputError(`Každá položka (${co}) musí mít název`);
+  return out as Record<string, any>[];
+}
 
 function povinne<T>(value: T | undefined, msg: string): T {
   if (value === undefined) throw new ToolInputError(msg);
@@ -314,18 +434,32 @@ export async function runTool(
       if (!r.rows[0]) throw new ToolInputError(`Revize s id ${id} neexistuje`);
       const [zavady, rozvadece, mistnosti] = await Promise.all([
         query('SELECT id, popis, zavaznost, stav, typ, norma, "mistnostId", "rozvadecId" FROM zavada WHERE "revizeId" = $1 ORDER BY id', [id]),
-        query('SELECT id, nazev, oznaceni FROM rozvadec WHERE "revizeId" = $1 ORDER BY poradi NULLS LAST, id', [id]),
+        query('SELECT id, nazev, oznaceni, umisteni FROM rozvadec WHERE "revizeId" = $1 ORDER BY poradi NULLS LAST, id', [id]),
         query('SELECT id, nazev, patro, prostredi FROM mistnost WHERE "revizeId" = $1 ORDER BY id', [id]),
       ]);
-      const okruhy = rozvadece.rows.length
-        ? await query('SELECT COUNT(*)::int AS pocet FROM okruh WHERE "rozvadecId" = ANY($1)', [rozvadece.rows.map((x) => x.id)])
-        : { rows: [{ pocet: 0 }] };
+      const rozvIds = rozvadece.rows.map((x) => x.id);
+      const mistIds = mistnosti.rows.map((x) => x.id);
+      const [okruhy, zarizeni] = await Promise.all([
+        rozvIds.length
+          ? query('SELECT "rozvadecId", cislo, nazev, "jisticTyp", "jisticProud", "pocetFazi" FROM okruh WHERE "rozvadecId" = ANY($1) ORDER BY cislo', [rozvIds])
+          : Promise.resolve({ rows: [] as any[] }),
+        mistIds.length
+          ? query('SELECT "mistnostId", nazev, "pocetKs" FROM zarizeni WHERE "mistnostId" = ANY($1) ORDER BY id', [mistIds])
+          : Promise.resolve({ rows: [] as any[] }),
+      ]);
       return {
         revize: compact(r.rows[0]),
         zavady: zavady.rows.map(compact),
-        rozvadece: rozvadece.rows.map(compact),
-        mistnosti: mistnosti.rows.map(compact),
-        pocetOkruhu: okruhy.rows[0]?.pocet ?? 0,
+        rozvadece: rozvadece.rows.map((rz) => ({
+          ...compact(rz),
+          okruhy: okruhy.rows.filter((o) => o.rozvadecId === rz.id).slice(0, 80)
+            .map((o) => `${o.cislo}: ${o.nazev ?? ''} ${o.jisticTyp ?? ''}${o.jisticProud ?? ''}${o.pocetFazi === 3 ? ' 3f' : ''}`.trim()),
+        })),
+        mistnosti: mistnosti.rows.map((m) => ({
+          ...compact(m),
+          zarizeni: zarizeni.rows.filter((z) => z.mistnostId === m.id).slice(0, 80)
+            .map((z) => (z.pocetKs > 1 ? `${z.nazev} (${z.pocetKs} ks)` : z.nazev)),
+        })),
       };
     }
 
@@ -442,11 +576,7 @@ export async function runTool(
 
     case 'pridej_zavadu': {
       const revizeId = povinne(int(input.revizeId), 'Chybí id revize');
-      const r = await query('SELECT id, "cisloRevize", stav FROM revize WHERE id = $1', [revizeId]);
-      if (!r.rows[0]) throw new ToolInputError(`Revize s id ${revizeId} neexistuje`);
-      if (jeZamceny(r.rows[0].stav)) {
-        throw new ToolInputError(`Revize ${r.rows[0].cisloRevize} je ve stavu „${r.rows[0].stav}“ a je zamčená. Závadu nelze přidat – uživatel ji musí nejdřív v aplikaci odemknout (tlačítko zámku v detailu revize).`);
-      }
+      const rev = await overOdemcenouRevizi(query, revizeId);
       const typ = oneOf(input.typ, ['zavada', 'doporuceni'] as const) ?? 'zavada';
       const data = {
         revizeId,
@@ -461,8 +591,110 @@ export async function runTool(
         fotky: [],
       };
       const id = await deps.vytvorZavadu(data);
-      akce.push({ typ: 'zavada', id, popis: `Závada ${data.zavaznost} v revizi ${r.rows[0].cisloRevize}`, odkaz: `/revize/${revizeId}` });
+      akce.push({ typ: 'zavada', id, popis: `Závada ${data.zavaznost} v revizi ${rev.cisloRevize}`, odkaz: `/revize/${revizeId}?zalozka=zavady` });
       return { ok: true, id };
+    }
+
+    case 'vytvor_rozvadec': {
+      const revizeId = povinne(int(input.revizeId), 'Chybí id revize');
+      await overOdemcenouRevizi(query, revizeId);
+      const nazev = povinne(str(input.nazev, 200), 'Chybí název rozvaděče');
+      const now = new Date().toISOString();
+      const res = await query(
+        `INSERT INTO rozvadec ("revizeId", nazev, oznaceni, umisteni, "typRozvadece", "stupenKryti", poznamka, "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+        [revizeId, nazev, str(input.oznaceni, 30) ?? null, str(input.umisteni, 200) ?? null, str(input.typRozvadece, 100) ?? null,
+          str(input.stupenKryti, 20) ?? 'IP20', str(input.poznamka, 2000) ?? null, now, now],
+      );
+      const id = res.rows[0].id;
+      akce.push({ typ: 'rozvadec', id, popis: `Rozvaděč ${nazev}`, odkaz: `/revize/${revizeId}?zalozka=rozvadece` });
+      return { ok: true, id };
+    }
+
+    case 'pridej_okruhy': {
+      const rozvadecId = povinne(int(input.rozvadecId), 'Chybí id rozvaděče');
+      const rz = await query('SELECT id, "revizeId", nazev FROM rozvadec WHERE id = $1', [rozvadecId]);
+      if (!rz.rows[0]) throw new ToolInputError(`Rozvaděč s id ${rozvadecId} neexistuje`);
+      await overOdemcenouRevizi(query, rz.rows[0].revizeId);
+      const seznam = polozky(input.okruhy, 60, 'okruhy');
+      const max = await query('SELECT COALESCE(MAX(cislo), 0)::int AS max FROM okruh WHERE "rozvadecId" = $1', [rozvadecId]);
+      let dalsi = (max.rows[0]?.max ?? 0) + 1;
+      const ids: number[] = [];
+      for (const o of seznam) {
+        const cislo = int(o.cislo) ?? dalsi;
+        dalsi = Math.max(dalsi, cislo + 1);
+        const proud = typeof o.jisticProud === 'number' && o.jisticProud > 0 ? `${o.jisticProud}A`
+          : str(o.jisticProud, 10)?.replace(/^(\d+(?:[.,]\d+)?)\s*A?$/i, '$1A') ?? '';
+        const typKabelu = str(o.typKabelu, 20);
+        const pocetZil = str(o.pocetZil, 10);
+        const prurez = str(o.prurez, 10)?.replace('.', ',');
+        // stejně jako computeVodic ve frontendu
+        const jadro = pocetZil ? `${pocetZil}x${prurez ?? ''}` : prurez ?? '';
+        const vodic = [typKabelu, jadro].filter(Boolean).join(' ') || null;
+        const res = await query(
+          `INSERT INTO okruh ("rozvadecId", cislo, nazev, "jisticTyp", "jisticProud", "pocetFazi", vodic, "typKabelu", "pocetZil", prurez, poznamka)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
+          [rozvadecId, cislo, str(o.nazev, 200), str(o.jisticTyp, 5)?.replace(/^([bcd])$/, (c) => c.toUpperCase()) ?? '', proud,
+            o.pocetFazi === 3 ? 3 : 1, vodic, typKabelu ?? null, pocetZil ?? null, prurez ?? null, str(o.poznamka, 2000) ?? null],
+        );
+        ids.push(res.rows[0].id);
+      }
+      akce.push({
+        typ: 'okruh', id: ids[0],
+        popis: `${ids.length} ${ids.length === 1 ? 'okruh' : ids.length < 5 ? 'okruhy' : 'okruhů'} v rozvaděči ${rz.rows[0].nazev}`,
+        odkaz: `/revize/${rz.rows[0].revizeId}?zalozka=rozvadece`,
+      });
+      return { ok: true, pocet: ids.length, ids };
+    }
+
+    case 'vytvor_mistnosti': {
+      const revizeId = povinne(int(input.revizeId), 'Chybí id revize');
+      await overOdemcenouRevizi(query, revizeId);
+      const seznam = polozky(input.mistnosti, 60, 'místnosti');
+      const vytvorene: { id: number; nazev: string }[] = [];
+      for (const m of seznam) {
+        const plocha = typeof m.plocha === 'number' && m.plocha > 0 ? m.plocha : null;
+        const res = await query(
+          `INSERT INTO mistnost ("revizeId", nazev, patro, plocha, prostredi, poznamka) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+          [revizeId, str(m.nazev, 120), str(m.patro, 30) ?? null, plocha,
+            oneOf(m.prostredi, ['Normální', 'Nebezpečné', 'Zvlášť nebezpečné'] as const) ?? 'Normální', str(m.poznamka, 2000) ?? null],
+        );
+        vytvorene.push({ id: res.rows[0].id, nazev: str(m.nazev, 120)! });
+      }
+      akce.push({
+        typ: 'mistnost', id: vytvorene[0].id,
+        popis: vytvorene.length === 1 ? `Místnost ${vytvorene[0].nazev}` : `${vytvorene.length} ${vytvorene.length < 5 ? 'místnosti' : 'místností'}`,
+        odkaz: `/revize/${revizeId}?zalozka=mistnosti`,
+      });
+      return { ok: true, mistnosti: vytvorene };
+    }
+
+    case 'pridej_zarizeni': {
+      const mistnostId = povinne(int(input.mistnostId), 'Chybí id místnosti');
+      const mi = await query('SELECT id, "revizeId", nazev FROM mistnost WHERE id = $1', [mistnostId]);
+      if (!mi.rows[0]) throw new ToolInputError(`Místnost s id ${mistnostId} neexistuje`);
+      await overOdemcenouRevizi(query, mi.rows[0].revizeId);
+      const seznam = polozky(input.zarizeni, 60, 'zařízení');
+      const ids: number[] = [];
+      for (const z of seznam) {
+        const pocetKs = int(z.pocetKs) ?? 1;
+        const trida = oneOf(z.trida, ['I', 'II', 'III'] as const) ?? 'I';
+        // stejně jako formulář zařízení ve frontendu
+        const ochrana = trida === 'II' ? 'izolací' : trida === 'III' ? 'MN' : pocetKs > 1 ? 'max.' : '';
+        const prikon = typeof z.prikonW === 'number' && z.prikonW > 0 ? z.prikonW : null;
+        const res = await query(
+          `INSERT INTO zarizeni ("mistnostId", nazev, oznaceni, "pocetKs", trida, "prikonW", "ochranaPredDotykem", stav, poznamka)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+          [mistnostId, str(z.nazev, 120), str(z.oznaceni, 20) ?? null, pocetKs, trida, prikon, ochrana, 'nekontrolováno', str(z.poznamka, 2000) ?? null],
+        );
+        ids.push(res.rows[0].id);
+      }
+      akce.push({
+        typ: 'zarizeni', id: ids[0],
+        popis: `${ids.length} zařízení v místnosti ${mi.rows[0].nazev}`,
+        odkaz: `/revize/${mi.rows[0].revizeId}?zalozka=mistnosti`,
+      });
+      return { ok: true, pocet: ids.length, ids };
     }
 
     default:

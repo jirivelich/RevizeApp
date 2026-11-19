@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { aiApi, type AIChatAkce } from '../services/api';
 import { Icon } from './icons';
 import { useDiktovani, usePredcitani } from '../hooks/useHlas';
+import { oznamZmenuDat } from '../hooks/useDataZmena';
 
 const PREDCITAT_KEY = 'aiChat.predcitat';
 const nactiPredcitani = () => { try { return localStorage.getItem(PREDCITAT_KEY) === '1'; } catch { return false; } };
@@ -20,6 +21,10 @@ const AKCE_IKONA: Record<AIChatAkce['typ'], string> = {
   zavada: '⚠️',
   udalost: '📅',
   zakaznik: '👤',
+  rozvadec: '🗄️',
+  okruh: '⚡',
+  mistnost: '🚪',
+  zarizeni: '🔌',
 };
 
 export function AIChatAssistant() {
@@ -92,7 +97,7 @@ export function AIChatAssistant() {
       setMessages([...newMessages, { role: 'assistant', content: reply, akce }]);
       if (predcitat) predcitani.precti(reply);
       // Asistent něco vytvořil → obnovit data v aplikaci
-      if (akce && akce.length > 0) qc.invalidateQueries();
+      if (akce && akce.length > 0) { qc.invalidateQueries(); oznamZmenuDat(); }
     } catch (err: any) {
       setMessages([
         ...newMessages,
@@ -173,13 +178,13 @@ export function AIChatAssistant() {
                   <Icon name="sparkle" size={24} />
                 </div>
                 <p className="text-sm text-[var(--text-secondary)] font-medium mb-1">AI Asistent pro revize</p>
-                <p className="text-xs text-[var(--text-secondary)]">Vidí vaše zákazníky, revize, závady a kalendář. Umí založit revizi, událost, závadu nebo zákazníka – vždy se nejdřív zeptá.</p>
+                <p className="text-xs text-[var(--text-secondary)]">Vidí vaše zákazníky, revize, závady a kalendář. Umí založit revizi, událost, závadu, zákazníka, rozvaděč s okruhy i místnosti se zařízením – vždy se nejdřív zeptá.</p>
                 <div className="mt-4 space-y-2">
                   {[
                     'Kterým revizím končí platnost v příštích 2 měsících?',
                     'Co mám v kalendáři tento týden?',
                     'Naplánuj revizi u zákazníka Novák na příští úterý v 9:00',
-                    'Jaký je min. izolační odpor pro 230 V?',
+                    'Do téhle revize přidej rozvaděč RB1 v chodbě s okruhy: světla B10, zásuvky B16, sporák 3f B16',
                   ].map((q) => (
                     <button
                       key={q}
