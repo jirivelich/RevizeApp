@@ -3,6 +3,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { aiApi, type AIChatAkce } from '../services/api';
 import { Icon } from './icons';
+import { useDiktovani, usePredcitani } from '../hooks/useHlas';
+
+const PREDCITAT_KEY = 'aiChat.predcitat';
+const nactiPredcitani = () => { try { return localStorage.getItem(PREDCITAT_KEY) === '1'; } catch { return false; } };
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -31,6 +35,28 @@ export function AIChatAssistant() {
   // Otevřená revize (/revize/123…) – „tahle revize“ v chatu
   const revizeId = Number(location.pathname.match(/^\/revize\/(\d+)/)?.[1]) || undefined;
 
+  // Hlas: diktování zprávy a předčítání odpovědí
+  const [predcitat, setPredcitat] = useState(nactiPredcitani);
+  const predcitani = usePredcitani();
+  const sendRef = useRef<(text?: string) => void>(() => {});
+  const diktovani = useDiktovani({
+    onText: (t) => setInput(t),
+    onKonec: (t) => sendRef.current(t), // po domluvení rovnou odeslat
+  });
+
+  const prepniPredcitani = () => {
+    const nove = !predcitat;
+    setPredcitat(nove);
+    if (!nove) predcitani.zastav();
+    try { localStorage.setItem(PREDCITAT_KEY, nove ? '1' : '0'); } catch { /* bez úložiště */ }
+  };
+
+  const handleMic = () => {
+    if (diktovani.posloucha) { diktovani.stop(); return; }
+    predcitani.zastav(); // ať asistent nemluví do mikrofonu
+    diktovani.start(input);
+  };
+
   // Check AI availability on mount
   useEffect(() => {
     aiApi.getStatus()
@@ -48,8 +74,8 @@ export function AIChatAssistant() {
     if (isOpen) inputRef.current?.focus();
   }, [isOpen]);
 
-  const handleSend = async () => {
-    const text = input.trim();
+  const handleSend = async (override?: string) => {
+    const text = (override ?? input).trim();
     if (!text || loading) return;
 
     const newMessages: ChatMessage[] = [...messages, { role: 'user', content: text }];
@@ -64,6 +90,7 @@ export function AIChatAssistant() {
         revizeId ? { id: revizeId } : undefined,
       );
       setMessages([...newMessages, { role: 'assistant', content: reply, akce }]);
+      if (predcitat) predcitani.precti(reply);
       // Asistent něco vytvořil → obnovit data v aplikaci
       if (akce && akce.length > 0) qc.invalidateQueries();
     } catch (err: any) {
@@ -75,6 +102,8 @@ export function AIChatAssistant() {
       setLoading(false);
     }
   };
+
+  useEffect(() => { sendRef.current = handleSend; });
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -109,13 +138,31 @@ export function AIChatAssistant() {
               <Icon name="sparkle" size={20} />
               <span className="font-medium text-sm">AI Asistent</span>
             </div>
+            <div className="flex items-center gap-1">
+            {predcitani.podporovano && (
+              <button
+                onClick={prepniPredcitani}
+                className="p-1 hover:bg-[var(--primary-hover)] rounded-[var(--radius-md)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-fg)]"
+                aria-label={predcitat ? 'Vypnout předčítání odpovědí' : 'Zapnout předčítání odpovědí'}
+                aria-pressed={predcitat}
+                title={predcitat ? 'Předčítání odpovědí zapnuto' : 'Předčítat odpovědi nahlas'}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                  {predcitat
+                    ? <><path d="M15.54 8.46a5 5 0 010 7.07" /><path d="M19.07 4.93a10 10 0 010 14.14" /></>
+                    : <><line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" /></>}
+                </svg>
+              </button>
+            )}
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={() => { setIsOpen(false); diktovani.stop(); predcitani.zastav(); }}
               className="p-1 hover:bg-[var(--primary-hover)] rounded-[var(--radius-md)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-fg)]"
               aria-label="Zavřít"
             >
               <Icon name="close" size={16} />
             </button>
+            </div>
           </div>
 
           {/* Messages */}
@@ -203,12 +250,32 @@ export function AIChatAssistant() {
                   e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
                 }}
                 onKeyDown={handleKeyDown}
-                placeholder="Napsat zprávu… (Shift+Enter = nový řádek)"
+                placeholder={diktovani.posloucha ? 'Poslouchám…' : 'Napsat zprávu… (Shift+Enter = nový řádek)'}
                 disabled={loading}
                 className="flex-1 resize-none px-3 py-2 text-sm border border-[var(--border-input)] rounded-[var(--radius-md)] focus:outline-none focus:border-[var(--primary-text)] focus:ring-2 focus:ring-[var(--focus-ring-color)] bg-[var(--bg-input)] text-[var(--text)] disabled:bg-[var(--bg-surface)]"
               />
+              {diktovani.podporovano && (
+                <button
+                  onClick={handleMic}
+                  disabled={loading}
+                  className={`px-3 py-2 rounded-[var(--radius-md)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring-color)] disabled:opacity-50 ${
+                    diktovani.posloucha
+                      ? 'bg-[var(--danger)] text-white animate-pulse'
+                      : 'bg-[var(--bg-input)] hover:bg-[var(--bg-hover)] text-[var(--text)] border border-[var(--border-input)]'
+                  }`}
+                  aria-label={diktovani.posloucha ? 'Ukončit diktování' : 'Diktovat zprávu'}
+                  aria-pressed={diktovani.posloucha}
+                  title={diktovani.posloucha ? 'Poslouchám… (klepnutím ukončíte)' : 'Diktovat zprávu'}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="9" y="2" width="6" height="12" rx="3" />
+                    <path d="M5 10v1a7 7 0 0014 0v-1" />
+                    <line x1="12" y1="18" x2="12" y2="22" />
+                  </svg>
+                </button>
+              )}
               <button
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={!input.trim() || loading}
                 className="px-3 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] disabled:bg-[var(--bg-hover)] disabled:text-[var(--text-muted)] text-[var(--primary-fg)] rounded-[var(--radius-md)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring-color)]"
                 aria-label="Odeslat"
@@ -216,6 +283,7 @@ export function AIChatAssistant() {
                 <Icon name="send" size={16} />
               </button>
             </div>
+            {diktovani.chyba && <p role="alert" className="text-[11px] text-[var(--danger-text)] mt-1">{diktovani.chyba}</p>}
             <p className="text-[10px] text-[var(--text-secondary)] mt-1 text-center">AI může dělat chyby. Ověřte důležité informace.</p>
           </div>
         </div>
