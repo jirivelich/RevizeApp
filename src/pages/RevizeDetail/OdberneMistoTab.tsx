@@ -42,7 +42,7 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
   useEffect(() => {
     if (loadedForRef.current === revize.id) return;
     loadedForRef.current = revize.id;
-    setFd(parseOdberneMisto(revize.odberneMistoData || formData.odberneMistoData));
+    setFd(parseOdberneMisto(formData.odberneMistoData ?? revize.odberneMistoData));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revize.id]);
 

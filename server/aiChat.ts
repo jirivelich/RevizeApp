@@ -24,7 +24,7 @@ export interface ChatDeps {
 
 /** Co asistent v aplikaci změnil – frontend z toho udělá odkazy a obnoví data. */
 export interface ChatAkce {
-  typ: 'revize' | 'zavada' | 'udalost' | 'zakaznik' | 'rozvadec' | 'okruh' | 'mistnost' | 'zarizeni';
+  typ: 'revize' | 'zavada' | 'udalost' | 'zakaznik' | 'rozvadec' | 'okruh' | 'mistnost' | 'zarizeni' | 'odberne_misto';
   id: number;
   popis: string;
   odkaz: string;
@@ -53,6 +53,12 @@ Práce s daty:
 - Před úpravou si záznam dohledej (detail_revize, kalendar, hledej_zakazniky…), ať máš správné id a víš, jakou hodnotu přepisuješ. Měň jen pole, o která uživatel žádá.
 - Naměřené hodnoty zapisuj přesně tak, jak je uživatel nadiktoval (čísla s desetinnou čárkou, bez jednotek; izolační odpor v MΩ, impedance smyčky v Ω; „víc než 200“ zapiš jako „>200“).
 - Mazat záznamy neumíš – když o to uživatel požádá, řekni mu, ať to udělá v aplikaci.
+
+Přiložené dokumenty (PDF, fotky):
+- Uživatel může přiložit např. smlouvu o připojení / o distribuci od ČEZ, fakturu za elektřinu, technickou zprávu, štítek rozvaděče nebo elektroměru. Přečti z nich údaje, které se hodí do revize: zákazník (jméno/firma, IČO nebo datum narození, DIČ, adresa, telefon, e-mail), odběrné místo (EAN, číslo OM, číslo elektroměru, adresa OM, parcela), smlouva (číslo, datum uzavření, platnost, typ odběru, účel), rezervovaný příkon, hodnota hlavního jističe a počet fází, distribuční sazba, kód HDO, příkony spotřebičů (TUV, akumulační/přímotopné topení, tepelné čerpadlo).
+- Nejdřív přehledně vypiš, co jsi v dokumentu našel a kam to zapíšeš (revize, zákazník, odběrné místo). Nečitelné nebo chybějící údaje neodhaduj – napiš, že chybí. Po potvrzení zapiš nástroji (uprav_odberne_misto, uprav_revizi, vytvor_zakaznika / uprav_zakaznika).
+- Když je v revizi už vyplněná jiná hodnota, upozorni na rozdíl a přepiš ji jen s potvrzením.
+- Pokud dokument nepatří k otevřené revizi (jiná adresa, jiný zákazník), upozorni na to.
 - Chybějící povinné údaje si vyžádej, nedomýšlej je (datum, adresu, klienta…). Rozumné výchozí hodnoty (typ revize pravidelná, lhůta 36 měsíců, kategorie elektro, dnešní datum revize) můžeš navrhnout v shrnutí.
 - Relativní data („zítra“, „příští úterý“) převeď podle dnešního data.
 - U zakládané revize, která patří existujícímu zákazníkovi, použij jeho id (nejdřív ho dohledej).
@@ -492,6 +498,52 @@ export const CHAT_TOOLS: Anthropic.Tool[] = [
       required: ['id'],
     },
   },
+  {
+    name: 'uprav_odberne_misto',
+    description: 'Zapíše údaje odběrného místa do revize (oddíly Odběrné místo, smlouva a tarif a formulář ČEZ „Potvrzení o vydání zprávy o revizi“). Typicky údaje vyčtené ze smlouvy o připojení nebo faktury. Uveď jen pole, která se mění.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        revizeId: { type: 'integer' },
+        distributor: { type: 'string', description: 'např. „ČEZ Distribuce, a. s.“' },
+        ean: { type: 'string', description: 'EAN odběrného místa (18 číslic, začíná 859182…)' },
+        cisloElektromeru: { type: 'string' },
+        parcela: { type: 'string', description: 'číslo parcelní' },
+        soustava: { type: 'string', description: 'např. „3/PEN AC 400/230 V TN-C“' },
+        zpusobMereni: { type: 'string', enum: ['prime', 'neprime'] },
+        pocetFazi: { type: 'string', enum: ['1', '3'] },
+        jisticProud: { type: 'string', description: 'hodnota hlavního jističe před elektroměrem v A (osazený), např. „25“' },
+        jisticCharakteristika: { type: 'string', description: 'B, C, D' },
+        smlouvaCislo: { type: 'string' },
+        smlouvaDatum: { type: 'string', description: 'datum uzavření smlouvy YYYY-MM-DD' },
+        smlouvaPlatnost: { type: 'string', description: 'platnost / účinnost smlouvy (text nebo datum)' },
+        smlouvaTypOdberu: { type: 'string', enum: ['novy', 'zmena', 'rozsireni'] },
+        smlouvaUcel: { type: 'string', description: 'účel odběru, např. „rodinný dům“' },
+        smlouvaPrikon: { type: 'string', description: 'rezervovaný příkon v kW' },
+        smlouvaJistic: { type: 'string', description: 'hodnota hlavního jističe dle smlouvy v A' },
+        tarif: { type: 'string', description: 'distribuční sazba, např. D02d, D25d, C02d' },
+        hdoKod: { type: 'string' },
+        smlouvaPoznamka: { type: 'string' },
+        cez: {
+          type: 'object',
+          description: 'Údaje pro formulář ČEZ „Potvrzení o vydání zprávy o revizi“',
+          properties: {
+            zakaznikJmeno: { type: 'string' }, zakaznikIco: { type: 'string', description: 'datum narození nebo IČO' },
+            zakaznikDic: { type: 'string' }, zakaznikMobil: { type: 'string' }, zakaznikEmail: { type: 'string' },
+            cisloOm: { type: 'string', description: 'číslo odběrného místa' },
+            ulice: { type: 'string' }, cisloDomu: { type: 'string', description: 'č. p. / č. o.' }, psc: { type: 'string' },
+            obec: { type: 'string' }, mistniCast: { type: 'string' }, katastr: { type: 'string', description: 'katastrální území' },
+            patro: { type: 'string' }, cisloBytu: { type: 'string' }, upresneni: { type: 'string', description: 'upřesnění místa odběru' },
+            prevodMtp: { type: 'string', description: 'převod měřicích transformátorů proudu, např. 150/5' },
+            tuvKw: { type: 'string' }, akuKw: { type: 'string' }, primotopKw: { type: 'string' },
+            tcPohonKw: { type: 'string' }, tcDotopKw: { type: 'string' }, tcVykonKw: { type: 'string' },
+            jineNazev: { type: 'string' }, jineKw: { type: 'string' },
+          },
+        },
+      },
+      required: ['revizeId'],
+    },
+  },
 ];
 
 // ==================== Pomocné funkce ====================
@@ -555,6 +607,37 @@ async function aktualizuj(query: ChatDeps['query'], tabulka: string, id: number,
   if (keys.length === 0) throw new ToolInputError('Nebyla zadána žádná změna');
   const set = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
   await query(`UPDATE ${tabulka} SET ${set} WHERE id = $${keys.length + 1}`, [...Object.values(data), id]);
+}
+
+// ==================== Odběrné místo (JSON v revize.odberneMistoData) ====================
+
+const OM_TEXT_POLE: Record<string, number> = {
+  distributor: 120, ean: 30, cisloElektromeru: 40, parcela: 60, soustava: 80, jisticProud: 10, jisticCharakteristika: 5,
+  smlouvaCislo: 60, smlouvaDatum: 20, smlouvaPlatnost: 60, smlouvaUcel: 200, smlouvaPrikon: 20, smlouvaJistic: 10,
+  tarif: 10, hdoKod: 40, smlouvaPoznamka: 2000,
+};
+const OM_CEZ_POLE: Record<string, number> = {
+  zakaznikJmeno: 200, zakaznikIco: 30, zakaznikDic: 20, zakaznikMobil: 40, zakaznikEmail: 120, cisloOm: 30,
+  ulice: 120, cisloDomu: 20, psc: 10, obec: 80, mistniCast: 80, katastr: 80, patro: 20, cisloBytu: 20, upresneni: 120,
+  prevodMtp: 20, tuvKw: 10, akuKw: 10, primotopKw: 10, tcPohonKw: 10, tcDotopKw: 10, tcVykonKw: 10, jineNazev: 120, jineKw: 10,
+};
+
+function nactiOm(json: unknown): Record<string, any> {
+  if (typeof json !== 'string' || !json) return {};
+  try { const d = JSON.parse(json); return d && typeof d === 'object' ? d : {}; } catch { return {}; }
+}
+
+/** Jen vyplněné údaje OM (bez checklistů a měření) – ať je výstup pro model krátký. */
+function odberneMistoProChat(json: unknown): Record<string, unknown> {
+  const d = nactiOm(json);
+  const out: Record<string, unknown> = {};
+  for (const k of [...Object.keys(OM_TEXT_POLE), 'zpusobMereni', 'pocetFazi', 'smlouvaTypOdberu']) {
+    if (typeof d[k] === 'string' && d[k].trim()) out[k] = d[k];
+  }
+  const cez = d.cez && typeof d.cez === 'object' ? compact(d.cez as Record<string, unknown>) : {};
+  delete (cez as Record<string, unknown>).vlozitRazitko;
+  if (Object.keys(cez).length) out.cez = cez;
+  return out;
 }
 
 function povinne<T>(value: T | undefined, msg: string): T {
@@ -640,7 +723,7 @@ export async function runTool(
       const id = povinne(int(input.id), 'Chybí id revize');
       const r = await query(
         `SELECT id, "cisloRevize", nazev, adresa, objednatel, "zakaznikId", datum, "datumPlatnosti", termin, "typRevize", "kategorieRevize",
-                stav, vysledek, "napetovaSoustava", "popisZarizeni", "rozsahRevize", zaver
+                stav, vysledek, "napetovaSoustava", "popisZarizeni", "rozsahRevize", zaver, "odberneMistoData"
          FROM revize WHERE id = $1`, [id]);
       if (!r.rows[0]) throw new ToolInputError(`Revize s id ${id} neexistuje`);
       const [zavady, rozvadece, mistnosti] = await Promise.all([
@@ -658,8 +741,10 @@ export async function runTool(
           ? query('SELECT id, "mistnostId", nazev, "pocetKs", trida, stav FROM zarizeni WHERE "mistnostId" = ANY($1) ORDER BY id', [mistIds])
           : Promise.resolve({ rows: [] as any[] }),
       ]);
+      const { odberneMistoData, ...revizeRadek } = r.rows[0];
       return {
-        revize: compact(r.rows[0]),
+        revize: compact(revizeRadek),
+        ...(revizeRadek.kategorieRevize === 'odberne_misto' || odberneMistoData ? { odberneMisto: odberneMistoProChat(odberneMistoData) } : {}),
         zavady: zavady.rows.map(compact),
         rozvadece: rozvadece.rows.map((rz) => ({
           ...compact(rz),
@@ -1088,9 +1173,51 @@ export async function runTool(
       return { ok: true };
     }
 
+    case 'uprav_odberne_misto': {
+      const revizeId = povinne(int(input.revizeId), 'Chybí id revize');
+      const rev = await overOdemcenouRevizi(query, revizeId);
+      const r = await query('SELECT "odberneMistoData", "kategorieRevize" FROM revize WHERE id = $1', [revizeId]);
+      const om = nactiOm(r.rows[0]?.odberneMistoData);
+      const zmeneno: string[] = [];
+      const zmeny = textovaPole(input, OM_TEXT_POLE);
+      if (typeof zmeny.smlouvaDatum === 'string' && !DATE_RE.test(zmeny.smlouvaDatum)) throw new ToolInputError(`Neplatné datum smlouvy (${DATE_DESC})`);
+      for (const k of ['jisticProud', 'smlouvaJistic'] as const) if (typeof zmeny[k] === 'string') zmeny[k] = zmeny[k]!.replace(/\s*A$/i, '');
+      for (const [k, v] of Object.entries(zmeny)) { om[k] = v ?? ''; zmeneno.push(k); }
+      const zm = oneOf(input.zpusobMereni, ['prime', 'neprime'] as const);
+      if (zm) { om.zpusobMereni = zm; zmeneno.push('zpusobMereni'); }
+      const pf = oneOf(String(input.pocetFazi ?? ''), ['1', '3'] as const);
+      if (pf) { om.pocetFazi = pf; zmeneno.push('pocetFazi'); }
+      const typ = oneOf(input.smlouvaTypOdberu, ['novy', 'zmena', 'rozsireni'] as const);
+      if (typ) { om.smlouvaTypOdberu = typ; zmeneno.push('smlouvaTypOdberu'); }
+      if (input.cez && typeof input.cez === 'object') {
+        const cezZmeny = textovaPole(input.cez, OM_CEZ_POLE);
+        if (Object.keys(cezZmeny).length) {
+          om.cez = { ...(om.cez && typeof om.cez === 'object' ? om.cez : {}) };
+          for (const [k, v] of Object.entries(cezZmeny)) { om.cez[k] = v ?? ''; zmeneno.push(`cez.${k}`); }
+        }
+      }
+      if (zmeneno.length === 0) throw new ToolInputError('Nebyla zadána žádná změna');
+      await deps.upravRevizi(revizeId, { odberneMistoData: JSON.stringify(om) });
+      akce.push({ typ: 'odberne_misto', id: revizeId, popis: `Odběrné místo v revizi ${rev.cisloRevize}: zapsáno ${zmeneno.length} ${zmeneno.length === 1 ? 'údaj' : zmeneno.length < 5 ? 'údaje' : 'údajů'}`, odkaz: `/revize/${revizeId}?zalozka=odberne_misto` });
+      return { ok: true, zmeneno };
+    }
+
     default:
       throw new ToolInputError(`Neznámý nástroj ${name}`);
   }
+}
+
+/** Zpráva z chatu → zpráva pro Messages API (přílohy jako dokument / obrázek před textem). */
+export function zpravaProApi(m: ChatMessage): Anthropic.MessageParam {
+  if (m.role !== 'user' || !m.prilohy?.length) return { role: m.role, content: m.content };
+  const bloky: Anthropic.ContentBlockParam[] = m.prilohy.map((p) =>
+    p.typ === 'application/pdf'
+      ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: p.data }, title: p.nazev }
+      : { type: 'image', source: { type: 'base64', media_type: p.typ, data: p.data } },
+  );
+  const seznam = m.prilohy.map((p) => p.nazev).join(', ');
+  bloky.push({ type: 'text', text: `${m.content}\n\n(Přiložené soubory: ${seznam})` });
+  return { role: 'user', content: bloky };
 }
 
 // ==================== Smyčka konverzace ====================
@@ -1106,7 +1233,7 @@ export async function chatSDaty(
   const dnes = kontext.dnes ?? dnesPraha();
   const system = systemPrompt(dnes, kontext.revizeId);
   const akce: ChatAkce[] = [];
-  const conversation: Anthropic.MessageParam[] = messages.map((m) => ({ role: m.role, content: m.content }));
+  const conversation: Anthropic.MessageParam[] = messages.map(zpravaProApi);
 
   for (let krok = 0; krok < MAX_KROKU; krok++) {
     const response = await ai.messages.create({

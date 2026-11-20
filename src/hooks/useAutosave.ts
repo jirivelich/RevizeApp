@@ -12,6 +12,8 @@ interface UseAutosaveReturn {
   flush: () => Promise<void>;
   /** Znovu uloží aktuální data (např. po chybě ukládání). */
   retry: () => Promise<void>;
+  /** Data se změnila jinde (např. AI chat) – nová data jsou výchozí stav, nic neukládat. */
+  reset: (data: Partial<Revize>) => void;
 }
 
 export function useAutosave(
@@ -117,5 +119,12 @@ export function useAutosave(
 
   const retry = useCallback(() => doSave(formDataRef.current), [doSave]);
 
-  return { status, lastSavedAt, saveNow, flush, retry };
+  const reset = useCallback((data: Partial<Revize>) => {
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+    baselineRef.current = JSON.stringify(data);
+    setStatus('idle');
+    statusRef.current = 'idle';
+  }, []);
+
+  return { status, lastSavedAt, saveNow, flush, retry, reset };
 }

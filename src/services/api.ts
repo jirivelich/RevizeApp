@@ -145,9 +145,16 @@ export async function checkServerHealth() {
 }
 
 // ==================== AI ====================
+/** Soubor přiložený ke zprávě v AI chatu (base64 bez prefixu data:). */
+export interface AIChatPriloha {
+  nazev: string;
+  typ: 'application/pdf' | 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+  data: string;
+}
+
 /** Záznam, který AI asistent v aplikaci vytvořil. */
 export interface AIChatAkce {
-  typ: 'revize' | 'zavada' | 'udalost' | 'zakaznik' | 'rozvadec' | 'okruh' | 'mistnost' | 'zarizeni';
+  typ: 'revize' | 'zavada' | 'udalost' | 'zakaznik' | 'rozvadec' | 'okruh' | 'mistnost' | 'zarizeni' | 'odberne_misto';
   id: number;
   popis: string;
   odkaz: string;
@@ -188,7 +195,7 @@ export const aiApi = {
 
   /** Chat s AI asistentem */
   async chat(
-    messages: { role: 'user' | 'assistant'; content: string }[],
+    messages: { role: 'user' | 'assistant'; content: string; prilohy?: AIChatPriloha[] }[],
     revizeContext?: { id?: number },
   ): Promise<{ reply: string; akce?: AIChatAkce[] }> {
     return fetch(buildApiUrl('/ai/chat'), {

@@ -228,3 +228,36 @@ describe('runTool – úpravy', () => {
     await expect(runTool('uprav_revizi', { id: 7, zaver: 'x' }, deps, [], '2026-11-19')).rejects.toThrow('zamčená');
   });
 });
+
+describe('přílohy a odběrné místo', () => {
+  it('zpravaProApi pošle PDF jako dokument a obrázek jako image před textem', async () => {
+    const { zpravaProApi } = await import('../aiChat');
+    const m: any = zpravaProApi({ role: 'user', content: 'přenes data', prilohy: [
+      { nazev: 'smlouva.pdf', typ: 'application/pdf', data: 'JVBERi0x' },
+      { nazev: 'stitek.jpg', typ: 'image/jpeg', data: '/9j/4AAQ' },
+    ] });
+    expect(m.content[0]).toMatchObject({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: 'JVBERi0x' }, title: 'smlouva.pdf' });
+    expect(m.content[1]).toMatchObject({ type: 'image', source: { media_type: 'image/jpeg' } });
+    expect(m.content[2].text).toContain('smlouva.pdf, stitek.jpg');
+    expect(zpravaProApi({ role: 'assistant', content: 'x' })).toEqual({ role: 'assistant', content: 'x' });
+  });
+
+  it('uprav_odberne_misto sloučí údaje do JSON a nepřepíše ostatní', async () => {
+    const puvodni = JSON.stringify({ ean: '', checklist: [{ nazev: 'A' }], cez: { patro: '2.NP' } });
+    const deps = makeDeps({
+      'FROM revize WHERE id = $1\', [revizeId]': [],
+      'SELECT id, "cisloRevize", stav FROM revize': [{ id: 7, cisloRevize: 'R7', stav: 'rozpracováno' }],
+      '"odberneMistoData", "kategorieRevize"': [{ odberneMistoData: puvodni, kategorieRevize: 'odberne_misto' }],
+    });
+    const akce: ChatAkce[] = [];
+    const out: any = await runTool('uprav_odberne_misto', {
+      revizeId: 7, ean: '859182400123456789', smlouvaJistic: '25 A', tarif: 'D25d', pocetFazi: '3', smlouvaTypOdberu: 'novy',
+      cez: { cisloOm: '4001234567', tuvKw: '2,2' },
+    }, deps, akce, '2026-11-20');
+    const ulozeno = JSON.parse((deps.upravRevizi as any).mock.calls[0][1].odberneMistoData);
+    expect(ulozeno).toMatchObject({ ean: '859182400123456789', smlouvaJistic: '25', tarif: 'D25d', pocetFazi: '3', smlouvaTypOdberu: 'novy',
+      checklist: [{ nazev: 'A' }], cez: { patro: '2.NP', cisloOm: '4001234567', tuvKw: '2,2' } });
+    expect(out.zmeneno).toContain('cez.cisloOm');
+    expect(akce[0]).toMatchObject({ typ: 'odberne_misto', odkaz: '/revize/7?zalozka=odberne_misto' });
+  });
+});

@@ -187,25 +187,77 @@ export async function generateReport(data: RevizeData): Promise<string> {
 
 // ==================== CHAT ASISTENT ====================
 
+/** Soubor přiložený ke zprávě uživatele (smlouva, faktura, fotka štítku…). */
+export interface ChatPriloha {
+  nazev: string;
+  typ: 'application/pdf' | 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+  /** Obsah souboru v base64 (bez prefixu data:). */
+  data: string;
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  prilohy?: ChatPriloha[];
 }
 
 const MAX_CHAT_MESSAGES = 40;
 const MAX_CHAT_CHARS = 8000;
+export const PRILOHY_TYPY = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const;
+/** Nejvýš tolik příloh v celé konverzaci (starší se zahodí). */
+export const MAX_PRILOH = 5;
+/** Limit jedné přílohy v base64 znacích (~15 MB souboru). */
+export const MAX_PRILOHA_B64 = 20_000_000;
+/** Limit všech příloh dohromady (API přijme požadavek do 32 MB). */
+export const MAX_PRILOHY_CELKEM_B64 = 28_000_000;
+const BASE64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
 
-/** Ověří a očistí historii chatu z klienta (role, délka, střídání, začíná uživatelem). */
+function sanitizePrilohy(input: unknown): ChatPriloha[] {
+  if (!Array.isArray(input)) return [];
+  return input
+    .filter((p: any) =>
+      p && typeof p.data === 'string' && (PRILOHY_TYPY as readonly string[]).includes(p.typ)
+      && p.data.length > 0 && p.data.length <= MAX_PRILOHA_B64 && BASE64_RE.test(p.data.slice(0, 4096)))
+    .map((p: any) => ({
+      nazev: (typeof p.nazev === 'string' && p.nazev.trim() ? p.nazev.trim() : 'soubor').slice(0, 120),
+      typ: p.typ,
+      data: p.data,
+    }));
+}
+
+/** Ověří a očistí historii chatu z klienta (role, délka, střídání, začíná uživatelem, přílohy). */
 export function sanitizeChatMessages(input: unknown): ChatMessage[] {
   if (!Array.isArray(input)) return [];
-  const cleaned = input
+  const cleaned: ChatMessage[] = input
     .filter((m: any) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
-    .map((m: any) => ({ role: m.role as ChatMessage['role'], content: m.content.trim().slice(0, MAX_CHAT_CHARS) }))
+    .map((m: any) => {
+      const prilohy = m.role === 'user' ? sanitizePrilohy(m.prilohy) : [];
+      const content = m.content.trim().slice(0, MAX_CHAT_CHARS) || (prilohy.length ? 'Zpracuj přiložený dokument.' : '');
+      return prilohy.length ? { role: m.role, content, prilohy } : { role: m.role, content };
+    })
     .filter((m) => m.content.length > 0)
     // chybové hlášky z UI („Chyba: …“) neposílat zpět modelu
     .filter((m) => !(m.role === 'assistant' && m.content.startsWith('Chyba:')))
     .slice(-MAX_CHAT_MESSAGES);
   while (cleaned.length && cleaned[0].role !== 'user') cleaned.shift();
+
+  // Limit počtu a velikosti příloh – ponechat nejnovější
+  let pocet = 0;
+  let velikost = 0;
+  for (let i = cleaned.length - 1; i >= 0; i--) {
+    const m = cleaned[i];
+    if (!m.prilohy) continue;
+    const ponechat: ChatPriloha[] = [];
+    for (let j = m.prilohy.length - 1; j >= 0; j--) {
+      const p = m.prilohy[j];
+      if (pocet < MAX_PRILOH && velikost + p.data.length <= MAX_PRILOHY_CELKEM_B64) {
+        ponechat.unshift(p);
+        pocet++;
+        velikost += p.data.length;
+      }
+    }
+    if (ponechat.length) m.prilohy = ponechat; else delete m.prilohy;
+  }
   return cleaned;
 }
 

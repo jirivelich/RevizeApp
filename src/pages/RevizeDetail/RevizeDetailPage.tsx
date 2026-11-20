@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../../hooks/queryKeys';
+import { revizeService } from '../../services/database';
 import { Button } from '../../components/ui';
 import {
   okruhService, zarizeniService,
@@ -45,7 +48,7 @@ export function RevizeDetailPage() {
   const [searchParams] = useSearchParams();
   const zalozka = searchParams.get('zalozka');
   useEffect(() => {
-    const povolene = ['info', 'dokumentace', 'rozvadece', 'zavady', 'mistnosti', 'rozsah', 'prilohy'] as const;
+    const povolene = ['info', 'dokumentace', 'rozvadece', 'zavady', 'mistnosti', 'rozsah', 'prilohy', 'odberne_misto'] as const;
     if (zalozka && (povolene as readonly string[]).includes(zalozka)) setActiveTab(zalozka as typeof povolene[number]);
   }, [zalozka]);
   const [selectedFirmaId, setSelectedFirmaId] = useState<string>('');
@@ -84,7 +87,7 @@ export function RevizeDetailPage() {
     await updateRevize.mutateAsync({ id: revize.id, data });
   }, [revize?.id, updateRevize]);
 
-  const { status: autoStatus, saveNow, flush, retry } = useAutosave(formData, revize, handleAutosave);
+  const { status: autoStatus, saveNow, flush, retry, reset: resetAutosave } = useAutosave(formData, revize, handleAutosave);
 
   // Zamčená (dokončená) revize: jen čtení a kopírování textu, odemknutí opsáním čísla revize.
   // Hooky musí být před předčasnými return níže.
@@ -125,9 +128,30 @@ export function RevizeDetailPage() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [autoStatus]);
 
-  // Změna dat jinde (AI chat) → přepočítat počty okruhů a zařízení
+  // Změna dat jinde (AI chat) → přepočítat počty okruhů a zařízení a znovu načíst revizi,
+  // aby autosave neposlal zpět starou verzi a nepřepsal to, co zapsal chat.
   const [verzeDat, setVerzeDat] = useState(0);
-  useZmenaDat(() => setVerzeDat((v) => v + 1));
+  const [externiVerze, setExterniVerze] = useState(0);
+  const qc = useQueryClient();
+  useZmenaDat(async () => {
+    setVerzeDat((v) => v + 1);
+    if (!numericId) return;
+    try {
+      await flush();
+      const cerstva = await qc.fetchQuery({
+        queryKey: queryKeys.revize.detail(numericId),
+        queryFn: () => revizeService.getById(numericId),
+        staleTime: 0,
+      });
+      if (cerstva) {
+        setFormData(cerstva);
+        resetAutosave(cerstva);
+        setExterniVerze((v) => v + 1);
+      }
+    } catch (e) {
+      console.error('Nepodařilo se znovu načíst revizi po změně z chatu', e);
+    }
+  });
 
   // Okruhy counts — N+1 but computed only when rozvadece change
   const [okruhyCounts, setOkruhyCounts] = useState<Record<number, number>>({});
@@ -369,7 +393,7 @@ export function RevizeDetailPage() {
       )}
 
       {activeTab === 'odberne_misto' && (
-        <OdberneMistoTab revize={revize} formData={formData} setFormData={setFormData} />
+        <OdberneMistoTab key={externiVerze} revize={revize} formData={formData} setFormData={setFormData} />
       )}
 
       {activeTab === 'strojni_zarizeni' && (

@@ -203,3 +203,29 @@ describe('getAIErrorMessage', () => {
     expect(getAIErrorMessage(apiError(Anthropic.InternalServerError, 500, 'boom')).status).toBe(503);
   });
 });
+
+describe('sanitizeChatMessages – přílohy', () => {
+  it('ponechá platné přílohy u uživatele, zahodí neplatné a doplní text', () => {
+    const out = sanitizeChatMessages([
+      { role: 'user', content: '', prilohy: [
+        { nazev: 'smlouva.pdf', typ: 'application/pdf', data: 'JVBERi0xLjQK' },
+        { nazev: 'virus.exe', typ: 'application/x-msdownload', data: 'TVqQ' },
+        { nazev: 'zly.png', typ: 'image/png', data: '<script>' },
+      ] },
+      { role: 'assistant', content: 'ok', prilohy: [{ nazev: 'x.pdf', typ: 'application/pdf', data: 'JVBE' }] },
+    ]);
+    expect(out[0]).toEqual({ role: 'user', content: 'Zpracuj přiložený dokument.', prilohy: [{ nazev: 'smlouva.pdf', typ: 'application/pdf', data: 'JVBERi0xLjQK' }] });
+    expect(out[1]).toEqual({ role: 'assistant', content: 'ok' });
+  });
+
+  it('ponechá nejvýš 5 nejnovějších příloh', () => {
+    const p = (n: number) => ({ nazev: `${n}.png`, typ: 'image/png', data: 'iVBORw0KGgo=' });
+    const out = sanitizeChatMessages([
+      { role: 'user', content: 'a', prilohy: [p(1), p(2), p(3)] },
+      { role: 'assistant', content: 'b' },
+      { role: 'user', content: 'c', prilohy: [p(4), p(5), p(6)] },
+    ]);
+    expect(out[0].prilohy?.map((x) => x.nazev)).toEqual(['2.png', '3.png']);
+    expect(out[2].prilohy?.map((x) => x.nazev)).toEqual(['4.png', '5.png', '6.png']);
+  });
+});
