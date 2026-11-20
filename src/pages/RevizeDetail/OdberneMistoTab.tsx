@@ -12,6 +12,9 @@ import {
   type OdberneMistoData, type KontrolaPolozka, type MereniObvodu, type Vysledek,
 } from '../../types/odberneMisto';
 import { TW, SectionHeader, ToggleSectionHeader, Field } from './tw';
+import { useNastaveni, useZakaznici } from '../../hooks/useQueries';
+import { hodnotyCez, vychoziHodnotyCez, stahniPotvrzeniCez, type PoleCez } from '../../services/cezPotvrzeni';
+import type { CezPotvrzeni } from '../../types/odberneMisto';
 
 interface Props {
   revize: Revize;
@@ -55,6 +58,36 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
   const upd = useCallback(<K extends keyof OdberneMistoData>(key: K, value: OdberneMistoData[K]) => {
     setFd(prev => ({ ...prev, [key]: value }));
   }, []);
+
+  const updCez = useCallback(<K extends keyof CezPotvrzeni>(key: K, value: CezPotvrzeni[K]) => {
+    setFd(prev => ({ ...prev, cez: { ...prev.cez, [key]: value } }));
+  }, []);
+
+  // Formulář ČEZ: výchozí hodnoty z revize, zákazníka a nastavení (zobrazí se jako nápověda v polích)
+  const { data: zakaznici = [] } = useZakaznici();
+  const { data: nastaveni } = useNastaveni();
+  const aktualniRevize = useMemo(() => ({ ...revize, ...formData }), [revize, formData]);
+  const zakaznik = useMemo(
+    () => zakaznici.find(z => z.id === (aktualniRevize.zakaznikId ?? undefined)) ?? null,
+    [zakaznici, aktualniRevize.zakaznikId],
+  );
+  const cezVychozi = useMemo(
+    () => vychoziHodnotyCez(aktualniRevize, fd, zakaznik, nastaveni),
+    [aktualniRevize, fd, zakaznik, nastaveni],
+  );
+  const [cezStav, setCezStav] = useState<{ busy: boolean; chyba: string | null }>({ busy: false, chyba: null });
+  const stahniCez = async () => {
+    setCezStav({ busy: true, chyba: null });
+    try {
+      const { pole, faze } = hodnotyCez(aktualniRevize, fd, zakaznik, nastaveni);
+      const razitko = fd.cez.vlozitRazitko ? nastaveni?.razitko : null;
+      const nazev = `CEZ-potvrzeni-revize-${(aktualniRevize.cisloRevize || 'OM').replace(/[^\w-]+/g, '_')}.pdf`;
+      await stahniPotvrzeniCez(pole, faze, nazev, razitko);
+      setCezStav({ busy: false, chyba: null });
+    } catch (e) {
+      setCezStav({ busy: false, chyba: e instanceof Error ? e.message : 'Formulář se nepodařilo vytvořit.' });
+    }
+  };
 
   const updItem = useCallback((list: ListKey, idx: number, patch: Partial<KontrolaPolozka>) => {
     setFd(prev => {
@@ -102,6 +135,21 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
         type={opts?.type || 'text'} className={TW.input} placeholder={opts?.placeholder}
         value={String(fd[key] ?? '')} onChange={e => upd(key, e.target.value as never)}
       />
+    </Field>
+  );
+
+  /** Pole formuláře ČEZ – prázdné = použije se výchozí hodnota (zobrazená šedě). */
+  const cezInp = (key: Exclude<keyof CezPotvrzeni, 'vlozitRazitko'> & PoleCez, label: string, opts?: { placeholder?: string; suffix?: string }) => (
+    <Field label={label}>
+      <div className="flex items-center gap-1.5">
+        <input
+          className={TW.input}
+          value={fd.cez[key]}
+          placeholder={cezVychozi[key] || opts?.placeholder || ''}
+          onChange={e => updCez(key, e.target.value)}
+        />
+        {opts?.suffix && <span className="text-xs text-[var(--text-muted)]">{opts.suffix}</span>}
+      </div>
     </Field>
   );
 
@@ -280,6 +328,91 @@ export function OdberneMistoTab({ revize, formData, setFormData }: Props) {
         'checklist', '07', 'Kontrolní seznam dle připojovacích podmínek distributora', 'checklist',
         `Seznam vychází z dokumentu: ${PPNN_ZDROJ}. Položky lze upravit, přidat nebo smazat.`,
       )}
+
+      {/* ═══ 08 – POTVRZENÍ PRO ČEZ DISTRIBUCE ═══ */}
+      <div className={TW.card}>
+        <SectionHeader num="08">Potvrzení o vydání zprávy o revizi (formulář ČEZ Distribuce)</SectionHeader>
+        <div className="p-4 space-y-4">
+          <p className="text-xs text-[var(--text-muted)]">
+            Vyplní originální formulář distributora. Šedé hodnoty v polích se doplní automaticky z revize, zákazníka
+            a nastavení – přepište je jen v případě potřeby. EAN, číslo parcely, hodnota jističe a počet fází se berou
+            z oddílů 01 a 02, údaje revizního technika z Nastavení.
+          </p>
+
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wide text-[var(--text-secondary)] mb-2">Zákazník</h4>
+            <div className={TW.grid2}>
+              {cezInp('zakaznikJmeno', 'Jméno a příjmení, titul / obchodní firma / název')}
+              {cezInp('zakaznikIco', 'Datum narození / IČO')}
+              {cezInp('zakaznikDic', 'DIČ CZ')}
+              {cezInp('zakaznikMobil', 'Mobil')}
+              {cezInp('zakaznikEmail', 'E-mail')}
+            </div>
+          </div>
+
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wide text-[var(--text-secondary)] mb-2">Odběrné místo</h4>
+            <div className={TW.grid2}>
+              {cezInp('cisloOm', 'Číslo OM')}
+              {cezInp('ulice', 'Ulice')}
+              {cezInp('cisloDomu', 'Č. p. / č. o.')}
+              {cezInp('psc', 'PSČ')}
+              {cezInp('obec', 'Obec')}
+              {cezInp('mistniCast', 'Místní část')}
+              {cezInp('katastr', 'Katastrální území (u novostavby)')}
+              {cezInp('patro', 'Patro')}
+              {cezInp('cisloBytu', 'Číslo bytu')}
+              {cezInp('upresneni', 'Upřesnění místa odběru')}
+              {cezInp('prevodMtp', 'Převod MTP (jsou-li instalovány)', { placeholder: 'např. 150/5', suffix: 'A' })}
+            </div>
+          </div>
+
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wide text-[var(--text-secondary)] mb-2">Příkon spotřebičů pro dvoutarifovou sazbu</h4>
+            <div className={TW.grid2}>
+              {cezInp('tuvKw', 'Ohřev vody (TUV) – akumulační', { suffix: 'kW' })}
+              {cezInp('tcPohonKw', 'Tepelné čerpadlo – příkon pohonu', { suffix: 'kW' })}
+              {cezInp('akuKw', 'Akumulační topení', { suffix: 'kW' })}
+              {cezInp('tcDotopKw', 'Tepelné čerpadlo – dotop', { suffix: 'kW' })}
+              {cezInp('primotopKw', 'Přímotopné topení', { suffix: 'kW' })}
+              {cezInp('tcVykonKw', 'Tepelné čerpadlo – topný výkon', { suffix: 'kW' })}
+              {cezInp('jineNazev', 'Jiné (uveďte)')}
+              {cezInp('jineKw', 'Jiné – příkon', { suffix: 'kW' })}
+            </div>
+          </div>
+
+          <div className="text-xs text-[var(--text-secondary)] rounded-[var(--radius-md)] bg-[var(--bg-input)] px-3 py-2 space-y-0.5">
+            <div><span className="font-semibold">Revizní technik:</span> {cezVychozi.technikJmeno || '—'}{cezVychozi.technikOsvedceni ? `, osvědčení ${cezVychozi.technikOsvedceni}` : ''}</div>
+            <div>
+              Zpráva č. {cezVychozi.cisloZpravy || '—'} vypracovaná {cezVychozi.vypracovano || '—'}
+              {cezVychozi.technikMobil ? ` · ${cezVychozi.technikMobil}` : ''}{cezVychozi.technikEmail ? ` · ${cezVychozi.technikEmail}` : ''}
+              {cezVychozi.technikIco ? ` · IČO ${cezVychozi.technikIco}` : ''}
+            </div>
+            {(!cezVychozi.technikJmeno || !cezVychozi.technikOsvedceni) && (
+              <div className="text-[var(--warning-text)]">Doplňte jméno a evidenční číslo osvědčení revizního technika v Nastavení.</div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={stahniCez}
+              disabled={cezStav.busy}
+              className="inline-flex items-center gap-2 px-4 min-h-[40px] rounded-[var(--radius-md)] text-sm font-semibold bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-[var(--primary-fg)] disabled:opacity-50"
+            >
+              {cezStav.busy ? 'Vytvářím…' : '⬇ Stáhnout formulář ČEZ (PDF)'}
+            </button>
+            {nastaveni?.razitko && (
+              <label className="flex items-center gap-2 text-sm text-[var(--text)] cursor-pointer">
+                <input type="checkbox" className="h-4 w-4 accent-[var(--primary)]" checked={fd.cez.vlozitRazitko} onChange={e => updCez('vlozitRazitko', e.target.checked)} />
+                Vložit razítko z Nastavení
+              </label>
+            )}
+            {cezStav.chyba && <span role="alert" className="text-sm text-[var(--danger-text)]">{cezStav.chyba}</span>}
+          </div>
+          {!fd.pocetFazi && <p className="text-xs text-[var(--warning-text)]">Není vybrán počet fází (oddíl 02) – ve formuláři zůstane 1f/3f nezaškrtnuté.</p>}
+        </div>
+      </div>
     </div>
   );
 }

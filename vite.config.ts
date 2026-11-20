@@ -28,7 +28,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,ttf}', 'sablony/*.pdf'],
         runtimeCaching: [
           {
             // Přílohy jsou velké a jen online – necachovat
