@@ -2,7 +2,7 @@
 import type { ReactNode } from 'react';
 import { useQuery as useRQQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { useRevize, useZakazky, useZavady, useFaktury } from '../hooks/useQueries';
+import { useRevize, useZakazky, useFaktury } from '../hooks/useQueries';
 import { useNotifications } from '../hooks/useNotifications';
 import { Badge } from '../components/ui';
 import type { BadgeVariant } from '../components/ui';
@@ -460,7 +460,6 @@ const PLATNOST_HORIZONT_DNI = 60;
 export function Dashboard() {
   const { data: revize = [], isLoading: loadingRevize } = useRevize();
   const { data: zakazky = [], isLoading: loadingZakazky } = useZakazky();
-  const { data: zavady = [] } = useZavady();
   const { data: faktury = [] } = useFaktury();
   const { notifications } = useNotifications();
 
@@ -492,9 +491,6 @@ export function Dashboard() {
       .sort((a, b) => new Date(a.datum).getTime() - new Date(b.datum).getTime());
     const zastarale = rozpracovane.filter(r => -daysFromToday(r.datum) >= staleDays).length;
 
-    const otevreneZavady = zavady.filter(z => z.stav !== 'vyřešená');
-    const zavadyC1 = otevreneZavady.filter(z => z.zavaznost === 'C1').length;
-
     // Fakturace
     const platne = faktury.filter(f => f.stav !== 'storno');
     const fakturovaneRevize = new Set(platne.map(f => f.revizeId).filter((id): id is number => id != null));
@@ -518,8 +514,6 @@ export function Dashboard() {
       rozpracovaneCount: rozpracovane.length,
       rozpracovaneTop: rozpracovane.slice(0, 5),
       zastarale,
-      otevreneZavady: otevreneZavady.length,
-      zavadyC1,
       faktury: {
         nevyfakturovano,
         poSplatnostiCount: poSplatnosti.length,
@@ -527,7 +521,7 @@ export function Dashboard() {
         uhrazenoMesic,
       },
     };
-  }, [revize, zavady, faktury]);
+  }, [revize, faktury]);
 
   if (isLoading) {
     return (
@@ -604,12 +598,12 @@ export function Dashboard() {
           to="/planovani"
         />
         <KpiCard
-          title="Otevřené závady"
-          value={data.otevreneZavady}
-          sub={data.zavadyC1 > 0 ? `${data.zavadyC1} se závažností C1` : 'žádná se závažností C1'}
-          tag={data.zavadyC1 > 0 ? 'C1' : undefined}
+          title="Faktury po splatnosti"
+          value={data.faktury.poSplatnostiCount}
+          sub={data.faktury.poSplatnostiCount > 0 ? formatKcCele(data.faktury.poSplatnostiSum) : 'vše uhrazeno včas'}
+          tag="upomenout"
           tone="danger"
-          to="/zavady"
+          to="/faktury"
         />
       </section>
 
@@ -627,11 +621,6 @@ export function Dashboard() {
               label={`Revize k vyfakturování (${FAKTURACE_OKNO_DNI} dní)`}
               value={String(data.faktury.nevyfakturovano)}
               hint={`Dokončené nebo schválené revize za posledních ${FAKTURACE_OKNO_DNI} dní, ke kterým zatím není vystavená faktura.`}
-            />
-            <InvoiceRow
-              label="Po splatnosti"
-              value={data.faktury.poSplatnostiCount > 0 ? `${data.faktury.poSplatnostiCount} · ${formatKcCele(data.faktury.poSplatnostiSum)}` : '0'}
-              tone={data.faktury.poSplatnostiCount > 0 ? 'danger' : undefined}
             />
             <InvoiceRow label="Uhrazeno tento měsíc" value={formatKcCele(data.faktury.uhrazenoMesic)} tone="success" />
           </Panel>
