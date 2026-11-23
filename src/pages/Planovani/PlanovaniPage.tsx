@@ -288,6 +288,8 @@ export function PlanovaniPage() {
   const handleConfirmDelete = () => {
     if (deleteTargetId === null) return;
     deleteZakazka.mutate(deleteTargetId, { onError: onMutationError });
+    // Mazalo se z okna úpravy → zavřít i formulář
+    if (deleteTargetId === editingId) handleCloseModal();
     setDeleteTargetId(null);
   };
 
@@ -448,6 +450,7 @@ export function PlanovaniPage() {
         revize={revize}
         zakaznici={zakaznici}
         isEditing={editingId !== null}
+        onDelete={() => { if (editingId !== null) setDeleteTargetId(editingId); }}
       />
 
       {/* Modal pro výběr kategorie revize */}

@@ -16,6 +16,8 @@ interface ZakazkaFormProps {
   revize: Revize[];
   zakaznici: Zakaznik[];
   isEditing: boolean;
+  /** Smazání upravované zakázky (tlačítko se ukáže jen při úpravě). */
+  onDelete?: () => void;
 }
 
 export function ZakazkaForm({
@@ -27,6 +29,7 @@ export function ZakazkaForm({
   revize,
   zakaznici,
   isEditing,
+  onDelete,
 }: ZakazkaFormProps) {
   const [formError, setFormError] = useState<string | null>(null);
   // Google kalendáře, do kterých lze zakázku zapsat (jen při propojeném Google Kalendáři)
@@ -91,6 +94,9 @@ export function ZakazkaForm({
       title={isEditing ? 'Upravit zakázku' : 'Nová zakázka'}
       footer={
         <>
+          {isEditing && onDelete && (
+            <Button variant="danger" onClick={onDelete} className="mr-auto">Smazat</Button>
+          )}
           <Button variant="secondary" onClick={onClose}>Zrušit</Button>
           <Button onClick={handleSubmit}>{isEditing ? 'Uložit' : 'Vytvořit'}</Button>
         </>

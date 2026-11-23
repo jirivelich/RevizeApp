@@ -90,7 +90,8 @@ export default function DevPlanovani() {
       </div>
       {v === 'week' ? <WeekView {...p} /> : v === 'calendar' ? <CalendarView {...p} /> : <ListView {...p} />}
       <ZakazkaForm isOpen={!!form} onClose={() => setForm(null)} onSubmit={ulozit} formData={form?.data ?? emptyFormData}
-        setFormData={setFormData} revize={[]} zakaznici={[...zakazniciById.values()]} isEditing={form?.id != null} />
+        setFormData={setFormData} revize={[]} zakaznici={[...zakazniciById.values()]} isEditing={form?.id != null}
+        onDelete={() => { const id = form?.id; if (id != null) { setZakazky(list => list.filter(z => z.id !== id)); setForm(null); } }} />
       {menu && <PlanContextMenu x={menu.x} y={menu.y} target={menu.target} p={p} onClose={zavrit} />}
     </div>
   );
