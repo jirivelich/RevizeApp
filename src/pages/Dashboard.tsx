@@ -479,7 +479,7 @@ function WipPanel({ revize, total, staleDays, className = '' }: { revize: Revize
 
 const CZ_MONTHS = ['led', 'úno', 'bře', 'dub', 'kvě', 'čvn', 'čvc', 'srp', 'zář', 'říj', 'lis', 'pro'];
 
-function RevizeBarChart({ revize }: { revize: Revize[] }) {
+function RevizeBarChart({ revize, className = '' }: { revize: Revize[]; className?: string }) {
   const bars = useMemo(() => {
     const now = new Date();
     return Array.from({ length: 12 }, (_, i) => {
@@ -497,19 +497,22 @@ function RevizeBarChart({ revize }: { revize: Revize[] }) {
   const current = bars[bars.length - 1];
 
   return (
-    <Panel title="Revize za 12 měsíců" action={<span className="text-[13px] text-[var(--text-secondary)] tabular-nums">{total} celkem</span>} bodyClassName="px-4 pt-4 pb-3">
+    <Panel title="Revize za 12 měsíců" className={className} action={<span className="text-[13px] text-[var(--text-secondary)] tabular-nums">{total} celkem</span>} bodyClassName="flex flex-col px-4 pt-4 pb-3">
       <div
         role="img"
         aria-label={`Sloupcový graf počtu revizí za posledních 12 měsíců, celkem ${total}, tento měsíc ${current.count}`}
-        className="flex h-32 items-end gap-1.5"
+        className="flex min-h-32 flex-1 items-stretch gap-1.5"
       >
         {bars.map(b => (
-          <div key={`${b.year}-${b.month}`} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5" title={`${b.label} ${b.year}: ${b.count}`}>
-            {b.count > 0 && <span className={`text-xs tabular-nums ${b.isCurrent ? 'text-[var(--text)] font-semibold' : 'text-[var(--text-muted)]'}`}>{b.count}</span>}
-            <div
-              className={`w-full rounded-t-[3px] ${b.isCurrent ? 'bg-[var(--primary)]' : 'bg-[var(--bg-hover-strong)]'}`}
-              style={{ height: `${Math.max((b.count / max) * 88, b.count > 0 ? 4 : 2)}px` }}
-            />
+          <div key={`${b.year}-${b.month}`} className="flex flex-1 flex-col items-center gap-1.5" title={`${b.label} ${b.year}: ${b.count}`}>
+            {/* Sloupec se škáluje podle výšky panelu (panel se natahuje, aby lícoval s pravým sloupcem) */}
+            <div className="flex w-full flex-1 flex-col items-center justify-end gap-1.5">
+              {b.count > 0 && <span className={`text-xs tabular-nums ${b.isCurrent ? 'text-[var(--text)] font-semibold' : 'text-[var(--text-muted)]'}`}>{b.count}</span>}
+              <div
+                className={`w-full rounded-t-[3px] ${b.isCurrent ? 'bg-[var(--primary)]' : 'bg-[var(--bg-hover-strong)]'}`}
+                style={{ height: b.count > 0 ? `max(4px, calc((100% - 22px) * ${b.count / max}))` : '2px' }}
+              />
+            </div>
             <span className={`text-xs ${b.isCurrent ? 'text-[var(--text)] font-semibold' : 'text-[var(--text-muted)]'}`}>{b.label}</span>
           </div>
         ))}
@@ -729,18 +732,19 @@ export function Dashboard() {
         />
       </section>
 
-      {/* ═══ Dva sloupce: vlevo práce, vpravo přehledy (každý sloupec se skládá samostatně, bez mezer) ═══ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start lg:items-stretch">
-        <div className="flex min-w-0 flex-col gap-3 self-start lg:col-span-2">
+      {/* ═══ Dva sloupce: vlevo práce, vpravo přehledy. Sloupce jsou stejně vysoké – poslední panel
+           v každém se roztáhne, takže spodní okraje lícují. ═══ */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-stretch">
+        <div className="flex min-w-0 flex-col gap-3 lg:col-span-2">
           {/* Mobil / tablet: Dnes hned nahoře (na počítači je v pravém sloupci) */}
           <div className="lg:hidden"><TodayWidget zakazky={zakazky} revizeById={revizeById} /></div>
           <AttentionPanel notifications={notifications} />
           <WipPanel revize={data.rozpracovaneTop} total={data.rozpracovaneCount} staleDays={staleDays} />
+          <RevizeBarChart revize={revize} className="lg:flex-1" />
         </div>
         <div className="flex min-w-0 flex-col gap-3">
           <div className="hidden lg:block"><TodayWidget zakazky={zakazky} revizeById={revizeById} /></div>
           <WeekPanel zakazky={zakazky} className="lg:flex-1" />
-          <RevizeBarChart revize={revize} />
           <Panel title="Fakturace" action={<PanelLink to="/faktury">Faktury</PanelLink>} bodyClassName="flex flex-col gap-3 px-4 py-3.5">
             <InvoiceRow
               label={`Revize k vyfakturování (${FAKTURACE_OKNO_DNI} dní)`}
