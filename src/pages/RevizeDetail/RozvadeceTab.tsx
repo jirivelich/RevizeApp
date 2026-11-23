@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useZmenaDat } from '../../hooks/useDataZmena';
 import { Button, Card, Input, Modal, BottomSheet, ConfirmDialog } from '../../components/ui';
 import { okruhService, cranicService } from '../../services/database';
 import { useCreateRozvadec, useDeleteRozvadec, useUpdateRozvadec } from '../../hooks/useQueries';
@@ -117,6 +118,12 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
   }, []);
 
   const sortedRozvadece = [...rozvadece].sort((a, b) => (a.poradi ?? a.id ?? 0) - (b.poradi ?? b.id ?? 0));
+
+  // Data se změnila jinde (např. AI chat přidal okruhy) → znovu načíst okruhy vybraného rozvaděče
+  useZmenaDat(() => {
+    const id = selectedRozvadec?.id;
+    if (id) okruhService.getByRozvadec(id).then(setOkruhy);
+  });
 
   const handleSelectRozvadec = async (rozvadec: Rozvadec) => {
     if (selectedRozvadec?.id === rozvadec.id) return;

@@ -25,6 +25,48 @@ export interface MereniObvodu {
   vysledek: Vysledek;
 }
 
+/**
+ * Údaje pro formulář ČEZ „Potvrzení o vydání zprávy o revizi elektrické instalace“.
+ * Prázdné pole = použije se hodnota odvozená z revize, zákazníka a nastavení.
+ */
+export interface CezPotvrzeni {
+  zakaznikJmeno: string;
+  zakaznikIco: string;      // datum narození / IČO
+  zakaznikDic: string;
+  zakaznikMobil: string;
+  zakaznikEmail: string;
+  cisloOm: string;
+  ulice: string;
+  cisloDomu: string;        // č. p. / č. o.
+  psc: string;
+  obec: string;
+  mistniCast: string;
+  katastr: string;          // katastrální území (u novostavby)
+  patro: string;
+  cisloBytu: string;
+  upresneni: string;        // upřesnění místa odběru
+  prevodMtp: string;        // převod MTP (A), jsou-li instalovány
+  tuvKw: string;            // ohřev vody (TUV) – akumulační
+  akuKw: string;            // akumulační topení
+  primotopKw: string;       // přímotopné topení
+  tcPohonKw: string;        // tepelné čerpadlo – příkon pohonu
+  tcDotopKw: string;        // tepelné čerpadlo – dotop
+  tcVykonKw: string;        // tepelné čerpadlo – topný výkon
+  jineNazev: string;
+  jineKw: string;
+  vlozitRazitko: boolean;
+}
+
+export function createDefaultCez(): CezPotvrzeni {
+  return {
+    zakaznikJmeno: '', zakaznikIco: '', zakaznikDic: '', zakaznikMobil: '', zakaznikEmail: '',
+    cisloOm: '', ulice: '', cisloDomu: '', psc: '', obec: '', mistniCast: '', katastr: '',
+    patro: '', cisloBytu: '', upresneni: '', prevodMtp: '',
+    tuvKw: '', akuKw: '', primotopKw: '', tcPohonKw: '', tcDotopKw: '', tcVykonKw: '', jineNazev: '', jineKw: '',
+    vlozitRazitko: false,
+  };
+}
+
 export interface OdberneMistoData {
   // Identifikace odběrného místa
   distributor: string;
@@ -69,6 +111,9 @@ export interface OdberneMistoData {
   mereni: MereniObvodu[];
   napetiU0: string;
   prechodovyOdpor: string;
+
+  // Formulář ČEZ „Potvrzení o vydání zprávy o revizi“
+  cez: CezPotvrzeni;
 }
 
 export const TARIFY_DISTRIBUCE = [
@@ -175,6 +220,7 @@ export function createDefaultOdberneMisto(): OdberneMistoData {
     checklist: DEFAULT_CHECKLIST.map(r => ({ ...r })),
     mereni: DEFAULT_MERENI.map(r => ({ ...r })),
     napetiU0: '', prechodovyOdpor: '',
+    cez: createDefaultCez(),
   };
 }
 
@@ -184,6 +230,8 @@ export function parseOdberneMisto(json?: string | null): OdberneMistoData {
   if (json) {
     try { Object.assign(d, JSON.parse(json)); } catch { /* poškozený JSON → výchozí */ }
   }
+  // Starší uložená data nemají sekci ČEZ (nebo jen část polí)
+  d.cez = { ...createDefaultCez(), ...(d.cez ?? {}) };
   return d;
 }
 

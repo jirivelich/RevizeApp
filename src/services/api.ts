@@ -145,6 +145,37 @@ export async function checkServerHealth() {
 }
 
 // ==================== AI ====================
+/** Soubor přiložený ke zprávě v AI chatu (base64 bez prefixu data:). */
+export interface AIChatPriloha {
+  nazev: string;
+  typ: 'application/pdf' | 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+  data: string;
+}
+
+/** Záznam, který AI asistent v aplikaci vytvořil. */
+export interface AIChatAkce {
+  typ: 'revize' | 'zavada' | 'udalost' | 'zakaznik' | 'rozvadec' | 'okruh' | 'mistnost' | 'zarizeni' | 'odberne_misto';
+  id: number;
+  popis: string;
+  odkaz: string;
+}
+
+export interface AIMistnostNavrh {
+  nazev: string;
+  patro: string;
+  plocha: number | null;
+  prostredi: 'Normální' | 'Nebezpečné' | 'Zvlášť nebezpečné';
+  poznamka: string;
+}
+
+export interface AIZarizeniNavrh {
+  nazev: string;
+  oznaceni: string;
+  pocetKs: number;
+  trida: 'I' | 'II' | 'III';
+  prikonW: number | null;
+}
+
 export const aiApi = {
   /** Zkontrolovat, zda je AI nakonfigurováno */
   async getStatus(): Promise<{ configured: boolean }> {
@@ -164,14 +195,14 @@ export const aiApi = {
 
   /** Chat s AI asistentem */
   async chat(
-    messages: { role: 'user' | 'assistant'; content: string }[],
-    revizeContext?: any,
-  ): Promise<{ reply: string }> {
+    messages: { role: 'user' | 'assistant'; content: string; prilohy?: AIChatPriloha[] }[],
+    revizeContext?: { id?: number },
+  ): Promise<{ reply: string; akce?: AIChatAkce[] }> {
     return fetch(buildApiUrl('/ai/chat'), {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ messages, revizeContext }),
-    }).then(res => handleResponse<{ reply: string }>(res));
+    }).then(res => handleResponse<{ reply: string; akce?: AIChatAkce[] }>(res));
   },
 
   /** Auto-vyplnění pole formuláře */
@@ -179,12 +210,35 @@ export const aiApi = {
     field: string,
     formData: Record<string, any>,
     entityType: string,
+    pokyny?: string,
   ): Promise<{ suggestion: Record<string, string> }> {
     return fetch(buildApiUrl('/ai/autofill'), {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ field, formData, entityType }),
+      body: JSON.stringify({ field, formData, entityType, pokyny }),
     }).then(res => handleResponse<{ suggestion: Record<string, string> }>(res));
+  },
+
+  /** Navrhnout místnosti z popisu objektu */
+  async navrhMistnosti(popis: string, revizeId?: number): Promise<{ mistnosti: AIMistnostNavrh[] }> {
+    return fetch(buildApiUrl('/ai/navrh-mistnosti'), {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ popis, revizeId }),
+    }).then(res => handleResponse<{ mistnosti: AIMistnostNavrh[] }>(res));
+  },
+
+  /** Navrhnout zařízení pro místnost */
+  async navrhZarizeni(
+    mistnost: { nazev: string; patro?: string; prostredi?: string; poznamka?: string },
+    popis?: string,
+    existujici?: string[],
+  ): Promise<{ zarizeni: AIZarizeniNavrh[] }> {
+    return fetch(buildApiUrl('/ai/navrh-zarizeni'), {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ mistnost, popis, existujici }),
+    }).then(res => handleResponse<{ zarizeni: AIZarizeniNavrh[] }>(res));
   },
 
   /** Analyzovat fotografie rozvaděče a navrhnout okruhy */
