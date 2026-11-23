@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useQuery as useRQQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -8,6 +8,11 @@ import { Badge } from '../components/ui';
 import type { BadgeVariant } from '../components/ui';
 import { KATEGORIE_LABELS } from '../types';
 import type { AppNotification, NotificationSeverity, NotificationType, Revize, Zakazka } from '../types';
+import {
+  KAT_META, kategorieOf, toDateStr, addDaysLocal, longDay, jobsOnDay, isAllDay, isClosed, timedBlocks, hourRange, formatTime,
+  googleCelodenni, googleCasove, type GUdalost,
+} from './Planovani/model';
+import { nactiKalendareProZakazky, nactiGoogleUdalosti } from '../services/googleCalendar';
 
 /* ═══ Helpers ═══ */
 
@@ -223,6 +228,159 @@ function AttentionPanel({ notifications }: { notifications: AppNotification[] })
         >
           {expanded ? 'Zobrazit méně' : `Zobrazit vše (${filtered.length})`}
         </button>
+      )}
+    </Panel>
+  );
+}
+
+/* ═══ Můj den (časová osa dne) ═══ */
+
+const DEN_HODINA = 34; // px na hodinu
+
+function nowHours() {
+  const d = new Date();
+  return d.getHours() + d.getMinutes() / 60;
+}
+
+function DayPanel({ zakazky, revizeById }: { zakazky: Zakazka[]; revizeById: Map<number, Revize> }) {
+  const today = toDateStr(new Date());
+  const [den, setDen] = useState(today);
+  const [now, setNow] = useState(nowHours);
+  useEffect(() => {
+    const t = setInterval(() => setNow(nowHours()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Události z Google Kalendáře (jen když je propojený; jinak se nic nenačítá)
+  const { data: gStav } = useRQQuery({
+    queryKey: ['google', 'kalendare-pro-zakazky'],
+    queryFn: nactiKalendareProZakazky,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+  const gOd = addDaysLocal(today, -7);
+  const gDo = addDaysLocal(today, 30);
+  const { data: gUdalosti } = useRQQuery({
+    queryKey: ['google', 'udalosti', gOd, gDo],
+    queryFn: () => nactiGoogleUdalosti(gOd, gDo) as Promise<GUdalost[]>,
+    enabled: !!gStav?.connected,
+    staleTime: 2 * 60 * 1000,
+    retry: false,
+  });
+
+  const aktivni = useMemo(() => zakazky.filter(z => z.stav !== 'zrušeno'), [zakazky]);
+  const celodenni = useMemo(() => jobsOnDay(aktivni, den).filter(isAllDay), [aktivni, den]);
+  const bloky = useMemo(() => timedBlocks(aktivni, den), [aktivni, den]);
+  const gCelodenni = useMemo(() => googleCelodenni(gUdalosti, den), [gUdalosti, den]);
+  const gBloky = useMemo(() => googleCasove(gUdalosti, den), [gUdalosti, den]);
+  const range = hourRange([...bloky, ...gBloky]);
+  const hodiny = Array.from({ length: range.end - range.start }, (_, i) => range.start + i);
+  const prazdny = celodenni.length + bloky.length + gCelodenni.length + gBloky.length === 0;
+  const jeDnes = den === today;
+  const nadpis = jeDnes ? 'Dnes' : den === addDaysLocal(today, 1) ? 'Zítra' : den === addDaysLocal(today, -1) ? 'Včera' : null;
+
+  const navBtn = 'h-8 w-8 inline-flex items-center justify-center rounded-[var(--radius-md)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text)]';
+  return (
+    <Panel
+      title="Můj den"
+      action={
+        <div className="flex items-center gap-1">
+          <button type="button" aria-label="Předchozí den" onClick={() => setDen(d => addDaysLocal(d, -1))} className={navBtn}>
+            <span className="rotate-180 inline-flex"><Icon name="chevron" size={16} /></span>
+          </button>
+          <button type="button" onClick={() => setDen(today)} disabled={jeDnes}
+            className="h-8 min-w-[150px] px-2 rounded-[var(--radius-md)] text-[13px] font-medium text-[var(--text)] hover:bg-[var(--bg-hover)] disabled:hover:bg-transparent first-letter:uppercase"
+            title={jeDnes ? undefined : 'Zpět na dnešek'}>
+            {nadpis ? `${nadpis} · ` : ''}{longDay(den)}
+          </button>
+          <button type="button" aria-label="Další den" onClick={() => setDen(d => addDaysLocal(d, 1))} className={navBtn}>
+            <Icon name="chevron" size={16} />
+          </button>
+          <span className="ml-1"><PanelLink to="/planovani">Kalendář</PanelLink></span>
+        </div>
+      }
+    >
+      {prazdny ? (
+        <EmptyNote>
+          {jeDnes ? 'Dnes nemáte nic naplánováno.' : 'Na tento den není nic naplánováno.'}<br />
+          <Link to="/planovani" className="mt-1 inline-block font-medium text-[var(--nav-text-active)] hover:underline">Naplánovat zakázku</Link>
+        </EmptyNote>
+      ) : (
+        <div className="flex flex-col">
+          {(celodenni.length > 0 || gCelodenni.length > 0) && (
+            <div className="flex flex-wrap items-center gap-1.5 px-4 py-2.5 border-b border-[var(--border)] bg-[var(--bg-faint)]">
+              <span className="w-12 flex-none whitespace-nowrap text-[11px] text-[var(--text-secondary)]">Celý den</span>
+              {celodenni.map(z => {
+                const kat = kategorieOf(z, revizeById);
+                return (
+                  <Link key={z.id} to="/planovani" title={[z.nazev, z.klient, z.adresa].filter(Boolean).join(' · ')}
+                    className={`max-w-full truncate rounded-[var(--radius-sm)] px-2.5 py-1 text-xs font-semibold hover:underline ${isClosed(z) ? 'opacity-55' : ''}`}
+                    style={{ color: KAT_META[kat].color, background: KAT_META[kat].bg }}>
+                    {z.nazev}
+                  </Link>
+                );
+              })}
+              {gCelodenni.map(u => (
+                <span key={u.id} className="max-w-full truncate rounded-[var(--radius-sm)] px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)] border border-dashed border-[var(--border-input)]">
+                  {u.nazev}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="relative flex px-4 py-3">
+            <div className="relative w-12 flex-none" style={{ height: hodiny.length * DEN_HODINA }}>
+              {hodiny.map((h, i) => (
+                <span key={h} className="absolute left-0 text-[11px] tabular-nums text-[var(--text-secondary)]" style={{ top: i * DEN_HODINA - 7 }}>{h}:00</span>
+              ))}
+            </div>
+            <div className="relative flex-1 min-w-0"
+              style={{
+                height: hodiny.length * DEN_HODINA,
+                backgroundImage: `repeating-linear-gradient(to bottom, var(--border-subtle) 0, var(--border-subtle) 1px, transparent 1px, transparent ${DEN_HODINA}px)`,
+              }}>
+              {gBloky.map(g => {
+                const top = (g.from - range.start) * DEN_HODINA;
+                const h = Math.max(18, (g.to - g.from) * DEN_HODINA);
+                return (
+                  <div key={g.u.id} title={`${g.u.nazev} · ${formatTime(g.from)}–${formatTime(g.to)} (Google Kalendář)`}
+                    className="absolute right-0 w-[34%] overflow-hidden rounded-[var(--radius-sm)] border border-dashed border-[var(--border-input)] bg-[var(--bg-surface)] px-2 py-1 text-[11px] text-[var(--text-secondary)]"
+                    style={{ top: top + 2, height: h - 4 }}>
+                    <span className="block truncate font-medium">{g.u.nazev}</span>
+                  </div>
+                );
+              })}
+              {bloky.map(b => {
+                const kat = kategorieOf(b.z, revizeById);
+                const top = (b.from - range.start) * DEN_HODINA;
+                const h = (b.to - b.from) * DEN_HODINA;
+                const sirka = gBloky.length ? 0.64 : 1;
+                return (
+                  <Link key={b.z.id} to="/planovani"
+                    title={`${b.z.nazev} · ${formatTime(b.from)}–${formatTime(b.to)}${b.z.klient ? ` · ${b.z.klient}` : ''}`}
+                    className={`absolute flex flex-col overflow-hidden rounded-[var(--radius-sm)] px-2 py-1 hover:brightness-110 ${isClosed(b.z) ? 'opacity-55' : ''}`}
+                    style={{
+                      top: top + 2, height: h - 4,
+                      left: `calc((100% - 4px) * ${sirka} * ${b.col} / ${b.cols})`,
+                      width: `calc((100% - 4px) * ${sirka} / ${b.cols} - 2px)`,
+                      background: KAT_META[kat].bg,
+                      border: `1px solid color-mix(in srgb, ${KAT_META[kat].color} 45%, transparent)`,
+                    }}>
+                    <span className="flex items-baseline gap-2 min-w-0">
+                      <span className="truncate text-xs font-semibold text-[var(--text)]">{b.z.nazev}</span>
+                      <span className="flex-none text-[11px] font-medium tabular-nums" style={{ color: KAT_META[kat].color }}>{formatTime(b.from)}–{formatTime(b.to)}</span>
+                    </span>
+                    {h >= 48 && <span className="truncate text-[11px] text-[var(--text-secondary)]">{[b.z.klient, b.z.adresa].filter(Boolean).join(' · ')}</span>}
+                  </Link>
+                );
+              })}
+              {jeDnes && now >= range.start && now <= range.end && (
+                <div aria-hidden="true" className="pointer-events-none absolute -left-1 right-0 z-[2] h-[2px] bg-[var(--danger)]" style={{ top: (now - range.start) * DEN_HODINA }}>
+                  <span className="absolute -left-[4px] -top-[4px] h-[10px] w-[10px] rounded-full bg-[var(--danger)]" />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </Panel>
   );
@@ -464,6 +622,7 @@ export function Dashboard() {
   const { notifications } = useNotifications();
 
   const isLoading = loadingRevize || loadingZakazky;
+  const revizeById = useMemo(() => new Map(revize.filter(r => r.id != null).map(r => [r.id!, r])), [revize]);
   const staleDays = 14;
 
   const data = useMemo(() => {
@@ -610,6 +769,7 @@ export function Dashboard() {
       {/* ═══ Dva sloupce: vlevo práce, vpravo přehledy (každý sloupec se skládá samostatně, bez mezer) ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start lg:items-stretch">
         <div className="flex min-w-0 flex-col gap-3 self-start lg:col-span-2">
+          <DayPanel zakazky={zakazky} revizeById={revizeById} />
           <AttentionPanel notifications={notifications} />
           <WipPanel revize={data.rozpracovaneTop} total={data.rozpracovaneCount} staleDays={staleDays} />
         </div>
