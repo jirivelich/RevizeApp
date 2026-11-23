@@ -5,7 +5,7 @@ import { useRevize, useZakazky, useCreateZakazka, useUpdateZakazka, useDeleteZak
 import type { Zakazka, KategorieRevize } from '../../types';
 import { emptyFormData, zakazkaToFormData, formDataToZakazka } from './utils';
 import { moveZakazka, toDateStr, parseTime } from './model';
-import type { PlanProps } from './shared';
+import { PlanContextMenu, type PlanProps, type MenuTarget } from './shared';
 import { useIsMobile } from './hooks';
 import type { ZakazkaFormData } from './utils';
 import { ListView } from './ListView';
@@ -116,6 +116,12 @@ export function PlanovaniPage() {
   useEffect(() => () => { if (undoTimer.current) clearTimeout(undoTimer.current); }, []);
 
   const today = toDateStr(new Date());
+  // Den vybraný v měsíčním pohledu – „Nová zakázka“ ho použije jako datum
+  const [vybranyDen, setVybranyDen] = useState(today);
+  const [kontextMenu, setKontextMenu] = useState<{ x: number; y: number; target: MenuTarget } | null>(null);
+  const zavritKontextMenu = useCallback(() => setKontextMenu(null), []);
+  /** Výchozí datum nové zakázky podle aktuálního pohledu. */
+  const novaZakazka = () => openCreate(viewMode === 'calendar' ? vybranyDen : undefined);
   const revizeById = useMemo(() => new Map(revize.filter(r => r.id != null).map(r => [r.id!, r])), [revize]);
   const zakazniciById = useMemo(() => new Map(zakaznici.filter(z => z.id != null).map(z => [z.id!, z])), [zakaznici]);
 
@@ -310,6 +316,9 @@ export function PlanovaniPage() {
     onUpdateStav: handleUpdateStav,
     onDelete: id => setDeleteTargetId(id),
     onMove: handleMove,
+    selectedDay: vybranyDen,
+    onSelectDay: setVybranyDen,
+    onContextMenu: (e, target) => setKontextMenu({ x: e.clientX, y: e.clientY, target }),
   };
 
   const viewBtn = (v: ViewMode, label: string) => (
@@ -367,7 +376,7 @@ export function PlanovaniPage() {
               </svg>
               {gcSyncing ? 'Sync…' : 'Google Kalendář'}
             </Button>
-            <Button onClick={() => openCreate()}>+ Nová zakázka</Button>
+            <Button onClick={novaZakazka}>+ Nová zakázka</Button>
             </div>
           </div>
         }
@@ -395,7 +404,7 @@ export function PlanovaniPage() {
         <button
           type="button"
           aria-label="Nová zakázka"
-          onClick={() => openCreate()}
+          onClick={novaZakazka}
           tabIndex={fabVisible ? 0 : -1}
           aria-hidden={!fabVisible}
           className={`fixed right-4 z-40 w-14 h-14 rounded-2xl bg-[var(--primary)] text-[var(--primary-fg)] flex items-center justify-center shadow-[var(--shadow-lg)] transition-[transform,opacity] duration-200 ${
@@ -404,6 +413,10 @@ export function PlanovaniPage() {
         >
           <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
         </button>
+      )}
+
+      {kontextMenu && (
+        <PlanContextMenu x={kontextMenu.x} y={kontextMenu.y} target={kontextMenu.target} p={planProps} onClose={zavritKontextMenu} />
       )}
 
       {/* Lišta „Vrátit“ */}

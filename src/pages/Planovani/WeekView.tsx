@@ -10,7 +10,7 @@ import {
   googleCelodenni, googleCasove, type TimedBlock, type GBlok,
 } from './model';
 import { KatLegend, NavBar, type PlanProps } from './shared';
-import { useCalendarKeys, useIsMobile } from './hooks';
+import { useCalendarKeys, useIsMobile, contextHandler } from './hooks';
 
 const DNY = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
 
@@ -164,7 +164,7 @@ export function WeekView(p: PlanProps) {
               return (
                 <Drag key={`${b.z.id}-${b.start}`} z={b.z} id={`bar|${b.z.id}|${b.start}`}
                   style={{ gridColumn: `${b.start + 2} / ${b.end + 3}`, gridRow: `${b.row + 1} / ${b.row + 2}`, zIndex: 1 }}>
-                  <button type="button" onClick={() => p.onEdit(b.z)}
+                  <button type="button" onClick={() => p.onEdit(b.z)} onContextMenu={contextHandler(p, { date: days[b.start], z: b.z })}
                     className={`w-full h-full mx-[3px] rounded-[var(--radius-sm)] px-2.5 flex items-center gap-2 text-xs font-semibold text-left whitespace-nowrap overflow-hidden ${isClosed(b.z) ? 'opacity-55' : ''}`}
                     style={{ color: KAT_META[kat].color, background: KAT_META[kat].bg, width: 'calc(100% - 6px)' }}>
                     <span className="truncate">{b.z.nazev}</span>
@@ -203,6 +203,7 @@ export function WeekView(p: PlanProps) {
                   {hours.map((h, i) => (
                     <Slot key={h} id={`slot|${d}|${h}`} top={i * HOUR} height={HOUR}
                       label={`Nová zakázka ${dt.getDate()}. ${dt.getMonth() + 1}. v ${h}:00`}
+                      onContextMenu={contextHandler(p, { date: d, time: `${String(h).padStart(2, '0')}:00` })}
                       onClick={() => p.onCreateAt(d, `${String(h).padStart(2, '0')}:00`)} />
                   ))}
                   {(() => {
@@ -217,7 +218,7 @@ export function WeekView(p: PlanProps) {
                             vedle={zb.some(b => kryje(b, g))} />
                         ))}
                         {zb.map(b => (
-                          <Block key={b.z.id} b={b} p={p} top={(b.from - range.start) * HOUR} hour={HOUR}
+                          <Block key={b.z.id} b={b} p={p} day={d} top={(b.from - range.start) * HOUR} hour={HOUR}
                             podil={gb.some(g => kryje(b, g)) ? 0.62 : 1} />
                         ))}
                       </>
@@ -252,10 +253,10 @@ function AllDayDrop({ id, style }: { id: string; style: CSSProperties }) {
   return <div ref={setNodeRef} className={`border-l border-[var(--border-subtle)] ${isOver ? 'bg-[var(--bg-accent)]' : ''}`} style={style} />;
 }
 
-function Slot({ id, top, height, onClick, label }: { id: string; top: number; height: number; onClick: () => void; label: string }) {
+function Slot({ id, top, height, onClick, onContextMenu, label }: { id: string; top: number; height: number; onClick: () => void; onContextMenu?: (e: React.MouseEvent) => void; label: string }) {
   const { setNodeRef, isOver } = useDroppable({ id });
   return (
-    <button ref={setNodeRef} type="button" aria-label={label} onClick={onClick}
+    <button ref={setNodeRef} type="button" aria-label={label} onClick={onClick} onContextMenu={onContextMenu}
       className={`absolute left-0 right-0 hover:bg-[var(--bg-hover)] ${isOver ? 'bg-[var(--bg-accent)]' : ''}`}
       style={{ top, height }} />
   );
@@ -271,7 +272,7 @@ function Drag({ z, id, style, children }: { z: Zakazka; id: string; style: CSSPr
   );
 }
 
-function Block({ b, p, top, hour, podil = 1 }: { b: TimedBlock; p: PlanProps; top: number; hour: number; podil?: number }) {
+function Block({ b, p, day, top, hour, podil = 1 }: { b: TimedBlock; p: PlanProps; day: string; top: number; hour: number; podil?: number }) {
   const kat = kategorieOf(b.z, p.revizeById);
   const h = (b.to - b.from) * hour;
   // podil < 1: část šířky sloupce přenechaná událostem z Google Kalendáře
@@ -283,7 +284,7 @@ function Block({ b, p, top, hour, podil = 1 }: { b: TimedBlock; p: PlanProps; to
   return (
     <Drag z={b.z} id={`block|${b.z.id}`}
       style={{ position: 'absolute', top: top + 2, height: h - 4, left: `calc(3px + (100% - 6px) * ${podil} * ${b.col} / ${b.cols})`, width, zIndex: 1 }}>
-      <button type="button" onClick={() => p.onEdit(b.z)} title={`${b.z.nazev} · ${formatTime(b.from)}–${formatTime(b.to)}${b.z.klient ? ` · ${b.z.klient}` : ''}`}
+      <button type="button" onClick={() => p.onEdit(b.z)} onContextMenu={contextHandler(p, { date: day, z: b.z })} title={`${b.z.nazev} · ${formatTime(b.from)}–${formatTime(b.to)}${b.z.klient ? ` · ${b.z.klient}` : ''}`}
         className={`w-full h-full box-border rounded-[var(--radius-sm)] ${uzky ? 'px-1 py-0.5' : kratky ? 'px-1.5 py-1' : 'px-2 py-1.5'} flex flex-col gap-0.5 overflow-hidden text-left ${isClosed(b.z) ? 'opacity-55' : ''}`}
         style={{ background: KAT_META[kat].bg, border: `1px solid color-mix(in srgb, ${KAT_META[kat].color} 45%, transparent)` }}>
         <span className={`${uzky ? 'text-[11px] break-words' : 'text-xs'} font-semibold text-[var(--text)] leading-tight ${radkuNazvu === 1 ? 'line-clamp-1' : radkuNazvu === 2 ? 'line-clamp-2' : 'line-clamp-3'}`}>{b.z.nazev}</span>

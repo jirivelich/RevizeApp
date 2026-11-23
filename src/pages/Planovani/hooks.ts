@@ -1,6 +1,7 @@
 /** Hooky a pomocné funkce pohledů Plánování (oddělené od komponent kvůli Fast Refresh). */
 import { useEffect, useSyncExternalStore } from 'react';
 import type { Zakaznik, Zakazka } from '../../types';
+import type { PlanProps, MenuTarget } from './shared';
 
 const MQ = '(max-width: 767px)';
 function subscribe(cb: () => void) {
@@ -40,4 +41,15 @@ export function useCalendarKeys(onPrev: () => void, onNext: () => void, onToday:
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
   }, [onPrev, onNext, onToday]);
+}
+
+/** Handler pro onContextMenu – na dotykových zařízeních nechá výchozí chování (dlouhý stisk = přetažení). */
+export function contextHandler(p: PlanProps, target: MenuTarget) {
+  return (e: React.MouseEvent) => {
+    if (!p.onContextMenu) return;
+    if ((e.nativeEvent as PointerEvent).pointerType === 'touch') return;
+    e.preventDefault();
+    e.stopPropagation();
+    p.onContextMenu(e, target);
+  };
 }

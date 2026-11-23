@@ -4,15 +4,18 @@ import {
   monthGrid, fromDateStr, jobsOnDay, deadlinesOnDay, loadLevel, kategorieOf, timeLabel, timeRange, longDay, MESICE, isClosed, googleVeDni,
 } from './model';
 import { KatDot, KatLegend, NavBar, PrimaryActionButton, MapLink, PhoneLink, IconDoc, GoogleKarta, type PlanProps } from './shared';
-import { phoneOf, useCalendarKeys, useIsMobile } from './hooks';
+import { phoneOf, useCalendarKeys, useIsMobile, contextHandler } from './hooks';
 
 const DNY = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
 
 export function CalendarView(p: PlanProps) {
   const isMobile = useIsMobile();
-  const t = fromDateStr(p.today);
-  const [ym, setYm] = useState({ y: t.getFullYear(), m: t.getMonth() });
-  const [selected, setSelected] = useState(p.today);
+  // Vybraný den drží stránka (tlačítko „Nová zakázka“ ho použije jako datum)
+  const [vlastniVyber, setVlastniVyber] = useState(p.today);
+  const selected = p.selectedDay ?? vlastniVyber;
+  const { onSelectDay } = p;
+  const setSelected = useCallback((d: string) => { setVlastniVyber(d); onSelectDay?.(d); }, [onSelectDay]);
+  const [ym, setYm] = useState(() => { const t = fromDateStr(selected); return { y: t.getFullYear(), m: t.getMonth() }; });
   const [showDeadlines, setShowDeadlines] = useState(true);
 
   const shift = useCallback((n: number) => setYm(({ y, m }) => {
@@ -25,7 +28,7 @@ export function CalendarView(p: PlanProps) {
     const d = fromDateStr(p.today);
     setYm({ y: d.getFullYear(), m: d.getMonth() });
     setSelected(p.today);
-  }, [p.today]);
+  }, [p.today, setSelected]);
   useCalendarKeys(prev, next, today);
 
   const grid = useMemo(() => monthGrid(ym.y, ym.m), [ym]);
@@ -91,6 +94,7 @@ export function CalendarView(p: PlanProps) {
                   aria-pressed={isSel}
                   onClick={() => { setSelected(d); if (!inMonth) setYm({ y: dt.getFullYear(), m: dt.getMonth() }); }}
                   onDoubleClick={() => p.onCreateAt(d)}
+                  onContextMenu={contextHandler(p, { date: d })}
                   className={isMobile
                     ? `h-[50px] rounded-[var(--radius-md)] flex flex-col items-center justify-center gap-1 ${isSel && !isToday ? 'ring-2 ring-inset ring-[var(--primary)]' : ''}`
                     : `relative min-h-[96px] p-2 flex flex-col text-left border-r border-b border-[var(--border-subtle)] hover:bg-[var(--bg-hover)] ${isSel ? 'shadow-[inset_0_0_0_2px_var(--primary)]' : ''}`}
@@ -173,7 +177,7 @@ function DayCard({ z, p, day }: { z: Zakazka; p: PlanProps; day: string }) {
   const kat = kategorieOf(z, p.revizeById);
   const tel = phoneOf(z, p.zakazniciById);
   return (
-    <article onClick={() => p.onEdit(z)}
+    <article onClick={() => p.onEdit(z)} onContextMenu={contextHandler(p, { date: day, z })}
       className={`flex gap-3 p-3 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--bg-faint)] cursor-pointer hover:border-[var(--border-strong)] ${isClosed(z) ? 'opacity-70' : ''}`}>
       <div className="w-11 shrink-0 flex flex-col leading-tight">
         <span className="text-[13px] font-bold text-[var(--text)]">{t.main === 'Celý den' ? 'Celý' : t.main}</span>

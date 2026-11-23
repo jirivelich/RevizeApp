@@ -1,5 +1,5 @@
 /** Sdílené prvky pohledů Plánování (seznam, týden, měsíc). */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Revize, Zakaznik, Zakazka } from '../../types';
 import { KAT_META, KAT_ORDER, primaryAction, mapsUrl, telHref, isClosed, type KatKey, type GUdalost } from './model';
@@ -23,6 +23,18 @@ export interface PlanProps {
   onMove: (z: Zakazka, date: string, time: string | 'allday') => void;
   /** Události z Google Kalendáře – jen pro přehled (šedě, bez úprav). */
   googleUdalosti?: GUdalost[];
+  /** Vybraný den v měsíčním pohledu (sdílený se stránkou kvůli „Nová zakázka“). */
+  selectedDay?: string;
+  onSelectDay?: (d: string) => void;
+  /** Pravé tlačítko myši na dni / časovém slotu / zakázce. */
+  onContextMenu?: (e: React.MouseEvent, target: MenuTarget) => void;
+}
+
+/** Na co uživatel klikl pravým tlačítkem: den (volitelně čas) a případně zakázka. */
+export interface MenuTarget {
+  date: string;
+  time?: string;
+  z?: Zakazka;
 }
 
 // ── Kategorie ──────────────────────────────────────────────
@@ -168,7 +180,6 @@ export function NavBar({ title, onPrev, onNext, onToday, right, prevLabel, nextL
 
 export function RowMenu({ z, p }: { z: Zakazka; p: PlanProps }) {
   const [open, setOpen] = useState(false);
-  const [stavOpen, setStavOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, right: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -177,7 +188,7 @@ export function RowMenu({ z, p }: { z: Zakazka; p: PlanProps }) {
     if (!open) return;
     const close = (e: MouseEvent | TouchEvent) => {
       const t = e.target as Node;
-      if (!menuRef.current?.contains(t) && !btnRef.current?.contains(t)) { setOpen(false); setStavOpen(false); }
+      if (!menuRef.current?.contains(t) && !btnRef.current?.contains(t)) setOpen(false);
     };
     const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOpen(false); btnRef.current?.focus(); } };
     document.addEventListener('mousedown', close);
@@ -197,9 +208,6 @@ export function RowMenu({ z, p }: { z: Zakazka; p: PlanProps }) {
     setPos({ top, right: window.innerWidth - r.right });
     setOpen(o => !o);
   };
-  const item = 'w-full text-left px-3 min-h-[40px] rounded-[var(--radius-md)] text-sm text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2';
-  const run = (fn: () => void) => (e: React.MouseEvent) => { e.stopPropagation(); fn(); setOpen(false); setStavOpen(false); };
-
   return (
     <>
       <button
@@ -221,32 +229,116 @@ export function RowMenu({ z, p }: { z: Zakazka; p: PlanProps }) {
           style={{ top: pos.top, right: pos.right }}
           onClick={e => e.stopPropagation()}
         >
-          <button type="button" role="menuitem" className={item} onClick={run(() => p.onEdit(z))}>Upravit</button>
-          {!isClosed(z) && (
-            <button type="button" role="menuitem" className={item} onClick={run(() => p.onComplete(z))}>Dokončit</button>
-          )}
-          {!z.revizeId && z.stav !== 'zrušeno' && (
-            <button type="button" role="menuitem" className={item} onClick={run(() => p.onCreateRevize(z))}>Založit revizi</button>
-          )}
-          <button type="button" role="menuitem" aria-expanded={stavOpen} className={`${item} justify-between`} onClick={e => { e.stopPropagation(); setStavOpen(s => !s); }}>
-            Změnit stav <span className={`transition-transform ${stavOpen ? 'rotate-180' : ''}`}><IconChevron dir="down" size={14} /></span>
-          </button>
-          {stavOpen && (
-            <div className="border-t border-[var(--border-subtle)] bg-[var(--bg-faint)]">
-              {STAV_OPTIONS.map(s => (
-                <button key={s.value} type="button" role="menuitemradio" aria-checked={z.stav === s.value}
-                  className={`w-full text-left px-5 min-h-[36px] text-[13px] hover:bg-[var(--bg-hover)] ${z.stav === s.value ? 'text-[var(--primary-text)] font-semibold' : 'text-[var(--text-secondary)]'}`}
-                  onClick={run(() => p.onUpdateStav(z.id!, s.value))}>
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="border-t border-[var(--border-subtle)] my-1" />
-          <button type="button" role="menuitem" className={`${item} text-[var(--danger-text)] hover:bg-[var(--danger-bg)]`} onClick={run(() => p.onDelete(z.id!))}>Smazat</button>
+          <ZakazkaMenuItems z={z} p={p} onDone={() => setOpen(false)} />
         </div>
       )}
     </>
+  );
+}
+
+const MENU_ITEM = 'w-full text-left px-3 min-h-[40px] rounded-[var(--radius-md)] text-sm text-[var(--text)] hover:bg-[var(--bg-hover)] flex items-center gap-2';
+
+/** Akce se zakázkou – společné pro menu „⋯“ a kontextové menu (pravé tlačítko). */
+function ZakazkaMenuItems({ z, p, onDone }: { z: Zakazka; p: PlanProps; onDone: () => void }) {
+  const [stavOpen, setStavOpen] = useState(false);
+  const item = MENU_ITEM;
+  const run = (fn: () => void) => (e: React.MouseEvent) => { e.stopPropagation(); fn(); onDone(); };
+  return (
+    <>
+      <button type="button" role="menuitem" className={item} onClick={run(() => p.onEdit(z))}>Upravit</button>
+      {z.revizeId != null && (
+        <button type="button" role="menuitem" className={item} onClick={run(() => p.onOpenRevize(z))}>Otevřít revizi</button>
+      )}
+      {!isClosed(z) && (
+        <button type="button" role="menuitem" className={item} onClick={run(() => p.onComplete(z))}>Dokončit</button>
+      )}
+      {!z.revizeId && z.stav !== 'zrušeno' && (
+        <button type="button" role="menuitem" className={item} onClick={run(() => p.onCreateRevize(z))}>Založit revizi</button>
+      )}
+      <button type="button" role="menuitem" aria-expanded={stavOpen} className={`${item} justify-between`} onClick={e => { e.stopPropagation(); setStavOpen(s => !s); }}>
+        Změnit stav <span className={`transition-transform ${stavOpen ? 'rotate-180' : ''}`}><IconChevron dir="down" size={14} /></span>
+      </button>
+      {stavOpen && (
+        <div className="border-t border-[var(--border-subtle)] bg-[var(--bg-faint)]">
+          {STAV_OPTIONS.map(s => (
+            <button key={s.value} type="button" role="menuitemradio" aria-checked={z.stav === s.value}
+              className={`w-full text-left px-5 min-h-[36px] text-[13px] hover:bg-[var(--bg-hover)] ${z.stav === s.value ? 'text-[var(--primary-text)] font-semibold' : 'text-[var(--text-secondary)]'}`}
+              onClick={run(() => p.onUpdateStav(z.id!, s.value))}>
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="border-t border-[var(--border-subtle)] my-1" />
+      <button type="button" role="menuitem" className={`${item} text-[var(--danger-text)] hover:bg-[var(--danger-bg)]`} onClick={run(() => p.onDelete(z.id!))}>Smazat</button>
+    </>
+  );
+}
+
+const fmtDen = (d: string) => { const [, m, day] = d.split('-').map(Number); return `${day}. ${m}.`; };
+
+/** Kontextové menu kalendáře (pravé tlačítko myši) na pozici kurzoru. */
+export function PlanContextMenu({ x, y, target, p, onClose }: { x: number; y: number; target: MenuTarget; p: PlanProps; onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ left: x, top: y });
+
+  // Udržet menu v okně (měří se až po vykreslení)
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setPos({
+      left: Math.max(8, Math.min(x, window.innerWidth - r.width - 8)),
+      top: Math.max(8, Math.min(y, window.innerHeight - r.height - 8)),
+    });
+    el.querySelector<HTMLElement>('[role^="menuitem"]')?.focus();
+  }, [x, y, target]);
+
+  useEffect(() => {
+    const close = (e: Event) => { if (!ref.current?.contains(e.target as Node)) onClose(); };
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const zavrit = () => onClose();
+    document.addEventListener('mousedown', close);
+    document.addEventListener('touchstart', close);
+    document.addEventListener('contextmenu', close);
+    document.addEventListener('keydown', esc);
+    window.addEventListener('resize', zavrit);
+    window.addEventListener('scroll', zavrit, true);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('touchstart', close);
+      document.removeEventListener('contextmenu', close);
+      document.removeEventListener('keydown', esc);
+      window.removeEventListener('resize', zavrit);
+      window.removeEventListener('scroll', zavrit, true);
+    };
+  }, [onClose]);
+
+  const { date, time, z } = target;
+  const run = (fn: () => void) => () => { fn(); onClose(); };
+  return (
+    <div
+      ref={ref}
+      role="menu"
+      aria-label={z ? `Akce se zakázkou ${z.nazev}` : `Akce pro ${fmtDen(date)}`}
+      className="fixed z-[9999] min-w-[220px] max-w-[300px] p-1 bg-[var(--surface)] border border-[var(--border-strong)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)]"
+      style={pos}
+      onClick={e => e.stopPropagation()}
+      onContextMenu={e => e.preventDefault()}
+    >
+      <div className="px-3 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-secondary)] truncate">
+        {z ? z.nazev : `${fmtDen(date)}${time ? ` · ${time}` : ''}`}
+      </div>
+      {z && (
+        <>
+          <ZakazkaMenuItems z={z} p={p} onDone={onClose} />
+          <div className="border-t border-[var(--border-subtle)] my-1" />
+        </>
+      )}
+      <button type="button" role="menuitem" className={MENU_ITEM} onClick={run(() => p.onCreateAt(date, time))}>
+        + Nová zakázka {fmtDen(date)}{time ? ` v ${time}` : ''}
+      </button>
+    </div>
   );
 }
 

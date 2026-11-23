@@ -2,14 +2,14 @@
  * Vývojová stránka /dev/planovani – pohledy Plánování se vzorovými daty (jen v dev režimu).
  * Parametr ?v=list|week|calendar
  */
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { Revize, Zakaznik, Zakazka } from '../../types';
 import { ListView } from './ListView';
 import { WeekView } from './WeekView';
 import { CalendarView } from './CalendarView';
 import { addDaysLocal, toDateStr, moveZakazka } from './model';
-import type { PlanProps } from './shared';
+import { PlanContextMenu, type PlanProps, type MenuTarget } from './shared';
 
 function sample(today: string): Zakazka[] {
   const d = (n: number) => addDaysLocal(today, n);
@@ -37,6 +37,9 @@ export default function DevPlanovani() {
   const v = params.get('v') || 'list';
   const today = toDateStr(new Date());
   const [zakazky, setZakazky] = useState<Zakazka[]>(() => sample(today));
+  const [den, setDen] = useState(today);
+  const [menu, setMenu] = useState<{ x: number; y: number; target: MenuTarget } | null>(null);
+  const zavrit = useCallback(() => setMenu(null), []);
   const update = (id: number, patch: Partial<Zakazka>) => setZakazky(list => list.map(z => (z.id === id ? { ...z, ...patch } : z)));
 
   const revizeById = useMemo(() => new Map<number, Revize>(), []);
@@ -56,6 +59,9 @@ export default function DevPlanovani() {
     onUpdateStav: (id, stav) => update(id, { stav }),
     onDelete: id => setZakazky(list => list.filter(z => z.id !== id)),
     onMove: (z, d, t) => update(z.id!, moveZakazka(z, d, t)),
+    selectedDay: den,
+    onSelectDay: setDen,
+    onContextMenu: (e, target) => setMenu({ x: e.clientX, y: e.clientY, target }),
   };
 
   return (
@@ -69,6 +75,7 @@ export default function DevPlanovani() {
         ))}
       </div>
       {v === 'week' ? <WeekView {...p} /> : v === 'calendar' ? <CalendarView {...p} /> : <ListView {...p} />}
+      {menu && <PlanContextMenu x={menu.x} y={menu.y} target={menu.target} p={p} onClose={zavrit} />}
     </div>
   );
 }
