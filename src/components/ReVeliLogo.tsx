@@ -1,21 +1,24 @@
-/** Značka ReVeli – varianta 5b (souměrné V z blesků: V jako Velich i Volt). */
+/** Značka – blesk-fajfka s fazetou: ✓ zkontrolováno + blesk (elektro), tmavší bleskové rameno. */
 
-/** Barva značky – logo je vínové v obou motivech. */
+/** Barva značky – vínová. */
 export const BRAND_COLOR = '#B42318';
+/** Tmavší vínová pro fazetu (bleskové rameno). */
+export const BRAND_DARK = '#7F1810';
 
-const ZNAK_5B = '11,11 23,11 29,29 25.5,29 32,41 38.5,29 35,29 41,11 53,11 44.5,30 48,30 34,54 30,54 16,30 19.5,30';
+const ZNAK = '8,57 19,45 37,62 53,40 45,40 91,6 66,49 74,49 37,88';
+const FAZETA = '37,62 53,40 45,40 91,6 66,49 74,49 37,88';
 
 interface LogoIconProps {
   size?: number;
   className?: string;
 }
 
-/** Čtvercová ikona: vínový podklad, bílý znak. */
+/** Znak s fazetou (bez podkladu) – funguje na světlém i tmavém pozadí. */
 export function LogoIcon({ size = 32, className = '' }: LogoIconProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" className={`shrink-0 ${className}`} aria-hidden="true">
-      <rect width="64" height="64" rx="14" fill={BRAND_COLOR} />
-      <polygon points={ZNAK_5B} fill="#fff" stroke="#fff" strokeWidth="1" strokeLinejoin="round" />
+    <svg width={size} height={size} viewBox="3.5 1 92 92" className={`shrink-0 ${className}`} aria-hidden="true">
+      <polygon points={ZNAK} fill={BRAND_COLOR} />
+      <polygon points={FAZETA} fill={BRAND_DARK} />
     </svg>
   );
 }
