@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button, Card, Input, Select, Badge, PageHeader, Textarea } from '../components/ui';
-import { useZakaznici, useCenik } from '../hooks/useQueries';
+import { useZakaznici, useCenik, useNastaveni } from '../hooks/useQueries';
 import type { Nabidka, NabidkaStav } from '../types';
 import { formatKc } from './fakturaUi';
 import { PolozkyDokladu } from '../components/PolozkyDokladu';
@@ -47,6 +47,7 @@ const NabidkaForm: React.FC = () => {
   const { data: nabidka, isLoading } = useNabidka(nabidkaId);
   const { data: zakaznici = [] } = useZakaznici();
   const { data: cenik = [] } = useCenik();
+  const { data: nastaveni } = useNastaveni();
   const create = useCreateNabidka();
   const update = useUpdateNabidka();
   const zmenStav = useZmenStavNabidky();
@@ -256,7 +257,8 @@ const NabidkaForm: React.FC = () => {
         </Card>
 
         <Card title="Položky">
-          <PolozkyDokladu radky={radky} setRadky={setRadky} cenik={cenik} readOnly={readOnly} sleva={sleva} setSleva={setSleva} />
+          <PolozkyDokladu radky={radky} setRadky={setRadky} cenik={cenik} readOnly={readOnly} sleva={sleva} setSleva={setSleva}
+            doprava={{ odkud: nastaveni?.firmaAdresa || nastaveni?.reviznniTechnikAdresa || '', kam: form.misto || form.odberatelAdresa }} />
         </Card>
 
         <Card title="Poznámka">

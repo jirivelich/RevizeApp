@@ -2,11 +2,15 @@
  * Položky dokladu (faktura, cenová nabídka): řádky s popisem, druhem činnosti,
  * množstvím, jednotkou a cenou, celková částka a výběr z ceníku podle kategorií.
  */
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import type React from 'react';
 import { Button, Input, Modal } from './ui';
 import { spoctiPolozku } from '../services/fakturaUtils';
-import { novyRadek, toNumCz, souhrnDokladu, type RadekState } from './polozkyDokladuModel';
+import { novyRadek, toNumCz, souhrnDokladu, cenikDopravy, nastavDopravu, VYCHOZI_SAZBA_KM, type RadekState } from './polozkyDokladuModel';
+import type { TrasaVysledek } from './TrasaModal';
+
+// Mapa (Leaflet) se načte až při otevření
+const TrasaModal = lazy(() => import('./TrasaModal'));
 import { spoctiCelkem } from '../services/fakturaUtils';
 import { formatKc } from '../pages/fakturaUi';
 import { CINNOST_OPTIONS, nazevCinnosti, seskupitPodleKategorie } from '../utils/druhyCinnosti';
@@ -20,9 +24,19 @@ interface Props {
   /** Procentuální sleva na celý doklad (text z pole); bez setSleva se pole nezobrazí */
   sleva?: string;
   setSleva?: (v: string) => void;
+  /** Zapne tlačítko „Doprava z mapy“; adresy se předvyplní do hledání trasy. */
+  doprava?: { odkud?: string; kam?: string };
 }
 
-export function PolozkyDokladu({ radky, setRadky, cenik, readOnly = false, sleva = '', setSleva }: Props) {
+export function PolozkyDokladu({ radky, setRadky, cenik, readOnly = false, sleva = '', setSleva, doprava }: Props) {
+  const [mapaOpen, setMapaOpen] = useState(false);
+  const dopravaCenik = cenikDopravy(cenik);
+  const pouzitTrasu = (v: TrasaVysledek) => {
+    const cil = v.kam ? ` ${v.kam}` : '';
+    const popis = `${dopravaCenik?.nazev || 'Doprava'}${cil}${v.tamIZpet ? ' a zpět' : ''}`.trim();
+    setRadky(rs => nastavDopravu(rs, { km: v.km, sazba: v.sazba, popis, cinnost: dopravaCenik?.cinnost || '' }));
+    setMapaOpen(false);
+  };
   const [cenikOpen, setCenikOpen] = useState(false);
   const [cenikHledat, setCenikHledat] = useState('');
 
@@ -84,6 +98,9 @@ export function PolozkyDokladu({ radky, setRadky, cenik, readOnly = false, sleva
         <div className="flex gap-2 flex-wrap">
           <Button variant="secondary" size="sm" onClick={() => setRadky(rs => [...rs, novyRadek()])}>+ Přidat položku</Button>
           <Button variant="secondary" size="sm" onClick={() => setCenikOpen(true)}>Přidat z ceníku</Button>
+          {doprava && (
+            <Button variant="secondary" size="sm" onClick={() => setMapaOpen(true)}>Doprava z mapy</Button>
+          )}
         </div>
       )}
       {(() => {
@@ -145,6 +162,13 @@ export function PolozkyDokladu({ radky, setRadky, cenik, readOnly = false, sleva
           )}
         </div>
       </Modal>
+      {doprava && mapaOpen && (
+        <Suspense fallback={null}>
+          <TrasaModal isOpen onClose={() => setMapaOpen(false)} onPouzit={pouzitTrasu}
+            vychoziOdkud={doprava.odkud || ''} vychoziKam={doprava.kam || ''}
+            vychoziSazba={dopravaCenik?.cena || VYCHOZI_SAZBA_KM} />
+        </Suspense>
+      )}
     </div>
   );
 }

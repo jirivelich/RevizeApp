@@ -1,6 +1,6 @@
 /** Model řádků položek dokladu (faktura, cenová nabídka) – viz PolozkyDokladu.tsx. */
 import { spoctiCelkem, spoctiPolozku } from '../services/fakturaUtils';
-import type { FakturaPolozka } from '../types';
+import type { CenikPolozka, FakturaPolozka } from '../types';
 
 export interface RadekState {
   key: number;
@@ -17,6 +17,30 @@ export const toNumCz = (s: string): number => {
   const n = Number(String(s).replace(',', '.').replace(/\s/g, ''));
   return Number.isFinite(n) ? n : 0;
 };
+
+/** Sazba za km, když v ceníku není položka dopravy. */
+export const VYCHOZI_SAZBA_KM = 12;
+
+/** Položka dopravy v ceníku: jednotka „km“, nebo „doprav…“ v názvu. */
+export function cenikDopravy(cenik: CenikPolozka[]): CenikPolozka | undefined {
+  const aktivni = cenik.filter(c => c.aktivni);
+  return aktivni.find(c => (c.jednotka || '').trim().toLowerCase() === 'km')
+    ?? aktivni.find(c => /doprav/i.test(c.nazev));
+}
+
+/** Řádek dopravy v dokladu (jednotka km nebo popis „Doprava…“). */
+export const jeRadekDopravy = (r: RadekState) =>
+  r.jednotka.trim().toLowerCase() === 'km' || /^doprav/i.test(r.popis.trim());
+
+/** Zapíše dopravu do řádků: existující řádek dopravy přepíše, jinak přidá nový (prázdný výchozí nahradí). */
+export function nastavDopravu(rs: RadekState[], d: { km: number; sazba: number; popis: string; cinnost?: string }): RadekState[] {
+  const patch = { popis: d.popis, mnozstvi: String(d.km), jednotka: 'km', cena: String(d.sazba) };
+  const i = rs.findIndex(jeRadekDopravy);
+  if (i >= 0) return rs.map((r, j) => (j === i ? { ...r, ...patch } : r));
+  const novy = novyRadek({ ...patch, cinnost: d.cinnost || '' });
+  const jenPrazdny = rs.length === 1 && !rs[0].popis.trim() && toNumCz(rs[0].cena) === 0;
+  return jenPrazdny ? [novy] : [...rs, novy];
+}
 
 let radekCounter = 0;
 export const novyRadek = (p?: Partial<RadekState>): RadekState => ({
