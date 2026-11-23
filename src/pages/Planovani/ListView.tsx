@@ -181,7 +181,7 @@ function DesktopRow({ z, p, group }: { z: Zakazka; p: PlanProps; group: ListGrou
       </div>
       <span className="text-[13px] text-[var(--text-secondary)] truncate">{z.klient}</span>
       <div className="flex items-center gap-1.5 min-w-0">
-        <MapLink adresa={z.adresa} className="flex items-center gap-1.5 min-w-0 text-[13px] text-[var(--text)] hover:text-[var(--primary-text)]">
+        <MapLink adresa={z.adresa} z={z} className="flex items-center gap-1.5 min-w-0 text-[13px] text-[var(--text)] hover:text-[var(--primary-text)]">
           <span className="text-[var(--text-muted)] shrink-0"><IconPin size={14} /></span>
           <span className="truncate">{z.adresa}</span>
         </MapLink>
@@ -277,7 +277,7 @@ function SwipeCard({ z, p, group }: { z: Zakazka; p: PlanProps; group: ListGroup
           <RowMenu z={z} p={p} />
         </div>
         <div className="flex items-center gap-1.5 pl-[76px]">
-          <MapLink adresa={z.adresa} className="w-11 h-10 inline-flex items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-input)] text-[var(--text)]" />
+          <MapLink adresa={z.adresa} z={z} className="w-11 h-10 inline-flex items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-input)] text-[var(--text)]" />
           {tel && <PhoneLink tel={tel} className="w-11 h-10 inline-flex items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-input)] text-[var(--text)]" />}
           <div className="ml-auto"><PrimaryActionButton z={z} p={p} /></div>
         </div>

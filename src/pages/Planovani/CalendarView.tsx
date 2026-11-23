@@ -228,7 +228,7 @@ function DayCard({ z, p, day }: { z: Zakazka; p: PlanProps; day: string }) {
           <KatDot kat={kat} />
           <span className="text-sm font-semibold text-[var(--text)] truncate">{z.nazev}</span>
         </div>
-        <MapLink adresa={z.adresa} className="text-xs text-[var(--text-secondary)] hover:text-[var(--primary-text)] truncate">{z.klient} · {z.adresa}</MapLink>
+        <MapLink adresa={z.adresa} z={z} className="text-xs text-[var(--text-secondary)] hover:text-[var(--primary-text)] truncate">{z.klient} · {z.adresa}</MapLink>
         <div className="flex items-center gap-1.5">
           {tel && <PhoneLink tel={tel} className="w-9 h-9 inline-flex items-center justify-center rounded-[var(--radius-md)] border border-[var(--border-input)] text-[var(--text)]" />}
           <div className="ml-auto"><PrimaryActionButton z={z} p={p} compact /></div>

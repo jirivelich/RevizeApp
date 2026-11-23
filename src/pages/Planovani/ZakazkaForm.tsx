@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { lazy, Suspense, useState } from 'react';
 import { Input, Select, Modal, Button } from '../../components/ui';
 import type { Revize, Zakaznik, KategorieRevize } from '../../types';
 import { KATEGORIE_LABELS } from '../../types';
@@ -6,6 +6,10 @@ import type { ZakazkaFormData } from './utils';
 import { PRIORITA_OPTIONS, STAV_OPTIONS, MAX_DNU_ROZSAHU, dnyMezi, dnyRealizaceZFormulare } from './utils';
 import { useQuery } from '@tanstack/react-query';
 import { nactiKalendareProZakazky } from '../../services/googleCalendar';
+import { NavigaceMenu } from '../../components/Navigace';
+
+// Mapa (Leaflet) se načte až při otevření
+const PolohaModal = lazy(() => import('../../components/PolohaModal'));
 
 interface ZakazkaFormProps {
   isOpen: boolean;
@@ -32,6 +36,8 @@ export function ZakazkaForm({
   onDelete,
 }: ZakazkaFormProps) {
   const [formError, setFormError] = useState<string | null>(null);
+  const [mapaOpen, setMapaOpen] = useState(false);
+  const maPolohu = formData.gpsLat != null && formData.gpsLng != null;
   // Google kalendáře, do kterých lze zakázku zapsat (jen při propojeném Google Kalendáři)
   const { data: gKalendare } = useQuery({
     queryKey: ['google', 'kalendare-pro-zakazky'],
@@ -123,7 +129,32 @@ export function ZakazkaForm({
           ]}
         />
         <Input label="Klient" value={formData.klient} onChange={(e) => setFormData((prev) => ({ ...prev, klient: e.target.value }))} required />
-        <Input label="Adresa" value={formData.adresa} onChange={(e) => setFormData((prev) => ({ ...prev, adresa: e.target.value }))} required />
+        <div>
+          <Input label="Adresa" value={formData.adresa} onChange={(e) => setFormData((prev) => ({ ...prev, adresa: e.target.value }))} required />
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+            <button type="button" onClick={() => setMapaOpen(true)} disabled={!formData.adresa.trim() && !maPolohu}
+              className="inline-flex items-center gap-1.5 min-h-[36px] font-medium text-[var(--primary-text)] hover:text-[var(--primary-hover)] disabled:opacity-50">
+              <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z" /><circle cx="12" cy="10" r="2.5" /></svg>
+              {maPolohu ? 'Změnit polohu na mapě' : 'Určit polohu na mapě'}
+            </button>
+            {maPolohu && (
+              <>
+                <span className="text-xs text-[var(--success-text)]">✓ poloha uložena</span>
+                <NavigaceMenu cil={{ adresa: formData.adresa, lat: formData.gpsLat, lng: formData.gpsLng, nazev: formData.nazev }}
+                  className="min-h-[36px] text-xs font-medium text-[var(--primary-text)] hover:underline">Navigovat</NavigaceMenu>
+                <button type="button" onClick={() => setFormData((prev) => ({ ...prev, gpsLat: null, gpsLng: null }))}
+                  className="min-h-[36px] text-xs text-[var(--text-secondary)] hover:text-[var(--danger-text)]">Odebrat</button>
+              </>
+            )}
+          </div>
+        </div>
+        {mapaOpen && (
+          <Suspense fallback={null}>
+            <PolohaModal isOpen adresa={formData.adresa} onClose={() => setMapaOpen(false)}
+              poloha={maPolohu ? { lat: formData.gpsLat!, lng: formData.gpsLng! } : null}
+              onUlozit={(b) => { setFormData((prev) => ({ ...prev, gpsLat: b.lat, gpsLng: b.lng })); setMapaOpen(false); }} />
+          </Suspense>
+        )}
 
         {/* Termín: od–do */}
         <div>

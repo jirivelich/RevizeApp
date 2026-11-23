@@ -20,6 +20,8 @@ export type ZakazkaFormData = {
   revizeId: number | undefined;
   poznamka: string;
   googleCalendarId: string;        // '' = výchozí Google kalendář
+  gpsLat: number | null;           // poloha na mapě (navigace); null = podle adresy
+  gpsLng: number | null;
 };
 
 export const emptyFormData: ZakazkaFormData = {
@@ -42,6 +44,8 @@ export const emptyFormData: ZakazkaFormData = {
   revizeId: undefined,
   poznamka: '',
   googleCalendarId: '',
+  gpsLat: null,
+  gpsLng: null,
 };
 
 export function getStatusColor(stav: Zakazka['stav']): string {
@@ -104,6 +108,8 @@ export function zakazkaToFormData(z: Zakazka): ZakazkaFormData {
     revizeId: z.revizeId,
     poznamka: z.poznamka || '',
     googleCalendarId: z.googleCalendarId || '',
+    gpsLat: z.gpsLat ?? null,
+    gpsLng: z.gpsLng ?? null,
   };
 }
 

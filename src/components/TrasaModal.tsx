@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button, Input, Modal } from './ui';
+import { najdiAdresu, OSM_DLAZDICE, OSM_ATRIBUCE, type Bod } from '../utils/mapy';
 
 export interface TrasaVysledek {
   /** Kilometry celkem (tam, nebo tam i zpět), zaokrouhlené na celé km. */
@@ -30,20 +31,9 @@ interface Props {
   vychoziSazba?: number;
 }
 
-type Bod = { lat: number; lng: number };
 
-const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
 const OSRM = 'https://router.project-osrm.org/route/v1/driving';
 const STRED_CR: L.LatLngExpression = [49.8, 15.5];
-
-async function najdiAdresu(q: string): Promise<{ bod: Bod; nazev: string } | null> {
-  const url = `${NOMINATIM}?format=json&limit=1&countrycodes=cz,sk,de,at,pl&accept-language=cs&q=${encodeURIComponent(q)}`;
-  const res = await fetch(url, { headers: { Accept: 'application/json' } });
-  if (!res.ok) throw new Error('Vyhledání adresy selhalo');
-  const data = (await res.json()) as { lat: string; lon: string; display_name: string }[];
-  if (!data.length) return null;
-  return { bod: { lat: Number(data[0].lat), lng: Number(data[0].lon) }, nazev: data[0].display_name };
-}
 
 async function spoctiTrasu(body: Bod[]): Promise<{ km: number; minut: number; cara: [number, number][] }> {
   const souradnice = body.map(b => `${b.lng.toFixed(6)},${b.lat.toFixed(6)}`).join(';');
@@ -98,10 +88,7 @@ export function TrasaModal({ isOpen, onClose, onPouzit, vychoziOdkud = '', vycho
   useEffect(() => {
     if (!isOpen || !mapEl.current) return;
     const m = L.map(mapEl.current, { zoomControl: true }).setView(STRED_CR, 7);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(m);
+    L.tileLayer(OSM_DLAZDICE, { maxZoom: 19, attribution: OSM_ATRIBUCE }).addTo(m);
     vrstva.current = L.layerGroup().addTo(m);
     mapa.current = m;
     // Modal se animuje – přepočítat velikost

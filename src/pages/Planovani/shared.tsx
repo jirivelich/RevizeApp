@@ -2,7 +2,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Revize, Zakaznik, Zakazka } from '../../types';
-import { KAT_META, KAT_ORDER, primaryAction, mapsUrl, telHref, isClosed, type KatKey, type GUdalost } from './model';
+import { NavigaceMenu } from '../../components/Navigace';
+import { KAT_META, KAT_ORDER, primaryAction, telHref, isClosed, type KatKey, type GUdalost } from './model';
 import { STAV_OPTIONS } from './utils';
 
 /** Data a akce společné všem pohledům. */
@@ -140,19 +141,12 @@ export function IconDoc({ size = 13 }: { size?: number }) {
   );
 }
 
-export function MapLink({ adresa, className = '', children }: { adresa: string; className?: string; children?: ReactNode }) {
+/** Adresa / ikona → menu „Navigovat“ (výběr aplikace; uložená poloha zakázky má přednost před adresou). */
+export function MapLink({ adresa, z, className = '', children }: { adresa: string; z?: Zakazka; className?: string; children?: ReactNode }) {
   return (
-    <a
-      href={mapsUrl(adresa)}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={e => e.stopPropagation()}
-      title="Otevřít v navigaci"
-      aria-label={children ? undefined : `Navigovat: ${adresa}`}
-      className={className}
-    >
+    <NavigaceMenu cil={{ adresa, lat: z?.gpsLat, lng: z?.gpsLng, nazev: z?.nazev }} className={`text-left ${className}`}>
       {children ?? <IconPin />}
-    </a>
+    </NavigaceMenu>
   );
 }
 

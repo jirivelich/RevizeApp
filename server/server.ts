@@ -1162,7 +1162,7 @@ async function startServer() {
     'nazev', 'klient', 'adresa', 'zakaznikId', 'datumPlanovany', 'casPlanovany',
     'datumDokonceni', 'stav', 'priorita', 'revizeId', 'poznamka',
     'datumyRealizace', 'lhutaZpravyDni', 'datumOdevzdaniZpravy',
-    'casKonec', 'celyDen', 'kategorie', 'googleCalendarId',
+    'casKonec', 'celyDen', 'kategorie', 'googleCalendarId', 'gpsLat', 'gpsLng',
   ] as const;
 
   const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -1172,7 +1172,7 @@ async function startServer() {
 
   // Nepovinná pole zakázky: prázdný řetězec z formuláře = nevyplněno (null).
   // Bez toho server odmítl každou novou zakázku s nevyplněným datem odevzdání zprávy.
-  const ZAKAZKA_NEPOVINNA = ['datumDokonceni', 'datumOdevzdaniZpravy', 'casPlanovany', 'casKonec', 'kategorie', 'poznamka', 'googleCalendarId'];
+  const ZAKAZKA_NEPOVINNA = ['datumDokonceni', 'datumOdevzdaniZpravy', 'casPlanovany', 'casKonec', 'kategorie', 'poznamka', 'googleCalendarId', 'gpsLat', 'gpsLng'];
   function normalizeZakazkaBody(body: any): void {
     if (!body || typeof body !== 'object') return;
     for (const key of ZAKAZKA_NEPOVINNA) {
@@ -1203,6 +1203,12 @@ async function startServer() {
     }
     if (body.casKonec !== undefined && body.casKonec !== null && body.casKonec !== '' && !TIME_RE.test(body.casKonec)) {
       return 'Neplatný formát času konce (HH:mm)';
+    }
+    for (const [key, max] of [['gpsLat', 90], ['gpsLng', 180]] as const) {
+      const v = body[key];
+      if (v !== undefined && v !== null && (typeof v !== 'number' || !Number.isFinite(v) || Math.abs(v) > max)) {
+        return 'Neplatná poloha zakázky na mapě';
+      }
     }
     if (body.kategorie !== undefined && body.kategorie !== null && body.kategorie !== ''
       && !['elektro', 'hromosvod', 'stroje', 'odberne_misto'].includes(body.kategorie)) {
@@ -1308,7 +1314,7 @@ async function startServer() {
     if (validationError) throw new ValidacniChyba(validationError);
 
     const { nazev, klient, adresa, zakaznikId, datumPlanovany, casPlanovany, stav, priorita, revizeId, poznamka,
-            datumyRealizace, lhutaZpravyDni, datumOdevzdaniZpravy, casKonec, celyDen, kategorie, googleCalendarId } = data;
+            datumyRealizace, lhutaZpravyDni, datumOdevzdaniZpravy, casKonec, celyDen, kategorie, googleCalendarId, gpsLat, gpsLng } = data;
     const now = new Date().toISOString();
     const realizaceJson = Array.isArray(datumyRealizace) && datumyRealizace.length > 0
       ? JSON.stringify(datumyRealizace) : null;
@@ -1316,12 +1322,13 @@ async function startServer() {
     const result = await pool.query(`
       INSERT INTO zakazka (nazev, klient, adresa, "zakaznikId", "datumPlanovany", "casPlanovany", stav, priorita,
         "revizeId", poznamka, "datumyRealizace", "lhutaZpravyDni", "datumOdevzdaniZpravy",
-        "casKonec", "celyDen", kategorie, "googleCalendarId", "createdAt", "updatedAt")
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+        "casKonec", "celyDen", kategorie, "googleCalendarId", "gpsLat", "gpsLng", "createdAt", "updatedAt")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
       RETURNING id
     `, [nazev, klient, adresa, zakaznikId || null, datumPlanovany, casPlanovany || null, stav, priorita,
         revizeId || null, poznamka || null, realizaceJson, lhutaZpravyDni ?? 4,
-        datumOdevzdaniZpravy || null, casKonec || null, !!celyDen, kategorie || null, googleCalendarId || null, now, now]);
+        datumOdevzdaniZpravy || null, casKonec || null, !!celyDen, kategorie || null, googleCalendarId || null,
+        gpsLat ?? null, gpsLng ?? null, now, now]);
 
     triggerAutoGoogleSync(userId);
     return result.rows[0].id;

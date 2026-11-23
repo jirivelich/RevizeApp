@@ -334,6 +334,8 @@ export interface Zakazka {
   celyDen?: boolean;     // celodenní zakázka bez konkrétního času
   kategorie?: KategorieRevize | null; // kategorie revize (barva v kalendáři, předvolba při založení revize)
   googleCalendarId?: string | null;   // Google kalendář pro synchronizaci (null = výchozí)
+  gpsLat?: number | null;             // poloha na mapě (navigace); null = jen podle adresy
+  gpsLng?: number | null;
   datumDokonceni?: string;
   datumyRealizace?: string[]; // konkrétní dny realizace ["YYYY-MM-DD", ...]
   lhutaZpravyDni?: number;   // počet dní po posledním dni pro odevzdání zprávy

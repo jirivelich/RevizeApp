@@ -728,6 +728,9 @@ export async function initializeDatabase() {
       'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS "casKonec" TEXT',
       'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS "celyDen" BOOLEAN NOT NULL DEFAULT FALSE',
       'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS kategorie TEXT',
+      // ===== Zakázka: poloha na mapě (navigace) =====
+      'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS "gpsLat" DOUBLE PRECISION',
+      'ALTER TABLE zakazka ADD COLUMN IF NOT EXISTS "gpsLng" DOUBLE PRECISION',
       `INSERT INTO schema_migrations (version, name, "appliedAt")
         VALUES (3, 'nalezitosti zpravy dle CSN 33 1500', '${new Date().toISOString()}')
         ON CONFLICT (version) DO NOTHING`,

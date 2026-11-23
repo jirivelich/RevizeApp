@@ -13,6 +13,8 @@ import {
   googleCelodenni, googleCasove, type GUdalost,
 } from './Planovani/model';
 import { nactiKalendareProZakazky, nactiGoogleUdalosti } from '../services/googleCalendar';
+import { NavigaceMenu, IkonaNavigace } from '../components/Navigace';
+import type { NavCil } from '../utils/navigace';
 
 /* ═══ Helpers ═══ */
 
@@ -249,6 +251,8 @@ interface DnesPolozka {
   barva: string;          // barva tečky (kategorie / Google)
   google?: boolean;
   hotovo?: boolean;
+  /** Kam navigovat (adresa / uložená poloha); bez něj žádné tlačítko. */
+  nav?: NavCil;
 }
 
 const VISIBLE_TODAY = 6;
@@ -287,13 +291,14 @@ function TodayWidget({ zakazky, revizeById }: { zakazky: Zakazka[]; revizeById: 
         key: `z${z.id}`, od: r?.from ?? null, doH: r?.to ?? null, nazev: z.nazev,
         pod: [z.klient, z.adresa].filter(Boolean).join(' · '),
         barva: KAT_META[kategorieOf(z, revizeById)].color, hotovo: isClosed(z),
+        nav: z.adresa || z.gpsLat != null ? { adresa: z.adresa, lat: z.gpsLat, lng: z.gpsLng, nazev: z.nazev } : undefined,
       });
     }
     for (const u of googleCelodenni(gUdalosti, today)) {
-      out.push({ key: `g${u.id}`, od: null, doH: null, nazev: u.nazev, pod: u.misto, barva: 'var(--text-muted)', google: true });
+      out.push({ key: `g${u.id}`, od: null, doH: null, nazev: u.nazev, pod: u.misto, barva: 'var(--text-muted)', google: true, nav: u.misto ? { adresa: u.misto, nazev: u.nazev } : undefined });
     }
     for (const g of googleCasove(gUdalosti, today)) {
-      out.push({ key: `g${g.u.id}`, od: g.from, doH: g.to, nazev: g.u.nazev, pod: g.u.misto, barva: 'var(--text-muted)', google: true });
+      out.push({ key: `g${g.u.id}`, od: g.from, doH: g.to, nazev: g.u.nazev, pod: g.u.misto, barva: 'var(--text-muted)', google: true, nav: g.u.misto ? { adresa: g.u.misto, nazev: g.u.nazev } : undefined });
     }
     return out.sort((x, y) => (x.od ?? -1) - (y.od ?? -1));
   }, [zakazky, revizeById, gUdalosti, today]);
@@ -351,12 +356,18 @@ function TodayWidget({ zakazky, revizeById }: { zakazky: Zakazka[]; revizeById: 
                 {ted && <span className="flex-none"><Badge variant="info">teď</Badge></span>}
               </>
             );
-            const cls = `flex items-start gap-2.5 py-2 ${probehlo || p.hotovo ? 'opacity-55' : ''}`;
+            const cls = `flex min-w-0 flex-1 items-start gap-2.5 py-2 ${probehlo || p.hotovo ? 'opacity-55' : ''}`;
             return (
-              <li key={p.key} className="border-b border-[var(--border)] last:border-b-0">
+              <li key={p.key} className="flex items-center gap-1 border-b border-[var(--border)] last:border-b-0">
                 {p.google
                   ? <div className={cls}>{obsah}</div>
                   : <Link to="/planovani" className={`${cls} group`}>{obsah}</Link>}
+                {p.nav && (
+                  <NavigaceMenu cil={p.nav} label={`Navigovat: ${p.nazev}`}
+                    className="flex h-9 w-9 flex-none items-center justify-center rounded-[var(--radius-md)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--primary-text)]">
+                    <IkonaNavigace />
+                  </NavigaceMenu>
+                )}
               </li>
             );
           })}
