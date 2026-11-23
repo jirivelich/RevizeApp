@@ -253,6 +253,8 @@ interface DnesPolozka {
   hotovo?: boolean;
   /** Kam navigovat (adresa / uložená poloha); bez něj žádné tlačítko. */
   nav?: NavCil;
+  /** Odkaz na detail zakázky v Plánování. */
+  odkaz?: string;
 }
 
 const VISIBLE_TODAY = 6;
@@ -291,6 +293,7 @@ function TodayWidget({ zakazky, revizeById }: { zakazky: Zakazka[]; revizeById: 
         key: `z${z.id}`, od: r?.from ?? null, doH: r?.to ?? null, nazev: z.nazev,
         pod: [z.klient, z.adresa].filter(Boolean).join(' · '),
         barva: KAT_META[kategorieOf(z, revizeById)].color, hotovo: isClosed(z),
+        odkaz: `/planovani?zakazka=${z.id}&datum=${today}`,
         nav: z.adresa || z.gpsLat != null ? { adresa: z.adresa, lat: z.gpsLat, lng: z.gpsLng, nazev: z.nazev } : undefined,
       });
     }
@@ -361,7 +364,7 @@ function TodayWidget({ zakazky, revizeById }: { zakazky: Zakazka[]; revizeById: 
               <li key={p.key} className="flex items-center gap-1 border-b border-[var(--border)] last:border-b-0">
                 {p.google
                   ? <div className={cls}>{obsah}</div>
-                  : <Link to="/planovani" className={`${cls} group`}>{obsah}</Link>}
+                  : <Link to={p.odkaz ?? '/planovani'} className={`${cls} group`}>{obsah}</Link>}
                 {p.nav && (
                   <NavigaceMenu cil={p.nav} label={`Navigovat: ${p.nazev}`}
                     className="flex h-9 w-9 flex-none items-center justify-center rounded-[var(--radius-md)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--primary-text)]">
@@ -418,7 +421,7 @@ function WeekPanel({ zakazky, className = '' }: { zakazky: Zakazka[]; className?
             const isToday = days === 0;
             return (
               <li key={key} className="border-b border-[var(--border)] last:border-b-0">
-                <Link to={`/planovani?datum=${z.datumPlanovany}`} className="flex gap-3 py-2.5 group">
+                <Link to={`/planovani?zakazka=${z.id}&datum=${toDateStr(date)}`} className="flex gap-3 py-2.5 group">
                   <span className={`flex w-11 flex-none flex-col items-center justify-center rounded-[var(--radius-md)] py-1 ${
                     isToday ? 'bg-[var(--primary)] text-[var(--primary-fg)]' : 'bg-[var(--bg-hover)] text-[var(--text)]'
                   }`}>

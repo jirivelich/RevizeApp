@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Modal, ConfirmDialog, PageHeader } from '../../components/ui';
 import { useRevize, useZakazky, useCreateZakazka, useUpdateZakazka, useDeleteZakazka, useCreateRevize, useZakaznici } from '../../hooks/useQueries';
 import type { Zakazka, KategorieRevize } from '../../types';
@@ -117,7 +117,12 @@ export function PlanovaniPage() {
 
   const today = toDateStr(new Date());
   // Den vybraný v měsíčním pohledu – „Nová zakázka“ ho použije jako datum
-  const [vybranyDen, setVybranyDen] = useState(today);
+  // Odkaz z dashboardu: /planovani?zakazka=ID&datum=YYYY-MM-DD → kalendář na ten den a rovnou detail zakázky
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [vybranyDen, setVybranyDen] = useState(() => {
+    const d = searchParams.get('datum');
+    return d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : today;
+  });
   const [vybranyDenDo, setVybranyDenDo] = useState<string | undefined>(undefined);
   const vyberDen = useCallback((d: string, end?: string) => { setVybranyDen(d); setVybranyDenDo(end); }, []);
   const [kontextMenu, setKontextMenu] = useState<{ x: number; y: number; target: MenuTarget } | null>(null);
@@ -171,6 +176,18 @@ export function PlanovaniPage() {
     setFormData(zakazkaToFormData(z));
     setIsModalOpen(true);
   };
+
+  // Otevřít zakázku z odkazu (?zakazka=ID), jakmile jsou zakázky načtené; parametr pak z URL odebrat
+  const zakazkaZOdkazu = searchParams.get('zakazka');
+  useEffect(() => {
+    if (!zakazkaZOdkazu) return;
+    const z = zakazky.find(x => String(x.id) === zakazkaZOdkazu);
+    if (!z && zakazky.length === 0) return; // ještě se načítá
+    if (z) openEdit(z);
+    setSearchParams(p => { p.delete('zakazka'); p.delete('datum'); return p; }, { replace: true });
+    // openEdit se mění s každým renderem; spouští se jen při změně odkazu / dat
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zakazkaZOdkazu, zakazky]);
 
   const handleSubmit = (data: ZakazkaFormData) => {
     const onSuccess = () => {
