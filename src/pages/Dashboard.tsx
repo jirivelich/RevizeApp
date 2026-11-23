@@ -9,7 +9,7 @@ import type { BadgeVariant } from '../components/ui';
 import { KATEGORIE_LABELS } from '../types';
 import type { AppNotification, NotificationSeverity, NotificationType, Revize, Zakazka } from '../types';
 import {
-  KAT_META, kategorieOf, toDateStr, addDaysLocal, longDay, jobsOnDay, isAllDay, isClosed, timedBlocks, hourRange, formatTime,
+  KAT_META, kategorieOf, toDateStr, jobsOnDay, isAllDay, isClosed, timeRange, formatTime,
   googleCelodenni, googleCasove, type GUdalost,
 } from './Planovani/model';
 import { nactiKalendareProZakazky, nactiGoogleUdalosti } from '../services/googleCalendar';
@@ -233,156 +233,141 @@ function AttentionPanel({ notifications }: { notifications: AppNotification[] })
   );
 }
 
-/* ═══ Můj den (časová osa dne) ═══ */
-
-const DEN_HODINA = 34; // px na hodinu
+/* ═══ Dnes: datum, počasí, program dne ═══ */
 
 function nowHours() {
   const d = new Date();
   return d.getHours() + d.getMinutes() / 60;
 }
 
-function DayPanel({ zakazky, revizeById }: { zakazky: Zakazka[]; revizeById: Map<number, Revize> }) {
+interface DnesPolozka {
+  key: string;
+  od: number | null;      // null = celý den
+  doH: number | null;
+  nazev: string;
+  pod?: string;
+  barva: string;          // barva tečky (kategorie / Google)
+  google?: boolean;
+  hotovo?: boolean;
+}
+
+const VISIBLE_TODAY = 6;
+
+function TodayWidget({ zakazky, revizeById }: { zakazky: Zakazka[]; revizeById: Map<number, Revize> }) {
   const today = toDateStr(new Date());
-  const [den, setDen] = useState(today);
   const [now, setNow] = useState(nowHours);
   useEffect(() => {
     const t = setInterval(() => setNow(nowHours()), 60_000);
     return () => clearInterval(t);
   }, []);
 
-  // Události z Google Kalendáře (jen když je propojený; jinak se nic nenačítá)
+  const { data: pocasi, isLoading: nacitaPocasi } = useWeather();
+  const dnesPocasi = pocasi?.find(d => d.date === today);
+
+  // Události z Google Kalendáře (jen když je propojený)
   const { data: gStav } = useRQQuery({
     queryKey: ['google', 'kalendare-pro-zakazky'],
     queryFn: nactiKalendareProZakazky,
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
-  const gOd = addDaysLocal(today, -7);
-  const gDo = addDaysLocal(today, 30);
   const { data: gUdalosti } = useRQQuery({
-    queryKey: ['google', 'udalosti', gOd, gDo],
-    queryFn: () => nactiGoogleUdalosti(gOd, gDo) as Promise<GUdalost[]>,
+    queryKey: ['google', 'udalosti', today, today],
+    queryFn: () => nactiGoogleUdalosti(today, today) as Promise<GUdalost[]>,
     enabled: !!gStav?.connected,
     staleTime: 2 * 60 * 1000,
     retry: false,
   });
 
-  const aktivni = useMemo(() => zakazky.filter(z => z.stav !== 'zrušeno'), [zakazky]);
-  const celodenni = useMemo(() => jobsOnDay(aktivni, den).filter(isAllDay), [aktivni, den]);
-  const bloky = useMemo(() => timedBlocks(aktivni, den), [aktivni, den]);
-  const gCelodenni = useMemo(() => googleCelodenni(gUdalosti, den), [gUdalosti, den]);
-  const gBloky = useMemo(() => googleCasove(gUdalosti, den), [gUdalosti, den]);
-  const range = hourRange([...bloky, ...gBloky]);
-  const hodiny = Array.from({ length: range.end - range.start }, (_, i) => range.start + i);
-  const prazdny = celodenni.length + bloky.length + gCelodenni.length + gBloky.length === 0;
-  const jeDnes = den === today;
-  const nadpis = jeDnes ? 'Dnes' : den === addDaysLocal(today, 1) ? 'Zítra' : den === addDaysLocal(today, -1) ? 'Včera' : null;
+  const polozky = useMemo<DnesPolozka[]>(() => {
+    const out: DnesPolozka[] = [];
+    for (const z of jobsOnDay(zakazky, today)) {
+      const r = isAllDay(z) ? null : timeRange(z);
+      out.push({
+        key: `z${z.id}`, od: r?.from ?? null, doH: r?.to ?? null, nazev: z.nazev,
+        pod: [z.klient, z.adresa].filter(Boolean).join(' · '),
+        barva: KAT_META[kategorieOf(z, revizeById)].color, hotovo: isClosed(z),
+      });
+    }
+    for (const u of googleCelodenni(gUdalosti, today)) {
+      out.push({ key: `g${u.id}`, od: null, doH: null, nazev: u.nazev, pod: u.misto, barva: 'var(--text-muted)', google: true });
+    }
+    for (const g of googleCasove(gUdalosti, today)) {
+      out.push({ key: `g${g.u.id}`, od: g.from, doH: g.to, nazev: g.u.nazev, pod: g.u.misto, barva: 'var(--text-muted)', google: true });
+    }
+    return out.sort((x, y) => (x.od ?? -1) - (y.od ?? -1));
+  }, [zakazky, revizeById, gUdalosti, today]);
 
-  const navBtn = 'h-8 w-8 inline-flex items-center justify-center rounded-[var(--radius-md)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text)]';
+  const datum = new Date().toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' });
+  const zobrazene = polozky.slice(0, VISIBLE_TODAY);
+
   return (
-    <Panel
-      title="Můj den"
-      action={
-        <div className="flex items-center gap-1">
-          <button type="button" aria-label="Předchozí den" onClick={() => setDen(d => addDaysLocal(d, -1))} className={navBtn}>
-            <span className="rotate-180 inline-flex"><Icon name="chevron" size={16} /></span>
-          </button>
-          <button type="button" onClick={() => setDen(today)} disabled={jeDnes}
-            className="h-8 min-w-[150px] px-2 rounded-[var(--radius-md)] text-[13px] font-medium text-[var(--text)] hover:bg-[var(--bg-hover)] disabled:hover:bg-transparent first-letter:uppercase"
-            title={jeDnes ? undefined : 'Zpět na dnešek'}>
-            {nadpis ? `${nadpis} · ` : ''}{longDay(den)}
-          </button>
-          <button type="button" aria-label="Další den" onClick={() => setDen(d => addDaysLocal(d, 1))} className={navBtn}>
-            <Icon name="chevron" size={16} />
-          </button>
-          <span className="ml-1"><PanelLink to="/planovani">Kalendář</PanelLink></span>
+    <section aria-label="Dnes" className="min-w-0 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--bg-surface)]">
+      {/* Datum + počasí */}
+      <div className="flex items-center justify-between gap-3 px-4 py-3.5 border-b border-[var(--border)]">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.06em] text-[var(--primary-text)]">Dnes</p>
+          <p className="text-[16px] font-bold leading-tight text-[var(--text)] first-letter:uppercase">{datum}</p>
         </div>
-      }
-    >
-      {prazdny ? (
-        <EmptyNote>
-          {jeDnes ? 'Dnes nemáte nic naplánováno.' : 'Na tento den není nic naplánováno.'}<br />
-          <Link to="/planovani" className="mt-1 inline-block font-medium text-[var(--nav-text-active)] hover:underline">Naplánovat zakázku</Link>
-        </EmptyNote>
-      ) : (
-        <div className="flex flex-col">
-          {(celodenni.length > 0 || gCelodenni.length > 0) && (
-            <div className="flex flex-wrap items-center gap-1.5 px-4 py-2.5 border-b border-[var(--border)] bg-[var(--bg-faint)]">
-              <span className="w-12 flex-none whitespace-nowrap text-[11px] text-[var(--text-secondary)]">Celý den</span>
-              {celodenni.map(z => {
-                const kat = kategorieOf(z, revizeById);
-                return (
-                  <Link key={z.id} to="/planovani" title={[z.nazev, z.klient, z.adresa].filter(Boolean).join(' · ')}
-                    className={`max-w-full truncate rounded-[var(--radius-sm)] px-2.5 py-1 text-xs font-semibold hover:underline ${isClosed(z) ? 'opacity-55' : ''}`}
-                    style={{ color: KAT_META[kat].color, background: KAT_META[kat].bg }}>
-                    {z.nazev}
-                  </Link>
-                );
-              })}
-              {gCelodenni.map(u => (
-                <span key={u.id} className="max-w-full truncate rounded-[var(--radius-sm)] px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)] border border-dashed border-[var(--border-input)]">
-                  {u.nazev}
-                </span>
-              ))}
-            </div>
-          )}
-          <div className="relative flex px-4 py-3">
-            <div className="relative w-12 flex-none" style={{ height: hodiny.length * DEN_HODINA }}>
-              {hodiny.map((h, i) => (
-                <span key={h} className="absolute left-0 text-[11px] tabular-nums text-[var(--text-secondary)]" style={{ top: i * DEN_HODINA - 7 }}>{h}:00</span>
-              ))}
-            </div>
-            <div className="relative flex-1 min-w-0"
-              style={{
-                height: hodiny.length * DEN_HODINA,
-                backgroundImage: `repeating-linear-gradient(to bottom, var(--border-subtle) 0, var(--border-subtle) 1px, transparent 1px, transparent ${DEN_HODINA}px)`,
-              }}>
-              {gBloky.map(g => {
-                const top = (g.from - range.start) * DEN_HODINA;
-                const h = Math.max(18, (g.to - g.from) * DEN_HODINA);
-                return (
-                  <div key={g.u.id} title={`${g.u.nazev} · ${formatTime(g.from)}–${formatTime(g.to)} (Google Kalendář)`}
-                    className="absolute right-0 w-[34%] overflow-hidden rounded-[var(--radius-sm)] border border-dashed border-[var(--border-input)] bg-[var(--bg-surface)] px-2 py-1 text-[11px] text-[var(--text-secondary)]"
-                    style={{ top: top + 2, height: h - 4 }}>
-                    <span className="block truncate font-medium">{g.u.nazev}</span>
-                  </div>
-                );
-              })}
-              {bloky.map(b => {
-                const kat = kategorieOf(b.z, revizeById);
-                const top = (b.from - range.start) * DEN_HODINA;
-                const h = (b.to - b.from) * DEN_HODINA;
-                const sirka = gBloky.length ? 0.64 : 1;
-                return (
-                  <Link key={b.z.id} to="/planovani"
-                    title={`${b.z.nazev} · ${formatTime(b.from)}–${formatTime(b.to)}${b.z.klient ? ` · ${b.z.klient}` : ''}`}
-                    className={`absolute flex flex-col overflow-hidden rounded-[var(--radius-sm)] px-2 py-1 hover:brightness-110 ${isClosed(b.z) ? 'opacity-55' : ''}`}
-                    style={{
-                      top: top + 2, height: h - 4,
-                      left: `calc((100% - 4px) * ${sirka} * ${b.col} / ${b.cols})`,
-                      width: `calc((100% - 4px) * ${sirka} / ${b.cols} - 2px)`,
-                      background: KAT_META[kat].bg,
-                      border: `1px solid color-mix(in srgb, ${KAT_META[kat].color} 45%, transparent)`,
-                    }}>
-                    <span className="flex items-baseline gap-2 min-w-0">
-                      <span className="truncate text-xs font-semibold text-[var(--text)]">{b.z.nazev}</span>
-                      <span className="flex-none text-[11px] font-medium tabular-nums" style={{ color: KAT_META[kat].color }}>{formatTime(b.from)}–{formatTime(b.to)}</span>
-                    </span>
-                    {h >= 48 && <span className="truncate text-[11px] text-[var(--text-secondary)]">{[b.z.klient, b.z.adresa].filter(Boolean).join(' · ')}</span>}
-                  </Link>
-                );
-              })}
-              {jeDnes && now >= range.start && now <= range.end && (
-                <div aria-hidden="true" className="pointer-events-none absolute -left-1 right-0 z-[2] h-[2px] bg-[var(--danger)]" style={{ top: (now - range.start) * DEN_HODINA }}>
-                  <span className="absolute -left-[4px] -top-[4px] h-[10px] w-[10px] rounded-full bg-[var(--danger)]" />
-                </div>
-              )}
-            </div>
+        {nacitaPocasi ? (
+          <span className="text-xs text-[var(--text-muted)] animate-pulse">načítám počasí…</span>
+        ) : dnesPocasi && (
+          <div className="flex flex-none items-center gap-2" title={`Tachov: ${dnesPocasi.max}° / ${dnesPocasi.min}°${dnesPocasi.precip > 0 ? `, srážky ${dnesPocasi.precip} %` : ''}`}>
+            <span className="text-[28px] leading-none" aria-hidden="true">{wmoToEmoji(dnesPocasi.code)}</span>
+            <span className="flex flex-col leading-tight">
+              <span className="text-[15px] font-semibold tabular-nums text-[var(--text)]">
+                {dnesPocasi.max}° <span className="font-normal text-[var(--text-muted)]">{dnesPocasi.min}°</span>
+              </span>
+              <span className="text-[11px] text-[var(--text-secondary)]">
+                {dnesPocasi.precip > 0 ? `💧${dnesPocasi.precip} % · ` : ''}Tachov
+              </span>
+            </span>
           </div>
-        </div>
+        )}
+      </div>
+
+      {/* Program dne */}
+      {polozky.length === 0 ? (
+        <p className="px-4 py-5 text-center text-[13px] text-[var(--text-muted)]">
+          Dnes nemáte nic naplánováno.{' '}
+          <Link to="/planovani" className="font-medium text-[var(--nav-text-active)] hover:underline">Naplánovat</Link>
+        </p>
+      ) : (
+        <ul className="px-4 py-1.5">
+          {zobrazene.map(p => {
+            const probehlo = p.doH !== null && p.doH <= now;
+            const ted = p.od !== null && p.doH !== null && p.od <= now && now < p.doH;
+            const obsah = (
+              <>
+                <span className={`w-[52px] flex-none whitespace-nowrap pt-px text-[13px] font-semibold tabular-nums ${ted ? 'text-[var(--primary-text)]' : 'text-[var(--text)]'}`}>
+                  {p.od === null ? <span className="text-[11px] font-medium text-[var(--text-secondary)]">celý den</span> : formatTime(p.od)}
+                </span>
+                <span className={`mt-[5px] h-2 w-2 flex-none rounded-full ${p.google ? 'border border-[var(--text-muted)]' : ''}`}
+                  style={p.google ? undefined : { background: p.barva }} />
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className={`truncate text-[14px] ${p.google ? 'text-[var(--text-secondary)]' : 'font-semibold text-[var(--text)] group-hover:underline'}`}>{p.nazev}</span>
+                  {p.pod && <span className="truncate text-xs text-[var(--text-muted)]">{p.pod}</span>}
+                </span>
+                {ted && <span className="flex-none"><Badge variant="info">teď</Badge></span>}
+              </>
+            );
+            const cls = `flex items-start gap-2.5 py-2 ${probehlo || p.hotovo ? 'opacity-55' : ''}`;
+            return (
+              <li key={p.key} className="border-b border-[var(--border)] last:border-b-0">
+                {p.google
+                  ? <div className={cls}>{obsah}</div>
+                  : <Link to="/planovani" className={`${cls} group`}>{obsah}</Link>}
+              </li>
+            );
+          })}
+        </ul>
       )}
-    </Panel>
+      {polozky.length > VISIBLE_TODAY && (
+        <Link to="/planovani" className="block border-t border-[var(--border)] py-2.5 text-center text-[13px] font-medium text-[var(--nav-text-active)] hover:bg-[var(--bg-hover)]">
+          a další {polozky.length - VISIBLE_TODAY} v kalendáři
+        </Link>
+      )}
+    </section>
   );
 }
 
@@ -400,7 +385,7 @@ function WeekPanel({ zakazky, className = '' }: { zakazky: Zakazka[]; className?
       const dates = Array.from(new Set([z.datumPlanovany, ...(z.datumyRealizace ?? [])].filter(Boolean)));
       for (const ds of dates) {
         const days = daysFromToday(ds);
-        if (days < 0 || days > 6) continue;
+        if (days < 1 || days > 7) continue; // dnešek je ve widgetu Dnes
         const date = new Date(ds);
         date.setHours(0, 0, 0, 0);
         out.push({ key: `${z.id}-${ds}`, date, days, z });
@@ -410,10 +395,10 @@ function WeekPanel({ zakazky, className = '' }: { zakazky: Zakazka[]; className?
   }, [zakazky]);
 
   return (
-    <Panel title="Tento týden" className={className} bodyClassName={items.length === 0 ? 'flex items-center justify-center' : ''} action={<PanelLink to="/planovani">Kalendář</PanelLink>}>
+    <Panel title="Další dny" className={className} bodyClassName={items.length === 0 ? 'flex items-center justify-center' : ''} action={<PanelLink to="/planovani">Kalendář</PanelLink>}>
       {items.length === 0 ? (
         <EmptyNote>
-          Na příštích 7 dní není nic naplánováno.<br />
+          Na příštích 7 dní nic naplánováno není.<br />
           <Link to="/planovani" className="mt-1 inline-block font-medium text-[var(--nav-text-active)] hover:underline">Naplánovat zakázku</Link>
         </EmptyNote>
       ) : (
@@ -592,23 +577,6 @@ function useWeather() {
   });
 }
 
-function WeatherInline() {
-  const { data, isLoading } = useWeather();
-  const today = new Date().toISOString().slice(0, 10);
-  const day = data?.find(d => d.date === today);
-  if (isLoading) return <span className="text-xs text-[var(--text-muted)] animate-pulse">načítám…</span>;
-  if (!day) return null;
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-xl leading-none">{wmoToEmoji(day.code)}</span>
-      <span className="text-[14px] font-semibold text-[var(--text)]">{day.max}°</span>
-      <span className="text-[13px] text-[var(--text-muted)]">{day.min}°</span>
-      {day.precip > 0 && <span className="text-xs text-[var(--primary-text)]">💧{day.precip}%</span>}
-      <span className="text-xs text-[var(--text-muted)]">Tachov</span>
-    </div>
-  );
-}
-
 /* ═══ Dashboard ═══ */
 
 /** Okno pro „nevyfakturované“ dokončené revize – starší se už nepočítají. */
@@ -701,17 +669,12 @@ export function Dashboard() {
     return 'Dobrý večer';
   })();
 
-  const todayLabel = new Date().toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
     <div className="space-y-5">
       {/* ═══ Hlavička ═══ */}
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-[var(--text-muted)]">
-            <span className="first-letter:uppercase">{todayLabel}</span>
-            <WeatherInline />
-          </div>
           <h1 className="text-xl font-bold leading-tight text-[var(--text)]">{greeting}</h1>
         </div>
         <div className="flex w-full flex-wrap gap-2 sm:w-auto">
@@ -769,11 +732,13 @@ export function Dashboard() {
       {/* ═══ Dva sloupce: vlevo práce, vpravo přehledy (každý sloupec se skládá samostatně, bez mezer) ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-start lg:items-stretch">
         <div className="flex min-w-0 flex-col gap-3 self-start lg:col-span-2">
-          <DayPanel zakazky={zakazky} revizeById={revizeById} />
+          {/* Mobil / tablet: Dnes hned nahoře (na počítači je v pravém sloupci) */}
+          <div className="lg:hidden"><TodayWidget zakazky={zakazky} revizeById={revizeById} /></div>
           <AttentionPanel notifications={notifications} />
           <WipPanel revize={data.rozpracovaneTop} total={data.rozpracovaneCount} staleDays={staleDays} />
         </div>
         <div className="flex min-w-0 flex-col gap-3">
+          <div className="hidden lg:block"><TodayWidget zakazky={zakazky} revizeById={revizeById} /></div>
           <WeekPanel zakazky={zakazky} className="lg:flex-1" />
           <RevizeBarChart revize={revize} />
           <Panel title="Fakturace" action={<PanelLink to="/faktury">Faktury</PanelLink>} bodyClassName="flex flex-col gap-3 px-4 py-3.5">
