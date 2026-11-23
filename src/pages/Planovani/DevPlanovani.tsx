@@ -10,6 +10,8 @@ import { WeekView } from './WeekView';
 import { CalendarView } from './CalendarView';
 import { addDaysLocal, toDateStr, moveZakazka } from './model';
 import { PlanContextMenu, type PlanProps, type MenuTarget } from './shared';
+import { ZakazkaForm } from './ZakazkaForm';
+import { emptyFormData, formDataToZakazka, zakazkaToFormData, type ZakazkaFormData } from './utils';
 
 function sample(today: string): Zakazka[] {
   const d = (n: number) => addDaysLocal(today, n);
@@ -38,8 +40,19 @@ export default function DevPlanovani() {
   const today = toDateStr(new Date());
   const [zakazky, setZakazky] = useState<Zakazka[]>(() => sample(today));
   const [den, setDen] = useState(today);
+  const [denDo, setDenDo] = useState<string | undefined>();
   const [menu, setMenu] = useState<{ x: number; y: number; target: MenuTarget } | null>(null);
   const zavrit = useCallback(() => setMenu(null), []);
+  // Skutečný formulář zakázky (uložení jen do vzorových dat)
+  const [form, setForm] = useState<{ data: ZakazkaFormData; id: number | null } | null>(null);
+  const setFormData: React.Dispatch<React.SetStateAction<ZakazkaFormData>> = act =>
+    setForm(f => (f ? { ...f, data: typeof act === 'function' ? act(f.data) : act } : f));
+  const ulozit = (data: ZakazkaFormData) => {
+    const z = formDataToZakazka(data);
+    if (form?.id != null) update(form.id, z);
+    else setZakazky(list => [...list, { ...z, id: Math.max(0, ...list.map(x => x.id ?? 0)) + 1, createdAt: new Date(), updatedAt: new Date() } as Zakazka]);
+    setForm(null);
+  };
   const update = (id: number, patch: Partial<Zakazka>) => setZakazky(list => list.map(z => (z.id === id ? { ...z, ...patch } : z)));
 
   const revizeById = useMemo(() => new Map<number, Revize>(), []);
@@ -50,8 +63,8 @@ export default function DevPlanovani() {
 
   const p: PlanProps = {
     zakazky, revizeById, zakazniciById, today,
-    onEdit: z => console.info('upravit', z.id),
-    onCreateAt: (d, t) => console.info('nová', d, t),
+    onEdit: z => setForm({ data: zakazkaToFormData(z), id: z.id ?? null }),
+    onCreateAt: (d, t, dTo) => setForm({ id: null, data: { ...emptyFormData, datumPlanovany: d, datumDo: dTo && dTo > d ? dTo : d, ...(t ? { casPlanovany: t } : {}), ...(dTo && dTo > d && !t ? { celyDen: true } : {}) } }),
     onCreateRevize: z => update(z.id!, { revizeId: 99 }),
     onOpenRevize: z => console.info('otevřít revizi', z.revizeId),
     onMarkReportDone: z => update(z.id!, { datumOdevzdaniZpravy: today }),
@@ -60,7 +73,8 @@ export default function DevPlanovani() {
     onDelete: id => setZakazky(list => list.filter(z => z.id !== id)),
     onMove: (z, d, t) => update(z.id!, moveZakazka(z, d, t)),
     selectedDay: den,
-    onSelectDay: setDen,
+    selectedDayEnd: denDo,
+    onSelectDay: (d, end) => { setDen(d); setDenDo(end); },
     onContextMenu: (e, target) => setMenu({ x: e.clientX, y: e.clientY, target }),
   };
 
@@ -75,6 +89,8 @@ export default function DevPlanovani() {
         ))}
       </div>
       {v === 'week' ? <WeekView {...p} /> : v === 'calendar' ? <CalendarView {...p} /> : <ListView {...p} />}
+      <ZakazkaForm isOpen={!!form} onClose={() => setForm(null)} onSubmit={ulozit} formData={form?.data ?? emptyFormData}
+        setFormData={setFormData} revize={[]} zakaznici={[...zakazniciById.values()]} isEditing={form?.id != null} />
       {menu && <PlanContextMenu x={menu.x} y={menu.y} target={menu.target} p={p} onClose={zavrit} />}
     </div>
   );

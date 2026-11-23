@@ -158,3 +158,30 @@ describe('PRIORITA_OPTIONS', () => {
     expect(values).toEqual(['nizká', 'střední', 'vysoká']);
   });
 });
+
+describe('rozsah od–do ve formuláři', () => {
+  it('dnyMezi vrací všechny dny včetně krajních, i přes konec měsíce', async () => {
+    const { dnyMezi } = await import('../../pages/Planovani/utils');
+    expect(dnyMezi('2026-11-29', '2026-12-02')).toEqual(['2026-11-29', '2026-11-30', '2026-12-01', '2026-12-02']);
+    expect(dnyMezi('2026-11-29', '2026-11-20')).toEqual(['2026-11-29']);
+  });
+
+  it('formulář → zakázka: vynechané dny se neuloží, první den = datumPlanovany', async () => {
+    const { formDataToZakazka, emptyFormData } = await import('../../pages/Planovani/utils');
+    const z = formDataToZakazka({ ...emptyFormData, datumPlanovany: '2026-11-27', datumDo: '2026-11-30', vynechaneDny: ['2026-11-28', '2026-11-29'] });
+    expect(z.datumPlanovany).toBe('2026-11-27');
+    expect(z.datumyRealizace).toEqual(['2026-11-30']);
+    expect(z).not.toHaveProperty('datumDo');
+    expect(z).not.toHaveProperty('vynechaneDny');
+  });
+
+  it('zakázka → formulář: mezery mezi dny se zobrazí jako vynechané', async () => {
+    const { zakazkaToFormData } = await import('../../pages/Planovani/utils');
+    const f = zakazkaToFormData({
+      nazev: 'x', klient: 'k', adresa: 'a', datumPlanovany: '2026-11-27', datumyRealizace: ['2026-11-30'],
+      stav: 'plánováno', priorita: 'střední', createdAt: new Date(), updatedAt: new Date(),
+    });
+    expect(f.datumDo).toBe('2026-11-30');
+    expect(f.vynechaneDny).toEqual(['2026-11-28', '2026-11-29']);
+  });
+});

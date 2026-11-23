@@ -10,7 +10,9 @@ export type ZakazkaFormData = {
   casKonec: string;                // '' = bez konce (blok 1 h)
   celyDen: boolean;
   kategorie: KategorieRevize | '';
-  datumyRealizace: string[];       // pole konkrétních dní realizace
+  datumyRealizace: string[];       // pole konkrétních dní realizace (bez prvního dne)
+  datumDo: string;                 // poslední den rozsahu „od–do“ (jen formulář)
+  vynechaneDny: string[];          // dny v rozsahu, kdy se nepracuje (jen formulář)
   lhutaZpravyDni: number;          // počet dní po posledním dni pro zprávu
   datumOdevzdaniZpravy: string;    // plánované odevzdání, '' = nenastaveno
   stav: Zakazka['stav'];
@@ -31,6 +33,8 @@ export const emptyFormData: ZakazkaFormData = {
   celyDen: false,
   kategorie: '',
   datumyRealizace: [],
+  datumDo: new Date().toISOString().split('T')[0],
+  vynechaneDny: [],
   lhutaZpravyDni: 4,
   datumOdevzdaniZpravy: '',
   stav: 'plánováno',
@@ -61,8 +65,13 @@ export function getPriorityColor(priorita: Zakazka['priorita']): string {
 
 /** Data formuláře → zakázka pro uložení (prázdná kategorie = null, celý den = bez konce). */
 export function formDataToZakazka(data: ZakazkaFormData): Partial<Zakazka> {
+  const { datumDo: _datumDo, vynechaneDny: _vynechane, ...rest } = data;
+  void _datumDo; void _vynechane;
+  const dny = dnyRealizaceZFormulare(data);
   return {
-    ...data,
+    ...rest,
+    datumPlanovany: dny[0] ?? data.datumPlanovany,
+    datumyRealizace: dny.slice(1),
     kategorie: data.kategorie || null,
     casKonec: data.celyDen || !data.casKonec ? null : data.casKonec,
     datumOdevzdaniZpravy: data.datumOdevzdaniZpravy || null,
@@ -72,6 +81,9 @@ export function formDataToZakazka(data: ZakazkaFormData): Partial<Zakazka> {
 }
 
 export function zakazkaToFormData(z: Zakazka): ZakazkaFormData {
+  const dny = getRealizaceDays(z);
+  const od = dny[0];
+  const doDne = dny[dny.length - 1];
   return {
     nazev: z.nazev,
     klient: z.klient,
@@ -82,7 +94,9 @@ export function zakazkaToFormData(z: Zakazka): ZakazkaFormData {
     casKonec: z.casKonec || '',
     celyDen: !!z.celyDen,
     kategorie: z.kategorie || '',
-    datumyRealizace: z.datumyRealizace || [],
+    datumyRealizace: dny.slice(1),
+    datumDo: doDne,
+    vynechaneDny: dnyMezi(od, doDne).filter(d => !dny.includes(d)),
     lhutaZpravyDni: z.lhutaZpravyDni ?? 4,
     datumOdevzdaniZpravy: z.datumOdevzdaniZpravy || '',
     stav: z.stav,
@@ -107,6 +121,36 @@ export const PRIORITA_OPTIONS = [
 ] as const;
 
 // ========== Helpery pro vícedenní zakázky ==========
+
+/** Maximální délka rozsahu „od–do“ ve formuláři (dní). */
+export const MAX_DNU_ROZSAHU = 62;
+
+function lokalniDen(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Všechny dny od–do včetně (místní čas). Neplatný / obrácený rozsah → jen `od`. */
+export function dnyMezi(od: string, doDne: string): string[] {
+  if (!od) return [];
+  if (!doDne || doDne <= od) return [od];
+  const [y, m, d] = od.split('-').map(Number);
+  const cur = new Date(y, m - 1, d);
+  const out: string[] = [];
+  while (out.length < MAX_DNU_ROZSAHU) {
+    const s = lokalniDen(cur);
+    if (s > doDne) break;
+    out.push(s);
+    cur.setDate(cur.getDate() + 1);
+  }
+  return out;
+}
+
+/** Dny realizace podle formuláře: rozsah od–do bez vynechaných dní (aspoň první den). */
+export function dnyRealizaceZFormulare(data: Pick<ZakazkaFormData, 'datumPlanovany' | 'datumDo' | 'vynechaneDny'>): string[] {
+  const vse = dnyMezi(data.datumPlanovany, data.datumDo);
+  const dny = vse.filter(d => !data.vynechaneDny.includes(d));
+  return dny.length ? dny : vse.slice(0, 1);
+}
 
 /** Vrátí seřazené dny realizace. Vždy zahrnuje datumPlanovany + případné extra dny. */
 export function getRealizaceDays(z: Zakazka): string[] {

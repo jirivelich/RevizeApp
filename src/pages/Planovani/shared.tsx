@@ -12,7 +12,8 @@ export interface PlanProps {
   zakazniciById: Map<number, Zakaznik>;
   today: string;
   onEdit: (z: Zakazka) => void;
-  onCreateAt: (date: string, time?: string) => void;
+  /** Nová zakázka; dateTo = poslední den rozsahu (výběr více dní). */
+  onCreateAt: (date: string, time?: string, dateTo?: string) => void;
   onCreateRevize: (z: Zakazka) => void;
   onOpenRevize: (z: Zakazka) => void;
   onMarkReportDone: (z: Zakazka) => void;
@@ -25,7 +26,9 @@ export interface PlanProps {
   googleUdalosti?: GUdalost[];
   /** Vybraný den v měsíčním pohledu (sdílený se stránkou kvůli „Nová zakázka“). */
   selectedDay?: string;
-  onSelectDay?: (d: string) => void;
+  /** Konec výběru více dní (tažením myší nebo Shift+klik); chybí = jeden den. */
+  selectedDayEnd?: string;
+  onSelectDay?: (d: string, end?: string) => void;
   /** Pravé tlačítko myši na dni / časovém slotu / zakázce. */
   onContextMenu?: (e: React.MouseEvent, target: MenuTarget) => void;
 }
@@ -34,6 +37,8 @@ export interface PlanProps {
 export interface MenuTarget {
   date: string;
   time?: string;
+  /** Poslední den vybraného rozsahu. */
+  dateTo?: string;
   z?: Zakazka;
 }
 
@@ -314,20 +319,21 @@ export function PlanContextMenu({ x, y, target, p, onClose }: { x: number; y: nu
     };
   }, [onClose]);
 
-  const { date, time, z } = target;
+  const { date, time, dateTo, z } = target;
+  const rozsah = dateTo && dateTo !== date ? `${fmtDen(date)}–${fmtDen(dateTo)}` : fmtDen(date);
   const run = (fn: () => void) => () => { fn(); onClose(); };
   return (
     <div
       ref={ref}
       role="menu"
-      aria-label={z ? `Akce se zakázkou ${z.nazev}` : `Akce pro ${fmtDen(date)}`}
+      aria-label={z ? `Akce se zakázkou ${z.nazev}` : `Akce pro ${rozsah}`}
       className="fixed z-[9999] min-w-[220px] max-w-[300px] p-1 bg-[var(--surface)] border border-[var(--border-strong)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)]"
       style={pos}
       onClick={e => e.stopPropagation()}
       onContextMenu={e => e.preventDefault()}
     >
       <div className="px-3 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-secondary)] truncate">
-        {z ? z.nazev : `${fmtDen(date)}${time ? ` · ${time}` : ''}`}
+        {z ? z.nazev : `${rozsah}${time ? ` · ${time}` : ''}`}
       </div>
       {z && (
         <>
@@ -335,8 +341,8 @@ export function PlanContextMenu({ x, y, target, p, onClose }: { x: number; y: nu
           <div className="border-t border-[var(--border-subtle)] my-1" />
         </>
       )}
-      <button type="button" role="menuitem" className={MENU_ITEM} onClick={run(() => p.onCreateAt(date, time))}>
-        + Nová zakázka {fmtDen(date)}{time ? ` v ${time}` : ''}
+      <button type="button" role="menuitem" className={MENU_ITEM} onClick={run(() => p.onCreateAt(date, time, dateTo))}>
+        + Nová zakázka {rozsah}{time ? ` v ${time}` : ''}
       </button>
     </div>
   );

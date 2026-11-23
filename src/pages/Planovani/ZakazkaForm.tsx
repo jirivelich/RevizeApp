@@ -3,7 +3,7 @@ import { Input, Select, Modal, Button } from '../../components/ui';
 import type { Revize, Zakaznik, KategorieRevize } from '../../types';
 import { KATEGORIE_LABELS } from '../../types';
 import type { ZakazkaFormData } from './utils';
-import { PRIORITA_OPTIONS, STAV_OPTIONS, addDays } from './utils';
+import { PRIORITA_OPTIONS, STAV_OPTIONS, MAX_DNU_ROZSAHU, dnyMezi, dnyRealizaceZFormulare } from './utils';
 import { useQuery } from '@tanstack/react-query';
 import { nactiKalendareProZakazky } from '../../services/googleCalendar';
 
@@ -54,39 +54,35 @@ export function ZakazkaForm({
       return;
     }
     if (!formData.datumPlanovany) {
-      setFormError('Zadejte 1. den realizace');
+      setFormError('Zadejte datum začátku');
       return;
     }
     setFormError(null);
     onSubmit(formData);
   };
 
-  const sortedExtra = [...formData.datumyRealizace].sort();
-
-  const addExtraDay = () => {
-    const lastDay = sortedExtra.length > 0
-      ? sortedExtra[sortedExtra.length - 1]
-      : formData.datumPlanovany;
-    const next = addDays(lastDay, 1);
-    if (!formData.datumyRealizace.includes(next)) {
-      setFormData((prev) => ({ ...prev, datumyRealizace: [...prev.datumyRealizace, next] }));
-    }
-  };
-
-  const removeExtraDay = (day: string) => {
-    setFormData((prev) => ({ ...prev, datumyRealizace: prev.datumyRealizace.filter((d) => d !== day) }));
-  };
-
-  const updateExtraDay = (oldDay: string, newDay: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      datumyRealizace: prev.datumyRealizace.map((d) => (d === oldDay ? newDay : d)),
-    }));
-  };
-
-  const allDays = [formData.datumPlanovany, ...formData.datumyRealizace].sort();
-  const lastDay = allDays[allDays.length - 1];
-  const deadlineZpravy = lastDay ? addDays(lastDay, formData.lhutaZpravyDni || 4) : null;
+  // Rozsah od–do; jednotlivé dny lze vynechat (víkend, jiná práce)
+  const rozsah = dnyMezi(formData.datumPlanovany, formData.datumDo);
+  const pocetDnu = dnyRealizaceZFormulare(formData).length;
+  const nastavOd = (od: string) => setFormData((prev) => {
+    // Posun začátku posune i konec, ať zůstane stejná délka
+    const delka = dnyMezi(prev.datumPlanovany, prev.datumDo).length;
+    const novyDo = od ? dnyMezi(od, '9999-12-31').slice(0, Math.max(1, delka)).pop() ?? od : prev.datumDo;
+    return { ...prev, datumPlanovany: od, datumDo: novyDo, vynechaneDny: [] };
+  });
+  const nastavDo = (doDne: string) => setFormData((prev) => ({
+    ...prev,
+    datumDo: doDne && doDne >= prev.datumPlanovany ? doDne : prev.datumPlanovany,
+    vynechaneDny: prev.vynechaneDny.filter((d) => d <= doDne),
+  }));
+  const prepniDen = (d: string) => setFormData((prev) => ({
+    ...prev,
+    vynechaneDny: prev.vynechaneDny.includes(d) ? prev.vynechaneDny.filter((x) => x !== d) : [...prev.vynechaneDny, d],
+  }));
+  const bezVikendu = () => setFormData((prev) => ({
+    ...prev,
+    vynechaneDny: dnyMezi(prev.datumPlanovany, prev.datumDo).filter((d) => { const w = new Date(`${d}T12:00:00`).getDay(); return w === 0 || w === 6; }),
+  }));
 
   return (
     <Modal
@@ -123,44 +119,37 @@ export function ZakazkaForm({
         <Input label="Klient" value={formData.klient} onChange={(e) => setFormData((prev) => ({ ...prev, klient: e.target.value }))} required />
         <Input label="Adresa" value={formData.adresa} onChange={(e) => setFormData((prev) => ({ ...prev, adresa: e.target.value }))} required />
 
-        {/* Dny realizace */}
+        {/* Termín: od–do */}
         <div>
-          <Input
-            type="date"
-            label="1. den realizace"
-            value={formData.datumPlanovany}
-            onChange={(e) => setFormData((prev) => ({ ...prev, datumPlanovany: e.target.value }))}
-            required
-          />
-          {sortedExtra.length > 0 && (
-            <div className="mt-2 space-y-2">
-              {sortedExtra.map((day) => (
-                <div key={day} className="flex items-center gap-2">
-                  <input
-                    type="date"
-                    value={day}
-                    onChange={(e) => updateExtraDay(day, e.target.value)}
-                    className="flex-1 px-3 min-h-[40px] text-sm bg-[var(--bg-input)] text-[var(--text)] border border-[var(--border-input)] rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring-color)] focus:border-[var(--primary-text)]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeExtraDay(day)}
-                    className="text-[var(--text-secondary)] hover:text-[var(--danger-text)] transition-colors min-w-[40px] min-h-[40px] text-lg leading-none"
-                    title="Odebrat den"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
+          <div className="grid grid-cols-2 gap-3">
+            <Input type="date" label="Od" value={formData.datumPlanovany} onChange={(e) => nastavOd(e.target.value)} required />
+            <Input type="date" label="Do" value={formData.datumDo} min={formData.datumPlanovany} onChange={(e) => nastavDo(e.target.value)} />
+          </div>
+          {rozsah.length > 1 && (
+            <div className="mt-2 flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-2 text-xs text-[var(--text-secondary)]">
+                <span>{pocetDnu} {pocetDnu === 1 ? 'den' : pocetDnu < 5 ? 'dny' : 'dní'} realizace · kliknutím den vynecháte</span>
+                <button type="button" onClick={bezVikendu} className="font-medium text-[var(--primary-text)] hover:text-[var(--primary-hover)]">Bez víkendů</button>
+              </div>
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label="Dny realizace">
+                {rozsah.map((d) => {
+                  const dt = new Date(`${d}T12:00:00`);
+                  const aktivni = !formData.vynechaneDny.includes(d);
+                  return (
+                    <button key={d} type="button" aria-pressed={aktivni} onClick={() => prepniDen(d)}
+                      className={`min-h-[36px] px-2 rounded-[var(--radius-md)] border text-xs font-semibold tabular-nums ${aktivni
+                        ? 'border-[var(--primary)] bg-[var(--bg-accent)] text-[var(--primary-text)]'
+                        : 'border-[var(--border-input)] text-[var(--text-muted)] line-through'}`}>
+                      {['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'][dt.getDay()]} {dt.getDate()}. {dt.getMonth() + 1}.
+                    </button>
+                  );
+                })}
+              </div>
+              {rozsah.length >= MAX_DNU_ROZSAHU && (
+                <p className="m-0 text-xs text-[var(--warning-text)]">Rozsah je omezený na {MAX_DNU_ROZSAHU} dní.</p>
+              )}
             </div>
           )}
-          <button
-            type="button"
-            onClick={addExtraDay}
-            className="mt-2 text-sm font-medium text-[var(--primary-text)] hover:text-[var(--primary-hover)] transition-colors"
-          >
-            + Přidat další den realizace
-          </button>
         </div>
 
         <label className="flex items-center gap-2 text-sm text-[var(--text)] min-h-[40px]">
@@ -199,31 +188,6 @@ export function ZakazkaForm({
           />
         )}
 
-        {/* Revizní zpráva */}
-        <div className="border-t border-[var(--border-input)] pt-4 space-y-3">
-          <p className="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.08em]">Revizní zpráva</p>
-          <div className="flex items-end gap-3">
-            <div className="flex-1">
-              <Input
-                type="number"
-                label="Lhůta pro zprávu (dní od dokončení)"
-                value={String(formData.lhutaZpravyDni)}
-                onChange={(e) => setFormData((prev) => ({ ...prev, lhutaZpravyDni: parseInt(e.target.value) || 4 }))}
-              />
-            </div>
-            {deadlineZpravy && (
-              <div className="mb-2 text-xs text-[var(--warning-text)] font-medium whitespace-nowrap">
-                → do {new Date(deadlineZpravy).toLocaleDateString('cs-CZ')}
-              </div>
-            )}
-          </div>
-          <Input
-            type="date"
-            label="Plánované odevzdání zprávy (volitelné)"
-            value={formData.datumOdevzdaniZpravy}
-            onChange={(e) => setFormData((prev) => ({ ...prev, datumOdevzdaniZpravy: e.target.value }))}
-          />
-        </div>
 
         <Select label="Stav" value={formData.stav} onChange={(e) => setFormData((prev) => ({ ...prev, stav: e.target.value as ZakazkaFormData['stav'] }))} options={[...STAV_OPTIONS]} />
         <Select label="Priorita" value={formData.priorita} onChange={(e) => setFormData((prev) => ({ ...prev, priorita: e.target.value as ZakazkaFormData['priorita'] }))} options={[...PRIORITA_OPTIONS]} />

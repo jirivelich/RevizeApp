@@ -1,20 +1,40 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Zakazka } from '../../types';
 import {
-  monthGrid, fromDateStr, jobsOnDay, deadlinesOnDay, loadLevel, kategorieOf, timeLabel, timeRange, longDay, MESICE, isClosed, googleVeDni,
+  monthGrid, fromDateStr, addDaysLocal, diffDays, jobsOnDay, deadlinesOnDay, loadLevel, kategorieOf, timeLabel, timeRange, longDay, MESICE, isClosed, googleVeDni,
 } from './model';
 import { KatDot, KatLegend, NavBar, PrimaryActionButton, MapLink, PhoneLink, IconDoc, GoogleKarta, type PlanProps } from './shared';
 import { phoneOf, useCalendarKeys, useIsMobile, contextHandler } from './hooks';
 
 const DNY = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
+const shortDate = (d: string) => { const t = fromDateStr(d); return `${t.getDate()}. ${t.getMonth() + 1}.`; };
 
 export function CalendarView(p: PlanProps) {
   const isMobile = useIsMobile();
   // Vybraný den drží stránka (tlačítko „Nová zakázka“ ho použije jako datum)
-  const [vlastniVyber, setVlastniVyber] = useState(p.today);
-  const selected = p.selectedDay ?? vlastniVyber;
+  const [vlastniVyber, setVlastniVyber] = useState<{ od: string; do?: string }>({ od: p.today });
+  const selected = p.selectedDay ?? vlastniVyber.od;
+  const selectedEnd = p.selectedDay !== undefined ? p.selectedDayEnd : vlastniVyber.do;
   const { onSelectDay } = p;
-  const setSelected = useCallback((d: string) => { setVlastniVyber(d); onSelectDay?.(d); }, [onSelectDay]);
+  /** Vybere den, případně rozsah a–b (v libovolném pořadí). */
+  const vyber = useCallback((a: string, b?: string) => {
+    const [od, doDne] = b && b < a ? [b, a] : [a, b];
+    const end = doDne && doDne !== od ? doDne : undefined;
+    setVlastniVyber({ od, do: end });
+    onSelectDay?.(od, end);
+  }, [onSelectDay]);
+  const setSelected = useCallback((d: string) => vyber(d), [vyber]);
+  const vRozsahu = (d: string) => !!selectedEnd && d >= selected && d <= selectedEnd;
+  const pocetVybranych = selectedEnd ? diffDays(selectedEnd, selected) + 1 : 1;
+
+  // Výběr více dní tažením myší (kotva = den, kde se tlačítko stisklo)
+  const kotva = useRef<string | null>(null);
+  const mys = useRef(false);
+  useEffect(() => {
+    const konec = () => { kotva.current = null; };
+    window.addEventListener('pointerup', konec);
+    return () => window.removeEventListener('pointerup', konec);
+  }, []);
   const [ym, setYm] = useState(() => { const t = fromDateStr(selected); return { y: t.getFullYear(), m: t.getMonth() }; });
   const [showDeadlines, setShowDeadlines] = useState(true);
 
@@ -34,10 +54,12 @@ export function CalendarView(p: PlanProps) {
   const grid = useMemo(() => monthGrid(ym.y, ym.m), [ym]);
   const active = useMemo(() => p.zakazky.filter(z => z.stav !== 'zrušeno'), [p.zakazky]);
   const dayJobs = useMemo(() => {
-    const list = jobsOnDay(active, selected);
+    // Při výběru více dní: zakázky ze všech vybraných dní (každá jednou)
+    const dny = selectedEnd ? Array.from({ length: diffDays(selectedEnd, selected) + 1 }, (_, i) => addDaysLocal(selected, i)) : [selected];
+    const list = [...new Map(dny.flatMap(d => jobsOnDay(active, d)).map(z => [z.id, z])).values()];
     const key = (z: Zakazka) => timeRange(z)?.from ?? -1; // celodenní nahoru
     return [...list].sort((a, b) => key(a) - key(b));
-  }, [active, selected]);
+  }, [active, selected, selectedEnd]);
   const dayDeadlines = useMemo(() => deadlinesOnDay(p.zakazky, selected), [p.zakazky, selected]);
   const [showGoogle, setShowGoogle] = useState(true);
   const gUdalosti = showGoogle ? p.googleUdalosti : undefined;
@@ -72,7 +94,7 @@ export function CalendarView(p: PlanProps) {
               <div key={d} className={`${isMobile ? 'text-center py-1.5' : 'px-2.5 py-2'} text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--text-secondary)]`}>{d}</div>
             ))}
           </div>
-          <div className={`grid grid-cols-7 ${isMobile ? 'gap-0.5' : ''}`} role="grid" aria-label={`${MESICE[ym.m]} ${ym.y}`}>
+          <div className={`grid grid-cols-7 select-none ${isMobile ? 'gap-0.5' : ''}`} role="grid" aria-label={`${MESICE[ym.m]} ${ym.y}`}>
             {grid.map((d, i) => {
               const dt = fromDateStr(d);
               const inMonth = dt.getMonth() === ym.m;
@@ -81,7 +103,7 @@ export function CalendarView(p: PlanProps) {
               const gCount = inMonth ? googleVeDni(gUdalosti, d).length : 0;
               const lateDeadline = deadlines.some(() => d < p.today);
               const isToday = d === p.today;
-              const isSel = d === selected;
+              const isSel = d === selected || vRozsahu(d);
               const weekend = i % 7 >= 5;
               const lvl = loadLevel(jobs.length);
               const bg = lvl ? `var(--load-${lvl})` : weekend && !isMobile ? 'var(--bg-faint)' : undefined;
@@ -92,9 +114,21 @@ export function CalendarView(p: PlanProps) {
                   type="button"
                   aria-label={label}
                   aria-pressed={isSel}
-                  onClick={() => { setSelected(d); if (!inMonth) setYm({ y: dt.getFullYear(), m: dt.getMonth() }); }}
+                  onPointerDown={e => {
+                    mys.current = e.pointerType === 'mouse';
+                    if (!mys.current || e.button !== 0 || e.shiftKey) return;
+                    kotva.current = d;
+                    vyber(d);
+                  }}
+                  onPointerEnter={() => { if (kotva.current) vyber(kotva.current, d); }}
+                  onClick={e => {
+                    if (e.shiftKey) vyber(selected, d);
+                    else if (!mys.current || e.detail === 0) setSelected(d); // dotyk a klávesnice; myš vybírá už při stisku
+                    mys.current = false;
+                    if (!inMonth) setYm({ y: dt.getFullYear(), m: dt.getMonth() });
+                  }}
                   onDoubleClick={() => p.onCreateAt(d)}
-                  onContextMenu={contextHandler(p, { date: d })}
+                  onContextMenu={contextHandler(p, vRozsahu(d) ? { date: selected, dateTo: selectedEnd } : { date: d })}
                   className={isMobile
                     ? `h-[50px] rounded-[var(--radius-md)] flex flex-col items-center justify-center gap-1 ${isSel && !isToday ? 'ring-2 ring-inset ring-[var(--primary)]' : ''}`
                     : `relative min-h-[96px] p-2 flex flex-col text-left border-r border-b border-[var(--border-subtle)] hover:bg-[var(--bg-hover)] ${isSel ? 'shadow-[inset_0_0_0_2px_var(--primary)]' : ''}`}
@@ -134,19 +168,25 @@ export function CalendarView(p: PlanProps) {
         <aside className="lg:w-[360px] shrink-0 flex flex-col gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4" aria-label="Zakázky vybraného dne">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <h3 className="m-0 text-[17px] font-bold text-[var(--text)] first-letter:uppercase">{selected === p.today ? `Dnes, ${longDay(selected)}` : longDay(selected)}</h3>
+              <h3 className="m-0 text-[17px] font-bold text-[var(--text)] first-letter:uppercase">
+                {selectedEnd ? `${shortDate(selected)} – ${shortDate(selectedEnd)}` : selected === p.today ? `Dnes, ${longDay(selected)}` : longDay(selected)}
+              </h3>
               <p className="m-0 text-xs text-[var(--text-secondary)]">
+                {selectedEnd && `${pocetVybranych} ${pocetVybranych < 5 ? 'dny' : 'dní'} · `}
                 {dayJobs.length ? `${dayJobs.length} ${dayJobs.length === 1 ? 'zakázka' : dayJobs.length < 5 ? 'zakázky' : 'zakázek'}` : 'Žádné zakázky'}
                 {dayDeadlines.length > 0 && ` · ${dayDeadlines.length} termín zprávy`}
               </p>
             </div>
-            <button type="button" onClick={() => p.onCreateAt(selected)}
+            <button type="button" onClick={() => p.onCreateAt(selected, undefined, selectedEnd)}
               className="shrink-0 min-h-[36px] px-3 rounded-[var(--radius-md)] border border-[var(--border-input)] text-xs font-semibold text-[var(--text)] hover:bg-[var(--bg-hover)]">
               + Přidat
             </button>
           </div>
 
           {dayJobs.map(z => <DayCard key={z.id} z={z} p={p} day={selected} />)}
+          {!isMobile && !selectedEnd && (
+            <p className="m-0 text-[11px] text-[var(--text-muted)]">Víc dní vyberete tažením myší nebo Shift+klikem.</p>
+          )}
 
           {dayGoogle.length > 0 && (
             <div className="pt-3 border-t border-[var(--border)] flex flex-col gap-2">

@@ -118,10 +118,12 @@ export function PlanovaniPage() {
   const today = toDateStr(new Date());
   // Den vybraný v měsíčním pohledu – „Nová zakázka“ ho použije jako datum
   const [vybranyDen, setVybranyDen] = useState(today);
+  const [vybranyDenDo, setVybranyDenDo] = useState<string | undefined>(undefined);
+  const vyberDen = useCallback((d: string, end?: string) => { setVybranyDen(d); setVybranyDenDo(end); }, []);
   const [kontextMenu, setKontextMenu] = useState<{ x: number; y: number; target: MenuTarget } | null>(null);
   const zavritKontextMenu = useCallback(() => setKontextMenu(null), []);
   /** Výchozí datum nové zakázky podle aktuálního pohledu. */
-  const novaZakazka = () => openCreate(viewMode === 'calendar' ? vybranyDen : undefined);
+  const novaZakazka = () => (viewMode === 'calendar' ? openCreate(vybranyDen, undefined, vybranyDenDo) : openCreate());
   const revizeById = useMemo(() => new Map(revize.filter(r => r.id != null).map(r => [r.id!, r])), [revize]);
   const zakazniciById = useMemo(() => new Map(zakaznici.filter(z => z.id != null).map(z => [z.id!, z])), [zakaznici]);
 
@@ -145,12 +147,17 @@ export function PlanovaniPage() {
   };
 
   // === Create / Edit ===
-  const openCreate = (defaultDate?: string, time?: string) => {
+  const openCreate = (defaultDate?: string, time?: string, dateTo?: string) => {
     setEditingId(null);
     const from = parseTime(time);
+    const od = defaultDate || today;
+    const vicedenni = !!dateTo && dateTo > od;
     setFormData({
       ...emptyFormData,
-      datumPlanovany: defaultDate || today,
+      datumPlanovany: od,
+      datumDo: vicedenni ? dateTo : od,
+      // Víc dní najednou = typicky celodenní práce
+      ...(vicedenni && !time ? { celyDen: true } : {}),
       ...(time && from !== null ? {
         casPlanovany: time,
         casKonec: `${String(Math.min(23, Math.floor(from) + 2)).padStart(2, '0')}:${time.slice(3)}`,
@@ -308,7 +315,7 @@ export function PlanovaniPage() {
     zakazniciById,
     today,
     onEdit: openEdit,
-    onCreateAt: (d, t) => openCreate(d, t),
+    onCreateAt: (d, t, dTo) => openCreate(d, t, dTo),
     onCreateRevize: handleCreateRevize,
     onOpenRevize: z => { if (z.revizeId) navigate(`/revize/${z.revizeId}`); },
     onMarkReportDone: handleMarkReportDone,
@@ -317,7 +324,8 @@ export function PlanovaniPage() {
     onDelete: id => setDeleteTargetId(id),
     onMove: handleMove,
     selectedDay: vybranyDen,
-    onSelectDay: setVybranyDen,
+    selectedDayEnd: vybranyDenDo,
+    onSelectDay: vyberDen,
     onContextMenu: (e, target) => setKontextMenu({ x: e.clientX, y: e.clientY, target }),
   };
 
