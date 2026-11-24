@@ -2,6 +2,7 @@
 import type { Revize, Firma, Nastaveni, Zakaznik } from '../../types';
 import { Input, Select } from '../../components/ui';
 import { TW, SectionHeader, Field } from './tw';
+import { SlozkaInput } from './SlozkaInput';
 import { ObjednatelSekce } from './ObjednatelSekce';
 
 interface HromosvodInfoTabProps {
@@ -46,6 +47,7 @@ export function HromosvodInfoTab({
               <input className={TW.input} value={formData.nazev || ''} onChange={(e) => setFormData({ ...formData, nazev: e.target.value })} />
             </div>
             <Input label="Adresa objektu" value={formData.adresa || ''} onChange={(e) => setFormData({ ...formData, adresa: e.target.value })} />
+            <SlozkaInput value={formData.slozka || ''} onChange={(v) => setFormData({ ...formData, slozka: v })} objednatel={formData.objednatel} />
             <div className="flex flex-col gap-1 col-span-3 max-sm:col-span-1">
               <label className={TW.label}>Norma</label>
               <input className={TW.input} placeholder="ČSN EN 62305-1 až 4" value={formData.hromosvodNorma || ''} onChange={(e) => setFormData({ ...formData, hromosvodNorma: e.target.value })} />

@@ -1,12 +1,17 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, Fragment } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
-import { Button, Input, Select, Modal, BottomSheet, Badge, PageHeader, EmptyState } from '../components/ui';
+import { Button, Input, Textarea, Select, Modal, BottomSheet, Badge, PageHeader, EmptyState } from '../components/ui';
 import type { BadgeVariant } from '../components/ui';
 import { revizeService } from '../services/database';
 import { useRevize, useDeleteRevize } from '../hooks/useQueries';
 import { KATEGORIE_LABELS } from '../types';
 import type { KategorieRevize, Revize } from '../types';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../hooks/queryKeys';
+import { seskupRevize, slozkaRevize, BEZ_SLOZKY, BEZ_OBJEDNATELE } from '../utils/slozky';
+import type { SkupinaObjednatel, SkupinaSlozka } from '../utils/slozky';
+import { SlozkaInput } from './RevizeDetail/SlozkaInput';
 
 // Definice kategorií revizí - centrální místo pro budoucí rozšíření
 const KATEGORIE_REVIZE: { value: KategorieRevize; label: string; popis: string; icon: React.ReactNode }[] = [
@@ -114,6 +119,36 @@ export function RevizePage() {
   // Potvrzení smazání (náhrada za window.confirm – nefunguje v iOS PWA)
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; cisloRevize: string } | null>(null);
   const [confirmDeleteInput, setConfirmDeleteInput] = useState('');
+
+  // Seskupení podle objednatele → složky (hala, projekt…)
+  const [seskupit, setSeskupitState] = useState<boolean>(() => {
+    try { return localStorage.getItem('revize-seskupit') === '1'; } catch { return false; }
+  });
+  const setSeskupit = (v: boolean) => {
+    setSeskupitState(v);
+    try { localStorage.setItem('revize-seskupit', v ? '1' : '0'); } catch { /* ignore */ }
+  };
+  const [rozbaleno, setRozbaleno] = useState<Set<string>>(() => new Set());
+  const toggleRozbaleno = (key: string) => setRozbaleno(prev => {
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
+  const queryClient = useQueryClient();
+
+  // Hromadné založení revizí (typicky desítky strojů do jedné složky)
+  type HromadneForm = {
+    objednatel: string; adresa: string; zakaznikId?: number; slozka: string;
+    kategorieRevize: KategorieRevize; datum: string; typRevize: Revize['typRevize']; termin: number; nazvy: string;
+  };
+  const [hromadne, setHromadne] = useState<HromadneForm | null>(null);
+  const [hromadnePrubeh, setHromadnePrubeh] = useState<{ hotovo: number; celkem: number } | null>(null);
+  const [hromadneChyba, setHromadneChyba] = useState<string | null>(null);
+
+  // Přejmenování / přiřazení složky
+  const [presun, setPresun] = useState<{ ids: number[]; puvodni: string; objednatel: string; nova: string } | null>(null);
+  const [presunBezi, setPresunBezi] = useState(false);
+  const [presunChyba, setPresunChyba] = useState<string | null>(null);
 
   // Paginace
   const [pageSize, setPageSize] = useState<number>(25);
@@ -266,19 +301,131 @@ export function RevizePage() {
     }
   };
 
-  const filteredRevize = revize.filter(r => {
-    const matchesSearch = r.nazev.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.cisloRevize.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.adresa.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = !filterStav || r.stav === filterStav;
-    const matchesKategorie = !filterKategorie || r.kategorieRevize === filterKategorie;
-    return matchesSearch && matchesFilter && matchesKategorie;
-  }).sort((a, b) => {
-    const valA = (a[sortKey] ?? '').toString().toLowerCase();
-    const valB = (b[sortKey] ?? '').toString().toLowerCase();
-    const cmp = valA.localeCompare(valB, 'cs');
-    return sortDir === 'asc' ? cmp : -cmp;
-  });
+  const filteredRevize = useMemo(() => {
+    const hledat = searchTerm.trim().toLowerCase();
+    return revize.filter(r => {
+      const matchesSearch = !hledat ||
+        r.nazev.toLowerCase().includes(hledat) ||
+        r.cisloRevize.toLowerCase().includes(hledat) ||
+        r.adresa.toLowerCase().includes(hledat) ||
+        (r.objednatel ?? '').toLowerCase().includes(hledat) ||
+        slozkaRevize(r).toLowerCase().includes(hledat);
+      const matchesFilter = !filterStav || r.stav === filterStav;
+      const matchesKategorie = !filterKategorie || r.kategorieRevize === filterKategorie;
+      return matchesSearch && matchesFilter && matchesKategorie;
+    }).sort((a, b) => {
+      const valA = (a[sortKey] ?? '').toString().toLowerCase();
+      const valB = (b[sortKey] ?? '').toString().toLowerCase();
+      const cmp = valA.localeCompare(valB, 'cs');
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [revize, searchTerm, filterStav, filterKategorie, sortKey, sortDir]);
+
+  const skupiny = useMemo(() => (seskupit ? seskupRevize(filteredRevize) : []), [seskupit, filteredRevize]);
+  // Při hledání jsou všechny skupiny rozbalené, aby byly nalezené revize vidět
+  const hledaniAktivni = searchTerm.trim() !== '';
+  const jeRozbaleno = (key: string) => hledaniAktivni || rozbaleno.has(key);
+  const rozbalitVse = () => setRozbaleno(new Set(skupiny.flatMap(o => [o.key, ...o.slozky.map(sl => sl.key)])));
+  const sbalitVse = () => setRozbaleno(new Set());
+
+  const openHromadne = (vzor?: { objednatel?: SkupinaObjednatel; slozka?: SkupinaSlozka }) => {
+    const prvni = vzor?.slozka?.revize[0] ?? vzor?.objednatel?.slozky[0]?.revize[0];
+    setHromadne({
+      objednatel: vzor?.objednatel && vzor.objednatel.nazev !== BEZ_OBJEDNATELE ? vzor.objednatel.nazev : '',
+      adresa: prvni?.adresa ?? '',
+      zakaznikId: prvni?.zakaznikId,
+      slozka: vzor?.slozka?.nazev ?? '',
+      kategorieRevize: prvni?.kategorieRevize ?? 'stroje',
+      datum: new Date().toISOString().split('T')[0],
+      typRevize: prvni?.typRevize ?? 'pravidelná',
+      termin: prvni?.termin ?? 12,
+      nazvy: '',
+    });
+    setHromadneChyba(null);
+    setHromadnePrubeh(null);
+  };
+
+  const hromadneNazvy = (hromadne?.nazvy ?? '').split('\n').map(n => n.trim()).filter(Boolean);
+
+  const handleHromadne = async () => {
+    if (!hromadne || hromadneNazvy.length === 0) return;
+    if (!navigator.onLine) {
+      setHromadneChyba('Hromadné založení vyžaduje připojení k internetu.');
+      return;
+    }
+    if (!hromadne.objednatel.trim() || !hromadne.adresa.trim()) {
+      setHromadneChyba('Vyplňte objednatele a adresu.');
+      return;
+    }
+    setHromadneChyba(null);
+    const zaklad = generateCisloRevize();
+    const existujici = new Set(revize.map(r => r.cisloRevize));
+    let poradi = 1;
+    const slozka = hromadne.slozka.trim();
+    setHromadnePrubeh({ hotovo: 0, celkem: hromadneNazvy.length });
+    try {
+      for (let i = 0; i < hromadneNazvy.length; i++) {
+        let cislo: string;
+        do { cislo = `${zaklad}-${String(poradi++).padStart(3, '0')}`; } while (existujici.has(cislo));
+        existujici.add(cislo);
+        const nazev = hromadneNazvy[i];
+        const id = await revizeService.create({
+          cisloRevize: cislo,
+          nazev,
+          adresa: hromadne.adresa.trim(),
+          objednatel: hromadne.objednatel.trim(),
+          zakaznikId: hromadne.zakaznikId,
+          slozka: slozka || null,
+          kategorieRevize: hromadne.kategorieRevize,
+          datum: hromadne.datum,
+          termin: hromadne.termin,
+          typRevize: hromadne.typRevize,
+          stav: 'rozpracováno',
+        } as Omit<Revize, 'id' | 'createdAt' | 'updatedAt'>);
+        // U strojů rovnou předvyplnit název stroje v protokolu
+        if (hromadne.kategorieRevize === 'stroje' && id > 0) {
+          await revizeService.update(id, { strojniData: JSON.stringify({ strojNazev: nazev }) });
+        }
+        setHromadnePrubeh({ hotovo: i + 1, celkem: hromadneNazvy.length });
+      }
+      await queryClient.invalidateQueries({ queryKey: queryKeys.revize.all });
+      if (slozka) {
+        // Rozbalit složku, do které se přidávalo
+        const sk = seskupRevize([{ objednatel: hromadne.objednatel, slozka } as Revize])[0];
+        setRozbaleno(prev => new Set([...prev, sk.key, sk.slozky[0].key]));
+      }
+      setHromadne(null);
+      setHromadnePrubeh(null);
+    } catch (err) {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.revize.all });
+      setHromadneChyba('Chyba při zakládání: ' + (err instanceof Error ? err.message : 'neznámá chyba') + '. Již založené revize zůstaly uložené.');
+      setHromadnePrubeh(null);
+    }
+  };
+
+  const openPresun = (revizeVeSlozce: Revize[], puvodni: string, objednatel: string) => {
+    setPresun({ ids: revizeVeSlozce.map(r => r.id!).filter(id => id > 0), puvodni, objednatel, nova: puvodni });
+    setPresunChyba(null);
+  };
+
+  const handlePresun = async () => {
+    if (!presun) return;
+    setPresunBezi(true);
+    setPresunChyba(null);
+    try {
+      const nova = presun.nova.trim();
+      for (const id of presun.ids) {
+        await revizeService.update(id, { slozka: nova || null });
+      }
+      await queryClient.invalidateQueries({ queryKey: queryKeys.revize.all });
+      setPresun(null);
+    } catch (err) {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.revize.all });
+      setPresunChyba('Chyba při ukládání: ' + (err instanceof Error ? err.message : 'neznámá chyba'));
+    } finally {
+      setPresunBezi(false);
+    }
+  };
 
   const totalCount = filteredRevize.length;
   const totalPages = pageSize === -1 ? 1 : Math.ceil(totalCount / pageSize);
@@ -286,103 +433,7 @@ export function RevizePage() {
     ? filteredRevize
     : filteredRevize.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
 
-  if (loading) {
-    return (
-      <div className="text-center py-12">
-        <div className="animate-spin h-6 w-6 border-2 border-[var(--border-strong)] border-t-transparent rounded-full mx-auto mb-4"></div>
-        <p className="text-sm text-[var(--text-secondary)]">Načítání revizí...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-[var(--danger-text)] text-sm font-medium mb-2">{error}</p>
-        <Button variant="secondary" onClick={() => refetch()}>
-          Zkusit znovu
-        </Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-4 h-full">
-      <div className="flex-shrink-0">
-        <PageHeader
-          title="Revize"
-          subtitle="Správa revizí elektrických instalací, hromosvodů a strojních zařízení"
-          actions={
-            <Button onClick={openModal}>
-              <span className="sm:hidden text-lg leading-none">+</span>
-              <span className="hidden sm:inline">+ Nová revize</span>
-            </Button>
-          }
-        />
-      </div>
-
-      <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] border border-[var(--border-medium)] flex-1 min-h-0 flex flex-col">
-        <div className="px-4 md:px-6 pt-4 pb-3 flex-shrink-0">
-          <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:gap-4">
-          <div className="w-full md:flex-1 md:min-w-[200px]">
-            <Input
-              placeholder="Hledat revize..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3 md:contents">
-          <Select
-            value={filterKategorie}
-            onChange={(e) => setFilterKategorie(e.target.value)}
-            options={[
-              { value: '', label: 'Všechny kategorie' },
-              { value: 'elektro', label: 'Elektrické instalace' },
-              { value: 'hromosvod', label: 'Hromosvody' },
-              { value: 'stroje', label: 'Strojní zařízení' },
-              { value: 'odberne_misto', label: 'Odběrné místo (ČEZ)' },
-            ]}
-          />
-          <Select
-            value={filterStav}
-            onChange={(e) => setFilterStav(e.target.value)}
-            options={[
-              { value: '', label: 'Všechny stavy' },
-              { value: 'rozpracováno', label: 'Rozpracováno' },
-              { value: 'dokončeno', label: 'Dokončeno' },
-              { value: 'schváleno', label: 'Schváleno' },
-            ]}
-          />
-          </div>
-          {/* Přepínač tabulka / karty — jen desktop */}
-          <div className="hidden md:flex items-center self-center gap-0.5 border border-[var(--border-medium)] rounded-[var(--radius-md)] p-0.5 flex-shrink-0">
-            <button
-              onClick={() => setView('table')}
-              title="Tabulka"
-              className={`p-2 rounded-[var(--radius-sm)] transition-colors ${viewMode === 'table' ? 'bg-[var(--bg-accent)] text-[var(--primary-text)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'}`}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M5 4a2 2 0 00-2 2v8a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2H5zm0 2h10v2H5V6zm0 4h4v4H5v-4zm6 0h4v4h-4v-4z" clipRule="evenodd" />
-              </svg>
-            </button>
-            <button
-              onClick={() => setView('grid')}
-              title="Karty"
-              className={`p-2 rounded-[var(--radius-sm)] transition-colors ${viewMode === 'grid' ? 'bg-[var(--bg-accent)] text-[var(--primary-text)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'}`}
-            >
-              <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-              </svg>
-            </button>
-          </div>
-          </div>
-        </div>
-
-        {filteredRevize.length > 0 ? (
-          <>
-          {/* Mobilní seznam karet */}
-          <div className="md:hidden px-4 pb-4 flex-1 min-h-0 overflow-auto space-y-2">
-            {paginatedRevize.map((r) => (
+  const renderKarta = (r: Revize) => (
               <div key={r.id} className="bg-[var(--bg-faint)] rounded-[var(--radius-lg)] border border-[var(--border)] p-3">
                 <Link to={`/revize/${r.id}`} className="block">
                   <p className="font-semibold text-[var(--text)] text-sm leading-snug">{r.nazev}</p>
@@ -418,25 +469,9 @@ export function RevizePage() {
                 </div>
                 <p className="text-xs text-[var(--text-secondary)] mt-1.5">{r.cisloRevize}</p>
               </div>
-            ))}
-          </div>
-          {/* Desktopová tabulka */}
-          <div className={`${viewMode === 'table' ? 'hidden md:block' : 'hidden'} px-6 pb-4 flex-1 min-h-0 overflow-auto`}>
-            <table className="w-full text-[13px]">
-              <thead className="sticky top-0 bg-[var(--bg-faint)] z-10">
-                <tr className="border-b border-[var(--border)]">
-                  <th className={TH_CLS} onClick={() => toggleSort('cisloRevize')}>Číslo<SortIcon col="cisloRevize" /></th>
-                  <th className={TH_CLS} onClick={() => toggleSort('kategorieRevize')}>Kategorie<SortIcon col="kategorieRevize" /></th>
-                  <th className={TH_CLS} onClick={() => toggleSort('nazev')}>Název<SortIcon col="nazev" /></th>
-                  <th className={TH_CLS} onClick={() => toggleSort('adresa')}>Adresa<SortIcon col="adresa" /></th>
-                  <th className={TH_CLS} onClick={() => toggleSort('datum')}>Datum<SortIcon col="datum" /></th>
-                  <th className={TH_CLS} onClick={() => toggleSort('typRevize')}>Typ<SortIcon col="typRevize" /></th>
-                  <th className={TH_CLS} onClick={() => toggleSort('stav')}>Stav<SortIcon col="stav" /></th>
-                  <th className="text-right h-9 px-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedRevize.map((r) => (
+  );
+
+  const renderRadek = (r: Revize) => (
                   <tr key={r.id} className="h-11 border-b border-[var(--border-subtle)] border-l-2 border-l-transparent hover:border-l-[var(--primary)] hover:bg-[var(--bg-hover)] group">
                     <td className="py-2 px-3">
                       {isOfflineId(r.id) ? (
@@ -484,12 +519,288 @@ export function RevizePage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+  );
+
+  const pocetRevizi = (n: number) => `${n} ${n === 1 ? 'revize' : n >= 2 && n <= 4 ? 'revize' : 'revizí'}`;
+
+  const chevron = (open: boolean) => (
+    <svg className={`w-4 h-4 flex-shrink-0 text-[var(--text-muted)] transition-transform ${open ? 'rotate-90' : ''}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+    </svg>
+  );
+
+  const progres = (hotovo: number, celkem: number) => (
+    <span className="flex items-center gap-2 text-xs text-[var(--text-secondary)] tabular-nums" title={`${hotovo} z ${celkem} dokončeno`}>
+      <span className="hidden sm:block w-20 h-1.5 rounded-full bg-[var(--border)] overflow-hidden">
+        <span className="block h-full bg-[var(--success)]" style={{ width: `${celkem ? (hotovo / celkem) * 100 : 0}%` }} />
+      </span>
+      {hotovo}/{celkem} hotovo
+    </span>
+  );
+
+  const akceBtn = (label: string, onClick: () => void, title?: string) => (
+    <button
+      type="button"
+      title={title}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      onKeyDown={(e) => e.stopPropagation()}
+      className="px-2 h-7 rounded-[var(--radius-md)] text-xs font-medium text-[var(--primary-text)] hover:bg-[var(--bg-accent)] transition-colors"
+    >
+      {label}
+    </button>
+  );
+
+  const toggleKlavesou = (key: string) => (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleRozbaleno(key); }
+  };
+
+  const hlavickaObjednatel = (o: SkupinaObjednatel, open: boolean) => (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+      {chevron(open)}
+      <span className={`font-semibold truncate ${o.nazev === BEZ_OBJEDNATELE ? 'italic text-[var(--text-muted)]' : 'text-[var(--text)]'}`}>{o.nazev}</span>
+      <span className="text-xs text-[var(--text-muted)] flex-shrink-0">
+        {pocetRevizi(o.pocet)}{o.slozky.some(sl => sl.nazev) ? ` · ${o.slozky.filter(sl => sl.nazev).length} slož.` : ''}
+      </span>
+      <span className="ml-auto flex items-center gap-2 flex-shrink-0">
+        {progres(o.hotovo, o.pocet)}
+        {akceBtn('+ Přidat', () => openHromadne({ objednatel: o }), 'Hromadně přidat revize tomuto objednateli')}
+      </span>
+    </div>
+  );
+
+  const hlavickaSlozka = (o: SkupinaObjednatel, sl: SkupinaSlozka, open: boolean) => (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+      {chevron(open)}
+      <svg className="w-4 h-4 flex-shrink-0 text-[var(--text-muted)]" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path d="M3.75 3A1.75 1.75 0 002 4.75v10.5c0 .966.784 1.75 1.75 1.75h12.5A1.75 1.75 0 0018 15.25v-8.5A1.75 1.75 0 0016.25 5h-4.836a.25.25 0 01-.177-.073L9.823 3.513A1.75 1.75 0 008.586 3H3.75z" />
+      </svg>
+      <span className={`font-medium truncate ${sl.nazev ? 'text-[var(--text)]' : 'italic text-[var(--text-muted)]'}`}>{sl.nazev || BEZ_SLOZKY}</span>
+      <span className="text-xs text-[var(--text-muted)] flex-shrink-0">{pocetRevizi(sl.revize.length)}</span>
+      <span className="ml-auto flex items-center gap-1 flex-shrink-0">
+        {progres(sl.hotovo, sl.revize.length)}
+        {akceBtn(sl.nazev ? 'Přejmenovat' : 'Zařadit do složky', () => openPresun(sl.revize, sl.nazev, o.nazev === BEZ_OBJEDNATELE ? '' : o.nazev),
+          sl.nazev ? 'Přejmenovat složku u všech jejích revizí' : 'Přesunout tyto revize do složky')}
+        {sl.nazev && akceBtn('+ Přidat', () => openHromadne({ objednatel: o, slozka: sl }), 'Hromadně přidat revize do této složky')}
+      </span>
+    </div>
+  );
+
+  /** Objednatel bez složek → revize rovnou pod ním (bez mezikroku „Bez složky“). */
+  const bezSlozek = (o: SkupinaObjednatel) => o.slozky.length === 1 && o.slozky[0].nazev === '';
+
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <div className="animate-spin h-6 w-6 border-2 border-[var(--border-strong)] border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p className="text-sm text-[var(--text-secondary)]">Načítání revizí...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-[var(--danger-text)] text-sm font-medium mb-2">{error}</p>
+        <Button variant="secondary" onClick={() => refetch()}>
+          Zkusit znovu
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4 h-full">
+      <div className="flex-shrink-0">
+        <PageHeader
+          title="Revize"
+          subtitle="Správa revizí elektrických instalací, hromosvodů a strojních zařízení"
+          actions={
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" onClick={() => openHromadne()} title="Založit více revizí najednou (např. strojní zařízení v hale)">
+                <span className="sm:hidden">Hromadně</span>
+                <span className="hidden sm:inline">Hromadně přidat</span>
+              </Button>
+              <Button onClick={openModal}>
+                <span className="sm:hidden text-lg leading-none">+</span>
+                <span className="hidden sm:inline">+ Nová revize</span>
+              </Button>
+            </div>
+          }
+        />
+      </div>
+
+      <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] border border-[var(--border-medium)] flex-1 min-h-0 flex flex-col">
+        <div className="px-4 md:px-6 pt-4 pb-3 flex-shrink-0">
+          <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:gap-4">
+          <div className="w-full md:flex-1 md:min-w-[200px]">
+            <Input
+              placeholder="Hledat revize..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3 md:contents">
+          <Select
+            value={filterKategorie}
+            onChange={(e) => setFilterKategorie(e.target.value)}
+            options={[
+              { value: '', label: 'Všechny kategorie' },
+              { value: 'elektro', label: 'Elektrické instalace' },
+              { value: 'hromosvod', label: 'Hromosvody' },
+              { value: 'stroje', label: 'Strojní zařízení' },
+              { value: 'odberne_misto', label: 'Odběrné místo (ČEZ)' },
+            ]}
+          />
+          <Select
+            value={filterStav}
+            onChange={(e) => setFilterStav(e.target.value)}
+            options={[
+              { value: '', label: 'Všechny stavy' },
+              { value: 'rozpracováno', label: 'Rozpracováno' },
+              { value: 'dokončeno', label: 'Dokončeno' },
+              { value: 'schváleno', label: 'Schváleno' },
+            ]}
+          />
+          </div>
+          {/* Seskupení podle objednatele a složky */}
+          <div className="flex items-center gap-2 self-center flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => setSeskupit(!seskupit)}
+              aria-pressed={seskupit}
+              title="Seskupit podle objednatele a složky (hala, projekt…)"
+              className={`flex items-center gap-1.5 px-3 h-10 rounded-[var(--radius-md)] border text-sm transition-colors ${
+                seskupit
+                  ? 'border-[var(--primary)] bg-[var(--bg-accent)] text-[var(--primary-text)]'
+                  : 'border-[var(--border-medium)] text-[var(--text-secondary)] hover:text-[var(--text)]'
+              }`}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M3.75 3A1.75 1.75 0 002 4.75v10.5c0 .966.784 1.75 1.75 1.75h12.5A1.75 1.75 0 0018 15.25v-8.5A1.75 1.75 0 0016.25 5h-4.836a.25.25 0 01-.177-.073L9.823 3.513A1.75 1.75 0 008.586 3H3.75z" />
+              </svg>
+              Seskupit
+            </button>
+            {seskupit && !hledaniAktivni && (
+              <>
+                <button type="button" onClick={rozbalitVse} className="text-xs text-[var(--primary-text)] hover:underline">Rozbalit vše</button>
+                <button type="button" onClick={sbalitVse} className="text-xs text-[var(--primary-text)] hover:underline">Sbalit vše</button>
+              </>
+            )}
+          </div>
+          {/* Přepínač tabulka / karty — jen desktop */}
+          <div className="hidden md:flex items-center self-center gap-0.5 border border-[var(--border-medium)] rounded-[var(--radius-md)] p-0.5 flex-shrink-0">
+            <button
+              onClick={() => setView('table')}
+              title="Tabulka"
+              className={`p-2 rounded-[var(--radius-sm)] transition-colors ${viewMode === 'table' ? 'bg-[var(--bg-accent)] text-[var(--primary-text)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'}`}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5 4a2 2 0 00-2 2v8a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2H5zm0 2h10v2H5V6zm0 4h4v4H5v-4zm6 0h4v4h-4v-4z" clipRule="evenodd" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setView('grid')}
+              title="Karty"
+              className={`p-2 rounded-[var(--radius-sm)] transition-colors ${viewMode === 'grid' ? 'bg-[var(--bg-accent)] text-[var(--primary-text)]' : 'text-[var(--text-muted)] hover:text-[var(--text)]'}`}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              </svg>
+            </button>
+          </div>
+          </div>
+        </div>
+
+        {filteredRevize.length > 0 ? (
+          <>
+          {/* Mobilní seznam karet */}
+          <div className="md:hidden px-4 pb-4 flex-1 min-h-0 overflow-auto space-y-2">
+            {!seskupit && paginatedRevize.map(renderKarta)}
+            {seskupit && skupiny.map(o => {
+              const oOpen = jeRozbaleno(o.key);
+              return (
+                <div key={o.key} className="space-y-2">
+                  <div
+                    role="button" tabIndex={0} aria-expanded={oOpen}
+                    onClick={() => toggleRozbaleno(o.key)} onKeyDown={toggleKlavesou(o.key)}
+                    className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-[var(--radius-lg)] px-3 py-2.5 text-sm cursor-pointer"
+                  >
+                    {hlavickaObjednatel(o, oOpen)}
+                  </div>
+                  {oOpen && (
+                    <div className="ml-2 pl-2 border-l-2 border-[var(--border)] space-y-2">
+                      {bezSlozek(o) ? o.slozky[0].revize.map(renderKarta) : o.slozky.map(sl => {
+                        const sOpen = jeRozbaleno(sl.key);
+                        return (
+                          <div key={sl.key} className="space-y-2">
+                            <div
+                              role="button" tabIndex={0} aria-expanded={sOpen}
+                              onClick={() => toggleRozbaleno(sl.key)} onKeyDown={toggleKlavesou(sl.key)}
+                              className="border border-[var(--border-subtle)] rounded-[var(--radius-md)] px-3 py-2 text-sm cursor-pointer"
+                            >
+                              {hlavickaSlozka(o, sl, sOpen)}
+                            </div>
+                            {sOpen && <div className="ml-2 space-y-2">{sl.revize.map(renderKarta)}</div>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {/* Desktopová tabulka */}
+          <div className={`${viewMode === 'table' || seskupit ? 'hidden md:block' : 'hidden'} px-6 pb-4 flex-1 min-h-0 overflow-auto`}>
+            <table className="w-full text-[13px]">
+              <thead className="sticky top-0 bg-[var(--bg-faint)] z-10">
+                <tr className="border-b border-[var(--border)]">
+                  <th className={TH_CLS} onClick={() => toggleSort('cisloRevize')}>Číslo<SortIcon col="cisloRevize" /></th>
+                  <th className={TH_CLS} onClick={() => toggleSort('kategorieRevize')}>Kategorie<SortIcon col="kategorieRevize" /></th>
+                  <th className={TH_CLS} onClick={() => toggleSort('nazev')}>Název<SortIcon col="nazev" /></th>
+                  <th className={TH_CLS} onClick={() => toggleSort('adresa')}>Adresa<SortIcon col="adresa" /></th>
+                  <th className={TH_CLS} onClick={() => toggleSort('datum')}>Datum<SortIcon col="datum" /></th>
+                  <th className={TH_CLS} onClick={() => toggleSort('typRevize')}>Typ<SortIcon col="typRevize" /></th>
+                  <th className={TH_CLS} onClick={() => toggleSort('stav')}>Stav<SortIcon col="stav" /></th>
+                  <th className="text-right h-9 px-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {!seskupit && paginatedRevize.map(renderRadek)}
+                {seskupit && skupiny.map(o => {
+                  const oOpen = jeRozbaleno(o.key);
+                  return (
+                    <Fragment key={o.key}>
+                      <tr
+                        tabIndex={0} aria-expanded={oOpen}
+                        onClick={() => toggleRozbaleno(o.key)} onKeyDown={toggleKlavesou(o.key)}
+                        className="bg-[var(--bg-surface)] border-b border-[var(--border)] cursor-pointer hover:bg-[var(--bg-hover)]"
+                      >
+                        <td colSpan={8} className="px-3 py-2 text-[13px]">{hlavickaObjednatel(o, oOpen)}</td>
+                      </tr>
+                      {oOpen && (bezSlozek(o) ? o.slozky[0].revize.map(renderRadek) : o.slozky.map(sl => {
+                        const sOpen = jeRozbaleno(sl.key);
+                        return (
+                          <Fragment key={sl.key}>
+                            <tr
+                              tabIndex={0} aria-expanded={sOpen}
+                              onClick={() => toggleRozbaleno(sl.key)} onKeyDown={toggleKlavesou(sl.key)}
+                              className="border-b border-[var(--border-subtle)] cursor-pointer hover:bg-[var(--bg-hover)]"
+                            >
+                              <td colSpan={8} className="pl-8 pr-3 py-1.5 text-[13px]">{hlavickaSlozka(o, sl, sOpen)}</td>
+                            </tr>
+                            {sOpen && sl.revize.map(renderRadek)}
+                          </Fragment>
+                        );
+                      }))}
+                    </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
           {/* Desktopový grid karet */}
-          <div className={`${viewMode === 'grid' ? 'hidden md:block' : 'hidden'} px-6 pb-4 flex-1 min-h-0 overflow-auto`}>
+          <div className={`${viewMode === 'grid' && !seskupit ? 'hidden md:block' : 'hidden'} px-6 pb-4 flex-1 min-h-0 overflow-auto`}>
             <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 py-2">
               {paginatedRevize.map((r) => (
                 <div key={r.id} className="bg-[var(--surface)] rounded-[var(--radius-lg)] border border-[var(--border-medium)] flex flex-col relative hover:border-[var(--border-strong)] transition-colors group">
@@ -565,6 +876,9 @@ export function RevizePage() {
           </div>
           {/* Pagination footer */}
           <div className="flex-shrink-0 flex items-center justify-between px-4 md:px-6 py-2 border-t border-[var(--border)] text-xs text-[var(--text-secondary)]">
+            {seskupit ? (
+              <span>{totalCount} záznamů · {skupiny.length} {skupiny.length === 1 ? 'objednatel' : skupiny.length <= 4 ? 'objednatelé' : 'objednatelů'}</span>
+            ) : (<>
             <span>
               {totalCount === 0 ? '0 záznamů' : pageSize === -1
                 ? `${totalCount} záznamů`
@@ -603,6 +917,7 @@ export function RevizePage() {
                 </button>
               </div>
             </div>
+            </>)}
           </div>
           </>
         ) : (
@@ -890,6 +1205,21 @@ export function RevizePage() {
         <span className="text-base">📋</span> Kopírovat revizi
       </button>
       <button
+        onClick={() => {
+          const r = revize.find(x => x.id === actionSheetRevize.id);
+          setActionSheetRevize(null);
+          if (r && !isOfflineId(r.id)) openPresun([r], slozkaRevize(r), r.objednatel);
+        }}
+        disabled={isOfflineId(actionSheetRevize?.id)}
+        className={`w-full text-left px-4 py-3.5 text-sm flex items-center gap-3 ${
+          isOfflineId(actionSheetRevize?.id)
+            ? 'text-[var(--text-muted)] opacity-40'
+            : 'text-[var(--text)] active:bg-[var(--bg-hover)]'
+        }`}
+      >
+        <span className="text-base">📁</span> Přesunout do složky
+      </button>
+      <button
         onClick={() => { const a = actionSheetRevize; setActionSheetRevize(null); openHistorieModal(a.id, a.cisloRevize); }}
         className="w-full text-left px-4 py-3.5 text-sm text-[var(--text)] active:bg-[var(--bg-hover)] flex items-center gap-3"
       >
@@ -973,6 +1303,117 @@ export function RevizePage() {
         </div>
       </Modal>
 
+      {/* Modal – hromadné založení revizí */}
+      <Modal
+        isOpen={hromadne !== null}
+        onClose={() => { if (!hromadnePrubeh) setHromadne(null); }}
+        title="Hromadně přidat revize"
+        size="lg"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setHromadne(null)} disabled={!!hromadnePrubeh}>Zrušit</Button>
+            <Button onClick={handleHromadne} disabled={!!hromadnePrubeh || hromadneNazvy.length === 0}>
+              {hromadnePrubeh
+                ? `Zakládám ${hromadnePrubeh.hotovo}/${hromadnePrubeh.celkem}…`
+                : `Založit ${pocetRevizi(hromadneNazvy.length)}`}
+            </Button>
+          </>
+        }
+      >
+        {hromadne && (
+          <div className="space-y-4">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Každý řádek seznamu bude samostatná revize (vlastní protokol) se společnými údaji níže.
+              Revize se zařadí do složky, takže v seznamu budou pohromadě.
+            </p>
+            <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
+              <Input label="Objednatel" value={hromadne.objednatel} onChange={(e) => setHromadne({ ...hromadne, objednatel: e.target.value, zakaznikId: undefined })} required />
+              <Input label="Adresa" value={hromadne.adresa} onChange={(e) => setHromadne({ ...hromadne, adresa: e.target.value })} required />
+              <SlozkaInput value={hromadne.slozka} onChange={(v) => setHromadne({ ...hromadne, slozka: v })} objednatel={hromadne.objednatel} />
+              <Select
+                label="Kategorie"
+                value={hromadne.kategorieRevize}
+                onChange={(e) => setHromadne({ ...hromadne, kategorieRevize: e.target.value as KategorieRevize })}
+                options={KATEGORIE_REVIZE.map(k => ({ value: k.value, label: k.label }))}
+              />
+              <Input type="date" label="Datum revize" value={hromadne.datum} onChange={(e) => setHromadne({ ...hromadne, datum: e.target.value })} />
+              <div className="grid grid-cols-2 gap-4">
+                <Select
+                  label="Typ"
+                  value={hromadne.typRevize}
+                  onChange={(e) => setHromadne({ ...hromadne, typRevize: e.target.value as Revize['typRevize'] })}
+                  options={[
+                    { value: 'pravidelná', label: 'Pravidelná' },
+                    { value: 'výchozí', label: 'Výchozí' },
+                    { value: 'mimořádná', label: 'Mimořádná' },
+                  ]}
+                />
+                <Select
+                  label="Platnost"
+                  value={String(hromadne.termin)}
+                  onChange={(e) => setHromadne({ ...hromadne, termin: parseInt(e.target.value) })}
+                  options={[
+                    { value: '6', label: '6 měsíců' },
+                    { value: '12', label: '1 rok' },
+                    { value: '24', label: '2 roky' },
+                    { value: '36', label: '3 roky' },
+                    { value: '48', label: '4 roky' },
+                    { value: '60', label: '5 let' },
+                  ].concat([6, 12, 24, 36, 48, 60].includes(hromadne.termin) ? [] : [{ value: String(hromadne.termin), label: `${hromadne.termin} měsíců` }])}
+                />
+              </div>
+            </div>
+            <Textarea
+              label={hromadne.kategorieRevize === 'stroje' ? 'Stroje – jeden řádek = jeden stroj' : 'Názvy – jeden řádek = jedna revize'}
+              rows={8}
+              value={hromadne.nazvy}
+              onChange={(e) => setHromadne({ ...hromadne, nazvy: e.target.value })}
+              placeholder={'Lis CNC LP-200\nPásová pila PP-300\nKompresor K-50'}
+              hint={`${pocetRevizi(hromadneNazvy.length)} · seznam lze vložit i jako sloupec z Excelu`}
+            />
+            {hromadnePrubeh && (
+              <div className="h-1.5 rounded-full bg-[var(--border)] overflow-hidden" role="progressbar" aria-valuenow={hromadnePrubeh.hotovo} aria-valuemax={hromadnePrubeh.celkem}>
+                <div className="h-full bg-[var(--primary)] transition-all" style={{ width: `${(hromadnePrubeh.hotovo / hromadnePrubeh.celkem) * 100}%` }} />
+              </div>
+            )}
+            {hromadneChyba && (
+              <p className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-[var(--radius-md)] px-3 py-2">
+                {hromadneChyba}
+              </p>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      {/* Modal – přesun do složky / přejmenování složky */}
+      <Modal
+        isOpen={presun !== null}
+        onClose={() => { if (!presunBezi) setPresun(null); }}
+        title={presun && presun.ids.length > 1 && presun.puvodni ? `Přejmenovat složku „${presun.puvodni}“` : 'Přesunout do složky'}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setPresun(null)} disabled={presunBezi}>Zrušit</Button>
+            <Button onClick={handlePresun} disabled={presunBezi || !presun || presun.ids.length === 0}>
+              {presunBezi ? 'Ukládám…' : 'Uložit'}
+            </Button>
+          </>
+        }
+      >
+        {presun && (
+          <div className="space-y-4">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Změní složku u {pocetRevizi(presun.ids.length)}. Prázdné pole = bez složky.
+            </p>
+            <SlozkaInput value={presun.nova} onChange={(v) => setPresun({ ...presun, nova: v })} objednatel={presun.objednatel} label="Složka" />
+            {presunChyba && (
+              <p className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-[var(--radius-md)] px-3 py-2">
+                {presunChyba}
+              </p>
+            )}
+          </div>
+        )}
+      </Modal>
+
       {/* Dropdown portal – mimo všechny overflow/backdrop-filter kontejnery */}
       {openMenuId !== null && openRevize && createPortal(
         <div
@@ -1010,6 +1451,17 @@ export function RevizePage() {
             }`}
           >
             <span>📋</span> Kopírovat revizi
+          </button>
+          <button
+            onClick={() => { if (isOfflineId(openRevize.id)) return; setOpenMenuId(null); openPresun([openRevize], slozkaRevize(openRevize), openRevize.objednatel); }}
+            disabled={isOfflineId(openRevize.id)}
+            className={`w-full text-left px-3 min-h-[36px] rounded-[var(--radius-md)] text-[13px] flex items-center gap-2 ${
+              isOfflineId(openRevize.id)
+                ? 'text-[var(--text-muted)] opacity-40 cursor-not-allowed'
+                : 'text-[var(--text)] hover:bg-[var(--bg-hover)]'
+            }`}
+          >
+            <span>📁</span> Přesunout do složky
           </button>
           <button
             onClick={() => { if (isOfflineId(openRevize.id)) return; setOpenMenuId(null); openHistorieModal(openRevize.id!, openRevize.cisloRevize); }}

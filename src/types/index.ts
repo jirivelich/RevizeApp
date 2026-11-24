@@ -34,6 +34,7 @@ export interface Revize {
   objednatel: string;
   zakaznikId?: number; // Vazba na zákazníka
   kategorieRevize: KategorieRevize; // elektro / hromosvod / stroje
+  slozka?: string | null; // seskupení v seznamu revizí (hala, projekt…), např. „Hala A“
   datum: string;
   datumDokonceni?: string;
   datumPlatnosti?: string;

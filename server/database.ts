@@ -472,6 +472,8 @@ export async function initializeDatabase() {
       // === Historie / návaznost revizí ===
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "predchoziRevizeId" INTEGER REFERENCES revize(id) ON DELETE SET NULL',
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "skupinaRevizi" TEXT',
+      // Složka – uživatelské seskupení revizí (hala, projekt…) v seznamu
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS slozka TEXT',
       // Fix: zakazka.revizeId musí mít ON DELETE SET NULL
       `DO $$ BEGIN
         IF EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'zakazka_revizeId_fkey' AND table_name = 'zakazka') THEN

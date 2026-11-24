@@ -150,7 +150,7 @@ async function startServer() {
 
   /** Založí revizi (se snapshotem revizního technika). Sdílí endpoint i AI chat. */
   async function vytvorRevizi(data: Record<string, any>): Promise<number> {
-    const { cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav, kategorieRevize } = data;
+    const { cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav, kategorieRevize, zakaznikId, slozka } = data;
     const now = new Date().toISOString();
 
     // Načíst nejnovější doklad technika pro snapshot
@@ -163,8 +163,8 @@ async function startServer() {
     const result = await pool.query(`
       INSERT INTO revize ("cisloRevize", nazev, adresa, objednatel, datum, termin, "typRevize", stav, "kategorieRevize",
         "rtJmeno", "rtCisloOpravneni", "rtPlatnostOpravneni", "rtCisloOsvedceni", "rtPlatnostOsvedceni",
-        "createdAt", "updatedAt")
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        "createdAt", "updatedAt", "zakaznikId", slozka)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
       RETURNING id
     `, [
       cisloRevize, nazev, adresa, objednatel, datum, termin, typRevize, stav, kategorieRevize || 'elektro',
@@ -174,6 +174,8 @@ async function startServer() {
       h.reviznniTechnikOsvedceni || n.reviznniTechnikOsvedceni || null,
       h.reviznniTechnikPlatnostOsvedceni || n.reviznniTechnikPlatnostOsvedceni || null,
       now, now,
+      zakaznikId || null,
+      typeof slozka === 'string' && slozka.trim() ? slozka.trim() : null,
     ]);
     return result.rows[0].id;
   }
@@ -222,6 +224,8 @@ async function startServer() {
       'normySoulad', 'lhutaText', 'datumUvedeniDoProvozu', 'zdrojUvedeniDoProvozu',
       // Historie / návaznost revizí
       'predchoziRevizeId', 'skupinaRevizi',
+      // Složka v seznamu revizí (hala, projekt…)
+      'slozka',
       // Snapshot revizního technika
       'rtJmeno', 'rtCisloOpravneni', 'rtPlatnostOpravneni', 'rtCisloOsvedceni', 'rtPlatnostOsvedceni',
       // Rozdělovník – seznam příjemců zprávy

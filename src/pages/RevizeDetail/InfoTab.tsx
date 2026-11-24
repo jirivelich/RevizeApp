@@ -3,6 +3,7 @@ import { KATEGORIE_LABELS } from '../../types';
 import type { Revize, Firma, Nastaveni, Zakaznik, KategorieRevize } from '../../types';
 import { Input, Select } from '../../components/ui';
 import { TW, SectionHeader, Field } from './tw';
+import { SlozkaInput } from './SlozkaInput';
 import { ObjednatelSekce } from './ObjednatelSekce';
 
 interface InfoTabProps {
@@ -47,6 +48,7 @@ export function InfoTab({
               <input className={TW.input} value={formData.nazev || ''} onChange={(e) => setFormData({ ...formData, nazev: e.target.value })} />
             </div>
             <Input label="Adresa objektu" value={formData.adresa || ''} onChange={(e) => setFormData({ ...formData, adresa: e.target.value })} />
+            <SlozkaInput value={formData.slozka || ''} onChange={(v) => setFormData({ ...formData, slozka: v })} objednatel={formData.objednatel} />
           </div>
         </div>
       </div>
