@@ -12,6 +12,7 @@ import { diffZmen, zapisAudit } from './audit';
 import { chatSDaty } from './aiChat';
 import { hlidejZamek, jeZamceny } from './zamek';
 import { najdiPodleIco, hledejPodleNazvu, AresChyba } from './ares';
+import { overPodpisPdf } from './podpisPdf';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -296,7 +297,13 @@ async function startServer() {
         return res.status(400).json({ error: 'Opsané číslo revize nesouhlasí.' });
       }
       if (!jeZamceny(revize.stav)) return res.json({ success: true, stav: revize.stav });
-      await pool.query('UPDATE revize SET stav = $1, "updatedAt" = $2 WHERE id = $3', ['rozpracováno', new Date().toISOString(), req.params.id]);
+      const ted = new Date().toISOString();
+      // Podepsaná zpráva přestává odpovídat, jakmile jde revizi znovu měnit
+      await pool.query(
+        `UPDATE revize SET stav = $1, "updatedAt" = $2,
+           "podpisZastaraly" = CASE WHEN "podepsanoAt" IS NOT NULL THEN $2 ELSE "podpisZastaraly" END
+         WHERE id = $3`,
+        ['rozpracováno', ted, req.params.id]);
       await zapisAudit({ entita: 'revize', entitaId: req.params.id, revizeId: req.params.id, akce: 'zmeneno', uzivatel: (req as AuthRequest).user?.username,
         zmeny: [{ pole: 'stav', puvodni: revize.stav, nova: 'rozpracováno (odemčeno opsáním čísla revize)' }] });
       res.json({ success: true, stav: 'rozpracováno' });
@@ -381,6 +388,9 @@ async function startServer() {
         'zaver': null,                    // nová revize nemá závěr
         'predchoziRevizeId': predchoziId,
         'skupinaRevizi': skupinaRevizi,
+        'podepsanoAt': null,              // podpis patří jen původní zprávě
+        'podepsal': null,
+        'podpisZastaraly': null,
         'createdAt': now,
         'updatedAt': now,
       };
@@ -778,6 +788,81 @@ async function startServer() {
   app.delete('/api/prilohy/:id', authMiddleware, async (req, res) => {
     try {
       await pool.query('DELETE FROM "revizePriloha" WHERE id = $1', [req.params.id]);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+
+  // ==================== ELEKTRONICKY PODEPSANÁ ZPRÁVA ====================
+  const PODPIS_MAX_BYTES = 20 * 1024 * 1024;
+  const PODPIS_META = `id, "revizeId", nazev, velikost, podepsal, vydavatel, kvalifikovany, "casPodpisu", overeni, "nahranoAt"`;
+
+  app.get('/api/revize/:revizeId/podepsana', authMiddleware, async (req, res) => {
+    try {
+      const r = await pool.query(`SELECT ${PODPIS_META} FROM "revizePodepsanaZprava" WHERE "revizeId" = $1`, [req.params.revizeId]);
+      const row = r.rows[0];
+      res.json(row ? { ...row, overeni: row.overeni ? JSON.parse(row.overeni) : null } : null);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.get('/api/revize/:revizeId/podepsana/soubor', authMiddleware, async (req, res) => {
+    try {
+      const r = await pool.query('SELECT nazev, data FROM "revizePodepsanaZprava" WHERE "revizeId" = $1', [req.params.revizeId]);
+      if (!r.rows[0]) return res.status(404).json({ error: 'Podepsaná zpráva nenalezena' });
+      res.json(r.rows[0]);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  /** Nahraje podepsané PDF. Revize musí být dokončená (zamčená), PDF musí obsahovat platný podpis. */
+  app.post('/api/revize/:revizeId/podepsana', authMiddleware, async (req, res) => {
+    try {
+      const { nazev, data } = req.body ?? {};
+      if (!nazev || typeof data !== 'string' || !data) return res.status(400).json({ error: 'Chybí soubor' });
+      const rev = await pool.query('SELECT id, stav FROM revize WHERE id = $1', [req.params.revizeId]);
+      if (!rev.rows[0]) return res.status(404).json({ error: 'Revize nebyla nalezena' });
+      if (!jeZamceny(rev.rows[0].stav)) {
+        return res.status(409).json({ error: 'Podepsanou zprávu lze nahrát jen k dokončené revizi. Nejdřív revizi dokončete.' });
+      }
+      const base64 = data.includes(',') ? data.slice(data.indexOf(',') + 1) : data;
+      const pdf = Buffer.from(base64, 'base64');
+      if (pdf.length > PODPIS_MAX_BYTES) return res.status(413).json({ error: 'Soubor je příliš velký (max. 20 MB)' });
+      const overeni = overPodpisPdf(pdf);
+      if (!overeni.ok || !overeni.hlavni) return res.status(422).json({ error: overeni.duvod ?? 'Podpis nelze ověřit', overeni });
+      const h = overeni.hlavni;
+      const ted = new Date().toISOString();
+      await pool.query(
+        `INSERT INTO "revizePodepsanaZprava" ("revizeId", nazev, velikost, data, podepsal, vydavatel, kvalifikovany, "casPodpisu", overeni, "nahranoAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         ON CONFLICT ("revizeId") DO UPDATE SET nazev = EXCLUDED.nazev, velikost = EXCLUDED.velikost, data = EXCLUDED.data,
+           podepsal = EXCLUDED.podepsal, vydavatel = EXCLUDED.vydavatel, kvalifikovany = EXCLUDED.kvalifikovany,
+           "casPodpisu" = EXCLUDED."casPodpisu", overeni = EXCLUDED.overeni, "nahranoAt" = EXCLUDED."nahranoAt"`,
+        [req.params.revizeId, String(nazev), pdf.length, base64, h.podepsal, h.vydavatel, h.kvalifikovany, h.casPodpisu,
+          JSON.stringify(overeni.podpisy), ted]);
+      await pool.query('UPDATE revize SET "podepsanoAt" = $1, podepsal = $2, "podpisZastaraly" = NULL WHERE id = $3',
+        [h.casPodpisu ?? ted, h.podepsal, req.params.revizeId]);
+      await zapisAudit({ entita: 'revize', entitaId: req.params.revizeId, revizeId: req.params.revizeId, akce: 'zmeneno',
+        uzivatel: (req as AuthRequest).user?.username,
+        zmeny: [{ pole: 'podpis', puvodni: null, nova: `elektronicky podepsáno: ${h.podepsal ?? '?'}${h.kvalifikovany ? ' (kvalifikovaný certifikát)' : ''}` }] });
+      res.json({ success: true, podepsal: h.podepsal, kvalifikovany: h.kvalifikovany, casPodpisu: h.casPodpisu });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  app.delete('/api/revize/:revizeId/podepsana', authMiddleware, async (req, res) => {
+    try {
+      const r = await pool.query('DELETE FROM "revizePodepsanaZprava" WHERE "revizeId" = $1 RETURNING podepsal', [req.params.revizeId]);
+      await pool.query('UPDATE revize SET "podepsanoAt" = NULL, podepsal = NULL, "podpisZastaraly" = NULL WHERE id = $1', [req.params.revizeId]);
+      if (r.rows[0]) {
+        await zapisAudit({ entita: 'revize', entitaId: req.params.revizeId, revizeId: req.params.revizeId, akce: 'zmeneno',
+          uzivatel: (req as AuthRequest).user?.username, zmeny: [{ pole: 'podpis', puvodni: r.rows[0].podepsal, nova: 'podepsaná zpráva odebrána' }] });
+      }
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -2410,7 +2495,8 @@ async function startServer() {
     'zakazka', 'mericiPristroj', 'revizePristroj', 'kalibrace', 'firma', 'nastaveni',
     'zavadaKatalog', 'zakaznik', 'predvolenyText',
     // Přílohy, rozsah revize, podklady a auditní stopa (bez nich by se při obnově ztratily)
-    'revizePriloha', 'revizeRozsahPolozka', 'revizeDokument', 'audit_log'
+    'revizePriloha', 'revizeRozsahPolozka', 'revizeDokument', 'audit_log',
+    'revizePodepsanaZprava'
   ];
 
   // Statistiky databáze (lehký endpoint - pouze počty)
@@ -2480,7 +2566,8 @@ async function startServer() {
         'pdfSablona', 'zavadaKatalog',
         'revize', 'mistnost', 'rozvadec', 'zakazka',
         'okruh', 'zavada', 'zarizeni', 'revizePristroj', 'kalibrace',
-        'revizePriloha', 'revizeRozsahPolozka', 'revizeDokument', 'audit_log'
+        'revizePriloha', 'revizeRozsahPolozka', 'revizeDokument', 'audit_log',
+        'revizePodepsanaZprava'
       ];
       
       const skipKeys = ['version', 'timestamp', 'appName'];

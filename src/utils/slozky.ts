@@ -28,12 +28,15 @@ export function slozkaRevize(r: Pick<Revize, 'slozka' | 'strojniData'>): string 
 const klic = (s: string) => s.trim().replace(/\s+/g, ' ').toLocaleLowerCase('cs');
 
 export const jeHotova = (r: Pick<Revize, 'stav'>) => r.stav === 'dokončeno' || r.stav === 'schváleno';
+/** Má platnou elektronicky podepsanou zprávu (po podpisu nebyla odemčena). */
+export const jePodepsana = (r: Pick<Revize, 'podepsanoAt' | 'podpisZastaraly'>) => !!r.podepsanoAt && !r.podpisZastaraly;
 
 export interface SkupinaSlozka {
   key: string;
   nazev: string;          // '' = bez složky
   revize: Revize[];
   hotovo: number;
+  podepsano: number;
 }
 
 export interface SkupinaObjednatel {
@@ -42,6 +45,7 @@ export interface SkupinaObjednatel {
   slozky: SkupinaSlozka[];
   pocet: number;
   hotovo: number;
+  podepsano: number;
 }
 
 /**
@@ -57,19 +61,20 @@ export function seskupRevize(revize: Revize[]): SkupinaObjednatel[] {
     const objKey = klic(objNazev);
     let obj = objednatele.get(objKey);
     if (!obj) {
-      obj = { key: objKey, nazev: objNazev, slozky: [], pocet: 0, hotovo: 0, mapa: new Map() };
+      obj = { key: objKey, nazev: objNazev, slozky: [], pocet: 0, hotovo: 0, podepsano: 0, mapa: new Map() };
       objednatele.set(objKey, obj);
     }
     const sNazev = slozkaRevize(r);
     const sKey = klic(sNazev);
     let sl = obj.mapa.get(sKey);
     if (!sl) {
-      sl = { key: `${objKey}::${sKey}`, nazev: sNazev, revize: [], hotovo: 0 };
+      sl = { key: `${objKey}::${sKey}`, nazev: sNazev, revize: [], hotovo: 0, podepsano: 0 };
       obj.mapa.set(sKey, sl);
     }
     sl.revize.push(r);
     obj.pocet++;
     if (jeHotova(r)) { sl.hotovo++; obj.hotovo++; }
+    if (jePodepsana(r)) { sl.podepsano++; obj.podepsano++; }
   }
 
   const cmp = (a: string, b: string) => a.localeCompare(b, 'cs', { numeric: true });

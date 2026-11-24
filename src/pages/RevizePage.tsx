@@ -9,7 +9,9 @@ import { KATEGORIE_LABELS } from '../types';
 import type { KategorieRevize, Revize } from '../types';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../hooks/queryKeys';
-import { seskupRevize, slozkaRevize, BEZ_SLOZKY, BEZ_OBJEDNATELE } from '../utils/slozky';
+import { seskupRevize, slozkaRevize, jeHotova, jePodepsana, BEZ_SLOZKY, BEZ_OBJEDNATELE } from '../utils/slozky';
+import { najdiRevizi } from '../utils/podpisPrirazeni';
+import { podpisService } from '../services/podpis';
 import type { SkupinaObjednatel, SkupinaSlozka } from '../utils/slozky';
 import { SlozkaInput } from './RevizeDetail/SlozkaInput';
 
@@ -144,6 +146,12 @@ export function RevizePage() {
   const [hromadne, setHromadne] = useState<HromadneForm | null>(null);
   const [hromadnePrubeh, setHromadnePrubeh] = useState<{ hotovo: number; celkem: number } | null>(null);
   const [hromadneChyba, setHromadneChyba] = useState<string | null>(null);
+
+  // Hromadné nahrání podepsaných zpráv (přiřazení podle čísla revize v názvu souboru)
+  type NahraniRadek = { file: File; revize: Revize | null; stav: 'ceka' | 'nahravam' | 'ok' | 'chyba'; zprava?: string };
+  const [nahrani, setNahrani] = useState<NahraniRadek[] | null>(null);
+  const [nahraniBezi, setNahraniBezi] = useState(false);
+  const nahraniInputRef = useRef<HTMLInputElement>(null);
 
   // Přejmenování / přiřazení složky
   const [presun, setPresun] = useState<{ ids: number[]; puvodni: string; objednatel: string; nova: string } | null>(null);
@@ -310,7 +318,10 @@ export function RevizePage() {
         r.adresa.toLowerCase().includes(hledat) ||
         (r.objednatel ?? '').toLowerCase().includes(hledat) ||
         slozkaRevize(r).toLowerCase().includes(hledat);
-      const matchesFilter = !filterStav || r.stav === filterStav;
+      const matchesFilter = !filterStav
+        || (filterStav === 'cekaNaPodpis' ? jeHotova(r) && !jePodepsana(r)
+          : filterStav === 'podepsano' ? jePodepsana(r)
+          : r.stav === filterStav);
       const matchesKategorie = !filterKategorie || r.kategorieRevize === filterKategorie;
       return matchesSearch && matchesFilter && matchesKategorie;
     }).sort((a, b) => {
@@ -403,6 +414,40 @@ export function RevizePage() {
     }
   };
 
+  const vyberPodepsane = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const pdf = [...files].filter(f => /\.pdf$/i.test(f.name) || f.type === 'application/pdf');
+    setNahrani(pdf.map(file => {
+      const r = najdiRevizi(file.name, revize);
+      return {
+        file, revize: r,
+        stav: r && jeHotova(r) ? 'ceka' : 'chyba',
+        zprava: !r ? 'Číslo revize v názvu souboru nenalezeno' : !jeHotova(r) ? 'Revize není dokončená' : undefined,
+      };
+    }));
+  };
+
+  const handleNahrani = async () => {
+    if (!nahrani) return;
+    setNahraniBezi(true);
+    const radky = [...nahrani];
+    for (let i = 0; i < radky.length; i++) {
+      const rd = radky[i];
+      if (rd.stav !== 'ceka' || !rd.revize?.id) continue;
+      radky[i] = { ...rd, stav: 'nahravam' };
+      setNahrani([...radky]);
+      try {
+        const v = await podpisService.nahrat(rd.revize.id, rd.file);
+        radky[i] = { ...rd, stav: 'ok', zprava: `${v.podepsal ?? 'podepsáno'}${v.kvalifikovany ? ' · kvalifikovaný' : ' · není kvalifikovaný'}` };
+      } catch (err) {
+        radky[i] = { ...rd, stav: 'chyba', zprava: err instanceof Error ? err.message : 'Chyba' };
+      }
+      setNahrani([...radky]);
+    }
+    await queryClient.invalidateQueries({ queryKey: queryKeys.revize.all });
+    setNahraniBezi(false);
+  };
+
   const openPresun = (revizeVeSlozce: Revize[], puvodni: string, objednatel: string) => {
     setPresun({ ids: revizeVeSlozce.map(r => r.id!).filter(id => id > 0), puvodni, objednatel, nova: puvodni });
     setPresunChyba(null);
@@ -443,6 +488,9 @@ export function RevizePage() {
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <Badge>{KATEGORIE_LABELS[r.kategorieRevize]?.kratky ?? r.kategorieRevize}</Badge>
                     <Badge variant={stavVariant(r.stav)}>{r.stav}</Badge>
+                    {r.podepsanoAt && (
+                        <Badge variant={r.podpisZastaraly ? 'warning' : 'success'}>{r.podpisZastaraly ? '✍ podpis neplatí' : '✍ podepsáno'}</Badge>
+                      )}
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs text-[var(--text-secondary)]">{new Date(r.datum).toLocaleDateString('cs-CZ')}</span>
@@ -497,7 +545,12 @@ export function RevizePage() {
                       <Badge>{r.typRevize}</Badge>
                     </td>
                     <td className="py-2 px-3">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                       <Badge variant={stavVariant(r.stav)}>{r.stav}</Badge>
+                      {r.podepsanoAt && (
+                        <Badge variant={r.podpisZastaraly ? 'warning' : 'success'}>{r.podpisZastaraly ? '✍ podpis neplatí' : '✍ podepsáno'}</Badge>
+                      )}
+                      </div>
                     </td>
                     <td className="py-2 px-3 text-right">
                       <div className="relative">
@@ -562,6 +615,7 @@ export function RevizePage() {
         {pocetRevizi(o.pocet)}{o.slozky.some(sl => sl.nazev) ? ` · ${o.slozky.filter(sl => sl.nazev).length} slož.` : ''}
       </span>
       <span className="ml-auto flex items-center gap-2 flex-shrink-0">
+        {o.podepsano > 0 && <span className="text-xs text-[var(--text-secondary)] tabular-nums" title="Elektronicky podepsané zprávy">✍ {o.podepsano}</span>}
         {progres(o.hotovo, o.pocet)}
         {akceBtn('+ Přidat', () => openHromadne({ objednatel: o }), 'Hromadně přidat revize tomuto objednateli')}
       </span>
@@ -577,6 +631,7 @@ export function RevizePage() {
       <span className={`font-medium truncate ${sl.nazev ? 'text-[var(--text)]' : 'italic text-[var(--text-muted)]'}`}>{sl.nazev || BEZ_SLOZKY}</span>
       <span className="text-xs text-[var(--text-muted)] flex-shrink-0">{pocetRevizi(sl.revize.length)}</span>
       <span className="ml-auto flex items-center gap-1 flex-shrink-0">
+        {sl.podepsano > 0 && <span className="text-xs text-[var(--text-secondary)] tabular-nums" title="Elektronicky podepsané zprávy">✍ {sl.podepsano}</span>}
         {progres(sl.hotovo, sl.revize.length)}
         {akceBtn(sl.nazev ? 'Přejmenovat' : 'Zařadit do složky', () => openPresun(sl.revize, sl.nazev, o.nazev === BEZ_OBJEDNATELE ? '' : o.nazev),
           sl.nazev ? 'Přejmenovat složku u všech jejích revizí' : 'Přesunout tyto revize do složky')}
@@ -616,6 +671,12 @@ export function RevizePage() {
           subtitle="Správa revizí elektrických instalací, hromosvodů a strojních zařízení"
           actions={
             <div className="flex items-center gap-2">
+              <input ref={nahraniInputRef} type="file" accept="application/pdf,.pdf" multiple className="hidden"
+                onChange={(e) => { vyberPodepsane(e.target.files); e.target.value = ''; }} />
+              <Button variant="secondary" onClick={() => nahraniInputRef.current?.click()} title="Nahrát elektronicky podepsané zprávy (PDF) – přiřadí se podle čísla revize v názvu souboru">
+                <span className="sm:hidden">✍</span>
+                <span className="hidden sm:inline">✍ Nahrát podepsané</span>
+              </Button>
               <Button variant="secondary" onClick={() => openHromadne()} title="Založit více revizí najednou (např. strojní zařízení v hale)">
                 <span className="sm:hidden">Hromadně</span>
                 <span className="hidden sm:inline">Hromadně přidat</span>
@@ -659,6 +720,8 @@ export function RevizePage() {
               { value: 'rozpracováno', label: 'Rozpracováno' },
               { value: 'dokončeno', label: 'Dokončeno' },
               { value: 'schváleno', label: 'Schváleno' },
+              { value: 'cekaNaPodpis', label: 'Čeká na podpis' },
+              { value: 'podepsano', label: 'Podepsáno' },
             ]}
           />
           </div>
@@ -1380,6 +1443,59 @@ export function RevizePage() {
               <p className="text-xs font-medium text-[var(--danger-text)] bg-[var(--danger-bg)] border border-[var(--danger)]/25 rounded-[var(--radius-md)] px-3 py-2">
                 {hromadneChyba}
               </p>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      {/* Modal – hromadné nahrání podepsaných zpráv */}
+      <Modal
+        isOpen={nahrani !== null}
+        onClose={() => { if (!nahraniBezi) setNahrani(null); }}
+        title="Nahrát podepsané zprávy"
+        size="lg"
+        footer={(() => {
+          const cekajici = nahrani?.filter(r => r.stav === 'ceka').length ?? 0;
+          const hotovo = nahrani?.some(r => r.stav === 'ok') ?? false;
+          return (
+            <>
+              <Button variant="secondary" onClick={() => setNahrani(null)} disabled={nahraniBezi}>{hotovo && cekajici === 0 ? 'Zavřít' : 'Zrušit'}</Button>
+              {cekajici > 0 && (
+                <Button onClick={handleNahrani} disabled={nahraniBezi}>
+                  {nahraniBezi ? 'Nahrávám…' : `Nahrát ${cekajici} ${cekajici === 1 ? 'soubor' : cekajici <= 4 ? 'soubory' : 'souborů'}`}
+                </Button>
+              )}
+            </>
+          );
+        })()}
+      >
+        {nahrani && (
+          <div className="space-y-3">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Soubory se k revizím přiřadí podle čísla revize v názvu (tak, jak je aplikace stáhla). Server u každého ověří
+              elektronický podpis a uloží ho jako originál zprávy.
+            </p>
+            {nahrani.length === 0 ? (
+              <p className="text-sm text-[var(--text-muted)]">Nebyly vybrány žádné PDF soubory.</p>
+            ) : (
+              <ul className="divide-y divide-[var(--border-subtle)] border border-[var(--border)] rounded-[var(--radius-md)] max-h-[50vh] overflow-auto">
+                {nahrani.map((rd, i) => (
+                  <li key={i} className="flex items-start gap-3 px-3 py-2 text-sm">
+                    <span className="w-5 flex-shrink-0 text-center" aria-hidden="true">
+                      {rd.stav === 'ok' ? '✅' : rd.stav === 'chyba' ? '⚠️' : rd.stav === 'nahravam' ? '⏳' : '📄'}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[var(--text)]">{rd.file.name}</p>
+                      <p className="text-xs text-[var(--text-secondary)] truncate">
+                        {rd.revize ? `→ ${rd.revize.cisloRevize} · ${rd.revize.nazev}` : '→ nepřiřazeno'}
+                      </p>
+                      {rd.zprava && (
+                        <p className={`text-xs ${rd.stav === 'chyba' ? 'text-[var(--danger-text)]' : 'text-[var(--success-text)]'}`}>{rd.zprava}</p>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         )}

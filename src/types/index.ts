@@ -35,6 +35,10 @@ export interface Revize {
   zakaznikId?: number; // Vazba na zákazníka
   kategorieRevize: KategorieRevize; // elektro / hromosvod / stroje
   slozka?: string | null; // seskupení v seznamu revizí (hala, projekt…), např. „Hala A“
+  // Elektronický podpis (soubor je zvlášť, viz podpisService)
+  podepsanoAt?: string | null;     // čas podpisu (z PDF) – vyplněno = revize má podepsanou zprávu
+  podepsal?: string | null;        // jméno z certifikátu podepisujícího
+  podpisZastaraly?: string | null; // kdy byla revize po podpisu odemčena (podepsaná verze už nemusí odpovídat)
   datum: string;
   datumDokonceni?: string;
   datumPlatnosti?: string;

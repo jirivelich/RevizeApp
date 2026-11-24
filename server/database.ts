@@ -217,6 +217,23 @@ export async function initializeDatabase() {
       )
     `);
 
+    // Elektronicky podepsaná revizní zpráva (originál PDF) – max. jedna na revizi
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS "revizePodepsanaZprava" (
+        id SERIAL PRIMARY KEY,
+        "revizeId" INTEGER NOT NULL UNIQUE REFERENCES revize(id) ON DELETE CASCADE,
+        nazev TEXT NOT NULL,
+        velikost INTEGER,
+        data TEXT NOT NULL,
+        podepsal TEXT,
+        vydavatel TEXT,
+        kvalifikovany BOOLEAN NOT NULL DEFAULT FALSE,
+        "casPodpisu" TEXT,
+        overeni TEXT,
+        "nahranoAt" TEXT NOT NULL
+      )
+    `);
+
     await client.query(`
       CREATE TABLE IF NOT EXISTS zakazka (
         id SERIAL PRIMARY KEY,
@@ -474,6 +491,10 @@ export async function initializeDatabase() {
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "skupinaRevizi" TEXT',
       // Složka – uživatelské seskupení revizí (hala, projekt…) v seznamu
       'ALTER TABLE revize ADD COLUMN IF NOT EXISTS slozka TEXT',
+      // Elektronický podpis – přehled na revizi (soubor je v tabulce revizePodepsanaZprava)
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "podepsanoAt" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "podepsal" TEXT',
+      'ALTER TABLE revize ADD COLUMN IF NOT EXISTS "podpisZastaraly" TEXT',
       // Fix: zakazka.revizeId musí mít ON DELETE SET NULL
       `DO $$ BEGIN
         IF EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'zakazka_revizeId_fkey' AND table_name = 'zakazka') THEN

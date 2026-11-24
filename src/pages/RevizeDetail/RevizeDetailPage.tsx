@@ -32,6 +32,7 @@ import { StrojniZarizeniTab } from './StrojniZarizeniTab';
 import { OdberneMistoTab } from './OdberneMistoTab';
 import { PrilohyTab } from './PrilohyTab';
 import { ZamekPruh, jeRevizeZamcena, useZamekDom } from './ZamekRevize';
+import { PodpisPanel } from './PodpisPanel';
 import { KontrolaPanel } from './KontrolaPanel';
 import { RozsahTab } from './RozsahTab';
 
@@ -352,6 +353,8 @@ export function RevizeDetailPage() {
         <ZamekPruh revizeId={revize.id} cisloRevize={revize.cisloRevize}
           onOdemceno={() => setFormData(prev => ({ ...prev, stav: 'rozpracováno' }))} />
       )}
+
+      {revize.id && <PodpisPanel revize={revize} zamcena={zamcena} />}
 
       {/* Tab content */}
       <div ref={obsahRef}>
