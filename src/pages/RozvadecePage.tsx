@@ -104,9 +104,9 @@ export function RozvadecDetailPage() {
       const saveData = { ...okruhData, izolacniOdpor: okruhData.izolacniOdpor || undefined, impedanceSmycky: impedanceSmyckyMax && okruhData.impedanceSmycky ? `max. ${okruhData.impedanceSmycky}` : okruhData.impedanceSmycky || undefined };
       const onDone = () => { setIsOkruhModalOpen(false); setEditingOkruh(null); resetOkruhForm(); };
       if (editingOkruh?.id) {
-        updateOkruh.mutate({ id: editingOkruh.id, data: { ...saveData, rozvadecId: rozvadec.id } }, { onSuccess: onDone });
+        return updateOkruh.mutateAsync({ id: editingOkruh.id, data: { ...saveData, rozvadecId: rozvadec.id } }, { onSuccess: onDone }).catch(() => undefined);
       } else {
-        createOkruh.mutate({ ...saveData, rozvadecId: rozvadec.id }, { onSuccess: onDone });
+        return createOkruh.mutateAsync({ ...saveData, rozvadecId: rozvadec.id }, { onSuccess: onDone }).catch(() => undefined);
       }
     }
   };
@@ -193,9 +193,9 @@ export function RozvadecDetailPage() {
     if (rozvadec?.id) {
       const onDone = () => { setIsCranicModalOpen(false); setEditingChranic(null); resetCranicForm(); };
       if (editingChranic?.id) {
-        updateChranic.mutate({ id: editingChranic.id, data: { ...cranicFormData, rozvadecId: rozvadec.id } }, { onSuccess: onDone });
+        return updateChranic.mutateAsync({ id: editingChranic.id, data: { ...cranicFormData, rozvadecId: rozvadec.id } }, { onSuccess: onDone }).catch(() => undefined);
       } else {
-        createChranic.mutate({ ...cranicFormData, rozvadecId: rozvadec.id }, { onSuccess: onDone });
+        return createChranic.mutateAsync({ ...cranicFormData, rozvadecId: rozvadec.id }, { onSuccess: onDone }).catch(() => undefined);
       }
     }
   };

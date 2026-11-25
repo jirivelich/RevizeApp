@@ -71,9 +71,9 @@ export function FirmyPage() {
     }
 
     if (editingFirma?.id) {
-      updateFirma.mutate({ id: editingFirma.id, data: formData }, { onSuccess: handleCloseModal });
+      return updateFirma.mutateAsync({ id: editingFirma.id, data: formData }, { onSuccess: handleCloseModal }).catch(() => undefined);
     } else {
-      createFirma.mutate(formData, { onSuccess: handleCloseModal });
+      return createFirma.mutateAsync(formData, { onSuccess: handleCloseModal }).catch(() => undefined);
     }
   };
 

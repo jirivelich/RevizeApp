@@ -203,12 +203,12 @@ export function MistnostiTab({ mistnosti, rozvadece = [], zarizeniCounts: propCo
       resetMistnostForm();
     };
     if (editingMistnost?.id) {
-      updateMistnost.mutate(
+      return updateMistnost.mutateAsync(
         { id: editingMistnost.id, data: { ...mistnostPayload(), revizeId } },
         { onSuccess: onDone }
-      );
+      ).catch(() => undefined);
     } else {
-      createMistnost.mutate(
+      return createMistnost.mutateAsync(
         { ...mistnostPayload(), revizeId } as any,
         {
           onSuccess: (newId) => {
@@ -219,7 +219,7 @@ export function MistnostiTab({ mistnosti, rozvadece = [], zarizeniCounts: propCo
             setZarizeni([]);
           },
         }
-      );
+      ).catch(() => undefined);
     }
   };
 

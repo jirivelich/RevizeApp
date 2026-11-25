@@ -14,7 +14,8 @@ const PolohaModal = lazy(() => import('../../components/PolohaModal'));
 interface ZakazkaFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: ZakazkaFormData) => void;
+  /** Může vrátit Promise – tlačítko Uložit je pak až do dokončení zablokované. */
+  onSubmit: (data: ZakazkaFormData) => void | Promise<unknown>;
   formData: ZakazkaFormData;
   setFormData: React.Dispatch<React.SetStateAction<ZakazkaFormData>>;
   revize: Revize[];
@@ -67,7 +68,7 @@ export function ZakazkaForm({
       return;
     }
     setFormError(null);
-    onSubmit(formData);
+    return onSubmit(formData);
   };
 
   // Rozsah od–do; jednotlivé dny lze vynechat (víkend, jiná práce)

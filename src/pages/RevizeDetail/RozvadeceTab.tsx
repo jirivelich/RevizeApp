@@ -154,7 +154,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
   const handleAddRozvadec = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingRozvadec?.id) {
-      updateRozvadec.mutate(
+      return updateRozvadec.mutateAsync(
         { id: editingRozvadec.id, data: { ...rozvadecFormData, revizeId } },
         {
           onSuccess: () => {
@@ -164,9 +164,9 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
             setRozvadecFormData({ nazev: '', oznaceni: '', umisteni: '', typRozvadece: '', stupenKryti: 'IP20', poznamka: '' });
           },
         }
-      );
+      ).catch(() => undefined);
     } else {
-    createRozvadec.mutate(
+    return createRozvadec.mutateAsync(
       { ...rozvadecFormData, revizeId } as any,
       {
         onSuccess: (newId) => {
@@ -183,7 +183,7 @@ export function RozvadeceTab({ rozvadece, okruhyCounts: propCounts, revizeId, on
           setRozvadecFormData({ nazev: '', oznaceni: '', umisteni: '', typRozvadece: '', stupenKryti: 'IP20', poznamka: '' });
         },
       }
-    );
+    ).catch(() => undefined);
     }
   };
 

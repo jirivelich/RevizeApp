@@ -1,4 +1,5 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { ButtonHTMLAttributes, MouseEvent, ReactNode } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'success' | 'danger' | 'warning';
@@ -22,6 +23,18 @@ const sizeClasses = {
   lg: 'px-6 text-base min-h-[48px]',
 };
 
+/** Druhé kliknutí na stejné tlačítko dřív než za tuto dobu se ignoruje (dvojklik). */
+const DVOJKLIK_MS = 600;
+
+const jePromise = (v: unknown): v is Promise<unknown> =>
+  !!v && typeof (v as { then?: unknown }).then === 'function';
+
+/**
+ * Tlačítko s ochranou proti dvojitému odeslání:
+ *  - když onClick vrátí Promise (async handler), tlačítko je až do jeho dokončení zablokované
+ *    a ukazuje točící se kolečko,
+ *  - rychlé druhé kliknutí (dvojklik) se ignoruje vždy.
+ */
 export function Button({
   variant = 'primary',
   size = 'md',
@@ -30,9 +43,42 @@ export function Button({
   disabled,
   type = 'button',
   as = 'button',
+  onClick,
   ...props
 }: ButtonProps) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Component = as as any;
+  const [pracuje, setPracuje] = useState(false);
+  const zamek = useRef(false);
+  const posledniKlik = useRef(0);
+  const pripojeno = useRef(true);
+  useEffect(() => {
+    pripojeno.current = true;
+    return () => { pripojeno.current = false; };
+  }, []);
+
+  const handleClick = onClick && ((e: MouseEvent<HTMLButtonElement>) => {
+    const ted = Date.now();
+    if (zamek.current || ted - posledniKlik.current < DVOJKLIK_MS) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    posledniKlik.current = ted;
+    const vysledek: unknown = onClick(e);
+    if (jePromise(vysledek)) {
+      zamek.current = true;
+      setPracuje(true);
+      const uvolnit = () => {
+        zamek.current = false;
+        if (pripojeno.current) setPracuje(false);
+      };
+      // Chybu zpracuje volající; tady jen uvolníme tlačítko
+      vysledek.then(uvolnit, uvolnit);
+    }
+  });
+
+  const vypnuto = disabled || pracuje;
 
   return (
     <Component
@@ -46,9 +92,14 @@ export function Button({
         disabled:opacity-45 disabled:cursor-not-allowed
         ${className}
       `}
-      disabled={disabled && as === 'button'}
+      disabled={vypnuto && as === 'button'}
+      aria-busy={pracuje || undefined}
+      onClick={handleClick}
       {...props}
     >
+      {pracuje && (
+        <span aria-hidden="true" className="w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin flex-shrink-0" />
+      )}
       {children}
     </Component>
   );

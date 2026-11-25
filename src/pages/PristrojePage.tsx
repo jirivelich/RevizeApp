@@ -60,9 +60,9 @@ export function PristrojePage() {
     e.preventDefault();
     const onDone = () => { setIsModalOpen(false); resetForm(); };
     if (editingPristroj?.id) {
-      updatePristroj.mutate({ id: editingPristroj.id, data: formData }, { onSuccess: onDone });
+      return updatePristroj.mutateAsync({ id: editingPristroj.id, data: formData }, { onSuccess: onDone }).catch(() => undefined);
     } else {
-      createPristroj.mutate(formData, { onSuccess: onDone });
+      return createPristroj.mutateAsync(formData, { onSuccess: onDone }).catch(() => undefined);
     }
   };
 
@@ -420,7 +420,7 @@ export function PristrojePage() {
                   size="sm"
                   onClick={() => {
                     if (!historyPristroj?.id || !kalibraceForm.datumKalibrace || !kalibraceForm.platnostKalibrace) return;
-                    createKalibrace.mutate({
+                    return createKalibrace.mutateAsync({
                       pristrojId: historyPristroj.id,
                       datumKalibrace: kalibraceForm.datumKalibrace,
                       platnostKalibrace: kalibraceForm.platnostKalibrace,
@@ -429,7 +429,7 @@ export function PristrojePage() {
                       poznamka: kalibraceForm.poznamka || undefined,
                     }, {
                       onSuccess: () => setIsKalibraceModalOpen(false),
-                    });
+                    }).catch(() => undefined);
                   }}
                 >
                   Uložit

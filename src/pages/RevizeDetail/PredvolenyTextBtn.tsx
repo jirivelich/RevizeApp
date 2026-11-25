@@ -39,8 +39,8 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
   }, [open]);
 
   const handleAdd = async () => {
-    if (!newNazev.trim() || !newText.trim()) return;
-    createText.mutate(
+    if (!newNazev.trim() || !newText.trim() || createText.isPending) return;
+    return createText.mutateAsync(
       { pole: field, nazev: newNazev.trim(), text: newText.trim() },
       {
         onSuccess: () => {
@@ -49,7 +49,7 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
           setAdding(false);
         },
       },
-    );
+    ).catch(() => undefined);
   };
 
   const handleDelete = (id: number) => setDeleteTargetId(id);
@@ -165,7 +165,7 @@ export function PredvolenyTextBtn({ field, mode = 'replace', value, onChange, vl
                 />
                 <div className="flex gap-1 justify-end">
                   <button type="button" onClick={() => setAdding(false)} className="px-2 py-0.5 text-xs text-[var(--text-muted)] hover:bg-[var(--bg-hover)] rounded cursor-pointer">Zrušit</button>
-                  <button type="button" onClick={handleAdd} className="px-2 py-0.5 text-xs bg-[var(--primary)] text-[var(--primary-fg)] rounded hover:bg-[var(--primary-hover)] cursor-pointer" disabled={!newNazev.trim() || !newText.trim()}>Uložit</button>
+                  <button type="button" onClick={handleAdd} className="px-2 py-0.5 text-xs bg-[var(--primary)] text-[var(--primary-fg)] rounded hover:bg-[var(--primary-hover)] cursor-pointer" disabled={!newNazev.trim() || !newText.trim() || createText.isPending}>Uložit</button>
                 </div>
               </div>
             )}

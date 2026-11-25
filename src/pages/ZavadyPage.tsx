@@ -82,9 +82,9 @@ export function ZavadyPage() {
     e.preventDefault();
     const onDone = () => { setIsModalOpen(false); setEditingZavada(null); resetForm(); };
     if (editingZavada?.id) {
-      updateZavadaMut.mutate({ id: editingZavada.id, data: formData }, { onSuccess: onDone });
+      return updateZavadaMut.mutateAsync({ id: editingZavada.id, data: formData }, { onSuccess: onDone }).catch(() => undefined);
     } else {
-      createZavadaMut.mutate(formData, { onSuccess: onDone });
+      return createZavadaMut.mutateAsync(formData, { onSuccess: onDone }).catch(() => undefined);
     }
   };
 

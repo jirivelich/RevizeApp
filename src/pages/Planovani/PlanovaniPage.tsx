@@ -196,15 +196,15 @@ export function PlanovaniPage() {
       setFormData({ ...emptyFormData });
     };
     if (editingId) {
-      updateZakazka.mutate({
+      return updateZakazka.mutateAsync({
         id: editingId,
         data: {
           ...formDataToZakazka(data),
           datumDokonceni: data.stav === 'dokončeno' ? today : undefined,
         },
-      }, { onSuccess, onError: onMutationError });
+      }, { onSuccess, onError: onMutationError }).catch(() => undefined);
     } else {
-      createZakazka.mutate(formDataToZakazka(data) as Parameters<typeof createZakazka.mutate>[0], { onSuccess, onError: onMutationError });
+      return createZakazka.mutateAsync(formDataToZakazka(data) as Parameters<typeof createZakazka.mutate>[0], { onSuccess, onError: onMutationError }).catch(() => undefined);
     }
   };
 

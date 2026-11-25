@@ -90,15 +90,15 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
       resetZavadaForm();
     };
     if (editingZavada?.id) {
-      updateZavada.mutate(
+      return updateZavada.mutateAsync(
         { id: editingZavada.id, data: { ...formData, revizeId, datumVyreseni: zavadaFormData.stav === 'vyřešená' ? new Date() : undefined } },
         { onSuccess: onDone }
-      );
+      ).catch(() => undefined);
     } else {
-      createZavada.mutate(
+      return createZavada.mutateAsync(
         { ...formData, revizeId, datumZjisteni: new Date() } as any,
         { onSuccess: onDone }
-      );
+      ).catch(() => undefined);
     }
   };
 
@@ -126,8 +126,9 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
   };
 
   const handleInlineSave = () => {
-    if (!inlineDraft.popis.trim()) return;
-    createZavada.mutate(
+    // Enter i klik během ukládání se ignorují (jinak by závada vznikla dvakrát)
+    if (!inlineDraft.popis.trim() || createZavada.isPending) return;
+    return createZavada.mutateAsync(
       { ...inlineDraft, revizeId, datumZjisteni: new Date(), fotky: [] } as any,
       {
         onSuccess: async () => {
@@ -135,7 +136,7 @@ export function ZavadyTab({ zavady, rozvadece, mistnosti, katalogZavad, revizeId
           setTimeout(() => inlinePopisRef.current?.focus(), 50);
         },
       }
-    );
+    ).catch(() => undefined);
   };
 
   const handleInlineKeyDown = (e: React.KeyboardEvent, field: 'popis' | 'zavaznost' | 'stav' | 'poznamka') => {
