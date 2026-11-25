@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, Fragment } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Input, Textarea, Select, Modal, BottomSheet, Badge, PageHeader, EmptyState } from '../components/ui';
@@ -98,7 +98,9 @@ export function RevizePage() {
 
   // Dropdown menu pro akce (desktop)
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-  const [dropdownPos, setDropdownPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 });
+  // Kotva = tlačítko ⋮; skutečná pozice se dopočítá po vykreslení (u spodních řádků se menu otevře nahoru)
+  const [dropdownKotva, setDropdownKotva] = useState<{ top: number; bottom: number; right: number }>({ top: 0, bottom: 0, right: 0 });
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; right: number } | null>(null);
   const openMenuRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (openMenuId === null) return;
@@ -111,6 +113,26 @@ export function RevizePage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [openMenuId]);
   const openRevize = revize.find(r => r.id === openMenuId) ?? null;
+  useLayoutEffect(() => {
+    if (openMenuId === null || !openMenuRef.current) return;
+    const vyska = openMenuRef.current.offsetHeight;
+    const okraj = 8;
+    const dole = dropdownKotva.bottom + 4;
+    const nahore = dropdownKotva.top - 4 - vyska;
+    // Dolů, pokud se vejde; jinak nahoru; když se nevejde ani tam, přitisknout k okraji okna
+    const top = dole + vyska <= window.innerHeight - okraj ? dole
+      : nahore >= okraj ? nahore
+      : Math.max(okraj, window.innerHeight - okraj - vyska);
+    setDropdownPos({ top, right: dropdownKotva.right });
+  }, [openMenuId, dropdownKotva]);
+  // Při posunu stránky nebo změně velikosti okna menu zavřít (jinak by „ujelo“ od tlačítka)
+  useEffect(() => {
+    if (openMenuId === null) return;
+    const zavrit = () => setOpenMenuId(null);
+    window.addEventListener('resize', zavrit);
+    window.addEventListener('scroll', zavrit, true);
+    return () => { window.removeEventListener('resize', zavrit); window.removeEventListener('scroll', zavrit, true); };
+  }, [openMenuId]);
 
   // Temp ID = záporné číslo = offline záznam čekající na synchronizaci
   const isOfflineId = (id: number | undefined) => (id ?? 0) < 0;
@@ -558,7 +580,8 @@ export function RevizePage() {
                           onClick={(e) => {
                             if (openMenuId === r.id) { setOpenMenuId(null); return; }
                             const rect = e.currentTarget.getBoundingClientRect();
-                            setDropdownPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                            setDropdownKotva({ top: rect.top, bottom: rect.bottom, right: window.innerWidth - rect.right });
+                            setDropdownPos(null);
                             setOpenMenuId(r.id!);
                           }}
                           className="p-2 rounded-[var(--radius-md)] hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
@@ -919,7 +942,8 @@ export function RevizePage() {
                           onClick={(e) => {
                             if (openMenuId === r.id) { setOpenMenuId(null); return; }
                             const rect = e.currentTarget.getBoundingClientRect();
-                            setDropdownPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                            setDropdownKotva({ top: rect.top, bottom: rect.bottom, right: window.innerWidth - rect.right });
+                            setDropdownPos(null);
                             setOpenMenuId(r.id!);
                           }}
                           className="p-2 rounded-[var(--radius-md)] hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
@@ -1534,8 +1558,8 @@ export function RevizePage() {
       {openMenuId !== null && openRevize && createPortal(
         <div
           ref={openMenuRef}
-          className="fixed w-48 bg-[var(--surface)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] border border-[var(--border-strong)] p-1 z-[9999]"
-          style={{ top: dropdownPos.top, right: dropdownPos.right }}
+          className="fixed w-48 max-h-[calc(100vh-16px)] overflow-auto bg-[var(--surface)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] border border-[var(--border-strong)] p-1 z-[9999]"
+          style={{ top: dropdownPos?.top ?? dropdownKotva.bottom + 4, right: dropdownKotva.right, visibility: dropdownPos ? 'visible' : 'hidden' }}
         >
           <button
             onClick={() => { if (isOfflineId(openRevize.id)) return; setOpenMenuId(null); navigate(`/revize/${openRevize.id}/nahled`); }}
