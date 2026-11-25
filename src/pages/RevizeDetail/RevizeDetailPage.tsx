@@ -154,20 +154,22 @@ export function RevizeDetailPage() {
     }
   });
 
+  // Rozvaděče a místnosti zůstávají po prvním otevření připravené (jen skryté) –
+  // přepnutí záložky tak nemusí znovu načítat okruhy/zařízení a zachová se výběr.
+  const [navstivene, setNavstivene] = useState<ReadonlySet<string>>(() => new Set([activeTab]));
+  if (!navstivene.has(activeTab)) setNavstivene(new Set(navstivene).add(activeTab)); // úprava stavu při renderu (bez efektu)
+  const drzet = (tab: string) => activeTab === tab || navstivene.has(tab);
+
   // Okruhy counts — N+1 but computed only when rozvadece change
   const [okruhyCounts, setOkruhyCounts] = useState<Record<number, number>>({});
   useEffect(() => {
     if (rozvadece.length === 0) return;
     let cancelled = false;
     (async () => {
-      const counts: Record<number, number> = {};
-      for (const roz of rozvadece) {
-        if (roz.id) {
-          const okruhyRoz = await okruhService.getByRozvadec(roz.id);
-          counts[roz.id] = okruhyRoz.length;
-        }
-      }
-      if (!cancelled) setOkruhyCounts(counts);
+      // Souběžně, ne jeden rozvaděč po druhém
+      const pary = await Promise.all(rozvadece.filter(r => r.id).map(async r =>
+        [r.id!, (await okruhService.getByRozvadec(r.id!)).length] as const));
+      if (!cancelled) setOkruhyCounts(Object.fromEntries(pary));
     })();
     return () => { cancelled = true; };
   }, [rozvadece, verzeDat]);
@@ -178,14 +180,9 @@ export function RevizeDetailPage() {
     if (mistnosti.length === 0) return;
     let cancelled = false;
     (async () => {
-      const counts: Record<number, number> = {};
-      for (const mist of mistnosti) {
-        if (mist.id) {
-          const zarList = await zarizeniService.getByMistnost(mist.id);
-          counts[mist.id] = zarList.length;
-        }
-      }
-      if (!cancelled) setZarizeniCounts(counts);
+      const pary = await Promise.all(mistnosti.filter(m => m.id).map(async m =>
+        [m.id!, (await zarizeniService.getByMistnost(m.id!)).length] as const));
+      if (!cancelled) setZarizeniCounts(Object.fromEntries(pary));
     })();
     return () => { cancelled = true; };
   }, [mistnosti, verzeDat]);
@@ -422,11 +419,13 @@ export function RevizeDetailPage() {
         />
       )}
 
-      {activeTab === 'rozvadece' && (
-        <RozvadeceTab
-          rozvadece={rozvadece} okruhyCounts={okruhyCounts}
-          revizeId={revize.id!} onReload={handleReload}
-        />
+      {drzet('rozvadece') && (
+        <div hidden={activeTab !== 'rozvadece'}>
+          <RozvadeceTab
+            rozvadece={rozvadece} okruhyCounts={okruhyCounts}
+            revizeId={revize.id!} onReload={handleReload}
+          />
+        </div>
       )}
 
       {activeTab === 'zavady' && (
@@ -436,11 +435,13 @@ export function RevizeDetailPage() {
         />
       )}
 
-      {activeTab === 'mistnosti' && (
-        <MistnostiTab
-          mistnosti={mistnosti} rozvadece={rozvadece} zarizeniCounts={zarizeniCounts}
-          revizeId={revize.id!} onReload={handleReload}
-        />
+      {drzet('mistnosti') && (
+        <div hidden={activeTab !== 'mistnosti'}>
+          <MistnostiTab
+            mistnosti={mistnosti} rozvadece={rozvadece} zarizeniCounts={zarizeniCounts}
+            revizeId={revize.id!} onReload={handleReload} aktivni={activeTab === 'mistnosti'}
+          />
+        </div>
       )}
 
       {activeTab === 'rozsah' && (

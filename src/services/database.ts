@@ -16,9 +16,7 @@ export const revizeService = {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Revize[]>(res));
         // Cache all revize for offline
-        for (const r of revize) {
-          if (r.id) await db.revizeCache.put({ id: r.id, data: r, updatedAt: Date.now() });
-        }
+        await db.revizeCache.bulkPut(revize.filter(r => r.id).map(r => ({ id: r.id!, data: r, updatedAt: Date.now() })));
         return revize;
       } catch {
         // Network error - fallback to cache
@@ -145,9 +143,7 @@ export const rozvadecService = {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Rozvadec[]>(res));
         if (rozvadece) {
-          for (const r of rozvadece) {
-            await db.rozvadecCache.put({ id: r.id ?? -1, data: r, updatedAt: Date.now() });
-          }
+          await db.rozvadecCache.bulkPut(rozvadece.map(r => ({ id: r.id ?? -1, data: r, updatedAt: Date.now() })));
         }
         return rozvadece;
       } catch {
@@ -224,9 +220,7 @@ export const okruhService = {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Okruh[]>(res));
         if (okruhy) {
-          for (const o of okruhy) {
-            await db.okruhCache.put({ id: o.id ?? -1, data: o, updatedAt: Date.now() });
-          }
+          await db.okruhCache.bulkPut(okruhy.map(o => ({ id: o.id ?? -1, data: o, updatedAt: Date.now() })));
         }
         return okruhy;
       } catch {
@@ -303,9 +297,7 @@ export const cranicService = {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Chranic[]>(res));
         if (chranice) {
-          for (const c of chranice) {
-            await db.cranicCache.put({ id: c.id ?? -1, data: c, updatedAt: Date.now() });
-          }
+          await db.cranicCache.bulkPut(chranice.map(c => ({ id: c.id ?? -1, data: c, updatedAt: Date.now() })));
         }
         return chranice;
       } catch {
@@ -388,9 +380,7 @@ export const mistnostService = {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Mistnost[]>(res));
         if (mistnosti) {
-          for (const m of mistnosti) {
-            await db.mistnostCache.put({ id: m.id ?? -1, data: m, updatedAt: Date.now() });
-          }
+          await db.mistnostCache.bulkPut(mistnosti.map(m => ({ id: m.id ?? -1, data: m, updatedAt: Date.now() })));
         }
         return mistnosti;
       } catch {
@@ -475,9 +465,7 @@ export const zarizeniService = {
         const zarizeni = await fetch(buildApiUrl(`/zarizeni/${mistnostId}`), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Zarizeni[]>(res));
-        for (const z of zarizeni) {
-          if (z.id) await db.zarizeniCache.put({ id: z.id, data: z, updatedAt: Date.now() });
-        }
+        await db.zarizeniCache.bulkPut(zarizeni.filter(z => z.id).map(z => ({ id: z.id!, data: z, updatedAt: Date.now() })));
         return zarizeni;
       } catch {
         const all = await db.zarizeniCache.toArray();
@@ -567,9 +555,7 @@ export const zavadaService = {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Zavada[]>(res));
         if (zavady) {
-          for (const z of zavady) {
-            await db.zavadaCache.put({ id: z.id ?? -1, data: z, updatedAt: Date.now() });
-          }
+          await db.zavadaCache.bulkPut(zavady.map(z => ({ id: z.id ?? -1, data: z, updatedAt: Date.now() })));
         }
         return zavady;
       } catch {
@@ -645,9 +631,7 @@ export const firmaService = {
         const firmy = await fetch(buildApiUrl('/firmy'), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Firma[]>(res));
-        for (const f of firmy) {
-          if (f.id) await db.firmaCache.put({ id: f.id, data: f, updatedAt: Date.now() });
-        }
+        await db.firmaCache.bulkPut(firmy.filter(f => f.id).map(f => ({ id: f.id!, data: f, updatedAt: Date.now() })));
         return firmy;
       } catch {
         const all = await db.firmaCache.toArray();
@@ -738,9 +722,7 @@ export const zakazkaService = {
         const zakazky = await fetch(buildApiUrl('/zakazky'), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Zakazka[]>(res));
-        for (const z of zakazky) {
-          if (z.id) await db.zakazkaCache.put({ id: z.id, data: z, updatedAt: Date.now() });
-        }
+        await db.zakazkaCache.bulkPut(zakazky.filter(z => z.id).map(z => ({ id: z.id!, data: z, updatedAt: Date.now() })));
         return zakazky;
       } catch {
         const all = await db.zakazkaCache.toArray();
@@ -819,9 +801,7 @@ export const pristrojService = {
         const pristroje = await fetch(buildApiUrl('/pristroje'), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<MericiPristroj[]>(res));
-        for (const p of pristroje) {
-          if (p.id) await db.pristrojCache.put({ id: p.id, data: p, updatedAt: Date.now() });
-        }
+        await db.pristrojCache.bulkPut(pristroje.filter(p => p.id).map(p => ({ id: p.id!, data: p, updatedAt: Date.now() })));
         return pristroje;
       } catch {
         return (await db.pristrojCache.toArray()).map(r => r.data);
@@ -1038,9 +1018,7 @@ export const zavadaKatalogService = {
         const items = await fetch(buildApiUrl('/zavady-katalog'), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<ZavadaKatalog[]>(res));
-        for (const item of items) {
-          if (item.id) await db.zavadaKatalogCache.put({ id: item.id, data: item, updatedAt: Date.now() });
-        }
+        await db.zavadaKatalogCache.bulkPut(items.filter(item => item.id).map(item => ({ id: item.id!, data: item, updatedAt: Date.now() })));
         return items;
       } catch {
         return (await db.zavadaKatalogCache.toArray()).map(r => r.data);
@@ -1158,9 +1136,7 @@ export const predvolenyTextService = {
         const items = await fetch(buildApiUrl('/predvolene-texty'), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<PredvolenyText[]>(res));
-        for (const item of items) {
-          if (item.id) await db.predvolenyTextCache.put({ id: item.id, data: item, updatedAt: Date.now() });
-        }
+        await db.predvolenyTextCache.bulkPut(items.filter(item => item.id).map(item => ({ id: item.id!, data: item, updatedAt: Date.now() })));
         return items;
       } catch {
         return (await db.predvolenyTextCache.toArray()).map(r => r.data);
@@ -1244,9 +1220,7 @@ export const zakazniciService = {
         const zakaznici = await fetch(buildApiUrl('/zakaznici'), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<Zakaznik[]>(res));
-        for (const z of zakaznici) {
-          if (z.id) await db.zakaznikCache.put({ id: z.id, data: z, updatedAt: Date.now() });
-        }
+        await db.zakaznikCache.bulkPut(zakaznici.filter(z => z.id).map(z => ({ id: z.id!, data: z, updatedAt: Date.now() })));
         return zakaznici;
       } catch {
         return (await db.zakaznikCache.toArray()).map(r => r.data);
@@ -1495,9 +1469,7 @@ export const cenikService = {
         const polozky = await fetch(buildApiUrl('/cenik'), {
           headers: getAuthHeaders(),
         }).then(res => handleResponse<CenikPolozka[]>(res));
-        for (const p of polozky) {
-          if (p.id) await db.cenikCache.put({ id: p.id, data: p, updatedAt: Date.now() });
-        }
+        await db.cenikCache.bulkPut(polozky.filter(p => p.id).map(p => ({ id: p.id!, data: p, updatedAt: Date.now() })));
         return polozky;
       } catch {
         return (await db.cenikCache.toArray()).map(r => r.data);

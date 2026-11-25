@@ -35,9 +35,11 @@ interface MistnostiTabProps {
   zarizeniCounts: Record<number, number>;
   revizeId: number;
   onReload: () => void;
+  /** Záložka je právě zobrazená (zůstává připojená i skrytá). */
+  aktivni?: boolean;
 }
 
-export function MistnostiTab({ mistnosti, rozvadece = [], zarizeniCounts: propCounts, revizeId, onReload: _onReload }: MistnostiTabProps) {
+export function MistnostiTab({ mistnosti, rozvadece = [], zarizeniCounts: propCounts, revizeId, onReload: _onReload, aktivni = true }: MistnostiTabProps) {
   const createMistnost = useCreateMistnost();
   const updateMistnost = useUpdateMistnost();
   const deleteMistnost = useDeleteMistnost();
@@ -65,21 +67,19 @@ export function MistnostiTab({ mistnosti, rozvadece = [], zarizeniCounts: propCo
   const [isPrirazeniOpen, setIsPrirazeniOpen] = useState(false);
   const [prirazeniIds, setPrirazeniIds] = useState<number[]>([]);
 
-  // Okruhy všech rozvaděčů revize
+  // Okruhy všech rozvaděčů revize (souběžně). Při návratu na záložku se tiše obnoví na pozadí –
+  // okruhy se mezitím mohly změnit v záložce Rozvaděče; zobrazená data se mezitím nemažou.
   useEffect(() => {
+    if (!aktivni) return;
     let cancelled = false;
     (async () => {
-      const sorted = [...rozvadece].sort((a, b) => (a.poradi ?? a.id ?? 0) - (b.poradi ?? b.id ?? 0));
-      const all: OkruhRevize[] = [];
-      for (const r of sorted) {
-        if (!r.id) continue;
-        const ok = await okruhService.getByRozvadec(r.id);
-        all.push(...[...ok].sort((a, b) => a.cislo - b.cislo).map(o => ({ ...o, rozvadec: r })));
-      }
-      if (!cancelled) setOkruhyRevize(all);
+      const sorted = [...rozvadece].filter(r => r.id).sort((a, b) => (a.poradi ?? a.id ?? 0) - (b.poradi ?? b.id ?? 0));
+      const poRozvadecich = await Promise.all(sorted.map(async r =>
+        [...await okruhService.getByRozvadec(r.id!)].sort((a, b) => a.cislo - b.cislo).map(o => ({ ...o, rozvadec: r }))));
+      if (!cancelled) setOkruhyRevize(poRozvadecich.flat());
     })();
     return () => { cancelled = true; };
-  }, [rozvadece]);
+  }, [rozvadece, aktivni]);
 
   const okruhById = useMemo(() => new Map(okruhyRevize.map(o => [o.id!, o])), [okruhyRevize]);
   const napajeciOkruhy = (m: Mistnost) =>
