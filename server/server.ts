@@ -430,7 +430,7 @@ async function startServer() {
 
       // 4. Zkopírovat rozvaděče + okruhy (mapa starých ID okruhů na nová kvůli vazbám místností)
       const okruhIdMap = new Map<number, number>();
-      const rozvadece = await client.query('SELECT * FROM rozvadec WHERE "revizeId" = $1', [sourceId]);
+      const rozvadece = await client.query('SELECT * FROM rozvadec WHERE "revizeId" = $1 ORDER BY poradi NULLS LAST, id', [sourceId]);
       for (const rozv of rozvadece.rows) {
         const newRozv = await client.query(`
           INSERT INTO rozvadec ("revizeId", nazev, oznaceni, umisteni, "typRozvadece", "stupenKryti", poznamka, "createdAt", "updatedAt")
@@ -459,7 +459,7 @@ async function startServer() {
       console.log(`  ✅ Zkopírováno ${rozvadece.rows.length} rozvaděčů`);
 
       // 5. Zkopírovat místnosti + zařízení
-      const mistnosti = await client.query('SELECT * FROM mistnost WHERE "revizeId" = $1', [sourceId]);
+      const mistnosti = await client.query('SELECT * FROM mistnost WHERE "revizeId" = $1 ORDER BY id', [sourceId]);
       for (const mist of mistnosti.rows) {
         const newMist = await client.query(`
           INSERT INTO mistnost ("revizeId", nazev, patro, plocha, typ, prostredi, poznamka, "okruhIds")
@@ -469,7 +469,7 @@ async function startServer() {
         const newMistId = newMist.rows[0].id;
 
         // Zařízení v místnosti
-        const zarizeni = await client.query('SELECT * FROM zarizeni WHERE "mistnostId" = $1', [mist.id]);
+        const zarizeni = await client.query('SELECT * FROM zarizeni WHERE "mistnostId" = $1 ORDER BY id', [mist.id]);
         for (const zar of zarizeni.rows) {
           await client.query(`
             INSERT INTO zarizeni ("mistnostId", nazev, oznaceni, "pocetKs", trida, "prikonW", "ochranaPredDotykem", stav, poznamka)
@@ -993,7 +993,7 @@ async function startServer() {
 
   app.get('/api/mistnosti/revize/:revizeId', authMiddleware, async (req, res) => {
     try {
-      const result = await pool.query('SELECT * FROM mistnost WHERE "revizeId" = $1', [req.params.revizeId]);
+      const result = await pool.query('SELECT * FROM mistnost WHERE "revizeId" = $1 ORDER BY id', [req.params.revizeId]);
       res.json(result.rows);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -1042,7 +1042,7 @@ async function startServer() {
   // ==================== ZAŘÍZENÍ ====================
   app.get('/api/zarizeni/:mistnostId', authMiddleware, async (req, res) => {
     try {
-      const result = await pool.query('SELECT * FROM zarizeni WHERE "mistnostId" = $1', [req.params.mistnostId]);
+      const result = await pool.query('SELECT * FROM zarizeni WHERE "mistnostId" = $1 ORDER BY id', [req.params.mistnostId]);
       res.json(result.rows);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -1104,7 +1104,7 @@ async function startServer() {
 
   app.get('/api/zavady/revize/:revizeId', authMiddleware, async (req, res) => {
     try {
-      const result = await pool.query('SELECT * FROM zavada WHERE "revizeId" = $1', [req.params.revizeId]);
+      const result = await pool.query('SELECT * FROM zavada WHERE "revizeId" = $1 ORDER BY id', [req.params.revizeId]);
       const rows = result.rows.map((row: Record<string, unknown>) => ({
         ...row,
         fotky: typeof row.fotky === 'string' ? JSON.parse(row.fotky) : (row.fotky || []),
@@ -2709,9 +2709,9 @@ async function startServer() {
       const revize = revizeResult.rows[0];
 
       const [rozvadeceRes, zavadyRes, mistnostiRes, nastaveniRes] = await Promise.all([
-        pool.query('SELECT * FROM rozvadec WHERE "revizeId" = $1', [revizeId]),
-        pool.query('SELECT * FROM zavada WHERE "revizeId" = $1', [revizeId]),
-        pool.query('SELECT * FROM mistnost WHERE "revizeId" = $1', [revizeId]),
+        pool.query('SELECT * FROM rozvadec WHERE "revizeId" = $1 ORDER BY poradi NULLS LAST, id', [revizeId]),
+        pool.query('SELECT * FROM zavada WHERE "revizeId" = $1 ORDER BY id', [revizeId]),
+        pool.query('SELECT * FROM mistnost WHERE "revizeId" = $1 ORDER BY id', [revizeId]),
         pool.query('SELECT * FROM nastaveni LIMIT 1'),
       ]);
 
@@ -2729,7 +2729,7 @@ async function startServer() {
       let zarizeni: any[] = [];
       if (mistnostIds.length > 0) {
         const placeholders = mistnostIds.map((_: any, i: number) => `$${i + 1}`).join(', ');
-        const zarizeniRes = await pool.query(`SELECT * FROM zarizeni WHERE "mistnostId" IN (${placeholders})`, mistnostIds);
+        const zarizeniRes = await pool.query(`SELECT * FROM zarizeni WHERE "mistnostId" IN (${placeholders}) ORDER BY id`, mistnostIds);
         zarizeni = zarizeniRes.rows;
       }
 
